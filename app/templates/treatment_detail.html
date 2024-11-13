@@ -1,0 +1,229 @@
+<!-- app/templates/treatment_detail.html -->
+{% extends "base.html" %}
+
+{% block title %}Treatment Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Treatment Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Basic Information</h6>
+                            <dl class="row">
+                                <dt class="col-sm-4">Date</dt>
+                                <dd class="col-sm-8">{{ treatment.date.strftime('%Y-%m-%d') }}</dd>
+
+                                <dt class="col-sm-4">Pain Level</dt>
+                                <dd class="col-sm-8">
+                                    <div class="progress" style="height: 20px;">
+                                        {% set width = treatment.pain_level * 10 if treatment.pain_level is not none else 0 %}
+                                        <div class="progress-bar bg-success"
+                                             role="progressbar"
+                                             data-width="{{ width }}"
+                                             aria-valuenow="{{ width }}"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+                                             {{ width }}%
+                                        </div>
+                                    </div>                                    
+                                </dd>
+                                
+
+                                <dt class="col-sm-4">Movement</dt>
+                                <dd class="col-sm-8">{{ treatment.movement_restriction }}</dd>
+                            </dl>
+
+                            <h6 class="mt-4">Description</h6>
+                            <p>{{ treatment.description }}</p>
+
+                            <h6 class="mt-4">Progress Notes</h6>
+                            <p>{{ treatment.progress_notes }}</p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6>Trigger Points Map</h6>
+                            <div class="body-map-container">
+                                <svg viewBox="0 0 200 400" class="body-map">
+                                    <!-- Body outline -->
+                                    <path d="M100,20 C120,20 140,40 140,70 L140,200 C140,260 120,300 100,340 C80,300 60,260 60,200 L60,70 C60,40 80,20 100,20" 
+                                          fill="none" stroke="black" />
+                                    
+                                    <!-- Plot recorded trigger points -->
+                                    {% for point in treatment.trigger_points %}
+                                    <circle cx="{{ point.location_x }}"
+                                           cy="{{ point.location_y }}"
+                                           r="4"
+                                           class="trigger-point {{ point.type }}"
+                                           data-toggle="tooltip"
+                                           title="{{ point.muscle }} (Intensity: {{ point.intensity }}/10)"/>
+                                    {% endfor %}
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trigger Points Details -->
+                    <div class="mt-4">
+                        <h6>Trigger Points Analysis</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Muscle</th>
+                                        <th>Intensity</th>
+                                        <th>Symptoms</th>
+                                        <th>Referral Pattern</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for point in treatment.trigger_points %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-{{ 'danger' if point.type == 'active' 
+                                                                    else 'warning' if point.type == 'latent' 
+                                                                    else 'info' }}">
+                                                {{ point.type }}
+                                            </span>
+                                        </td>
+                                        <td>{{ point.muscle }}</td>
+                                        <td>{{ point.intensity }}/10</td>
+                                        <td>{{ point.symptoms }}</td>
+                                        <td>{{ point.referral_pattern }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Evaluation Data -->
+                    <div class="mt-4">
+                        <h6>Evaluation Results</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Pain Characteristics</h6>
+                                <ul class="list-unstyled">
+                                    {% for char in treatment.evaluation_data.pain_characteristics %}
+                                    <li><i class="bi bi-check-circle text-success"></i> {{ char }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Muscle-Specific Symptoms</h6>
+                                {% for muscle, symptoms in treatment.evaluation_data.muscle_symptoms.items() %}
+                                <div class="mb-2">
+                                    <strong>{{ muscle }}:</strong>
+                                    <ul class="list-unstyled">
+                                        {% for symptom in symptoms %}
+                                        <li><i class="bi bi-dash"></i> {{ symptom }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Treatment Timeline -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Treatment Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for t in treatment.patient.treatments|sort(attribute='date', reverse=true) %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker {{ 'bg-primary' if t.id == treatment.id else '' }}"></div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between">
+                                    <small>{{ t.date.strftime('%Y-%m-%d') }}</small>
+                                    <small>Pain: {{ t.pain_level }}/10</small>
+                                </div>
+                                <p class="mb-0">{{ t.description }}</p>
+                                {% if t.id == treatment.id %}
+                                <span class="badge bg-primary">Current</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #dee2e6;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 12px;
+    bottom: -20px;
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.timeline-item:last-child::before {
+    display: none;
+}
+
+.trigger-point {
+    cursor: pointer;
+}
+
+.trigger-point.active {
+    fill: #dc3545;
+}
+
+.trigger-point.latent {
+    fill: #ffc107;
+}
+
+.trigger-point.satellite {
+    fill: #17a2b8;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+</script>
+{% endblock %}

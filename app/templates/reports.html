@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-graph-up"></i> Reports & Analytics</h1>
+        <div class="btn-group">
+            <button class="btn btn-outline-primary" onclick="window.print()">
+                <i class="bi bi-printer"></i> Print Report
+            </button>
+            <button class="btn btn-outline-success" onclick="exportToExcel()">
+                <i class="bi bi-file-earmark-excel"></i> Export to Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Patients</h6>
+                    <h2 class="display-4">{{ total_patients }}</h2>
+                    <p class="mb-0">
+                        <span class="badge bg-light text-primary">
+                            {{ active_patients }} Active
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Treatment Completion Rate</h6>
+                    <h2 class="display-4">{{ "%.1f"|format(completion_rate) }}%</h2>
+                    <div class="progress">
+                        <div class="progress-bar bg-white" 
+                             role="progressbar" 
+                             {% if completion_rate %}style="width: {{ completion_rate|string }}%"{% endif %}
+                             aria-valuenow="{{ completion_rate|int }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            <span class="visually-hidden">{{ completion_rate|int }}% Complete</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Avg. Treatments/Patient</h6>
+                    <h2 class="display-4">{{ "%.1f"|format(avg_treatments) }}</h2>
+                    <p class="mb-0">Sessions per patient</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Monthly Growth</h6>
+                    <h2 class="display-4">
+                        {% if monthly_treatments|length >= 2 %}
+                            {% set growth = ((monthly_treatments[0][1] - monthly_treatments[1][1]) / monthly_treatments[1][1] * 100)|round(1) %}
+                            {{ growth }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </h2>
+                    <p class="mb-0">Compared to last month</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Treatment Trends</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="treatmentsChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Conditions Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="conditionsChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Recent Activity</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Patient</th>
+                            <th>Activity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in recent_activity %}
+                        <tr>
+                            <td>{{ activity.date.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ activity.name }}</td>
+                            <td>{{ activity.description }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if activity.status == 'Completed' else 'primary' }}">
+                                    {{ activity.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+    'use strict';
+    
+    // Safe JSON parsing of server data
+    const serverData = {
+        conditions: JSON.parse('{{ conditions|tojson|safe }}' || '[]'),
+        treatments: JSON.parse('{{ monthly_treatments|tojson|safe }}' || '[]')
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTreatmentsChart();
+        initializeConditionsChart();
+    });
+
+    function initializeTreatmentsChart() {
+        fetch('/api/reports/treatments-by-month')
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                const ctx = document.getElementById('treatmentsChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels || [],
+                        datasets: [{
+                            label: 'Number of Treatments',
+                            data: data.data || [],
+                            borderColor: '#3498db',
+                            tension: 0.1,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(function(error) {
+                console.error('Error loading treatments data:', error);
+            });
+    }
+
+    function initializeConditionsChart() {
+        if (!serverData.conditions.length) {
+            return;
+        }
+
+        const labels = [];
+        const data = [];
+        
+        serverData.conditions.forEach(function(condition) {
+            labels.push(condition[0]);
+            data.push(condition[1]);
+        });
+
+        const ctx = document.getElementById('conditionsChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: [
+                        '#3498db',
+                        '#2ecc71',
+                        '#e74c3c',
+                        '#f1c40f',
+                        '#9b59b6',
+                        '#1abc9c'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    }
+})();
+
+// Keep export function in global scope
+window.exportToExcel = function() {
+    alert('Export to Excel functionality will be implemented here');
+};
+</script>
+{% endblock %}

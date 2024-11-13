@@ -1,0 +1,303 @@
+<!-- app/templates/index.html -->
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <!-- Page Header -->
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+        <a href="{{ url_for('main.new_patient') }}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> New Patient
+        </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Patients</h5>
+                    <h2>{{ total_patients }}</h2>
+                    <p class="mb-0"><small>All time registered patients</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <h5 class="card-title">Active Patients</h5>
+                    <h2>{{ active_patients }}</h2>
+                    <p class="mb-0"><small>Currently under treatment</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <h5 class="card-title">Today's Appointments</h5>
+                    <h2>{{ upcoming_appointments|selectattr('next_appointment', 'eq', today)|list|length }}</h2>
+                    <p class="mb-0"><small>Scheduled for today</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <h5 class="card-title">This Week's Sessions</h5>
+                    <h2>{{ upcoming_appointments|selectattr('next_appointment', 'le', week_end)|list|length }}</h2>
+                    <p class="mb-0"><small>Next 7 days</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Appointments Card -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-calendar-check"></i> Upcoming Appointments
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_appointments %}
+                        <div class="list-group">
+                            {% for appointment in upcoming_appointments %}
+                            <a href="{{ url_for('main.patient_detail', id=appointment.patient.id) }}" 
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ appointment.patient.name }}</h6>
+                                    <small>{{ appointment.next_appointment.strftime('%d %b, %Y') }}</small>
+                                </div>
+                                <p class="mb-1">{{ appointment.description|truncate(50) }}</p>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No upcoming appointments</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-lightning"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('main.new_patient') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-person-plus"></i> Register New Patient
+                        </a>
+                        <a href="{{ url_for('main.appointments') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-calendar-plus"></i> Schedule Appointment
+                        </a>
+                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#searchModal">
+                            <i class="bi bi-search"></i> Quick Patient Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient List -->
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-people"></i> Patient List
+                    </h5>
+                </div>
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" id="patientSearch" class="form-control" 
+                               placeholder="Search patients..." value="{{ search }}">
+                        <select class="form-select" id="statusFilter" style="max-width: 150px;">
+                            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                            <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+                            <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Diagnosis</th>
+                            <th>Last Visit</th>
+                            <th>Next Appointment</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                        <tr>
+                            <td>{{ patient.name }}</td>
+                            <td>{{ patient.diagnosis }}</td>
+                            <td>
+                                {% if patient.treatments %}
+                                    {{ patient.treatments[-1].date.strftime('%Y-%m-%d') }}
+                                {% else %}
+                                    No visits yet
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if patient.treatments and patient.treatments[-1].next_appointment %}
+                                    {{ patient.treatments[-1].next_appointment.strftime('%Y-%m-%d') }}
+                                {% else %}
+                                    Not scheduled
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-badge {% if patient.status == 'Active' %}status-active{% else %}status-inactive{% endif %}">
+                                    {{ patient.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('main.patient_detail', id=patient.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('main.edit_patient', id=patient.id) }}" 
+                                       class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-success" 
+                                        onclick="quickTreatment('{{ patient.id }}')">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Search Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quick Patient Search</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control" id="quickSearch" 
+                       placeholder="Type patient name or diagnosis...">
+                <div id="searchResults" class="list-group mt-3">
+                    <!-- Search results will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Treatment Modal -->
+<div class="modal fade" id="quickTreatmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quick Treatment Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickTreatmentForm" method="POST">
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Treatment Description</label>
+                        <textarea class="form-control" name="description" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="progress_notes" class="form-label">Progress Notes</label>
+                        <textarea class="form-control" name="progress_notes"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="next_appointment" class="form-label">Next Appointment</label>
+                        <input type="date" class="form-control" name="next_appointment" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Treatment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Quick search functionality
+    const quickSearch = document.getElementById('quickSearch');
+    const searchResults = document.getElementById('searchResults');
+    
+    quickSearch.addEventListener('input', async (e) => {
+        if (e.target.value.length < 2) {
+            searchResults.innerHTML = '';
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/search?q=${e.target.value}`);
+            const data = await response.json();
+            
+            searchResults.innerHTML = data.map(patient => `
+                <a href="/patient/${patient.id}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">${patient.name}</h6>
+                        <span class="status-badge status-${patient.status.toLowerCase()}">
+                            ${patient.status}
+                        </span>
+                    </div>
+                    <small>${patient.diagnosis}</small>
+                </a>
+            `).join('');
+        } catch (error) {
+            console.error('Error searching patients:', error);
+        }
+    });
+
+    // Patient list search and filter
+    const patientSearch = document.getElementById('patientSearch');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    function updatePatientList() {
+        const searchParams = new URLSearchParams(window.location.search);
+        searchParams.set('search', patientSearch.value);
+        searchParams.set('status', statusFilter.value);
+        window.location.href = `/?${searchParams.toString()}`;
+    }
+    
+    patientSearch.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+            updatePatientList();
+        }
+    });
+    
+    statusFilter.addEventListener('change', updatePatientList);
+
+    // Quick treatment functionality
+    function quickTreatment(patientId) {
+        const modal = new bootstrap.Modal(document.getElementById('quickTreatmentModal'));
+        const form = document.getElementById('quickTreatmentForm');
+        form.action = `/treatment/new/${patientId}`;
+        modal.show();
+    }
+</script>
+{% endblock %}

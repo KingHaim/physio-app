@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Report: {{ patient.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Report Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="bi bi-file-text"></i> Patient Report</h1>
+            <h4 class="text-muted">{{ patient.name }}</h4>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-outline-primary" onclick="window.print()">
+                <i class="bi bi-printer"></i> Print Report
+            </button>
+            <button class="btn btn-outline-success" onclick="exportReport()">
+                <i class="bi bi-download"></i> Export PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Patient Overview -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Patient Overview</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Status</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-{{ 'success' if patient.status == 'Active' else 'secondary' }}">
+                                {{ patient.status }}
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-4">Diagnosis</dt>
+                        <dd class="col-sm-8">{{ patient.diagnosis }}</dd>
+
+                        <dt class="col-sm-4">Started</dt>
+                        <dd class="col-sm-8">{{ patient.created_at.strftime('%Y-%m-%d') }}</dd>
+
+                        <dt class="col-sm-4">Contact</dt>
+                        <dd class="col-sm-8">{{ patient.contact }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Treatment Stats -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Treatment Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <div>
+                            <h6 class="text-muted mb-1">Total Sessions</h6>
+                            <h3>{{ total_treatments }}</h3>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Completion Rate</h6>
+                            <h3>{{ "%.1f"|format(completion_rate) }}%</h3>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">Average Frequency</h6>
+                        <h3>{{ "%.1f"|format(avg_frequency) }} days</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Timeline -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Progress Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for event in progress_timeline %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker {% if event.event_type == 'treatment' %}bg-primary
+                                                      {% elif event.event_type == 'note' %}bg-info
+                                                      {% else %}bg-success{% endif %}">
+                            </div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-1">{{ event.event }}</h6>
+                                    <small class="text-muted">{{ event.date.strftime('%Y-%m-%d %H:%M') }}</small>
+                                </div>
+                                <p class="mb-0">{{ event.details }}</p>
+                                {% if event.notes %}
+                                <p class="text-muted mt-1"><small>{{ event.notes }}</small></p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 40px;
+        margin-bottom: 20px;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #3498db;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 12px;
+        bottom: -20px;
+        width: 2px;
+        background-color: #e9ecef;
+    }
+
+    .timeline-item:last-child::before {
+        display: none;
+    }
+</style>
+
+<script>
+function exportReport() {
+    // Implement PDF export functionality
+    alert('PDF export will be implemented here');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,175 @@
+<!-- app/templates/edit_patient.html -->
+{% extends "base.html" %}
+
+{% block title %}Edit {{ patient.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-gear"></i> Edit Patient Details
+                    </h5>
+                    <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-arrow-left"></i> Back to Patient
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('main.edit_patient', id=patient.id) }}" method="POST">
+                        <div class="row">
+                            <!-- Personal Information Section -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Personal Information</h6>
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Full Name</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="name" 
+                                           name="name" 
+                                           value="{{ patient.name }}" 
+                                           required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="date_of_birth" class="form-label">Date of Birth</label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="date_of_birth" 
+                                           name="date_of_birth" 
+                                           value="{{ patient.date_of_birth.strftime('%Y-%m-%d') }}" 
+                                           required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="contact" class="form-label">Contact Information</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="contact" 
+                                           name="contact" 
+                                           value="{{ patient.contact }}" 
+                                           required>
+                                    <div class="form-text">Phone number or email address</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status" name="status" required>
+                                        <option value="Active" {% if patient.status == 'Active' %}selected{% endif %}>
+                                            Active
+                                        </option>
+                                        <option value="Inactive" {% if patient.status == 'Inactive' %}selected{% endif %}>
+                                            Inactive
+                                        </option>
+                                        <option value="Completed" {% if patient.status == 'Completed' %}selected{% endif %}>
+                                            Treatment Completed
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Medical Information Section -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Medical Information</h6>
+                                <div class="mb-3">
+                                    <label for="diagnosis" class="form-label">Diagnosis</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="diagnosis" 
+                                           name="diagnosis" 
+                                           value="{{ patient.diagnosis }}" 
+                                           required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="treatment_plan" class="form-label">Treatment Plan</label>
+                                    <textarea class="form-control" 
+                                              id="treatment_plan" 
+                                              name="treatment_plan" 
+                                              rows="4">{{ patient.treatment_plan }}</textarea>
+                                    <div class="form-text">Outline the proposed treatment strategy</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">Additional Notes</label>
+                                    <textarea class="form-control" 
+                                              id="notes" 
+                                              name="notes" 
+                                              rows="4">{{ patient.notes }}</textarea>
+                                    <div class="form-text">Any additional information or observations</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <button type="button" 
+                                    class="btn btn-outline-danger" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#confirmCancel">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Cancel Modal -->
+<div class="modal fade" id="confirmCancel" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Cancel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel? Any unsaved changes will be lost.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Continue Editing</button>
+                <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-danger">Yes, Cancel</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // Form validation and handling
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            const requiredFields = form.querySelectorAll('[required]');
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('is-invalid');
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+            }
+        });
+    });
+
+    // Date validation - prevent future dates for date of birth
+    const dateOfBirthInput = document.getElementById('date_of_birth');
+    const today = new Date().toISOString().split('T')[0];
+    dateOfBirthInput.setAttribute('max', today);
+</script>
+{% endblock %}
+{% endblock %}
