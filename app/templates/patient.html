@@ -25,44 +25,20 @@
 
     <div class="row mt-4">
         <!-- Patient Information -->
+        <!-- Replace the Treatment Info section in the New Treatment Modal with this -->
         <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-person"></i> Patient Information
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <dl class="row">
-                        <dt class="col-sm-4">Contact</dt>
-                        <dd class="col-sm-8">{{ patient.contact }}</dd>
-
-                        <dt class="col-sm-4">Status</dt>
-                        <dd class="col-sm-8">
-                            <span class="status-badge status-{{ patient.status|lower }}">
-                                {{ patient.status }}
-                            </span>
-                        </dd>
-                    </dl>
-                </div>
+            <h6 class="mb-3">Basic Information</h6>
+            <div class="mb-3">
+                <label class="form-label">Treatment Description</label>
+                <textarea class="form-control" name="description"></textarea>
             </div>
-
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-clipboard2-pulse"></i> Medical Information
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <h6>Diagnosis</h6>
-                    <p>{{ patient.diagnosis }}</p>
-
-                    <h6 class="mt-3">Treatment Plan</h6>
-                    <p>{{ patient.treatment_plan }}</p>
-
-                    <h6 class="mt-3">Notes</h6>
-                    <p>{{ patient.notes }}</p>
-                </div>
+            <div class="mb-3">
+                <label class="form-label">Progress Notes</label>
+                <textarea class="form-control" name="progress_notes"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Pain Level (1-10)</label>
+                <input type="number" class="form-control" name="pain_level" min="1" max="10">
             </div>
         </div>
 
@@ -83,10 +59,9 @@
                                         <th>Date</th>
                                         <th>Description</th>
                                         <th>Progress Notes</th>
-                                        
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <!-- In the Treatment History table section -->
                                 <tbody>
                                     {% for treatment in patient.treatments|sort(attribute='date', reverse=true) %}
                                     <tr>
@@ -94,9 +69,11 @@
                                         <td>{{ treatment.description }}</td>
                                         <td>{{ treatment.progress_notes }}</td>
                                         <td>
-                                            <button class="btn btn-sm btn-primary view-treatment-btn" 
-                                                    data-treatment-id="{{ treatment.id }}">
+                                            <button type="button" class="btn btn-sm btn-primary view-treatment-btn" data-treatment-id="{{ treatment.id }}">
                                                 <i class="bi bi-eye"></i> View Details
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger delete-treatment-btn" data-treatment-id="{{ treatment.id }}">
+                                                <i class="bi bi-x-lg"></i>
                                             </button>
                                         </td>
                                     </tr>
@@ -113,6 +90,7 @@
     </div>
 </div>
 
+<!-- Remove the duplicate modal and keep only this one -->
 <!-- Treatment Details Modal -->
 <div class="modal fade" id="treatmentDetailsModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
@@ -124,26 +102,19 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h6 class="mb-0">Basic Information</h6>
-                            </div>
-                            <div class="card-body">
-                                <dl class="row">
-                                    <dt class="col-sm-4">Date</dt>
-                                    <dd class="col-sm-8" id="treatment-date"></dd>
-                                    
-                                    <dt class="col-sm-4">Description</dt>
-                                    <dd class="col-sm-8" id="treatment-description"></dd>
-                                    
-                                    <dt class="col-sm-4">Progress Notes</dt>
-                                    <dd class="col-sm-8" id="treatment-progress-notes"></dd>
-                                    
-                                    <dt class="col-sm-4">Pain Level</dt>
-                                    <dd class="col-sm-8" id="treatment-pain-level"></dd>
-                                </dl>
-                            </div>
-                        </div>
+                        <dl class="row">
+                            <dt class="col-sm-4">Date</dt>
+                            <dd class="col-sm-8" id="treatment-date"></dd>
+                            
+                            <dt class="col-sm-4">Description</dt>
+                            <dd class="col-sm-8" id="treatment-description"></dd>
+                            
+                            <dt class="col-sm-4">Progress Notes</dt>
+                            <dd class="col-sm-8" id="treatment-progress-notes"></dd>
+                            
+                            <dt class="col-sm-4">Pain Level</dt>
+                            <dd class="col-sm-8" id="treatment-pain-level"></dd>
+                        </dl>
 
                         <div class="card">
                             <div class="card-header">
@@ -235,10 +206,7 @@
                                 <label class="form-label">Pain Level (1-10)</label>
                                 <input type="number" class="form-control" name="pain_level" min="1" max="10">
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Next Appointment</label>
-                                <input type="date" class="form-control" name="next_appointment" required>
-                            </div>
+                            
                         </div>
 
                         <div class="col-md-4">
@@ -365,489 +333,294 @@
 </style>
 
 <script>
-    const treatmentModule = {
-        pointsData: [],
-        selectedPointType: 'active'
-    };
-
-    // Add this to your existing script section
     function viewTreatmentDetails(treatmentId) {
-        // Prevent event bubbling
-        event.stopPropagation();
+        const modal = new bootstrap.Modal(document.getElementById('treatmentDetailsModal'));
+        modal.show();
         
-        // Make an AJAX call to get treatment details
         fetch(`/api/treatment/${treatmentId}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(treatment => {
                 // Fill in basic information
-                document.getElementById('treatment-date').textContent = new Date(treatment.date).toLocaleDateString();
-                document.getElementById('treatment-description').textContent = treatment.description;
-                document.getElementById('treatment-progress-notes').textContent = treatment.progress_notes;
-                document.getElementById('treatment-pain-level').textContent = treatment.pain_level;
+                document.getElementById('treatment-date').textContent = 
+                    new Date(treatment.date).toLocaleDateString();
+                document.getElementById('treatment-description').textContent = 
+                    treatment.description || 'N/A';
+                document.getElementById('treatment-progress-notes').textContent = 
+                    treatment.progress_notes || 'N/A';
+                document.getElementById('treatment-pain-level').textContent = 
+                    treatment.pain_level || 'N/A';
                 
                 // Fill in evaluation details
-                document.getElementById('treatment-pain-chars').textContent = treatment.pain_chars?.join(', ') || 'None';
-                document.getElementById('treatment-movement').textContent = treatment.movement_restriction || 'None';
+                const evalData = treatment.evaluation_data || {};
+                document.getElementById('treatment-pain-chars').textContent = 
+                    evalData.pain_characteristics?.join(', ') || 'None';
+                document.getElementById('treatment-movement').textContent = 
+                    treatment.movement_restriction || 'None';
                 
-                // Clear existing trigger points
+                // Clear and update trigger points on the body chart
                 const viewTriggerPoints = document.getElementById('viewTriggerPoints');
                 viewTriggerPoints.innerHTML = '';
                 
                 // Add trigger points to the body chart
-                treatment.trigger_points.forEach(point => {
+                treatment.trigger_points?.forEach(point => {
                     const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                     circle.setAttribute("cx", point.x);
                     circle.setAttribute("cy", point.y);
                     circle.setAttribute("r", "4");
-                    circle.classList.add('trigger-point', point.type);
+                    circle.setAttribute("class", `trigger-point ${point.type}`);
                     viewTriggerPoints.appendChild(circle);
                 });
                 
                 // Update trigger points table
                 const tbody = document.getElementById('viewPointsTableBody');
                 tbody.innerHTML = '';
-                treatment.trigger_points.forEach(point => {
+                treatment.trigger_points?.forEach(point => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td><span class="badge bg-${point.type === 'active' ? 'danger' : point.type === 'latent' ? 'warning' : 'info'}">${point.type}</span></td>
-                        <td>${point.muscle || ''}</td>
-                        <td>${point.intensity || ''}</td>
-                        <td>${point.symptoms || ''}</td>
-                        <td>${point.referral || ''}</td>
+                        <td>${point.muscle || 'N/A'}</td>
+                        <td>${point.intensity || 'N/A'}</td>
+                        <td>${point.symptoms || 'N/A'}</td>
+                        <td>${point.referral || 'N/A'}</td>
                     `;
                     tbody.appendChild(row);
                 });
-                
-                // Show the modal
-                const modal = new bootstrap.Modal(document.getElementById('treatmentDetailsModal'));
-                modal.show();
             })
             .catch(error => {
                 console.error('Error fetching treatment details:', error);
-                alert('Error loading treatment details');
+                alert('Error loading treatment details. Please try again.');
             });
     }
 
-    function getSVGPoint(evt, svg) {
-        const CTM = svg.getScreenCTM();
-        if (CTM) {
-            const point = svg.createSVGPoint();
-            point.x = evt.clientX;
-            point.y = evt.clientY;
-            return point.matrixTransform(CTM.inverse());
-        }
-        return null;
-    }
-
-    function isPointInRegion(x, y, region) {
-        return x >= region.x1 && x <= region.x2 && 
-               y >= region.y1 && y <= region.y2;
-    }
-
-    function showTriggerPointSuggestions(regions) {
-        console.log('Matching regions:', regions);
-    }
-
-    function findPossibleTriggerPoints(x, y) {
-        console.log('Finding trigger points for coordinates:', x, y);
-        
-        const anatomicalRegions = [
-            // NECK REGIONS
-            {
-                name: "Front Neck",
-                region: { x1: 236, y1: 109, x2: 260, y2: 140 },
-                triggerPoints: [
-                    { 
-                        muscle: "Sternocleidomastoid (SCM) - Upper",
-                        description: "Upper third of muscle near mastoid process",
-                        symptoms: "Frontal headaches, eye pain, eye tearing, dizziness, nausea, balance problems"
-                    },
-                    {
-                        muscle: "Sternocleidomastoid (SCM) - Middle",
-                        description: "Mid-portion of muscle",
-                        symptoms: "Face pain, sinus congestion, ear pain, hearing issues"
-                    },
-                    {
-                        muscle: "Sternocleidomastoid (SCM) - Lower",
-                        description: "Near clavicular and sternal attachments",
-                        symptoms: "Throat pain, swallowing difficulty, autonomic symptoms"
-                    },
-                    {
-                        muscle: "Scalenes - Anterior",
-                        description: "Side of neck, behind SCM",
-                        symptoms: "Arm pain, numbness in fingers, thoracic outlet symptoms"
-                    },
-                    {
-                        muscle: "Scalenes - Middle",
-                        description: "Side of neck, between anterior and posterior scalenes",
-                        symptoms: "Chest pain, arm pain, hand weakness"
-                    },
-                    {
-                        muscle: "Hyoid Muscles",
-                        description: "Under chin, throat area",
-                        symptoms: "Swallowing difficulty, throat pain, tongue pain"
-                    }
-                ]
-            },
-            {
-                name: "Back Neck",
-                region: { x1: 536, y1: 109, x2: 555, y2: 145 },
-                triggerPoints: [
-                    {
-                        muscle: "Suboccipitals",
-                        description: "Base of skull muscles",
-                        symptoms: "Occipital headaches, eye pain, vertigo"
-                    },
-                    {
-                        muscle: "Upper Trapezius - Neck",
-                        description: "Top of shoulder into neck",
-                        symptoms: "Severe neck pain, headaches, dizziness"
-                    },
-                    {
-                        muscle: "Semispinalis Capitis",
-                        description: "Back of neck, deep layer",
-                        symptoms: "Neck pain, headaches, limited rotation"
-                    },
-                    {
-                        muscle: "Splenius Capitis",
-                        description: "Back of neck, superficial layer",
-                        symptoms: "Neck pain, headaches, limited side bending"
-                    },
-                    {
-                        muscle: "Levator Scapulae - Upper",
-                        description: "Back of neck into shoulder blade",
-                        symptoms: "Sharp neck pain, limited rotation, shoulder blade pain"
-                    }
-                ]
-            },
-
-            // SHOULDER REGIONS
-            {
-                name: "Front Shoulder",
-                region: { x1: 185, y1: 140, x2: 236, y2: 180 },
-                triggerPoints: [
-                    {
-                        muscle: "Anterior Deltoid",
-                        description: "Front of shoulder",
-                        symptoms: "Shoulder pain, restricted forward movement"
-                    },
-                    {
-                        muscle: "Upper Pectoralis Major",
-                        description: "Upper chest near shoulder",
-                        symptoms: "Chest pain, anterior shoulder pain, restricted movement"
-                    },
-                    {
-                        muscle: "Coracobrachialis",
-                        description: "Deep front of shoulder",
-                        symptoms: "Deep shoulder pain, arm pain"
-                    },
-                    {
-                        muscle: "Biceps - Long Head",
-                        description: "Front of shoulder, upper arm",
-                        symptoms: "Deep shoulder pain, biceps tendon pain"
-                    },
-                    {
-                        muscle: "Subscapularis",
-                        description: "Deep under shoulder blade",
-                        symptoms: "Deep shoulder pain, restricted internal rotation"
-                    }
-                ]
-            },
-            {
-                name: "Back Shoulder",
-                region: { x1: 482, y1: 145, x2: 536, y2: 180 },
-                triggerPoints: [
-                    {
-                        muscle: "Supraspinatus",
-                        description: "Top of shoulder blade",
-                        symptoms: "Sharp shoulder pain, painful arc, weakness raising arm"
-                    },
-                    {
-                        muscle: "Infraspinatus - Upper",
-                        description: "Upper portion below spine of scapula",
-                        symptoms: "Deep shoulder pain, restricted external rotation"
-                    },
-                    {
-                        muscle: "Infraspinatus - Lower",
-                        description: "Lower portion of shoulder blade",
-                        symptoms: "Shoulder pain, arm pain, weakness"
-                    },
-                    {
-                        muscle: "Teres Minor",
-                        description: "Outer border of shoulder blade",
-                        symptoms: "Posterior shoulder pain, restricted rotation"
-                    },
-                    {
-                        muscle: "Teres Major",
-                        description: "Lower outer border of shoulder blade",
-                        symptoms: "Back of shoulder pain, restricted internal rotation"
-                    },
-                    {
-                        muscle: "Posterior Deltoid",
-                        description: "Back of shoulder",
-                        symptoms: "Shoulder pain, restricted backward movement"
-                    }
-                ]
+    function deleteTreatment(treatmentId) {
+        fetch(`/api/treatment/${treatmentId}`, {
+            method: 'DELETE',
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
             }
-        ];
-
-        const matchingRegions = anatomicalRegions.filter(region => 
-            isPointInRegion(x, y, region.region)
-        );
-
-        if (matchingRegions.length > 0) {
-            showTriggerPointSuggestions(matchingRegions);
-        }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Remove the row from the table
+                const row = document.querySelector(`button[data-treatment-id="${treatmentId}"]`).closest('tr');
+                row.remove();
+                alert('Treatment record deleted successfully.');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting treatment:', error);
+            alert('Error deleting treatment. Please try again.');
+        });
     }
-    
 
-    
     document.addEventListener('DOMContentLoaded', function() {
-        const bodyMap = document.querySelector('.body-map');
-        bodyMap.addEventListener('click', function(evt) {
-            evt.preventDefault();
-            const svgPoint = getSVGPoint(evt, bodyMap);
-            if (svgPoint) {
-                addTriggerPoint(svgPoint.x, svgPoint.y, treatmentModule.selectedPointType);
-            }
-        });
-
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.view-treatment-btn')) {
-                const button = e.target.closest('.view-treatment-btn');
-                const treatmentId = button.dataset.treatmentId;
-                viewTreatmentDetails(treatmentId);
-            }
-        });
-
-        document.querySelectorAll('[data-point-type]').forEach(button => {
+        // Add view treatment button event listeners
+        document.querySelectorAll('.view-treatment-btn').forEach(button => {
             button.addEventListener('click', function() {
-                document.querySelectorAll('[data-point-type]').forEach(btn => 
-                    btn.classList.remove('active')
-                );
-                this.classList.add('active');
-                treatmentModule.selectedPointType = this.dataset.pointType;
+                const treatmentId = this.getAttribute('data-treatment-id');
+                viewTreatmentDetails(treatmentId);
             });
         });
 
-        document.getElementById('treatmentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            try {
-                // Get form values
-                const description = this.querySelector('[name="description"]').value;
-                const progressNotes = this.querySelector('[name="progress_notes"]').value || '';
-                const painLevel = this.querySelector('[name="pain_level"]').value;
-                
-                // Set next appointment to today + 1 week (or you can add a date picker to your form)
-                const nextAppointment = new Date();
-                nextAppointment.setDate(nextAppointment.getDate() + 7);
-                const nextAppointmentStr = nextAppointment.toISOString().split('T')[0];
-
-                // Validation
-                if (!description) {
-                    alert('Please enter a treatment description');
-                    return;
+        // Add delete button event listeners
+        document.querySelectorAll('.delete-treatment-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this treatment record? This cannot be undone.')) {
+                    const treatmentId = this.getAttribute('data-treatment-id');
+                    deleteTreatment(treatmentId);
                 }
-
-                if (!painLevel) {
-                    alert('Please enter a pain level');
-                    return;
-                }
-
-                if (treatmentModule.pointsData.length === 0) {
-                    alert('Please add at least one trigger point');
-                    return;
-                }
-
-                // Create FormData object
-                const formData = new FormData(this);
-                formData.append('next_appointment', nextAppointmentStr);
-                formData.append('trigger_points', JSON.stringify(treatmentModule.pointsData));
-
-                // Log data being sent
-                console.log('Submitting treatment data:', {
-                    description,
-                    progressNotes,
-                    painLevel,
-                    nextAppointment: nextAppointmentStr,
-                    triggerPoints: treatmentModule.pointsData
-                });
-
-                // Submit form
-                this.submit();
-
-            } catch (error) {
-                console.error('Error preparing treatment data:', error);
-                console.error('Error stack:', error.stack);
-                alert('Error preparing treatment data: ' + error.message);
-            }
-        });
-            e.preventDefault();
-
-            try {
-                const description = this.querySelector('[name="description"]').value;
-                const progressNotes = this.querySelector('[name="progress_notes"]').value || '';
-                const painLevel = this.querySelector('[name="pain_level"]').value;
-
-                console.log('Form values:', {
-                    description,
-                    progressNotes,
-                    painLevel,
-                    triggerPoints: treatmentModule.pointsData
-                });
-
-                if (!description) {
-                    alert('Please enter a treatment description');
-                    return;
-                }
-
-                if (!painLevel) {
-                    alert('Please enter a pain level');
-                    return;
-                }
-
-                if (treatmentModule.pointsData.length === 0) {
-                    alert('Please add at least one trigger point');
-                    return;
-                }
-
-                const treatmentData = {
-                    description: description,
-                    progress_notes: progressNotes,
-                    pain_level: parseInt(painLevel),
-                    date: new Date().toISOString().split('T')[0],
-                    trigger_points: treatmentModule.pointsData.map(point => ({
-                        x: Math.round(point.x),
-                        y: Math.round(point.y),
-                        type: point.type,
-                        muscle: point.muscle || '',
-                        intensity: parseInt(point.intensity) || 5,
-                        symptoms: point.symptoms || '',
-                        referral: point.referral || ''
-                    }))
-                };
-
-                document.getElementById('triggerPointsData').value = JSON.stringify(treatmentData.trigger_points);
-                console.log('Submitting treatment data:', treatmentData);
-
-                this.submit();
-
-            } catch (error) {
-                console.error('Error preparing treatment data:', error);
-                alert('Error preparing treatment data: ' + error.message);
-            }
+            });
         });
 
-        function addTriggerPoint(x, y, type) {
-            const pointId = Date.now();
-            const point = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            point.setAttribute("cx", x);
-            point.setAttribute("cy", y);
-            point.setAttribute("r", "4");
-            point.classList.add('trigger-point', type);
-            point.setAttribute("data-id", pointId);
-            
-            document.getElementById('triggerPoints').appendChild(point);
+        // Global variables for tracking trigger points
+        let currentPointType = 'active';
+        const triggerPoints = [];
+        let pointIdCounter = 0;
 
+        // Point type button handling
+        const pointTypeButtons = document.querySelectorAll('[data-point-type]');
+        pointTypeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                pointTypeButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                currentPointType = this.dataset.pointType;
+            });
+        });
+
+        // Remove required attribute from next appointment input when the modal loads
+        const nextAppointmentInput = document.querySelector('input[name="next_appointment"]');
+        if (nextAppointmentInput) {
+            nextAppointmentInput.removeAttribute('required');
+        }
+
+        // Remove required attribute from description textarea
+        const descriptionTextarea = document.querySelector('textarea[name="description"]');
+        if (descriptionTextarea) {
+            descriptionTextarea.removeAttribute('required');
+        }
+
+        function getPointColor(type) {
+            const colors = {
+                'active': '#dc3545',
+                'latent': '#ffc107',
+                'satellite': '#17a2b8'
+            };
+            return colors[type] || '#dc3545';
+        }
+
+        function createTableRow(point) {
+            const row = document.createElement('tr');
+            row.dataset.pointId = point.id;
+            row.innerHTML = `
+                <td>
+                    <span class="badge bg-${point.type === 'active' ? 'danger' : point.type === 'latent' ? 'warning' : 'info'}">
+                        ${point.type}
+                    </span>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm muscle-select" onchange="updatePointData('${point.id}', 'muscle', this.value)">
+                        <option value="">Select muscle</option>
+                        <option value="Trapezius">Trapezius</option>
+                        <option value="Levator Scapulae">Levator Scapulae</option>
+                        <option value="Rhomboids">Rhomboids</option>
+                        <option value="Deltoid">Deltoid</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" min="1" max="10" 
+                           onchange="updatePointData('${point.id}', 'intensity', this.value)" value="${point.intensity || ''}"
+                           placeholder="1-10">
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm" 
+                           onchange="updatePointData('${point.id}', 'symptoms', this.value)" value="${point.symptoms || ''}"
+                           placeholder="Symptoms">
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm" 
+                           onchange="updatePointData('${point.id}', 'referral', this.value)" value="${point.referral || ''}"
+                           placeholder="Referral pattern">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removePoint('${point.id}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            return row;
+        }
+    
+        // Add point to both SVG and table
+        function addPoint(x, y, type = currentPointType) {
+            const pointId = `point-${pointIdCounter++}`;
             const pointData = {
                 id: pointId,
-                x: x,
-                y: y,
+                x: Math.round(x),
+                y: Math.round(y),
                 type: type,
+                intensity: '',
                 muscle: '',
-                intensity: 5,
                 symptoms: '',
                 referral: ''
             };
-            treatmentModule.pointsData.push(pointData);
-            updatePointsList();
-            findPossibleTriggerPoints(x, y);
-        }
-
-        function updatePointsList() {
+    
+            // Create SVG point
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", x);
+            circle.setAttribute("cy", y);
+            circle.setAttribute("r", "4");
+            circle.setAttribute("fill", getPointColor(type));
+            circle.setAttribute("class", "trigger-point");
+            circle.setAttribute("data-point-id", pointId);
+            
+            circle.addEventListener('mouseover', () => circle.setAttribute("r", "6"));
+            circle.addEventListener('mouseout', () => circle.setAttribute("r", "4"));
+            
+            const pointsGroup = document.getElementById('triggerPoints');
+            pointsGroup.appendChild(circle);
+    
             const tbody = document.getElementById('pointsTableBody');
-            tbody.innerHTML = '';
-
-            treatmentModule.pointsData.forEach(point => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><span class="badge bg-${point.type === 'active' ? 'danger' : point.type === 'latent' ? 'warning' : 'info'}">${point.type}</span></td>
-                    <td>
-                        <select class="form-select form-select-sm" onchange="updatePointMuscle(${point.id}, this.value)">
-                            <option value="">Select muscle</option>
-                            <!-- Options for muscles -->
-                        </select>
-                    </td>
-                    <td>
-                        <input type="number" class="form-control form-control-sm" min="1" max="10" 
-                            value="${point.intensity}" onchange="updatePointIntensity(${point.id}, this.value)">
-                    </td>
-                    <td>
-                        <input type="text" class="form-control form-control-sm" 
-                            value="${point.symptoms}" onchange="updatePointSymptoms(${point.id}, this.value)">
-                    </td>
-                    <td>
-                        <input type="text" class="form-control form-control-sm" 
-                            value="${point.referral}" onchange="updatePointReferral(${point.id}, this.value)">
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-danger" onclick="removePoint(${point.id})">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-
-            document.getElementById('triggerPointsData').value = JSON.stringify(treatmentModule.pointsData);
+            tbody.appendChild(createTableRow(pointData));
+    
+            triggerPoints.push(pointData);
+            updateFormData();
         }
-
-        window.removePoint = function(id) {
-            const index = treatmentModule.pointsData.findIndex(p => p.id === id);
+    
+        window.updatePointData = function(pointId, field, value) {
+            const point = triggerPoints.find(p => p.id === pointId);
+            if (point) {
+                point[field] = value;
+                updateFormData();
+            }
+        };
+    
+        window.removePoint = function(pointId) {
+            const index = triggerPoints.findIndex(p => p.id === pointId);
             if (index > -1) {
-                treatmentModule.pointsData.splice(index, 1);
-                updatePointsList();
-                document.querySelector(`circle[data-id="${id}"]`).remove();
+                triggerPoints.splice(index, 1);
+                document.querySelector(`circle[data-point-id="${pointId}"]`)?.remove();
+                document.querySelector(`tr[data-point-id="${pointId}"]`)?.remove();
+                updateFormData();
             }
         };
-
-        window.updatePointMuscle = function(id, muscle) {
-            const point = treatmentModule.pointsData.find(p => p.id === id);
-            if (point) {
-                point.muscle = muscle;
-                updatePointsList();
-            }
-        };
-
-        window.updatePointIntensity = function(id, intensity) {
-            const point = treatmentModule.pointsData.find(p => p.id === id);
-            if (point) {
-                point.intensity = parseInt(intensity, 10);
-                updatePointsList();
-            }
-        };
-
-        window.updatePointSymptoms = function(id, symptoms) {
-            const point = treatmentModule.pointsData.find(p => p.id === id);
-            if (point) {
-                point.symptoms = symptoms;
-                updatePointsList();
-            }
-        };
-
-        window.updatePointReferral = function(id, referral) {
-            const point = treatmentModule.pointsData.find(p => p.id === id);
-            if (point) {
-                point.referral = referral;
-                updatePointsList();
-            }
-        };
-</script>
-
-
     
+        function updateFormData() {
+            const dataInput = document.getElementById('triggerPointsData');
+            dataInput.value = JSON.stringify(triggerPoints);
+        }
     
+        // Setup SVG click handler
+        const newTreatmentSvg = document.querySelector('#newTreatmentModal .body-map');
+        if (newTreatmentSvg) {
+            newTreatmentSvg.addEventListener('click', function(evt) {
+                evt.preventDefault();
+                const rect = this.getBoundingClientRect();
+                const scale = this.viewBox.baseVal.width / rect.width;
+                
+                const x = (evt.clientX - rect.left) * scale;
+                const y = (evt.clientY - rect.top) * scale;
+                
+                addPoint(x, y);
+            });
+        }
     
+        // Form submission handler - no validation
+        const treatmentForm = document.getElementById('treatmentForm');
+        treatmentForm.addEventListener('submit', function(e) {
+            // No validation needed - all fields are optional
+            if (triggerPoints.length === 0) {
+                e.preventDefault();
+                alert('Please add at least one trigger point.');
+                return;
+            }
+        });
     
+        // Reset modal when closed
+        const newTreatmentModal = document.getElementById('newTreatmentModal');
+        newTreatmentModal.addEventListener('hidden.bs.modal', function() {
+            triggerPoints.length = 0;
+            document.getElementById('triggerPoints').innerHTML = '';
+            document.getElementById('pointsTableBody').innerHTML = '';
+            document.getElementById('triggerPointsData').value = '';
+            
+            treatmentForm.reset();
+    
+            pointTypeButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.pointType === 'active') {
+                    btn.classList.add('active');
+                    currentPointType = 'active';
+                }
+            });
+        });
+    });
+    </script>
 {% endblock %}

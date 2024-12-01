@@ -68,6 +68,32 @@ def get_treatment_details(id):
         'trigger_points': trigger_points,
         'next_appointment': treatment.next_appointment.isoformat() if treatment.next_appointment else None
     })
+
+# In your routes.py file
+from flask import jsonify
+from sqlalchemy import exc
+
+@main.route('/api/treatment/<int:id>', methods=['DELETE'])
+def delete_treatment(id):
+    try:
+        treatment = Treatment.query.get_or_404(id)
+        
+        # First delete associated trigger points
+        TriggerPoint.query.filter_by(treatment_id=id).delete()
+        
+        # Then delete the treatment
+        db.session.delete(treatment)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Treatment deleted successfully'})
+    except exc.SQLAlchemyError as e:
+        db.session.rollback()
+        print(f"Database error: {str(e)}")  # For debugging
+        return jsonify({'success': False, 'message': 'Database error occurred'}), 500
+    except Exception as e:
+        db.session.rollback()
+        print(f"General error: {str(e)}")  # For debugging
+        return jsonify({'success': False, 'message': 'An error occurred'}), 500
 @main.route('/patient/<int:id>/edit', methods=['GET', 'POST'])
 def edit_patient(id):
     patient = Patient.query.get_or_404(id)
@@ -122,11 +148,16 @@ def patient_detail(id):
 def new_treatment(patient_id):
     patient = Patient.query.get_or_404(patient_id)
     try:
+        # Get next_appointment if it exists, otherwise set to None
+        next_appointment = None
+        if request.form.get('next_appointment'):
+            next_appointment = datetime.strptime(request.form['next_appointment'], '%Y-%m-%d')
+
         treatment = Treatment(
             patient_id=patient_id,
             description=request.form['description'],
             progress_notes=request.form['progress_notes'],
-            next_appointment=datetime.strptime(request.form['next_appointment'], '%Y-%m-%d'),
+            next_appointment=next_appointment,  # Now can be None
             pain_level=request.form.get('pain_level', type=int),
             movement_restriction=request.form.get('movement_restriction'),
             evaluation_data={
@@ -134,8 +165,10 @@ def new_treatment(patient_id):
                 'muscle_symptoms': {k: v for k, v in request.form.items() if k.startswith('muscle_symptoms')}
             }
         )
+        
+        # Rest of the function remains the same
         db.session.add(treatment)
-        db.session.flush()  # Get treatment ID before adding trigger points
+        db.session.flush()
 
         trigger_points_data = json.loads(request.form.get('trigger_points', '[]'))
         for point_data in trigger_points_data:
@@ -156,10 +189,9 @@ def new_treatment(patient_id):
     except Exception as e:
         db.session.rollback()
         flash('Error recording treatment. Please try again.', 'danger')
-        print(f"Error in new_treatment: {e}")  # For debugging
+        print(f"Error in new_treatment: {e}")
 
     return redirect(url_for('main.patient_detail', id=patient_id))
-
 @main.route('/appointments')
 def appointments():
     start_date = request.args.get('start_date',
