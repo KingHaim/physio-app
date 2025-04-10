@@ -6,6 +6,7 @@ from app import db
 from sqlalchemy.sql import func, or_
 import os
 import json
+from flask_login import login_required, current_user
 
 api = Blueprint('api', __name__)
 
@@ -295,19 +296,29 @@ def create_patient_from_booking():
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})
 
-@api.route('/api/treatment/<int:id>', methods=['GET'])
-def get_treatment(id):
-    treatment = Treatment.query.get_or_404(id)
-    return jsonify({
+@api.route('/treatments/<int:treatment_id>')
+@login_required
+def get_treatment(treatment_id):
+    treatment = Treatment.query.get_or_404(treatment_id)
+    
+    # Check if user has permission to view this treatment
+    if not current_user.is_admin and treatment.patient.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    treatment_data = {
         'id': treatment.id,
-        'date': treatment.date.strftime('%Y-%m-%d'),
-        'description': treatment.description,
-        'progress_notes': treatment.progress_notes,
+        'patient_id': treatment.patient_id,
+        'treatment_type': treatment.treatment_type,
+        'assessment': treatment.assessment,
+        'notes': treatment.notes,
         'status': treatment.status,
-        'next_appointment': treatment.next_appointment.strftime('%Y-%m-%d') if treatment.next_appointment else None,
-        'pain_level': treatment.pain_level,
-        'movement_restriction': treatment.movement_restriction
-    })
+        'provider': treatment.provider,
+        'created_at': treatment.created_at.isoformat() if treatment.created_at else None,
+        'updated_at': treatment.updated_at.isoformat() if treatment.updated_at else None,
+        'body_chart_url': treatment.body_chart_url if hasattr(treatment, 'body_chart_url') else None
+    }
+    
+    return jsonify(treatment_data)
 
 @api.route('/api/appointment/<int:id>/status', methods=['POST'])
 def update_appointment_status(id):
@@ -763,3 +774,28 @@ def bulk_update_patient_status():
             'success': False,
             'error': str(e)
         })
+
+@api.route('/api/treatments', methods=['POST'])
+@login_required
+def create_treatment():
+    data = request.json
+    
+    # Get required fields
+    patient_id = data.get('patient_id')
+    treatment_type = data.get('treatment_type')
+    
+    # Get optional fields
+    pain_level = data.get('pain_level')  # This can be None
+    
+    # Create treatment
+    treatment = Treatment(
+        patient_id=patient_id,
+        treatment_type=treatment_type,
+        pain_level=pain_level,  # This can be None
+        # Other fields...
+    )
+    
+    db.session.add(treatment)
+    db.session.commit()
+    
+    return jsonify({'success': True, 'id': treatment.id})

@@ -199,54 +199,45 @@ def patient_detail(id):
     
     return render_template('patient_detail.html', patient=patient, today=today)
 
-@main.route('/treatment/new/<int:patient_id>', methods=['POST'])
-def new_treatment(patient_id):
-    patient = Patient.query.get_or_404(patient_id)
-    try:
-        # Get next_appointment if it exists, otherwise set to None
-        next_appointment = None
-        if request.form.get('next_appointment'):
-            next_appointment = datetime.strptime(request.form['next_appointment'], '%Y-%m-%d')
+@main.route('/patient/<int:patient_id>/treatment', methods=['POST'])
+@login_required
+def add_treatment(patient_id):
+    # Get form data
+    treatment_type = request.form.get('treatment_type')
+    assessment = request.form.get('assessment')
+    notes = request.form.get('notes')
+    status = request.form.get('status')
+    provider = request.form.get('provider')
+    
+    # Get optional fields
+    pain_level = request.form.get('pain_level')
+    if pain_level:  # Only convert to int if a value was provided
+        pain_level = int(pain_level)
+    else:
+        pain_level = None  # Set to None if not provided
+    
+    movement_restriction = request.form.get('movement_restriction')
+    body_chart_url = request.form.get('body_chart_url')
+    
+    # Create new treatment
+    treatment = Treatment(
+        patient_id=patient_id,
+        treatment_type=treatment_type,
+        assessment=assessment,
+        notes=notes,
+        status=status,
+        provider=provider,
+        pain_level=pain_level,  # This can be None
+        movement_restriction=movement_restriction,
+        body_chart_url=body_chart_url
+    )
+    
+    db.session.add(treatment)
+    db.session.commit()
+    
+    flash('Treatment added successfully', 'success')
+    return redirect(url_for('main.patient_detail', patient_id=patient_id))
 
-        treatment = Treatment(
-            patient_id=patient_id,
-            description=request.form['description'],
-            progress_notes=request.form['progress_notes'],
-            next_appointment=next_appointment,  # Now can be None
-            pain_level=request.form.get('pain_level', type=int),
-            movement_restriction=request.form.get('movement_restriction'),
-            evaluation_data={
-                'pain_characteristics': request.form.getlist('pain_chars[]'),
-                'muscle_symptoms': {k: v for k, v in request.form.items() if k.startswith('muscle_symptoms')}
-            }
-        )
-        
-        # Rest of the function remains the same
-        db.session.add(treatment)
-        db.session.flush()
-
-        trigger_points_data = json.loads(request.form.get('trigger_points', '[]'))
-        for point_data in trigger_points_data:
-            trigger_point = TriggerPoint(
-                treatment_id=treatment.id,
-                location_x=point_data['x'],
-                location_y=point_data['y'],
-                type=point_data['type'],
-                muscle=point_data['muscle'],
-                intensity=point_data.get('intensity', 5),
-                symptoms=point_data.get('symptoms', ''),
-                referral_pattern=point_data.get('referral', '')
-            )
-            db.session.add(trigger_point)
-
-        db.session.commit()
-        flash('Treatment recorded successfully!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash('Error recording treatment. Please try again.', 'danger')
-        print(f"Error in new_treatment: {e}")
-
-    return redirect(url_for('main.patient_detail', id=patient_id))
 @main.route('/appointments')
 def appointments():
     start_date = request.args.get('start_date',

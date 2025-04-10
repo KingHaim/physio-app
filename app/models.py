@@ -21,12 +21,14 @@ class Patient(db.Model):
 class Treatment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
-    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    description = db.Column(db.Text, nullable=False)
-    progress_notes = db.Column(db.Text)
-    next_appointment = db.Column(db.DateTime)
-    status = db.Column(db.String(20), default='Scheduled')
+    treatment_type = db.Column(db.String(100), nullable=False)
+    assessment = db.Column(db.Text)
+    notes = db.Column(db.Text)
+    status = db.Column(db.String(50), default='Scheduled')
+    provider = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    body_chart_url = db.Column(db.String(255))
     
     # New fields
     pain_level = db.Column(db.Integer)

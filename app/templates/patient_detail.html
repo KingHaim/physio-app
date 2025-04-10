@@ -258,6 +258,136 @@
 <!-- New Treatment Modal -->
 <div class="modal fade" id="newTreatmentModal" tabindex="-1" aria-labelledby="newTreatmentModalLabel" aria-hidden="true">
     <!-- Modal content here -->
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newTreatmentModalLabel">Add Treatment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="treatmentForm">
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="description" name="description" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="datetime-local" class="form-control" id="date" name="date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pain_level" class="form-label">Pain Level (0-10)</label>
+                        <input type="number" class="form-control" id="pain_level" name="pain_level" min="0" max="10">
+                        <small class="text-muted">Optional: Leave blank if not applicable</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="movement_restriction" class="form-label">Movement Restriction</label>
+                        <textarea class="form-control" id="movement_restriction" name="movement_restriction" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="progress_notes" class="form-label">Progress Notes</label>
+                        <textarea class="form-control" id="progress_notes" name="progress_notes" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="" disabled selected>Select status</option>
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="treatment_type" class="form-label">Treatment Type</label>
+                        <input type="text" class="form-control" id="treatment_type" name="treatment_type">
+                    </div>
+                    <div class="mb-3">
+                        <label for="provider" class="form-label">Provider</label>
+                        <input type="text" class="form-control" id="provider" name="provider">
+                    </div>
+                    <div class="mb-3">
+                        <label for="assessment" class="form-label">Assessment</label>
+                        <textarea class="form-control" id="assessment" name="assessment" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="body_chart_url" class="form-label">Body Chart URL</label>
+                        <input type="text" class="form-control" id="body_chart_url" name="body_chart_url">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Treatment</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Find the treatment view modal in patient_detail.html and add this code -->
+<div class="modal fade" id="treatmentViewModal" tabindex="-1" aria-labelledby="treatmentViewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="treatmentViewModalLabel">Treatment Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Treatment details -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <h6>Treatment Information</h6>
+            <table class="table table-sm">
+              <tr>
+                <th>Date:</th>
+                <td id="view-treatment-date"></td>
+              </tr>
+              <tr>
+                <th>Type:</th>
+                <td id="view-treatment-type"></td>
+              </tr>
+              <tr>
+                <th>Status:</th>
+                <td id="view-treatment-status"></td>
+              </tr>
+              <tr>
+                <th>Provider:</th>
+                <td id="view-treatment-provider"></td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <h6>Assessment</h6>
+            <p id="view-treatment-assessment" class="border p-2 rounded bg-light" style="min-height: 100px;"></p>
+          </div>
+        </div>
+        
+        <!-- Body Chart Section - Add this new section -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6>Body Chart</h6>
+            <div class="text-center">
+              <img id="view-body-chart" src="" alt="Body Chart" class="img-fluid border rounded" style="max-height: 400px;">
+              <p class="text-muted small mt-2" id="no-body-chart-message">No body chart available for this treatment.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-12">
+            <h6>Notes</h6>
+            <p id="view-treatment-notes" class="border p-2 rounded bg-light" style="min-height: 100px;"></p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -436,5 +566,60 @@
             });
         }
     });
+
+    // Find your existing viewTreatment function and modify it
+    function viewTreatment(treatmentId) {
+        fetch(`/api/treatments/${treatmentId}`)
+            .then(response => response.json())
+            .then(data => {
+                // Populate existing fields
+                document.getElementById('view-treatment-date').textContent = new Date(data.created_at).toLocaleString();
+                document.getElementById('view-treatment-type').textContent = data.treatment_type;
+                document.getElementById('view-treatment-status').textContent = data.status;
+                document.getElementById('view-treatment-provider').textContent = data.provider || 'Not specified';
+                document.getElementById('view-treatment-assessment').textContent = data.assessment || 'No assessment provided';
+                document.getElementById('view-treatment-notes').textContent = data.notes || 'No notes provided';
+                
+                // Handle body chart
+                const bodyChartImg = document.getElementById('view-body-chart');
+                const noChartMessage = document.getElementById('no-body-chart-message');
+                
+                if (data.body_chart_url) {
+                    bodyChartImg.src = data.body_chart_url;
+                    bodyChartImg.style.display = 'inline-block';
+                    noChartMessage.style.display = 'none';
+                } else {
+                    bodyChartImg.style.display = 'none';
+                    noChartMessage.style.display = 'block';
+                }
+                
+                // Handle pain level display
+                const painLevelElement = document.getElementById('view-treatment-pain-level');
+                if (painLevelElement) {
+                    painLevelElement.textContent = data.pain_level !== null ? 
+                        `${data.pain_level}/10` : 
+                        'Not recorded';
+                }
+                
+                // Show the modal
+                const modal = new bootstrap.Modal(document.getElementById('treatmentViewModal'));
+                modal.show();
+            })
+            .catch(error => {
+                console.error('Error fetching treatment details:', error);
+                alert('Failed to load treatment details. Please try again.');
+            });
+    }
+
+    // Find your form validation JavaScript and update it
+    function validateTreatmentForm() {
+        // Other required field validations...
+        
+        // Make sure pain_level is not required
+        const painLevel = document.getElementById('pain_level').value;
+        // No validation needed for pain level since it's optional
+        
+        return true; // Return true if all required fields are valid
+    }
 </script>
 {% endblock %} 
