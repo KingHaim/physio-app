@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Calendly Bookings{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <!-- Header with sync button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="bi bi-calendar-check"></i> Calendly Bookings</h1>
+        <button id="syncCalendlyBtn" class="btn btn-primary">
+            <i class="bi bi-arrow-repeat"></i> Sync Calendly Data
+        </button>
+    </div>
+    
+    <!-- Unmatched bookings section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+            <h5 class="mb-0"><i class="bi bi-question-circle"></i> Unmatched Bookings</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if unmatched_bookings %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Appointment Time</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in unmatched_bookings %}
+                        <tr>
+                            <td>{{ booking.name }}</td>
+                            <td>{{ booking.email }}</td>
+                            <td>{{ booking.phone }}</td>
+                            <td>{{ booking.appointment_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <a href="{{ url_for('main.match_booking_to_patient', booking_id=booking.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-link"></i> Match to Patient
+                                    </a>
+                                    <a href="{{ url_for('main.create_patient_from_booking', booking_id=booking.id) }}" 
+                                       class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-person-plus"></i> Create Patient
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-calendar-check text-muted" style="font-size: 2rem;"></i>
+                <p class="text-muted mt-2">No unmatched Calendly bookings</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Recent matched bookings section -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0">
+            <h5 class="mb-0"><i class="bi bi-check-circle"></i> Recently Matched Bookings</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if recent_matched_appointments %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Patient</th>
+                            <th>Appointment Time</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in recent_matched_appointments %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('main.patient_detail', id=appointment.patient.id) }}" 
+                                   class="text-decoration-none text-dark fw-medium">
+                                   {{ appointment.patient.name }}
+                                </a>
+                            </td>
+                            <td>{{ appointment.next_appointment.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'primary' if appointment.status == 'Scheduled' else 'success' }}">
+                                    {{ appointment.status }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ url_for('main.view_treatment', id=appointment.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('main.edit_treatment', id=appointment.id) }}" 
+                                   class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-calendar-check text-muted" style="font-size: 2rem;"></i>
+                <p class="text-muted mt-2">No recently matched bookings</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('syncCalendlyBtn').addEventListener('click', function() {
+        // Show loading state
+        const button = this;
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Syncing...';
+        
+        // Call the API endpoint to sync Calendly events
+        fetch('/api/sync-calendly-events')
+            .then(response => response.json())
+            .then(data => {
+                // Reset button state
+                button.disabled = false;
+                button.innerHTML = originalText;
+                
+                // Show success or error message
+                if (data.success) {
+                    // Create success alert
+                    const alertContainer = document.querySelector('.alert-container');
+                    alertContainer.innerHTML += `
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="bi bi-check-circle-fill"></i> ${data.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                    
+                    // Reload the page after a short delay to show updated data
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    // Create error alert
+                    const alertContainer = document.querySelector('.alert-container');
+                    alertContainer.innerHTML += `
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Error: ${data.error}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                // Reset button state and show error
+                button.disabled = false;
+                button.innerHTML = originalText;
+                
+                // Create error alert
+                const alertContainer = document.querySelector('.alert-container');
+                alertContainer.innerHTML += `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Error: Network or server error occurred.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                console.error('Error:', error);
+            });
+    });
+</script>
+{% endblock %} 

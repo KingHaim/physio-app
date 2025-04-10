@@ -38,7 +38,7 @@
                                            class="form-control" 
                                            id="date_of_birth" 
                                            name="date_of_birth" 
-                                           value="{{ patient.date_of_birth.strftime('%Y-%m-%d') }}" 
+                                           value="{{ patient.date_of_birth.strftime('%Y-%m-%d') if patient.date_of_birth else '' }}" 
                                            required>
                                 </div>
 

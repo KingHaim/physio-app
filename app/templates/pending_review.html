@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Patients Pending Review{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <h1 class="h3 mb-4"><i class="bi bi-clipboard-check"></i> Patients Pending Review</h1>
+    
+    {% if pending_patients %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Contact</th>
+                            <th>Diagnosis</th>
+                            <th>Created</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in pending_patients %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('main.patient_detail', id=patient.id) }}" 
+                                   class="text-decoration-none text-dark fw-medium">
+                                   {{ patient.name }}
+                                </a>
+                            </td>
+                            <td>{{ patient.contact }}</td>
+                            <td>{{ patient.diagnosis|truncate(40) if patient.diagnosis else "No diagnosis" }}</td>
+                            <td>{{ patient.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            onclick="updateStatus({{ patient.id }}, 'Active')">
+                                        Mark Active
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" 
+                                            onclick="updateStatus({{ patient.id }}, 'Inactive')">
+                                        Mark Inactive
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No patients pending review.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function updateStatus(patientId, status) {
+        fetch('/api/patients/' + patientId + '/status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                status: status
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the row from the table
+                const row = document.querySelector(`tr[data-patient-id="${patientId}"]`);
+                if (row) row.remove();
+                
+                // If no more rows, show the "no patients" message
+                const tbody = document.querySelector('tbody');
+                if (tbody && tbody.children.length === 0) {
+                    document.querySelector('.card').innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> No patients pending review.
+                        </div>
+                    `;
+                }
+                
+                // Show success message
+                const alertContainer = document.querySelector('.alert-container');
+                alertContainer.innerHTML += `
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        Patient status updated to ${status}.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+            }
+        });
+    }
+</script>
+{% endblock %} 

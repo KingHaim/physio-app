@@ -12,3 +12,6 @@ class Config:
     # Use absolute path for database
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", f"sqlite:///{os.path.join(basedir, 'instance', 'physio.db')}")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Calendly API configuration
+    CALENDLY_API_TOKEN = os.environ.get('CALENDLY_API_TOKEN', '')

@@ -1,151 +1,94 @@
 {% extends "base.html" %}
 
-{% block title %}Report: {{ patient.name }}{% endblock %}
+{% block title %}{{ patient.name }} - Treatment Report{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Report Header -->
+<div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1><i class="bi bi-file-text"></i> Patient Report</h1>
-            <h4 class="text-muted">{{ patient.name }}</h4>
-        </div>
-        <div class="btn-group">
-            <button class="btn btn-outline-primary" onclick="window.print()">
+        <h1><i class="bi bi-file-earmark-text"></i> Treatment Report</h1>
+        <div class="d-flex gap-2">
+            {% if all_reports and all_reports|length > 1 %}
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="reportsDropdown" 
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-clock-history"></i> View Other Reports
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="reportsDropdown">
+                    {% for r in all_reports %}
+                    <li>
+                        <a class="dropdown-item {% if r.id == report.id %}active{% endif %}" 
+                           href="{{ url_for('main.patient_report', id=patient.id) }}?report_id={{ r.id }}">
+                            {{ r.report_type }} - {{ r.generated_date.strftime('%Y-%m-%d %H:%M') }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left"></i> Back to Patient
+            </a>
+            <button class="btn btn-outline-secondary" onclick="window.print()">
                 <i class="bi bi-printer"></i> Print Report
-            </button>
-            <button class="btn btn-outline-success" onclick="exportReport()">
-                <i class="bi bi-download"></i> Export PDF
             </button>
         </div>
     </div>
-
-    <div class="row">
-        <!-- Patient Overview -->
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Patient Overview</h5>
-                </div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-4">Status</dt>
-                        <dd class="col-sm-8">
-                            <span class="badge bg-{{ 'success' if patient.status == 'Active' else 'secondary' }}">
-                                {{ patient.status }}
-                            </span>
-                        </dd>
-
-                        <dt class="col-sm-4">Diagnosis</dt>
-                        <dd class="col-sm-8">{{ patient.diagnosis }}</dd>
-
-                        <dt class="col-sm-4">Started</dt>
-                        <dd class="col-sm-8">{{ patient.created_at.strftime('%Y-%m-%d') }}</dd>
-
-                        <dt class="col-sm-4">Contact</dt>
-                        <dd class="col-sm-8">{{ patient.contact }}</dd>
-                    </dl>
-                </div>
-            </div>
-
-            <!-- Treatment Stats -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Treatment Statistics</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-3">
-                        <div>
-                            <h6 class="text-muted mb-1">Total Sessions</h6>
-                            <h3>{{ total_treatments }}</h3>
-                        </div>
-                        <div>
-                            <h6 class="text-muted mb-1">Completion Rate</h6>
-                            <h3>{{ "%.1f"|format(completion_rate) }}%</h3>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <h6 class="text-muted mb-1">Average Frequency</h6>
-                        <h3>{{ "%.1f"|format(avg_frequency) }} days</h3>
-                    </div>
-                </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between">
+                <h5 class="mb-0">Treatment Progress Report</h5>
+                <span class="text-muted">Generated: {{ report.generated_date.strftime('%Y-%m-%d %H:%M') }}</span>
             </div>
         </div>
-
-        <!-- Progress Timeline -->
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Progress Timeline</h5>
-                </div>
-                <div class="card-body">
-                    <div class="timeline">
-                        {% for event in progress_timeline %}
-                        <div class="timeline-item">
-                            <div class="timeline-marker {% if event.event_type == 'treatment' %}bg-primary
-                                                      {% elif event.event_type == 'note' %}bg-info
-                                                      {% else %}bg-success{% endif %}">
-                            </div>
-                            <div class="timeline-content">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-1">{{ event.event }}</h6>
-                                    <small class="text-muted">{{ event.date.strftime('%Y-%m-%d %H:%M') }}</small>
-                                </div>
-                                <p class="mb-0">{{ event.details }}</p>
-                                {% if event.notes %}
-                                <p class="text-muted mt-1"><small>{{ event.notes }}</small></p>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
+        <div class="card-body">
+            <div class="report-content">
+                {{ report.content|markdown }}
             </div>
+        </div>
+        <div class="card-footer text-muted">
+            <small>This report was automatically generated based on treatment history. Please review for accuracy.</small>
         </div>
     </div>
 </div>
 
 <style>
-    .timeline {
-        position: relative;
-        padding: 20px 0;
+    @media print {
+        .btn, nav, footer {
+            display: none !important;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .card {
+            border: none;
+        }
+        
+        .card-header, .card-footer {
+            background-color: white !important;
+        }
     }
-
-    .timeline-item {
-        position: relative;
-        padding-left: 40px;
-        margin-bottom: 20px;
+    
+    .report-content {
+        font-size: 1rem;
+        line-height: 1.6;
     }
-
-    .timeline-marker {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background-color: #3498db;
+    
+    .report-content h1, 
+    .report-content h2, 
+    .report-content h3 {
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
     }
-
-    .timeline-item::before {
-        content: '';
-        position: absolute;
-        left: 5px;
-        top: 12px;
-        bottom: -20px;
-        width: 2px;
-        background-color: #e9ecef;
-    }
-
-    .timeline-item:last-child::before {
-        display: none;
+    
+    .report-content ul, 
+    .report-content ol {
+        margin-bottom: 1rem;
     }
 </style>
-
-<script>
-function exportReport() {
-    // Implement PDF export functionality
-    alert('PDF export will be implemented here');
-}
-</script>
 {% endblock %}

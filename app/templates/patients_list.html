@@ -1,165 +1,311 @@
 <!-- app/templates/patients_list.html -->
 {% extends "base.html" %}
 
-{% block title %}Patients List{% endblock %}
+{% block title %}Patient List{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="bi bi-people"></i> Patients Directory</h1>
-        <div class="d-flex gap-2">
-            <div class="input-group">
-                <input type="text" id="patientSearch" class="form-control" placeholder="Search patients...">
-                <select id="filterStatus" class="form-select" style="max-width: 150px;">
-                    <option value="all">All Status</option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Completed">Completed</option>
-                </select>
-                <button class="btn btn-outline-secondary" type="button" id="exportPatients">
-                    <i class="bi bi-download"></i> Export
+<div class="container-fluid py-3">
+    <!-- Simple header with search -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-4">
+            <h1 class="h3 mb-0"><i class="bi bi-people"></i> Patient List</h1>
+        </div>
+        <div class="col-md-5">
+            <input type="text" id="patientSearch" class="form-control" placeholder="Search patients...">
+        </div>
+        <div class="col-md-3">
+            <select id="filterStatus" class="form-select">
+                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+                <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Inactive</option>
+                <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>Completed</option>
+                <option value="Pending Review" {% if status_filter == 'Pending Review' %}selected{% endif %}>Pending Review</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Add this above the table -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="btn-group">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" 
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    Bulk Actions
                 </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="bulkUpdateStatus('Active')">
+                        Mark Selected as Active
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="bulkUpdateStatus('Inactive')">
+                        Mark Selected as Inactive
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" onclick="selectAllPendingReview()">
+                        Select All Pending Review
+                    </a></li>
+                </ul>
             </div>
-            <a href="{{ url_for('main.new_patient') }}" class="btn btn-primary">
-                <i class="bi bi-person-plus"></i> New Patient
-            </a>
         </div>
     </div>
 
-    <!-- Patients Grid -->
-    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
-        {% for patient in patients %}
-        <div class="col patient-card" data-status="{{ patient.status }}">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <h5 class="card-title mb-1">
-                            <a href="{{ url_for('main.patient_detail', id=patient.id) }}" 
-                               class="text-decoration-none">{{ patient.name }}</a>
-                        </h5>
-                        <span class="badge bg-{{ 'success' if patient.status == 'Active' 
-                                               else 'secondary' if patient.status == 'Inactive'
-                                               else 'info' }}">
-                            {{ patient.status }}
-                        </span>
-                    </div>
-                    <p class="text-muted small mb-2">ID: {{ patient.id }}</p>
-                    
-                    <div class="mt-3">
-                        <p class="mb-1"><strong>Diagnosis:</strong> {{ patient.diagnosis }}</p>
-                        <p class="mb-1"><strong>Last Visit:</strong> 
-                            {% if patient.treatments %}
-                                {{ patient.treatments[-1].date.strftime('%Y-%m-%d') }}
-                            {% else %}
-                                No visits yet
-                            {% endif %}
-                        </p>
-                        <p class="mb-1"><strong>Next Appointment:</strong>
-                            {% if patient.treatments and patient.treatments[-1].next_appointment %}
-                                {{ patient.treatments[-1].next_appointment.strftime('%Y-%m-%d') }}
-                            {% else %}
-                                Not scheduled
-                            {% endif %}
-                        </p>
-                    </div>
-
-                    <div class="progress mt-3" style="height: 5px;">
-                        {% set completion = (patient.treatments|length / 12 * 100)|round|int if patient.treatments else 0 %}
-                        <div class="progress-bar bg-success" 
-                            role="progressbar" 
-                            {% if completion %}style="width: {{ completion|string }}%"{% endif %}
-                            aria-valuenow="{{ completion|int }}" 
-                            aria-valuemin="0" 
-                            aria-valuemax="100">
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer bg-transparent">
-                    <div class="btn-group w-100">
-                        <a href="{{ url_for('main.patient_detail', id=patient.id) }}" 
-                           class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-eye"></i> View
-                        </a>
-                        <a href="{{ url_for('main.patient_report', id=patient.id) }}" 
-                           class="btn btn-outline-info btn-sm">
-                            <i class="bi bi-file-text"></i> Report
-                        </a>
-                        <button class="btn btn-outline-success btn-sm" 
-                        onclick="quickNote('{{ patient.id }}')">
-                            <i class="bi bi-plus-circle"></i> Quick Note
-                        </button>
-                    </div>
-                </div>
+    <!-- Clean, modern table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <input type="checkbox" class="form-check-input" id="selectAll" onclick="toggleSelectAll()">
+                            </th>
+                            <th>Name</th>
+                            <th>Diagnosis</th>
+                            <th>Last Visit</th>
+                            <th>Next Appointment</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                        <tr data-status="{{ patient.status }}">
+                            <td>
+                                <input type="checkbox" class="form-check-input patient-checkbox" 
+                                       data-patient-id="{{ patient.id }}" data-status="{{ patient.status }}">
+                            </td>
+                            <td>
+                                <a href="{{ url_for('main.patient_detail', id=patient.id) }}" 
+                                   class="text-decoration-none text-dark fw-medium">
+                                   {{ patient.name }}
+                                </a>
+                            </td>
+                            <td>{{ patient.diagnosis|truncate(40) if patient.diagnosis else "No diagnosis" }}</td>
+                            <td>
+                                {% if patient.treatments %}
+                                    {{ patient.treatments|sort(attribute='date', reverse=True)|first|attr('date')|string|truncate(10, True, '') }}
+                                {% else %}
+                                    <span class="text-muted">No visits yet</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if patient.treatments and patient.treatments[-1].next_appointment %}
+                                    {{ patient.treatments[-1].next_appointment.strftime('%Y-%m-%d') }}
+                                {% else %}
+                                    <span class="text-muted">Not scheduled</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-badge 
+                                    {% if patient.status == 'Active' %}status-active
+                                    {% elif patient.status == 'Inactive' %}status-inactive
+                                    {% else %}status-completed{% endif %}">
+                                    {{ patient.status }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="action-buttons">
+                                    <a href="{{ url_for('main.patient_detail', id=patient.id) }}" 
+                                       class="btn btn-sm btn-outline-primary action-btn">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('main.edit_patient', id=patient.id) }}" 
+                                       class="btn btn-sm btn-outline-secondary action-btn">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-primary action-btn" 
+                                            onclick="quickTreatment('{{ patient.id }}')">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-        {% endfor %}
     </div>
+
+    {% if not patients %}
+    <div class="alert alert-info text-center my-4">
+        <i class="bi bi-info-circle me-2"></i>
+        No patients found matching your search criteria.
+    </div>
+    {% endif %}
 </div>
 
-<!-- Quick Note Modal -->
-<div class="modal fade" id="quickNoteModal" tabindex="-1">
+<!-- Quick Treatment Modal -->
+<div class="modal fade" id="quickTreatmentModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Add Quick Note</h5>
+                <h5 class="modal-title">Quick Treatment Entry</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="quickNoteForm" method="POST">
-                <div class="modal-body">
+            <div class="modal-body">
+                <form id="quickTreatmentForm" method="POST">
                     <div class="mb-3">
-                        <label class="form-label">Note Type</label>
-                        <select class="form-select" name="note_type" required>
-                            <option value="progress">Progress Note</option>
-                            <option value="observation">Observation</option>
-                            <option value="reminder">Reminder</option>
-                        </select>
+                        <label for="description" class="form-label">Treatment Description</label>
+                        <textarea class="form-control" name="description" required></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Note</label>
-                        <textarea class="form-control" name="content" rows="3" required></textarea>
+                        <label for="progress_notes" class="form-label">Progress Notes</label>
+                        <textarea class="form-control" name="progress_notes"></textarea>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Note</button>
-                </div>
-            </form>
+                    <div class="mb-3">
+                        <label for="next_appointment" class="form-label">Next Appointment</label>
+                        <input type="date" class="form-control" name="next_appointment">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Treatment</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
+{% block styles %}
+<style>
+    /* Clean, modern styling */
+    .table {
+        --bs-table-hover-bg: rgba(52, 152, 219, 0.05);
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #495057;
+        border-top: none;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        border-color: #f0f0f0;
+        padding: 12px 16px;
+    }
+    
+    /* Status badges - use the same class names as in base.html */
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: inline-block;
+        text-align: center;
+        min-width: 80px;
+    }
+    
+    /* Action buttons */
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+        justify-content: flex-end;
+    }
+    
+    .action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 4px;
+    }
+    
+    /* Search and filter controls */
+    #patientSearch, #filterStatus {
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        padding: 8px 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    /* Card styling */
+    .card {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .shadow-sm {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05)!important;
+    }
+</style>
+{% endblock %}
+
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('patientSearch');
-    const statusFilter = document.getElementById('filterStatus');
-    const patientCards = document.querySelectorAll('.patient-card');
-
-    function filterPatients() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const statusValue = statusFilter.value;
-
-        patientCards.forEach(card => {
-            const cardText = card.textContent.toLowerCase();
-            const cardStatus = card.dataset.status;
-            const matchesSearch = cardText.includes(searchTerm);
-            const matchesStatus = statusValue === 'all' || cardStatus === statusValue;
-
-            card.style.display = matchesSearch && matchesStatus ? '' : 'none';
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('patientSearch');
+        const statusFilter = document.getElementById('filterStatus');
+        
+        // Apply filters function
+        function applyFilters() {
+            const searchTerm = searchInput.value;
+            const statusValue = statusFilter.value;
+            
+            window.location.href = `/patients?search=${encodeURIComponent(searchTerm)}&status=${statusValue}`;
+        }
+        
+        // Add event listeners
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                applyFilters();
+            }
+        });
+        
+        // Apply filters on status change
+        statusFilter.addEventListener('change', applyFilters);
+    });
+    
+    // Quick treatment functionality
+    function quickTreatment(patientId) {
+        const modal = new bootstrap.Modal(document.getElementById('quickTreatmentModal'));
+        const form = document.getElementById('quickTreatmentForm');
+        form.action = `/treatment/new/${patientId}`;
+        modal.show();
+    }
+    
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.patient-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
         });
     }
-
-    searchInput.addEventListener('input', filterPatients);
-    statusFilter.addEventListener('change', filterPatients);
-});
-
-function quickNote(patientId) {
-    const modal = new bootstrap.Modal(document.getElementById('quickNoteModal'));
-    const form = document.getElementById('quickNoteForm');
-    form.action = `/patient/${patientId}/quick-note`;
-    modal.show();
-}
+    
+    function selectAllPendingReview() {
+        const checkboxes = document.querySelectorAll('.patient-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = checkbox.dataset.status === 'Pending Review';
+        });
+    }
+    
+    function bulkUpdateStatus(status) {
+        const selectedCheckboxes = document.querySelectorAll('.patient-checkbox:checked');
+        if (selectedCheckboxes.length === 0) {
+            alert('Please select at least one patient');
+            return;
+        }
+        
+        const patientIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.patientId);
+        
+        fetch('/api/patients/bulk-update-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                patient_ids: patientIds,
+                status: status
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    }
 </script>
 {% endblock %}

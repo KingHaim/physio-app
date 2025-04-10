@@ -1,0 +1,286 @@
+<!-- New Treatment Modal -->
+<div class="modal fade" id="newTreatmentModal" tabindex="-1" aria-labelledby="newTreatmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newTreatmentModalLabel">New Treatment Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('main.new_treatment', patient_id=patient.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Left Column -->
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Treatment Information</h6>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Treatment Description</label>
+                                <input type="text" class="form-control" id="description" name="description" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="next_appointment" class="form-label">Appointment Date</label>
+                                <input type="date" class="form-control" id="next_appointment" name="next_appointment">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="pain_level" class="form-label">Pain Level (1-10)</label>
+                                <input type="number" class="form-control" id="pain_level" name="pain_level" min="1" max="10">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="movement_restriction" class="form-label">Movement Restriction</label>
+                                <input type="text" class="form-control" id="movement_restriction" name="movement_restriction">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="progress_notes" class="form-label">Progress Notes</label>
+                                <textarea class="form-control" id="progress_notes" name="progress_notes" rows="5"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Column - Body Chart -->
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Body Chart & Trigger Points</h6>
+                            
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>Body Map</span>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-danger active" data-point-type="active">Active</button>
+                                            <button type="button" class="btn btn-outline-warning" data-point-type="latent">Latent</button>
+                                            <button type="button" class="btn btn-outline-info" data-point-type="satellite">Satellite</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="body-map-container">
+                                        <img src="{{ url_for('static', filename='images/bodychart.svg') }}" class="body-map" id="bodyMapImage" alt="Body chart">
+                                        <svg class="body-map-overlay" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
+                                            <g id="triggerPoints"></g>
+                                        </svg>
+                                    </div>
+                                    <div class="text-muted small mt-2">Click on the body map to add trigger points</div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Trigger Points</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Type</th>
+                                                    <th>Muscle</th>
+                                                    <th>Intensity</th>
+                                                    <th>Symptoms</th>
+                                                    <th>Referral</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="pointsTableBody">
+                                                <!-- Trigger points will be added here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden input to store trigger points data -->
+                            <input type="hidden" id="trigger_points" name="trigger_points" value="[]">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Treatment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Trigger point management
+    let triggerPoints = [];
+    let pointIdCounter = 1;
+    let currentPointType = 'active';
+    
+    // Point type buttons
+    document.querySelectorAll('[data-point-type]').forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            document.querySelectorAll('[data-point-type]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Set current point type
+            currentPointType = this.getAttribute('data-point-type');
+        });
+    });
+    
+    // Get point color based on type
+    function getPointColor(type) {
+        switch(type) {
+            case 'active': return '#dc3545'; // Red
+            case 'latent': return '#ffc107'; // Yellow
+            case 'satellite': return '#17a2b8'; // Teal
+            default: return '#dc3545'; // Default to red
+        }
+    }
+    
+    // Create table row for a point
+    function createTableRow(pointData) {
+        const row = document.createElement('tr');
+        row.setAttribute('data-point-id', pointData.id);
+        
+        row.innerHTML = `
+            <td>
+                <span class="badge" style="background-color: ${getPointColor(pointData.type)}">
+                    ${pointData.type.charAt(0).toUpperCase() + pointData.type.slice(1)}
+                </span>
+            </td>
+            <td>
+                <select class="form-select form-select-sm muscle-select" 
+                        onchange="updatePointData('${pointData.id}', 'muscle', this.value)">
+                    <option value="" ${!pointData.muscle ? 'selected' : ''}>Select...</option>
+                    <option value="Trapezius" ${pointData.muscle === 'Trapezius' ? 'selected' : ''}>Trapezius</option>
+                    <option value="Levator Scapulae" ${pointData.muscle === 'Levator Scapulae' ? 'selected' : ''}>Levator Scapulae</option>
+                    <option value="Rhomboids" ${pointData.muscle === 'Rhomboids' ? 'selected' : ''}>Rhomboids</option>
+                    <option value="Infraspinatus" ${pointData.muscle === 'Infraspinatus' ? 'selected' : ''}>Infraspinatus</option>
+                    <option value="Teres Minor" ${pointData.muscle === 'Teres Minor' ? 'selected' : ''}>Teres Minor</option>
+                    <option value="Teres Major" ${pointData.muscle === 'Teres Major' ? 'selected' : ''}>Teres Major</option>
+                    <option value="Subscapularis" ${pointData.muscle === 'Subscapularis' ? 'selected' : ''}>Subscapularis</option>
+                    <option value="Pectoralis Major" ${pointData.muscle === 'Pectoralis Major' ? 'selected' : ''}>Pectoralis Major</option>
+                    <option value="Pectoralis Minor" ${pointData.muscle === 'Pectoralis Minor' ? 'selected' : ''}>Pectoralis Minor</option>
+                    <option value="Biceps Brachii" ${pointData.muscle === 'Biceps Brachii' ? 'selected' : ''}>Biceps Brachii</option>
+                    <option value="Triceps Brachii" ${pointData.muscle === 'Triceps Brachii' ? 'selected' : ''}>Triceps Brachii</option>
+                    <option value="Deltoid" ${pointData.muscle === 'Deltoid' ? 'selected' : ''}>Deltoid</option>
+                    <option value="Gluteus Maximus" ${pointData.muscle === 'Gluteus Maximus' ? 'selected' : ''}>Gluteus Maximus</option>
+                    <option value="Gluteus Medius" ${pointData.muscle === 'Gluteus Medius' ? 'selected' : ''}>Gluteus Medius</option>
+                    <option value="Piriformis" ${pointData.muscle === 'Piriformis' ? 'selected' : ''}>Piriformis</option>
+                    <option value="Quadratus Lumborum" ${pointData.muscle === 'Quadratus Lumborum' ? 'selected' : ''}>Quadratus Lumborum</option>
+                    <option value="Erector Spinae" ${pointData.muscle === 'Erector Spinae' ? 'selected' : ''}>Erector Spinae</option>
+                    <option value="Quadriceps" ${pointData.muscle === 'Quadriceps' ? 'selected' : ''}>Quadriceps</option>
+                    <option value="Hamstrings" ${pointData.muscle === 'Hamstrings' ? 'selected' : ''}>Hamstrings</option>
+                    <option value="Gastrocnemius" ${pointData.muscle === 'Gastrocnemius' ? 'selected' : ''}>Gastrocnemius</option>
+                    <option value="Soleus" ${pointData.muscle === 'Soleus' ? 'selected' : ''}>Soleus</option>
+                </select>
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm" min="1" max="10" 
+                       value="${pointData.intensity}" 
+                       onchange="updatePointData('${pointData.id}', 'intensity', this.value)">
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm" 
+                       value="${pointData.symptoms}" 
+                       onchange="updatePointData('${pointData.id}', 'symptoms', this.value)">
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm" 
+                       value="${pointData.referral}" 
+                       onchange="updatePointData('${pointData.id}', 'referral', this.value)">
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" 
+                        onclick="removePoint('${pointData.id}')">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        return row;
+    }
+    
+    // Add point to both SVG and table
+    function addPoint(x, y, type = currentPointType) {
+        const pointId = `point-${pointIdCounter++}`;
+        const pointData = {
+            id: pointId,
+            x: Math.round(x),
+            y: Math.round(y),
+            type: type,
+            intensity: 5,
+            muscle: '',
+            symptoms: '',
+            referral: ''
+        };
+        
+        // Create SVG point
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", pointData.x);
+        circle.setAttribute("cy", pointData.y);
+        circle.setAttribute("r", "4");
+        circle.setAttribute("fill", getPointColor(pointData.type));
+        circle.setAttribute("class", "trigger-point");
+        circle.setAttribute("data-point-id", pointId);
+        
+        circle.addEventListener('mouseover', () => circle.setAttribute("r", "6"));
+        circle.addEventListener('mouseout', () => circle.setAttribute("r", "4"));
+        
+        const pointsGroup = document.getElementById('triggerPoints');
+        pointsGroup.appendChild(circle);
+        
+        const tbody = document.getElementById('pointsTableBody');
+        tbody.appendChild(createTableRow(pointData));
+        
+        triggerPoints.push(pointData);
+        updateFormData();
+    }
+    
+    window.updatePointData = function(pointId, field, value) {
+        const point = triggerPoints.find(p => p.id === pointId);
+        if (point) {
+            point[field] = value;
+            updateFormData();
+        }
+    };
+    
+    window.removePoint = function(pointId) {
+        const index = triggerPoints.findIndex(p => p.id === pointId);
+        if (index > -1) {
+            triggerPoints.splice(index, 1);
+            document.querySelector(`circle[data-point-id="${pointId}"]`)?.remove();
+            document.querySelector(`tr[data-point-id="${pointId}"]`)?.remove();
+            updateFormData();
+        }
+    };
+    
+    function updateFormData() {
+        const dataInput = document.getElementById('trigger_points');
+        dataInput.value = JSON.stringify(triggerPoints);
+    }
+    
+    // Setup SVG click handler
+    const bodyMapOverlay = document.querySelector('.body-map-overlay');
+    
+    if (bodyMapOverlay) {
+        bodyMapOverlay.style.pointerEvents = 'all'; // Make overlay clickable
+        
+        bodyMapOverlay.addEventListener('click', function(evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            
+            // Get click coordinates in SVG space
+            const pt = bodyMapOverlay.createSVGPoint();
+            pt.x = evt.clientX;
+            pt.y = evt.clientY;
+            
+            // Transform to SVG coordinate system
+            const svgP = pt.matrixTransform(bodyMapOverlay.getScreenCTM().inverse());
+            
+            // Add the point
+            addPoint(svgP.x, svgP.y);
+        });
+    }
+});
+</script> 

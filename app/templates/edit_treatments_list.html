@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Treatments for {{ patient.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-plus"></i> Edit Treatments for {{ patient.name }}
+                    </h5>
+                    <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-arrow-left"></i> Back to Patient
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <p><i class="bi bi-info-circle"></i> Click on any treatment session below to edit it.</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <button class="btn btn-outline-primary" id="markPastAsCompleted">
+                            <i class="bi bi-check-all"></i> Mark Past Treatments as Completed
+                        </button>
+                    </div>
+                    
+                    <div class="list-group">
+                        {% for treatment in treatments %}
+                        <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" 
+                           class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ treatment.date.strftime('%Y-%m-%d') }} - {{ treatment.description }}</h5>
+                                <span class="badge bg-{% if treatment.status == 'Scheduled' %}primary
+                                                    {% elif treatment.status == 'Completed' %}success
+                                                    {% elif treatment.status == 'Cancelled' %}danger
+                                                    {% else %}warning{% endif %}">
+                                    {{ treatment.status }}
+                                </span>
+                            </div>
+                            <p class="mb-1">{{ treatment.progress_notes|truncate(100) }}</p>
+                            <small>Click to edit this treatment session</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('markPastAsCompleted').addEventListener('click', function() {
+    if (confirm('Mark all past treatments as Completed? This will help improve AI-generated reports.')) {
+        fetch('/api/patient/{{ patient.id }}/mark-past-as-completed', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`${data.count} treatments marked as Completed.`);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred.');
+        });
+    }
+});
+</script>
+{% endblock %} 

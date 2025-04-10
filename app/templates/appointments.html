@@ -13,6 +13,28 @@
         </button>
     </div>
 
+    <!-- Calendly Integration -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Schedule with Calendly</h5>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showCalendlyToggle">
+                        <label class="form-check-label" for="showCalendlyToggle">Show Calendly</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Calendly inline widget begin -->
+                    <div id="calendly-container" style="min-width:320px;height:700px;display:none;">
+                        <iframe src="https://calendly.com/haimphysio/" width="100%" height="100%" frameborder="0"></iframe>
+                    </div>
+                    <!-- Calendly inline widget end -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Date Filter and Calendar View Toggle -->
     <div class="row mb-4">
         <div class="col-md-8">
@@ -97,19 +119,23 @@
                                 </span>
                             </td>
                             <td>{{ appointment.progress_notes|truncate(30) }}</td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-primary" 
-                                            onclick="editAppointment('{{ appointment.id }}')">
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <!-- Edit button -->
+                                    <a href="{{ url_for('main.edit_treatment', id=appointment.id) }}" class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-pencil"></i>
+                                    </a>
+                                    
+                                    <!-- Mark as completed button -->
+                                    <button type="button" class="btn btn-sm btn-outline-success mark-completed-btn" 
+                                            data-appointment-id="{{ appointment.id }}">
+                                        <i class="bi bi-check-circle"></i>
                                     </button>
-                                    <button class="btn btn-outline-success" 
-                                            onclick="completeAppointment('{{ appointment.id }}')">
-                                        <i class="bi bi-check-lg"></i>
-                                    </button>
-                                    <button class="btn btn-outline-danger" 
-                                            onclick="cancelAppointment('{{ appointment.id }}')">
-                                        <i class="bi bi-x-lg"></i>
+                                    
+                                    <!-- Cancel button -->
+                                    <button type="button" class="btn btn-sm btn-outline-danger cancel-appointment-btn" 
+                                            data-appointment-id="{{ appointment.id }}">
+                                        <i class="bi bi-x-circle"></i>
                                     </button>
                                 </div>
                             </td>
@@ -182,6 +208,11 @@
         </div>
     </div>
 </div>
+
+<!-- Add this after the Sync button in your appointments.html -->
+<a href="{{ url_for('main.review_calendly_bookings') }}" class="btn btn-outline-secondary mt-3 ms-2">
+    <i class="bi bi-list-check"></i> Review Calendly Bookings
+</a>
 {% endblock %}
 
 {% block scripts %}
@@ -190,6 +221,24 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Wait for Calendly script to load completely
+    setTimeout(function() {
+        // Initialize Calendly widget
+        initCalendlyWidget('https://calendly.com/haimphysio/');
+    }, 1000); // Give it a second to load
+    
+    // Calendly toggle
+    const showCalendlyToggle = document.getElementById('showCalendlyToggle');
+    const calendlyContainer = document.getElementById('calendly-container');
+    
+    showCalendlyToggle.addEventListener('change', function() {
+        if (this.checked) {
+            calendlyContainer.style.display = 'block';
+        } else {
+            calendlyContainer.style.display = 'none';
+        }
+    });
+    
     // Initialize date filters
     const today = new Date();
     const startDateInput = document.getElementById('startDate');
@@ -282,6 +331,94 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.getElementById('filterDates').addEventListener('click', filterAppointments);
+
+    // Add a button to fetch Calendly events
+    const fetchCalendlyBtn = document.createElement('button');
+    fetchCalendlyBtn.className = 'btn btn-outline-primary mt-3';
+    fetchCalendlyBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Sync Calendly Appointments';
+    fetchCalendlyBtn.onclick = fetchCalendlyEvents;
+    
+    // Add the button after the Calendly container
+    const calendlyCard = document.querySelector('#calendly-container').closest('.card');
+    calendlyCard.querySelector('.card-body').appendChild(fetchCalendlyBtn);
+    
+    // Function to fetch Calendly events
+    function fetchCalendlyEvents() {
+        // Show loading indicator
+        fetchCalendlyBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Syncing...';
+        fetchCalendlyBtn.disabled = true;
+        
+        // Make API request to your backend endpoint
+        fetch('/api/sync-calendly-events')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    alert(`Successfully synced ${data.count} appointments from Calendly`);
+                    // Reload the page to show updated appointments
+                    window.location.reload();
+                } else {
+                    // Show error message
+                    alert('Error syncing Calendly appointments: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to sync Calendly appointments: ' + error.message);
+            })
+            .finally(() => {
+                // Reset button state
+                fetchCalendlyBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Sync Calendly Appointments';
+                fetchCalendlyBtn.disabled = false;
+            });
+    }
+
+    // Handle mark as completed buttons
+    document.querySelectorAll('.mark-completed-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const appointmentId = this.getAttribute('data-appointment-id');
+            updateAppointmentStatus(appointmentId, 'Completed');
+        });
+    });
+    
+    // Handle cancel appointment buttons
+    document.querySelectorAll('.cancel-appointment-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const appointmentId = this.getAttribute('data-appointment-id');
+            if (confirm('Are you sure you want to cancel this appointment?')) {
+                updateAppointmentStatus(appointmentId, 'Cancelled');
+            }
+        });
+    });
+    
+    // Function to update appointment status
+    function updateAppointmentStatus(appointmentId, status) {
+        fetch(`/api/appointment/${appointmentId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: status })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload the page to show the updated status
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the appointment.');
+        });
+    }
 });
 </script>
 {% endblock %}

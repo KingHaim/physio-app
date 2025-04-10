@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Review Calendly Bookings{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-calendar-check"></i> Review Calendly Bookings</h1>
+    </div>
+
+    {% if unmatched_bookings %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Unmatched Calendly Bookings</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Appointment Type</th>
+                            <th>Date/Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in unmatched_bookings %}
+                        <tr data-booking-id="{{ booking.id }}">
+                            <td>{{ booking.name }}</td>
+                            <td>{{ booking.email }}</td>
+                            <td>{{ booking.event_type }}</td>
+                            <td>{{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" 
+                                        onclick="showMatchModal('{{ booking.id }}', '{{ booking.name }}')">
+                                    Match to Patient
+                                </button>
+                                <button class="btn btn-sm btn-success" 
+                                        onclick="createNewPatient('{{ booking.id }}')">
+                                    Create New Patient
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No unmatched Calendly bookings to review.
+    </div>
+    {% endif %}
+</div>
+
+<!-- Match Patient Modal -->
+<div class="modal fade" id="matchPatientModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Match Booking to Patient</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Select an existing patient to match with <strong id="bookingName"></strong>:</p>
+                <input type="hidden" id="bookingId">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="patientSearch" 
+                           placeholder="Search patients...">
+                </div>
+                <div class="list-group" id="patientResults">
+                    <!-- Patient results will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function showMatchModal(bookingId, bookingName) {
+        document.getElementById('bookingId').value = bookingId;
+        document.getElementById('bookingName').textContent = bookingName;
+        
+        // Clear previous results
+        document.getElementById('patientResults').innerHTML = '';
+        document.getElementById('patientSearch').value = '';
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('matchPatientModal'));
+        modal.show();
+        
+        // Focus search field
+        setTimeout(() => {
+            document.getElementById('patientSearch').focus();
+        }, 500);
+    }
+    
+    // Patient search
+    document.getElementById('patientSearch').addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+        if (searchTerm.length < 2) {
+            document.getElementById('patientResults').innerHTML = '';
+            return;
+        }
+        
+        fetch(`/api/patients/search?q=${encodeURIComponent(searchTerm)}`)
+            .then(response => response.json())
+            .then(patients => {
+                const resultsContainer = document.getElementById('patientResults');
+                resultsContainer.innerHTML = '';
+                
+                patients.forEach(patient => {
+                    const item = document.createElement('a');
+                    item.className = 'list-group-item list-group-item-action';
+                    item.innerHTML = `<strong>${patient.name}</strong> - ${patient.contact || 'No contact info'}`;
+                    item.onclick = function() {
+                        matchPatient(document.getElementById('bookingId').value, patient.id);
+                    };
+                    resultsContainer.appendChild(item);
+                });
+                
+                if (patients.length === 0) {
+                    resultsContainer.innerHTML = '<div class="list-group-item">No patients found</div>';
+                }
+            });
+    });
+    
+    function matchPatient(bookingId, patientId) {
+        fetch('/api/calendly/match-booking', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                booking_id: bookingId,
+                patient_id: patientId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('matchPatientModal')).hide();
+                
+                // Instead of reloading, update the UI
+                const row = document.querySelector(`tr[data-booking-id="${bookingId}"]`);
+                if (row) {
+                    // Replace the row with a success message
+                    const newRow = document.createElement('tr');
+                    newRow.className = 'table-success';
+                    newRow.innerHTML = `
+                        <td colspan="5" class="text-center">
+                            <div class="alert alert-success mb-0">
+                                Booking matched successfully! 
+                                <a href="/patient/${patientId}" class="alert-link">View patient profile</a>
+                            </div>
+                        </td>
+                    `;
+                    row.parentNode.replaceChild(newRow, row);
+                    
+                    // Remove the success message after 5 seconds
+                    setTimeout(() => {
+                        newRow.remove();
+                        // If no more bookings, show the "no bookings" message
+                        const tbody = document.querySelector('tbody');
+                        if (tbody.children.length === 0) {
+                            location.reload();
+                        }
+                    }, 5000);
+                } else {
+                    // If we can't find the row, just reload the page
+                    location.reload();
+                }
+            } else {
+                alert('Error matching patient: ' + data.error);
+            }
+        });
+    }
+    
+    function createNewPatient(bookingId) {
+        if (confirm('Create a new patient record from this booking?')) {
+            fetch('/api/calendly/create-patient-from-booking', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    booking_id: bookingId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Instead of redirecting, show a success message and remove the row
+                    const row = document.querySelector(`tr[data-booking-id="${bookingId}"]`);
+                    if (row) {
+                        // Replace the row with a success message
+                        const newRow = document.createElement('tr');
+                        newRow.className = 'table-success';
+                        newRow.innerHTML = `
+                            <td colspan="5" class="text-center">
+                                <div class="alert alert-success mb-0">
+                                    Patient created successfully! 
+                                    <a href="/patient/${data.patient_id}" class="alert-link">View patient profile</a>
+                                </div>
+                            </td>
+                        `;
+                        row.parentNode.replaceChild(newRow, row);
+                        
+                        // Remove the success message after 5 seconds
+                        setTimeout(() => {
+                            newRow.remove();
+                            // If no more bookings, show the "no bookings" message
+                            const tbody = document.querySelector('tbody');
+                            if (tbody.children.length === 0) {
+                                location.reload();
+                            }
+                        }, 5000);
+                    } else {
+                        // If we can't find the row, just reload the page
+                        location.reload();
+                    }
+                } else {
+                    alert('Error creating patient: ' + data.error);
+                }
+            });
+        }
+    }
+</script>
+{% endblock %} 
