@@ -49,20 +49,28 @@
                         <div class="col-md-6">
                             <h6>Trigger Points Map</h6>
                             <div class="body-map-container">
-                                <svg viewBox="0 0 200 400" class="body-map">
-                                    <!-- Body outline -->
-                                    <path d="M100,20 C120,20 140,40 140,70 L140,200 C140,260 120,300 100,340 C80,300 60,260 60,200 L60,70 C60,40 80,20 100,20" 
-                                          fill="none" stroke="black" />
-                                    
+                                <img src="{{ url_for('static', filename='images/bodychart.svg') }}" class="body-map" alt="Body chart">
+                                <svg class="body-map-overlay" viewBox="0 0 500 800" xmlns="http://www.w3.org/2000/svg">
                                     <!-- Plot recorded trigger points -->
-                                    {% for point in treatment.trigger_points %}
-                                    <circle cx="{{ point.location_x }}"
-                                           cy="{{ point.location_y }}"
-                                           r="4"
-                                           class="trigger-point {{ point.type }}"
-                                           data-toggle="tooltip"
-                                           title="{{ point.muscle }} (Intensity: {{ point.intensity }}/10)"/>
-                                    {% endfor %}
+                                    {% if treatment.evaluation_data %}
+                                        {% for point in treatment.evaluation_data %}
+                                        <circle cx="{{ point.x }}"
+                                               cy="{{ point.y }}"
+                                               r="7"
+                                               class="trigger-point {{ point.type }}"
+                                               data-toggle="tooltip"
+                                               title="{{ point.muscle }} (Intensity: {{ point.intensity }}/10)"/>
+                                        {% endfor %}
+                                    {% else %}
+                                        {% for point in treatment.trigger_points %}
+                                        <circle cx="{{ point.location_x }}"
+                                               cy="{{ point.location_y }}"
+                                               r="7"
+                                               class="trigger-point {{ point.type }}"
+                                               data-toggle="tooltip"
+                                               title="{{ point.muscle }} (Intensity: {{ point.intensity }}/10)"/>
+                                        {% endfor %}
+                                    {% endif %}
                                 </svg>
                             </div>
                         </div>
@@ -83,21 +91,39 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for point in treatment.trigger_points %}
-                                    <tr>
-                                        <td>
-                                            <span class="badge bg-{{ 'danger' if point.type == 'active' 
-                                                                    else 'warning' if point.type == 'latent' 
-                                                                    else 'info' }}">
-                                                {{ point.type }}
-                                            </span>
-                                        </td>
-                                        <td>{{ point.muscle }}</td>
-                                        <td>{{ point.intensity }}/10</td>
-                                        <td>{{ point.symptoms }}</td>
-                                        <td>{{ point.referral_pattern }}</td>
-                                    </tr>
-                                    {% endfor %}
+                                    {% if treatment.evaluation_data %}
+                                        {% for point in treatment.evaluation_data %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-{{ 'danger' if point.type == 'active' 
+                                                                        else 'warning' if point.type == 'latent' 
+                                                                        else 'info' }}">
+                                                    {{ point.type }}
+                                                </span>
+                                            </td>
+                                            <td>{{ point.muscle }}</td>
+                                            <td>{{ point.intensity }}/10</td>
+                                            <td>{{ point.symptoms }}</td>
+                                            <td>{{ point.referral }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        {% for point in treatment.trigger_points %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-{{ 'danger' if point.type == 'active' 
+                                                                        else 'warning' if point.type == 'latent' 
+                                                                        else 'info' }}">
+                                                    {{ point.type }}
+                                                </span>
+                                            </td>
+                                            <td>{{ point.muscle }}</td>
+                                            <td>{{ point.intensity }}/10</td>
+                                            <td>{{ point.symptoms }}</td>
+                                            <td>{{ point.referral_pattern }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% endif %}
                                 </tbody>
                             </table>
                         </div>
@@ -200,8 +226,36 @@
     display: none;
 }
 
+.body-map-container {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+    position: relative;
+    cursor: crosshair;
+}
+
+.body-map {
+    width: 100%;
+    height: auto;
+    display: block;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+}
+
+.body-map-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10; /* Ensure overlay is above the image */
+}
+
 .trigger-point {
     cursor: pointer;
+    pointer-events: all;
 }
 
 .trigger-point.active {

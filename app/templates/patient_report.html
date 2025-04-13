@@ -4,12 +4,12 @@
 
 {% block content %}
 <div class="container py-4">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
-        <h1 class="h3 mb-3 mb-md-0"><i class="bi bi-file-earmark-text"></i> Treatment Report</h1>
-        <div class="d-flex flex-column flex-md-row gap-2 w-100 w-md-auto">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-file-earmark-text"></i> Treatment Report</h1>
+        <div class="d-flex gap-2">
             {% if all_reports and all_reports|length > 1 %}
-            <div class="dropdown mb-2 mb-md-0 w-100 w-md-auto">
-                <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="reportsDropdown" 
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="reportsDropdown" 
                         data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-clock-history"></i> View Other Reports
                 </button>
@@ -25,16 +25,16 @@
                 </ul>
             </div>
             {% endif %}
-            <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-primary w-100 w-md-auto mb-2 mb-md-0">
+            <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-primary">
                 <i class="bi bi-arrow-left"></i> Back to Patient
             </a>
-            <button class="btn btn-outline-secondary w-100 w-md-auto mb-2 mb-md-0" onclick="window.print()">
+            <button class="btn btn-outline-secondary" onclick="window.print()">
                 <i class="bi bi-printer"></i> Print Report
             </button>
-            <button class="btn btn-outline-success w-100 w-md-auto mb-2 mb-md-0" onclick="exportToPDF()">
+            <button class="btn btn-outline-success" onclick="exportToPDF()">
                 <i class="bi bi-file-earmark-pdf"></i> Export to PDF
             </button>
-            <button class="btn btn-outline-danger w-100 w-md-auto" onclick="deleteReport({{ report.id }})">
+            <button class="btn btn-outline-danger" onclick="deleteReport({{ report.id }})">
                 <i class="bi bi-trash"></i> Delete Report
             </button>
         </div>
@@ -133,39 +133,6 @@
         
         .report-content h3 {
             font-size: 14pt;
-        }
-    }
-    
-    /* Mobile optimization styles */
-    @media (max-width: 768px) {
-        .report-content {
-            font-size: 0.95rem;
-        }
-        
-        .report-content h1 {
-            font-size: 1.5rem;
-        }
-        
-        .report-content h2 {
-            font-size: 1.3rem;
-        }
-        
-        .report-content h3 {
-            font-size: 1.1rem;
-        }
-        
-        .card-header .d-flex {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .card-header .d-flex > div,
-        .card-header .d-flex > span {
-            margin-bottom: 0.5rem;
-        }
-        
-        .patient-summary .row > div {
-            margin-bottom: 1rem;
         }
     }
     

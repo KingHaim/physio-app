@@ -20,16 +20,16 @@
 
     <!-- Patient Header -->
     <div class="row mb-4">
-        <div class="col-md-8 mb-3 mb-md-0">
-            <h1 class="mb-3 h3">{{ patient.name }}</h1>
+        <div class="col-md-8">
+            <h1 class="mb-3">{{ patient.name }}</h1>
             <div class="patient-info mb-3">
                 <p class="mb-1"><strong>Date of Birth:</strong> {{ patient.date_of_birth.strftime('%Y-%m-%d') if patient.date_of_birth else 'Not provided' }}</p>
                 <p class="mb-1"><strong>Contact:</strong> {{ patient.contact }}</p>
                 <p class="mb-1"><strong>Status:</strong> <span class="badge bg-{{ 'success' if patient.status == 'Active' else 'secondary' }}">{{ patient.status }}</span></p>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="d-grid gap-2">
+        <div class="col-md-4 text-md-end">
+            <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end">
                 <a href="{{ url_for('main.edit_patient', id=patient.id) }}" class="btn btn-primary">
                     <i class="bi bi-pencil"></i> Edit Patient
                 </a>
@@ -127,8 +127,8 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                    <h5 class="mb-2 mb-md-0"><i class="bi bi-clipboard-data"></i> Past Treatments</h5>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-data"></i> Past Treatments</h5>
                     <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newTreatmentModal">
                         <i class="bi bi-plus-circle"></i> Add Treatment
                     </button>
@@ -163,26 +163,26 @@
                                             </td>
                                             <td>{{ treatment.treatment_type or 'Unknown' }}</td>
                                             <td>
-                                                <div class="btn-group d-flex d-md-inline-flex flex-wrap">
+                                        <div class="btn-group">
                                                     <a href="{{ url_for('main.view_treatment', id=treatment.id) }}" class="btn btn-sm btn-primary">
-                                                        <i class="bi bi-eye"></i><span class="d-none d-md-inline"> View</span>
+                                                <i class="bi bi-eye"></i> View
                                                     </a>
-                                                    <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-sm btn-secondary">
-                                                        <i class="bi bi-pencil"></i><span class="d-none d-md-inline"> Edit</span>
-                                                    </a>
-                                                </div>
+                                            <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-sm btn-secondary">
+                                                <i class="bi bi-pencil"></i> Edit
+                                            </a>
+                                        </div>
                                             </td>
                                         </tr>
                                         {% endif %}
                                     {% endfor %}
                                 </tbody>
                             </table>
-                        </div>
+                                    </div>
                     {% else %}
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i> No treatments found for this patient.
-                        </div>
-                    {% endif %}
+                                </div>
+                            {% endif %}
                 </div>
             </div>
         </div>
@@ -458,15 +458,15 @@
                                             <option value="therapy-session">Therapy Session (60 min)</option>
                                         </select>
                                         <small class="text-muted">Select the appropriate event type from your Calendly account</small>
-                                    </div>
+                    </div>
                                     
-                                    <div class="mb-3">
+                    <div class="mb-3">
                                         <label for="calendlyLocation" class="form-label">Location</label>
                                         <input type="text" class="form-control" id="calendlyLocation" name="calendly_location" placeholder="e.g. Office, Video Call">
                                         <small class="text-muted">Where will this appointment take place?</small>
-                                    </div>
+                    </div>
                                     
-                                    <div class="mb-3">
+                    <div class="mb-3">
                                         <label for="calendlyAppointmentDate" class="form-label">Preferred Date (Optional)</label>
                                         <input type="date" class="form-control" id="calendlyAppointmentDate" name="appointment_date">
                                         <small class="text-muted">If you have a preferred date in mind, otherwise Calendly will show available slots</small>
@@ -478,12 +478,12 @@
                     
                     <button type="submit" class="btn btn-primary">Add Treatment</button>
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
     </div>
+  </div>
 </div>
 
 <style>
@@ -819,9 +819,9 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
                             throw new Error(data.message || 'Error adding treatment');
                         });
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
+            })
+            .catch(error => {
+                console.error('Error:', error);
                     alert(`Failed to add treatment: ${error.message}`);
                 });
             });
@@ -833,10 +833,10 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
             generateReportBtn.addEventListener('click', function() {
                 // Show confirmation dialog
                 if (confirm('Generate a comprehensive physiotherapy report based on all treatment history?\n\nThis process may take up to 30 seconds as it uses AI to analyze the treatment data.')) {
-                    // Show loading state
-                    const originalText = generateReportBtn.innerHTML;
+                // Show loading state
+                const originalText = generateReportBtn.innerHTML;
                     generateReportBtn.innerHTML = '<i class="bi bi-hourglass-split fa-spin"></i> Generating AI Report...';
-                    generateReportBtn.disabled = true;
+                generateReportBtn.disabled = true;
                     generateReportBtn.classList.add('position-relative');
                     
                     // Add a spinner overlay
@@ -846,33 +846,33 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
                     generateReportBtn.appendChild(spinnerOverlay);
                     
                     // Call the API to generate the report
-                    fetch(`/api/patient/${patientId}/generate-report`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Show success message
+                fetch(`/api/patient/${patientId}/generate-report`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message
                             alert('Report generated successfully! Opening the report now.');
-                            
+                        
                             // Open the report in a new tab/window
                             window.location.href = `/patient/${patientId}/report?report_id=${data.report_id}`;
-                        } else {
-                            // Show error message
-                            alert('Error generating report: ' + data.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred while generating the report.');
-                    })
-                    .finally(() => {
-                        // Reset button state
-                        generateReportBtn.innerHTML = originalText;
-                        generateReportBtn.disabled = false;
+                    } else {
+                        // Show error message
+                        alert('Error generating report: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while generating the report.');
+                })
+                .finally(() => {
+                    // Reset button state
+                    generateReportBtn.innerHTML = originalText;
+                    generateReportBtn.disabled = false;
                         generateReportBtn.classList.remove('position-relative');
                     });
                 }
