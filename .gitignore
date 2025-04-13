@@ -1,7 +1,93 @@
-*.pyc
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Flask stuff
 instance/
+.webassets-cache
 *.db
+*.db-journal
+
+# Environment and credentials
+.env
+.env.*
+.venv
+env/
 venv/
-physio/
+ENV/
+env.bak/
+venv.bak/
+*key*.txt
+*token*.txt
+*credential*.txt
+*secret*.txt
+*password*.txt
+
+# IDE and editor specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.spyderproject
+.spyproject
+.ropeproject
+.project
+.pydevproject
+.settings/
+
+# OS specific files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Logs and databases
+*.log
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*~
+*.swp
+*.tmp
+*.old
+
+# Generated and caches
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# PhysioApp specific
+physio/
+physio_*/
+working_endpoint.txt
+run_with_api_key.sh

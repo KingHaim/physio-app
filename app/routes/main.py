@@ -36,26 +36,20 @@ def index():
     
     # Get today's appointments count
     today_appointments = Treatment.query.filter(
-        func.date(Treatment.next_appointment) == today
+        func.date(Treatment.created_at) == today
     ).count()
     
     # Get upcoming appointments
     upcoming_appointments = Treatment.query.filter(
-        Treatment.next_appointment >= today
-    ).order_by(Treatment.next_appointment).limit(5).all()
+        Treatment.created_at >= today
+    ).order_by(Treatment.created_at).limit(5).all()
     
     # Get recent treatments
     recent_treatments = Treatment.query.order_by(
-        Treatment.date.desc()
+        Treatment.created_at.desc()  # O el nombre correcto de la columna
+
     ).limit(5).all()
     
-    # Convert next_appointment to date objects for comparison
-    for appointment in upcoming_appointments:
-        if appointment.next_appointment:
-            # Store the original datetime
-            appointment.next_appointment_datetime = appointment.next_appointment
-            # Add a date-only attribute for comparison
-            appointment.next_appointment_date = appointment.next_appointment.date()
 
     return render_template('index.html',
                            total_patients=total_patients,
@@ -69,30 +63,46 @@ def index():
                            month_end=month_end)
 @main.route('/api/treatment/<int:id>')
 def get_treatment_details(id):
-    treatment = Treatment.query.get_or_404(id)
+    try:
+        treatment = Treatment.query.get_or_404(id)
+        
+        # Get trigger points for this treatment
+        trigger_points = [{
+            'x': point.location_x,
+            'y': point.location_y,
+            'type': point.type,
+            'muscle': point.muscle,
+            'intensity': point.intensity,
+            'symptoms': point.symptoms,
+            'referral': point.referral_pattern
+        } for point in treatment.trigger_points]
     
-    # Get trigger points for this treatment
-    trigger_points = [{
-        'x': point.location_x,
-        'y': point.location_y,
-        'type': point.type,
-        'muscle': point.muscle,
-        'intensity': point.intensity,
-        'symptoms': point.symptoms,
-        'referral': point.referral_pattern
-    } for point in treatment.trigger_points]
-
-    return jsonify({
-        'id': treatment.id,
-        'date': treatment.date.isoformat(),
-        'description': treatment.description,
-        'progress_notes': treatment.progress_notes,
-        'pain_level': treatment.pain_level,
-        'movement_restriction': treatment.movement_restriction,
-        'evaluation_data': treatment.evaluation_data,
-        'trigger_points': trigger_points,
-        'next_appointment': treatment.next_appointment.isoformat() if treatment.next_appointment else None
-    })
+        # Return all fields that might be needed by the frontend
+        # Include both original field names and mapped field names for backward compatibility
+        return jsonify({
+            'id': treatment.id,
+            'date': treatment.created_at.isoformat() if treatment.created_at else None,
+            'description': treatment.treatment_type,  # For backward compatibility
+            'progress_notes': treatment.notes,        # For backward compatibility
+            'pain_level': treatment.pain_level,
+            'movement_restriction': treatment.movement_restriction,
+            'evaluation_data': treatment.evaluation_data,
+            'trigger_points': trigger_points,
+            'treatment_type': treatment.treatment_type,
+            'provider': treatment.provider,
+            'notes': treatment.notes,
+            'assessment': treatment.assessment,
+            'status': treatment.status,
+            'body_chart_url': treatment.body_chart_url,
+            'patient_id': treatment.patient_id,
+            'patient_name': treatment.patient.name if treatment.patient else None
+        })
+    except Exception as e:
+        print(f"Error getting treatment details: {str(e)}")
+        return jsonify({
+            'error': 'Failed to retrieve treatment details',
+            'message': str(e)
+        }), 500
 
 # In your routes.py file
 from flask import jsonify
@@ -167,6 +177,9 @@ def new_patient():
 @main.route('/patient/<int:id>')
 def patient_detail(id):
     patient = Patient.query.get_or_404(id)
+    print(f"Treatments for patient {patient.name}:")
+    for treatment in patient.treatments:
+        print(f"Treatment Created At: {treatment.created_at}")
     
     # Make sure today is a datetime object with both date and time
     today = datetime.now()
@@ -174,7 +187,7 @@ def patient_detail(id):
     # Automatically mark past treatments as completed
     past_treatments = Treatment.query.filter(
         Treatment.patient_id == id,
-        Treatment.date < today.date(),
+        Treatment.created_at < today,
         Treatment.status == 'Scheduled'
     ).all()
     
@@ -191,13 +204,20 @@ def patient_detail(id):
     print(f"Patient: {patient.name}, ID: {patient.id}")
     print(f"Today: {today}")
     
-    # Check if treatments exist
-    if patient.treatments:
-        print(f"Number of treatments: {len(patient.treatments)}")
-        for t in patient.treatments:
-            print(f"Treatment: {t.id}, Date: {t.date}, Next: {t.next_appointment}")
+    # Check if treatments exist and directly query them to bypass any caching issues
+    direct_treatments = Treatment.query.filter_by(patient_id=id).all()
+    print(f"Direct query found {len(direct_treatments)} treatments for patient {patient.id}")
     
-    return render_template('patient_detail.html', patient=patient, today=today)
+    for t in direct_treatments:
+        print(f"Direct treatment: ID={t.id}, Type={t.treatment_type}, Date={t.created_at}, Status={t.status}")
+    
+    # Use direct queried treatments in the template
+    # This bypasses any possible issues with the relationship loading
+    return render_template('patient_detail.html', 
+                          patient=patient, 
+                          today=today, 
+                          treatments=direct_treatments)
+
 
 @main.route('/patient/<int:patient_id>/treatment', methods=['POST'])
 @login_required
@@ -219,6 +239,25 @@ def add_treatment(patient_id):
     movement_restriction = request.form.get('movement_restriction')
     body_chart_url = request.form.get('body_chart_url')
     
+    # Get trigger points / evaluation data
+    evaluation_data = None
+    if request.form.get('trigger_points_data'):
+        evaluation_data = json.loads(request.form.get('trigger_points_data'))
+    elif request.form.get('evaluation_data'):
+        evaluation_data = json.loads(request.form.get('evaluation_data'))
+    
+    # Get date field if provided
+    date_str = request.form.get('date')
+    created_at = None
+    if date_str:
+        try:
+            created_at = datetime.strptime(date_str, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            # If date parsing fails, use current datetime
+            created_at = datetime.now()
+    else:
+        created_at = datetime.now()
+    
     # Create new treatment
     treatment = Treatment(
         patient_id=patient_id,
@@ -229,14 +268,32 @@ def add_treatment(patient_id):
         provider=provider,
         pain_level=pain_level,  # This can be None
         movement_restriction=movement_restriction,
-        body_chart_url=body_chart_url
+        body_chart_url=body_chart_url,
+        created_at=created_at,
+        evaluation_data=evaluation_data  # Add the evaluation_data
     )
     
     db.session.add(treatment)
     db.session.commit()
     
+    # If we have trigger points data, create those records too
+    if evaluation_data:
+        for point_data in evaluation_data:
+            trigger_point = TriggerPoint(
+                treatment_id=treatment.id,
+                location_x=float(point_data['x']),
+                location_y=float(point_data['y']),
+                type=point_data['type'],
+                muscle=point_data.get('muscle', ''),
+                intensity=int(point_data['intensity']) if point_data.get('intensity') and point_data['intensity'] != '' else None,
+                symptoms=point_data.get('symptoms', ''),
+                referral_pattern=point_data.get('referral', '')
+            )
+            db.session.add(trigger_point)
+        db.session.commit()
+    
     flash('Treatment added successfully', 'success')
-    return redirect(url_for('main.patient_detail', patient_id=patient_id))
+    return redirect(url_for('main.patient_detail', id=patient_id))
 
 @main.route('/appointments')
 def appointments():
@@ -246,8 +303,8 @@ def appointments():
                              (datetime.now() + timedelta(days=30)).date().isoformat())
 
     appointments = Treatment.query.filter(
-        Treatment.next_appointment.between(start_date, end_date)
-    ).order_by(Treatment.next_appointment).all()
+        Treatment.created_at.between(start_date, end_date)
+    ).order_by(Treatment.created_at).all()
 
     patients = Patient.query.filter_by(status='Active').all()
 
@@ -263,14 +320,14 @@ def get_appointments():
     end = request.args.get('end', (datetime.now() + timedelta(days=30)).date().isoformat())
 
     appointments = Treatment.query.filter(
-        Treatment.next_appointment.between(start, end)
+        Treatment.created_at.between(start, end)
     ).all()
 
     events = [{
         'id': apt.id,
-        'title': f"{apt.patient.name} - {apt.description}",
-        'start': apt.next_appointment.isoformat(),
-        'end': (apt.next_appointment + timedelta(minutes=30)).isoformat(),
+        'title': f"{apt.patient.name} - {apt.treatment_type}",
+        'start': apt.created_at.isoformat(),
+        'end': (apt.created_at + timedelta(minutes=30)).isoformat(),
         'color': '#3498db' if apt.status == 'Scheduled' else '#2ecc71'
     } for apt in appointments]
 
@@ -285,12 +342,12 @@ def update_appointment(id):
     elif request.form.get('action') == 'cancel':
         treatment.status = 'Cancelled'
     else:
-        treatment.next_appointment = datetime.strptime(
+        treatment.created_at = datetime.strptime(
             request.form['appointment_datetime'],
             '%Y-%m-%dT%H:%M'
         )
-        treatment.description = request.form['appointment_type']
-        treatment.progress_notes = request.form['notes']
+        treatment.treatment_type = request.form['appointment_type']
+        treatment.notes = request.form['notes']
 
     db.session.commit()
     return jsonify({'success': True})
@@ -302,10 +359,10 @@ def reports():
         active_patients = Patient.query.filter_by(status='Active').count()
 
         monthly_treatments_query = db.session.query(
-            func.strftime('%Y-%m', Treatment.date).label('month'),
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
             func.count(Treatment.id).label('count')
-        ).group_by(func.strftime('%Y-%m', Treatment.date)) \
-            .order_by(func.strftime('%Y-%m', Treatment.date).desc()) \
+        ).group_by(func.strftime('%Y-%m', Treatment.created_at)) \
+            .order_by(func.strftime('%Y-%m', Treatment.created_at).desc()) \
             .limit(12).all()
 
         monthly_treatments = [(row[0], row[1]) for row in monthly_treatments_query]
@@ -328,7 +385,7 @@ def reports():
         recent_activity = (
             Treatment.query
             .join(Patient)
-            .order_by(Treatment.date.desc())
+            .order_by(Treatment.created_at.desc())
             .limit(10)
             .all()
         )
@@ -349,10 +406,10 @@ def reports():
 @main.route('/api/reports/treatments-by-month')
 def treatments_by_month():
     treatments = db.session.query(
-        func.strftime('%Y-%m', Treatment.date).label('month'),
+        func.strftime('%Y-%m', Treatment.created_at).label('month'),
         func.count(Treatment.id).label('count')
-    ).group_by(func.strftime('%Y-%m', Treatment.date)) \
-        .order_by(func.strftime('%Y-%m', Treatment.date)) \
+    ).group_by(func.strftime('%Y-%m', Treatment.created_at)) \
+        .order_by(func.strftime('%Y-%m', Treatment.created_at)) \
         .all()
 
     return jsonify({
@@ -363,7 +420,7 @@ def treatments_by_month():
 @main.route('/patient/<int:id>/treatments')
 def patient_treatments(id):
     patient = Patient.query.get_or_404(id)
-    treatments = Treatment.query.filter_by(patient_id=id).order_by(Treatment.date.desc()).all()
+    treatments = Treatment.query.filter_by(patient_id=id).order_by(Treatment.created_at.desc()).all()
     return render_template('treatments.html', patient=patient, treatments=treatments)
 
 @main.route('/search')
@@ -454,19 +511,32 @@ def edit_treatment(id):
     if request.method == 'POST':
         # Update date field
         if request.form.get('date'):
-            treatment.date = datetime.strptime(request.form['date'], '%Y-%m-%d')
+            treatment.created_at = datetime.strptime(request.form['date'], '%Y-%m-%d')
+
+        # Update treatment_type field
+        if request.form.get('treatment_type'):
+            treatment.treatment_type = request.form['treatment_type']
+        # For backward compatibility - map description to treatment_type if provided
+        elif request.form.get('description'):
+            treatment.treatment_type = request.form['description']
         
-        treatment.description = request.form['description']
-        treatment.progress_notes = request.form['progress_notes']
+        # Update notes field
+        if request.form.get('notes'):
+            treatment.notes = request.form['notes']
+        # For backward compatibility - map progress_notes to notes if provided
+        elif request.form.get('progress_notes'):
+            treatment.notes = request.form['progress_notes']
+            
         treatment.status = request.form['status']
         
-        # Handle next_appointment
-        if request.form.get('next_appointment'):
-            treatment.next_appointment = datetime.strptime(
-                request.form['next_appointment'], '%Y-%m-%d'
+        # Handle created_at
+        if request.form.get('created_at'):
+            treatment.created_at = datetime.strptime(
+                request.form['created_at'], '%Y-%m-%d'
             )
         else:
-            treatment.next_appointment = None
+            # Don't set to None if not provided, keep existing value
+            pass
             
         # Handle pain level if provided
         if request.form.get('pain_level'):
@@ -499,16 +569,54 @@ def edit_treatment(id):
                 db.session.add(trigger_point)
         
         db.session.commit()
-        flash(f'Treatment session on {treatment.date.strftime("%Y-%m-%d")} updated successfully!', 'success')
+        flash(f'Treatment session on {treatment.created_at.strftime("%Y-%m-%d")} updated successfully!', 'success')
         return redirect(url_for('main.patient_detail', id=patient.id))
     
-    return render_template('edit_treatment.html', treatment=treatment, patient=patient)
+    # For GET requests, prepare the data for the template with proper field mapping
+    return render_template('edit_treatment.html', 
+                          treatment={
+                              'id': treatment.id,
+                              'created_at': treatment.created_at,
+                              'description': treatment.treatment_type,  # Map treatment_type to description 
+                              'progress_notes': treatment.notes,        # Map notes to progress_notes
+                              'status': treatment.status,
+                              'pain_level': treatment.pain_level,
+                              'movement_restriction': treatment.movement_restriction,
+                              'evaluation_data': treatment.evaluation_data,
+                              'trigger_points': treatment.trigger_points,
+                              'body_chart_url': treatment.body_chart_url
+                          }, 
+                          patient=patient)
 
 @main.route('/treatment/<int:id>/view')
 def view_treatment(id):
     treatment = Treatment.query.get_or_404(id)
     patient = treatment.patient
-    return render_template('view_treatment.html', treatment=treatment, patient=patient)
+    
+    # Add a debug statement to check what treatment data is available
+    print(f"Viewing treatment {id}: Type={treatment.treatment_type}, Notes={treatment.notes}, Status={treatment.status}")
+    
+    # Create a mapped treatment object that includes both original and mapped fields
+    # This ensures backward compatibility with templates that might use either naming convention
+    mapped_treatment = {
+        'id': treatment.id,
+        'created_at': treatment.created_at,
+        'description': treatment.treatment_type,  # Map treatment_type to description
+        'progress_notes': treatment.notes,        # Map notes to progress_notes
+        'treatment_type': treatment.treatment_type,
+        'notes': treatment.notes,
+        'status': treatment.status,
+        'patient_id': treatment.patient_id,
+        'pain_level': treatment.pain_level,
+        'movement_restriction': treatment.movement_restriction,
+        'assessment': treatment.assessment,
+        'provider': treatment.provider,
+        'body_chart_url': treatment.body_chart_url,
+        'trigger_points': treatment.trigger_points,
+        'evaluation_data': treatment.evaluation_data
+    }
+    
+    return render_template('view_treatment.html', treatment=mapped_treatment, patient=patient)
 
 @main.route('/test/edit-treatment/<int:id>')
 def test_edit_treatment(id):
@@ -518,8 +626,8 @@ def test_edit_treatment(id):
     <body>
         <h1>Test Edit Treatment</h1>
         <p>Treatment ID: {treatment.id}</p>
-        <p>Date: {treatment.date}</p>
-        <p>Description: {treatment.description}</p>
+        <p>Date: {treatment.created_at}</p>
+        <p>Description: {treatment.treatment_type}</p>
         <p>Patient: {treatment.patient.name}</p>
         <a href="/treatment/{treatment.id}/edit">Go to Edit Page</a>
     </body>
@@ -529,21 +637,19 @@ def test_edit_treatment(id):
 @main.route('/patient/<int:id>/edit-treatments')
 def patient_edit_treatments(id):
     patient = Patient.query.get_or_404(id)
-    treatments = Treatment.query.filter_by(patient_id=id).order_by(Treatment.date.desc()).all()
+    treatments = Treatment.query.filter_by(patient_id=id).order_by(Treatment.created_at.desc()).all()
     return render_template('edit_treatments_list.html', patient=patient, treatments=treatments)
 
 @main.route('/admin/fix-calendly-dates')
 def fix_calendly_dates():
     # Get all treatments with "Booked via Calendly" in the notes
     calendly_treatments = Treatment.query.filter(
-        Treatment.progress_notes.like('%Booked via Calendly%')
+        Treatment.notes.like('%Booked via Calendly%')
     ).all()
     
     updated_count = 0
     for treatment in calendly_treatments:
-        if treatment.next_appointment:
-            # Update the date to match the next_appointment date
-            treatment.date = treatment.next_appointment.date()
+        if treatment.created_at:
             updated_count += 1
     
     db.session.commit()
@@ -571,11 +677,11 @@ def analytics():
     one_year_ago = today - timedelta(days=365)
     
     treatments_by_month = db.session.query(
-        func.strftime('%Y-%m', Treatment.date).label('month'),
+        func.strftime('%Y-%m', Treatment.created_at).label('month'),
         func.count(Treatment.id).label('count')
-    ).filter(Treatment.date >= one_year_ago) \
-        .group_by(func.strftime('%Y-%m', Treatment.date)) \
-        .order_by(func.strftime('%Y-%m', Treatment.date)) \
+    ).filter(Treatment.created_at >= one_year_ago) \
+        .group_by(func.strftime('%Y-%m', Treatment.created_at)) \
+        .order_by(func.strftime('%Y-%m', Treatment.created_at)) \
         .all()
     
     # Get patient acquisition by month
@@ -615,3 +721,112 @@ def analytics():
                           patients_by_month=patients_by_month,
                           common_diagnoses=common_diagnoses,
                           avg_treatments=round(avg_treatments, 1))
+
+@main.route('/admin/update-treatments')
+def update_treatments_demo():
+    """Update all treatments with sample data for demonstration purposes."""
+    treatments = Treatment.query.all()
+    
+    treatment_types = [
+        "Initial Assessment", "Follow-up", "Deep Tissue Massage", 
+        "Sports Massage", "Trigger Point Therapy", "Myofascial Release",
+        "Joint Mobilization", "Rehabilitation Exercise", "Manual Therapy"
+    ]
+    
+    assessment_templates = [
+        "Patient presents with {location} pain rated {pain}/10. Range of motion is {rom}.",
+        "Follow-up assessment shows {improvement} improvement since last session. Pain now at {pain}/10.",
+        "Initial evaluation indicates {condition} with associated {symptoms}.",
+        "Patient reports {change} in symptoms since previous treatment."
+    ]
+    
+    notes_templates = [
+        "Treatment focused on {area}. Patient responded well to {technique}.",
+        "Used {technique} on {area}. Patient reported immediate relief.",
+        "Performed {technique}. Recommended home exercises for {area}.",
+        "Patient showed {response} to treatment. Advised to continue with {advice}."
+    ]
+    
+    locations = ["lower back", "neck", "shoulder", "knee", "hip", "ankle", "wrist"]
+    rom_states = ["limited", "moderately restricted", "slightly restricted", "normal"]
+    improvements = ["significant", "moderate", "slight", "minimal"]
+    conditions = ["muscle strain", "joint dysfunction", "postural imbalance", "overuse syndrome"]
+    symptoms = ["pain", "stiffness", "reduced mobility", "muscle spasms", "nerve impingement"]
+    changes = ["improvement", "slight improvement", "no change", "worsening"]
+    areas = ["cervical spine", "lumbar region", "thoracic spine", "shoulder complex", "hip complex", "knee joint"]
+    techniques = ["soft tissue manipulation", "joint mobilization", "trigger point release", "myofascial release", "proprioceptive neuromuscular facilitation"]
+    responses = ["positive response", "good improvement", "moderate improvement", "limited improvement"]
+    advice = ["stretching routine", "strengthening exercises", "postural correction", "activity modification", "rest and ice"]
+    
+    providers = ["Dr. Smith", "Dr. Johnson", "Dr. Williams", "Dr. Brown", "Dr. Jones"]
+    
+    import random
+    from datetime import timedelta
+    
+    count = 0
+    for treatment in treatments:
+        # Only update treatments with default/empty values
+        if treatment.treatment_type == "Unknown" or not treatment.treatment_type:
+            treatment.treatment_type = random.choice(treatment_types)
+            count += 1
+        
+        # Generate assessment if empty
+        if not treatment.assessment:
+            template = random.choice(assessment_templates)
+            pain = treatment.pain_level if treatment.pain_level else random.randint(1, 9)
+            
+            if "{location}" in template:
+                template = template.replace("{location}", random.choice(locations))
+            if "{pain}" in template:
+                template = template.replace("{pain}", str(pain))
+            if "{rom}" in template:
+                template = template.replace("{rom}", random.choice(rom_states))
+            if "{improvement}" in template:
+                template = template.replace("{improvement}", random.choice(improvements))
+            if "{condition}" in template:
+                template = template.replace("{condition}", random.choice(conditions))
+            if "{symptoms}" in template:
+                template = template.replace("{symptoms}", random.choice(symptoms))
+            if "{change}" in template:
+                template = template.replace("{change}", random.choice(changes))
+                
+            treatment.assessment = template
+        
+        # Generate notes if empty
+        if not treatment.notes:
+            template = random.choice(notes_templates)
+            
+            if "{area}" in template:
+                template = template.replace("{area}", random.choice(areas))
+            if "{technique}" in template:
+                template = template.replace("{technique}", random.choice(techniques))
+            if "{response}" in template:
+                template = template.replace("{response}", random.choice(responses))
+            if "{advice}" in template:
+                template = template.replace("{advice}", random.choice(advice))
+                
+            treatment.notes = template
+        
+        # Add provider if empty
+        if not treatment.provider or treatment.provider == "none":
+            treatment.provider = random.choice(providers)
+        
+        # Make sure pain level is set
+        if not treatment.pain_level:
+            treatment.pain_level = random.randint(1, 9)
+        
+        # Set movement restriction if empty
+        if not treatment.movement_restriction or treatment.movement_restriction == "none":
+            treatment.movement_restriction = random.choice(rom_states)
+    
+    db.session.commit()
+    
+    return f"""
+    <html>
+    <body>
+        <h1>Treatment Data Updated</h1>
+        <p>Updated {count} treatment records with meaningful data.</p>
+        <a href="/">Return to Dashboard</a>
+    </body>
+    </html>
+    """

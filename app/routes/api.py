@@ -104,21 +104,20 @@ def sync_calendly_events():
                     db.session.add(patient)
                     db.session.flush()
                 
-                # Check if appointment already exists
+                # Check if appointment already exists based on created_at date/time
                 existing_appointment = Treatment.query.filter_by(
                     patient_id=patient.id,
-                    next_appointment=start_time
+                    created_at=start_time
                 ).first()
                 
                 if not existing_appointment:
                     # Create new appointment (Treatment)
                     appointment = Treatment(
                         patient_id=patient.id,
-                        next_appointment=start_time,
-                        description=event_type,
+                        created_at=start_time,
+                        treatment_type=event_type,
                         status="Scheduled",
-                        progress_notes=f"Booked via Calendly. Duration: {int((end_time - start_time).total_seconds() / 60)} minutes.",
-                        date=start_time.date()
+                        notes=f"Booked via Calendly. Duration: {int((end_time - start_time).total_seconds() / 60)} minutes.",
                     )
                     db.session.add(appointment)
                     synced_count += 1
@@ -220,7 +219,7 @@ def match_calendly_booking():
         
         # Check if there's already a treatment for this appointment
         existing_treatment = Treatment.query.filter_by(
-            next_appointment=booking.start_time,
+            created_at=booking.start_time,
             patient_id=patient_id
         ).first()
         
@@ -228,11 +227,10 @@ def match_calendly_booking():
             # Create a new treatment record
             treatment = Treatment(
                 patient_id=patient_id,
-                date=datetime.now(),
-                description=f"Calendly booking: {booking.event_type}",
-                next_appointment=booking.start_time,
+                created_at=booking.start_time,
+                treatment_type=booking.event_type,
                 status="Scheduled",
-                progress_notes=f"Booked via Calendly. Email: {booking.email}"
+                notes=f"Linked to Calendly booking. Matched by admin user."
             )
             db.session.add(treatment)
         
@@ -322,29 +320,31 @@ def get_treatment(treatment_id):
 
 @api.route('/api/appointment/<int:id>/status', methods=['POST'])
 def update_appointment_status(id):
-    data = request.json
-    status = data.get('status')
-    
-    if not status:
-        return jsonify({'success': False, 'message': 'Status is required'})
-    
     try:
+        data = request.json
+        status = data.get('status')
+        
+        if not status:
+            return jsonify({'success': False, 'error': 'Status not provided'})
+        
         appointment = Treatment.query.get_or_404(id)
         appointment.status = status
         
         # If marking as completed, set the date to today if not already set
-        if status == 'Completed' and not appointment.date:
-            appointment.date = datetime.now().date()
+        if status == 'Completed' and not appointment.created_at:
+            appointment.created_at = datetime.now()
         
         db.session.commit()
         
         return jsonify({
             'success': True,
-            'message': f'Appointment status updated to {status}'
+            'id': appointment.id,
+            'status': appointment.status
         })
+    
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)})
+        return jsonify({'success': False, 'error': str(e)})
 
 @api.route('/api/patient/<int:id>/generate-report', methods=['POST'])
 def generate_patient_report(id):
@@ -359,14 +359,14 @@ def generate_patient_report(id):
         treatments = Treatment.query.filter(
             Treatment.patient_id == id,
             (Treatment.status == 'Completed') | 
-            (Treatment.date < today)  # Consider past treatments as completed
-        ).order_by(Treatment.date).all()
+            (Treatment.created_at < today)  # Consider past treatments as completed
+        ).order_by(Treatment.created_at).all()
         
         if not treatments:
             print(f"No completed or past treatments found for patient {id}")
             
             # Check if there are any treatments at all
-            all_treatments = Treatment.query.filter_by(patient_id=id).order_by(Treatment.date).all()
+            all_treatments = Treatment.query.filter_by(patient_id=id).order_by(Treatment.created_at).all()
             
             if all_treatments:
                 print(f"Using fallback report with {len(all_treatments)} treatments")
@@ -398,60 +398,155 @@ def generate_patient_report(id):
         
         print(f"Found {len(treatments)} completed/past treatments for patient {id}")
         
-        # Prepare the prompt for the AI
-        prompt = f"""
-        Patient Name: {patient.name}
-        Diagnosis: {patient.diagnosis}
-        Treatment Plan: {patient.treatment_plan}
-        
-        Treatment History:
-        """
+        # Extract initial and latest pain levels if available
+        initial_pain = None
+        latest_pain = None
         
         for t in treatments:
+            if t.pain_level is not None:
+                if initial_pain is None:
+                    initial_pain = t.pain_level
+                latest_pain = t.pain_level
+        
+        # Calculate treatment duration
+        first_date = treatments[0].created_at if treatments else None
+        last_date = treatments[-1].created_at if treatments else None
+        treatment_duration = None
+        
+        if first_date and last_date:
+            duration_days = (last_date - first_date).days
+            if duration_days < 7:
+                treatment_duration = f"{duration_days} days"
+            elif duration_days < 30:
+                treatment_duration = f"{duration_days // 7} weeks, {duration_days % 7} days"
+            else:
+                treatment_duration = f"{duration_days // 30} months, {(duration_days % 30) // 7} weeks"
+        
+        # Prepare the prompt for the AI with more structured data
+        prompt = f"""
+        # PATIENT INFORMATION
+        - Patient Name: {patient.name}
+        - Diagnosis: {patient.diagnosis}
+        - Treatment Plan: {patient.treatment_plan}
+        - Total Treatment Sessions: {len(treatments)}
+        - Treatment Duration: {treatment_duration or 'N/A'}
+        - Initial Pain Level: {initial_pain or 'Not recorded'}
+        - Latest Pain Level: {latest_pain or 'Not recorded'}
+        
+        # DETAILED TREATMENT HISTORY
+        """
+        
+        for idx, t in enumerate(treatments, 1):
             prompt += f"""
-            Date: {t.date.strftime('%Y-%m-%d')}
-            Description: {t.description}
-            Progress Notes: {t.progress_notes or 'None'}
-            Pain Level: {t.pain_level or 'Not recorded'}
-            Movement Restriction: {t.movement_restriction or 'None'}
-            Status: {t.status}
+        ## Session {idx}: {t.created_at.strftime('%Y-%m-%d')}
+        - Treatment Type: {t.treatment_type}
+        - Progress Notes: {t.notes or 'None'}
+        - Pain Level: {t.pain_level or 'Not recorded'} / 10
+        - Movement Restriction: {t.movement_restriction or 'None recorded'}
+        - Status: {t.status}
+        """
             
-            """
+            # Include trigger point information if available
+            if hasattr(t, 'trigger_points') and t.trigger_points:
+                prompt += "\n        - Trigger Points:\n"
+                for tp in t.trigger_points:
+                    prompt += f"          * {tp.muscle or 'Unspecified muscle'} (Intensity: {tp.intensity or 'N/A'}/10, Type: {tp.type or 'unspecified'})\n"
+                    if tp.symptoms:
+                        prompt += f"            Symptoms: {tp.symptoms}\n"
         
         prompt += """
-        Based on the above information, please generate a comprehensive physiotherapy treatment progress report. 
-        Include:
-        1. A summary of the patient's condition and progress
-        2. Key observations from the treatment sessions
-        3. Assessment of improvement in pain levels and movement
-        4. Recommendations for continued treatment
+        # REPORT GENERATION INSTRUCTIONS
         
-        Format the report with markdown headings and bullet points for readability.
+        As a professional physiotherapist, please generate a comprehensive physiotherapy treatment progress report based on the above information. The report should include:
         
-        End the report with a signature section that includes:
+        1. PATIENT OVERVIEW: Brief introduction to the patient and their presenting condition
+        
+        2. CLINICAL ASSESSMENT:
+           - Initial assessment findings and baseline measurements
+           - Key impairments identified
+           - Functional limitations observed
+        
+        3. TREATMENT APPROACH:
+           - Overview of physiotherapy interventions provided
+           - Specific techniques and modalities used
+           - Progression of treatment over time
+        
+        4. PROGRESS EVALUATION:
+           - Changes in pain levels with detailed comparison between initial and current state
+           - Improvements in range of motion and functional capacity
+           - Response to specific treatment techniques
+        
+        5. CURRENT STATUS:
+           - Present physical condition
+           - Remaining impairments and functional limitations
+           - Self-management capabilities
+        
+        6. RECOMMENDATIONS:
+           - Required further treatment (if applicable)
+           - Home exercise program suggestions
+           - Activity modifications and ergonomic advice
+           - Preventative strategies to avoid recurrence
+        
+        7. PROGNOSIS:
+           - Expected timeline for full recovery
+           - Factors potentially influencing recovery
+           - Long-term outlook
+        
+        Format the report with clear markdown headings, bullet points, and short paragraphs for optimal readability. Use physiotherapy-specific terminology while ensuring the report remains accessible to the patient and other healthcare providers.
+        
+        End the report with:
         
         ---
         
-        **Haim Ganancia**
-        CostaSpine Physiotherapy Clinic
-        Date: [Current Date]
+        **Haim Ganancia, Physiotherapist**  
+        ICPFA 7595 Clinic  
+        Report Date: {datetime.now().strftime('%Y-%m-%d')}
         """
         
         # Call the DeepSeek API
         api_key = os.environ.get('DEEPSEEK_API_KEY')
         
         if not api_key:
-            print("No DeepSeek API key found")
-            # Generate a fallback report
-            report_content = generate_fallback_report(treatments)
-            report_type = 'Fallback Report (No API Key)'
+            print("No DeepSeek API key found in environment variables")
+            
+            # Try to read from .env file
+            try:
+                with open('.env', 'r') as file:
+                    for line in file:
+                        if line.startswith('DEEPSEEK_API_KEY='):
+                            api_key = line.strip().split('=', 1)[1].strip('"\'')
+                            break
+            except FileNotFoundError:
+                print(".env file not found")
+            
+            if not api_key:
+                print("No DeepSeek API key found in .env file")
+                # Generate a fallback report
+                report_content = generate_fallback_report(treatments)
+                report_type = 'Fallback Report (No API Key)'
         else:
             try:
                 print(f"Calling DeepSeek API for patient {id}")
                 
+                # Get the API endpoint, defaulting to the main endpoint if not specified
+                api_endpoint = os.environ.get('DEEPSEEK_API_ENDPOINT', 'https://api.deepseek.com/v1/chat/completions')
+                
+                # Try to read from working_endpoint.txt if it exists
+                try:
+                    with open('working_endpoint.txt', 'r') as file:
+                        saved_endpoint = file.read().strip()
+                        if saved_endpoint:
+                            api_endpoint = saved_endpoint
+                            print(f"Using saved endpoint from working_endpoint.txt: {api_endpoint}")
+                except FileNotFoundError:
+                    print("No working_endpoint.txt file found, using default or environment endpoint")
+                
+                print(f"Using API endpoint: {api_endpoint}")
+                print(f"Using API key (first 4 chars): {api_key[:4]}...")
+                
                 # Increase timeout to 60 seconds
                 response = requests.post(
-                    "https://api.deepseek.com/v1/chat/completions",
+                    api_endpoint,
                     headers={
                         "Authorization": f"Bearer {api_key}",
                         "Content-Type": "application/json"
@@ -459,22 +554,75 @@ def generate_patient_report(id):
                     json={
                         "model": "deepseek-chat",
                         "messages": [
-                            {"role": "system", "content": "You are a professional physiotherapist creating a treatment progress report."},
+                            {"role": "system", "content": "You are a professional physiotherapist with expertise in creating detailed, evidence-based treatment progress reports. You use precise physiotherapy terminology while ensuring your reports remain clear and accessible."},
                             {"role": "user", "content": prompt}
                         ],
-                        "temperature": 0.7,
-                        "max_tokens": 2000
+                        "temperature": 0.3,  # Lower temperature for more consistent, factual reports
+                        "max_tokens": 4000   # Increased token limit for more detailed reports
                     },
-                    timeout=60  # Increased from 30 to 60 seconds
+                    timeout=90  # Increased timeout for longer reports
                 )
                 
                 print(f"DeepSeek API response status: {response.status_code}")
                 
                 if response.status_code != 200:
                     print(f"Error from DeepSeek API: {response.text}")
-                    # Generate a fallback report
-                    report_content = generate_fallback_report(treatments)
-                    report_type = 'Fallback Report (API Error)'
+                    # Add more detailed error logging
+                    print(f"Full error details: Status: {response.status_code}, Content: {response.content}")
+                    print(f"API Key (first 4 chars): {api_key[:4]}...")
+                    
+                    # Try alternative endpoints if the main one fails
+                    alternative_endpoints = [
+                        "https://api.deepseek.ai/v1/chat/completions",
+                        "https://api.deepseek.com/v1/completions",
+                        "https://api.deepseek.chat/v1/chat/completions"
+                    ]
+                    
+                    # Skip the endpoint we just tried
+                    if api_endpoint in alternative_endpoints:
+                        alternative_endpoints.remove(api_endpoint)
+                    
+                    success = False
+                    for alt_endpoint in alternative_endpoints:
+                        print(f"Trying alternative endpoint: {alt_endpoint}")
+                        try:
+                            alt_response = requests.post(
+                                alt_endpoint,
+                                headers={
+                                    "Authorization": f"Bearer {api_key}",
+                                    "Content-Type": "application/json"
+                                },
+                                json={
+                                    "model": "deepseek-chat",
+                                    "messages": [
+                                        {"role": "system", "content": "You are a professional physiotherapist."},
+                                        {"role": "user", "content": prompt}
+                                    ],
+                                    "temperature": 0.3,
+                                    "max_tokens": 4000
+                                },
+                                timeout=90
+                            )
+                            
+                            if alt_response.status_code == 200:
+                                print(f"Successfully connected to alternative endpoint: {alt_endpoint}")
+                                response = alt_response
+                                success = True
+                                
+                                # Save the working endpoint for future use
+                                with open('working_endpoint.txt', 'w') as file:
+                                    file.write(alt_endpoint)
+                                    
+                                break
+                            else:
+                                print(f"Alternative endpoint failed: {alt_response.status_code} - {alt_response.text}")
+                        except Exception as alt_e:
+                            print(f"Error with alternative endpoint: {str(alt_e)}")
+                    
+                    if not success:
+                        # Generate a fallback report
+                        report_content = generate_fallback_report(treatments)
+                        report_type = 'Fallback Report (API Error)'
                 else:
                     # Extract the report content
                     try:
@@ -528,39 +676,103 @@ def generate_fallback_report(treatments):
     """Generate a simple report if the API fails"""
     today = datetime.now().strftime('%Y-%m-%d')
     
-    content = """# Treatment Progress Report
-
-## Summary
-This is an automatically generated summary of the treatment history.
-
-## Treatment History
-"""
+    # Extract initial and latest pain levels
+    initial_pain = None
+    latest_pain = None
+    pain_trend = "N/A"
     
     for t in treatments:
+        if t.pain_level is not None:
+            if initial_pain is None:
+                initial_pain = t.pain_level
+            latest_pain = t.pain_level
+    
+    if initial_pain is not None and latest_pain is not None:
+        if latest_pain < initial_pain:
+            pain_diff = initial_pain - latest_pain
+            pain_trend = f"Improved by {pain_diff} points"
+        elif latest_pain > initial_pain:
+            pain_diff = latest_pain - initial_pain
+            pain_trend = f"Worsened by {pain_diff} points"
+        else:
+            pain_trend = "Remained stable"
+    
+    # Calculate treatment duration
+    first_date = treatments[0].created_at.strftime('%Y-%m-%d') if treatments else "N/A"
+    last_date = treatments[-1].created_at.strftime('%Y-%m-%d') if treatments else "N/A"
+    
+    treatment_duration = "N/A"
+    if len(treatments) > 1:
+        days = (treatments[-1].created_at - treatments[0].created_at).days
+        if days < 7:
+            treatment_duration = f"{days} days"
+        elif days < 30:
+            treatment_duration = f"{days // 7} weeks, {days % 7} days"
+        else:
+            treatment_duration = f"{days // 30} months, {(days % 30) // 7} weeks"
+    
+    # Count treatment types
+    treatment_types = {}
+    for t in treatments:
+        t_type = t.treatment_type
+        if t_type in treatment_types:
+            treatment_types[t_type] += 1
+        else:
+            treatment_types[t_type] = 1
+            
+    # Format most used treatment types
+    treatment_summary = "\n".join([f"- {t_type}: {count} session(s)" for t_type, count in sorted(treatment_types.items(), key=lambda x: x[1], reverse=True)])
+    
+    content = f"""# Physiotherapy Treatment Report
+
+## Summary
+This automatically generated report summarizes the physiotherapy treatment history. This is a basic report generated when AI report generation is unavailable.
+
+## Patient Treatment Overview
+- **Treatment Period**: {first_date} to {last_date}
+- **Duration**: {treatment_duration}
+- **Total Sessions**: {len(treatments)}
+- **Initial Pain Level**: {initial_pain if initial_pain is not None else 'Not recorded'}/10
+- **Current Pain Level**: {latest_pain if latest_pain is not None else 'Not recorded'}/10
+- **Pain Trend**: {pain_trend}
+
+## Treatment Approaches
+{treatment_summary}
+
+## Detailed Treatment History
+"""
+    
+    for idx, t in enumerate(treatments, 1):
+        session_date = t.created_at.strftime('%Y-%m-%d')
         content += f"""
-### Session on {t.date.strftime('%Y-%m-%d')}
+### Session {idx}: {session_date}
 
-**Description:** {t.description}
+**Treatment Type:** {t.treatment_type}
 
-**Progress Notes:** {t.progress_notes or 'None recorded'}
+**Progress Notes:** {t.notes or 'None recorded'}
 
-**Pain Level:** {t.pain_level or 'Not recorded'}
+**Pain Level:** {t.pain_level if t.pain_level is not None else 'Not recorded'}/10
 
 **Movement Restriction:** {t.movement_restriction or 'None recorded'}
 
----
+**Status:** {t.status}
 """
+        # Add trigger point information if available
+        if hasattr(t, 'trigger_points') and t.trigger_points:
+            content += "\n**Trigger Points Addressed:**\n"
+            for tp in t.trigger_points:
+                content += f"- {tp.muscle or 'Unspecified muscle'} (Intensity: {tp.intensity or 'N/A'}/10, Type: {tp.type or 'unspecified'})\n"
     
-    content += """
+    content += f"""
 ## Recommendations
-
-Please consult with your physiotherapist for personalized recommendations based on your treatment progress.
+Based on the treatment history, it is recommended to continue with the therapeutic approaches that have shown positive outcomes. Follow-up sessions may be necessary to maintain progress and prevent recurrence of symptoms.
 
 ---
 
-**Haim Ganancia**  
+**Haim Ganancia, PT**  
 CostaSpine Physiotherapy Clinic  
-Date: """ + today
+Report Date: {today}
+"""
     
     return content
 
@@ -572,7 +784,7 @@ def mark_past_as_completed(id):
         # Find all past treatments that aren't already completed
         past_treatments = Treatment.query.filter(
             Treatment.patient_id == id,
-            Treatment.date < today,
+            Treatment.created_at < today,
             Treatment.status != 'Completed'
         ).all()
         
@@ -645,11 +857,10 @@ def calendly_webhook():
             # Create a treatment record
             treatment = Treatment(
                 patient_id=patient.id,
-                date=datetime.now(),
-                description=f"Calendly booking: {booking.event_type}",
-                next_appointment=booking.start_time,
+                created_at=booking.start_time,
+                treatment_type=booking.event_type,
                 status="Scheduled",
-                progress_notes=f"Automatically matched from Calendly. Email: {booking.email}"
+                notes=f"Linked to Calendly booking. Matched by admin user."
             )
             
             db.session.add(treatment)
@@ -688,7 +899,7 @@ def sync_calendly_appointments():
                 
                 # Check if there's already a treatment for this appointment
                 existing_treatment = Treatment.query.filter_by(
-                    next_appointment=booking.start_time,
+                    created_at=booking.start_time,
                     patient_id=patient.id
                 ).first()
                 
@@ -696,11 +907,10 @@ def sync_calendly_appointments():
                     # Create a new treatment record
                     treatment = Treatment(
                         patient_id=patient.id,
-                        date=datetime.now(),
-                        description=f"Calendly booking: {booking.event_type}",
-                        next_appointment=booking.start_time,
+                        created_at=booking.start_time,
+                        treatment_type=booking.event_type,
                         status="Scheduled",
-                        progress_notes=f"Automatically matched from Calendly. Email: {booking.email}"
+                        notes=f"Linked to Calendly booking. Matched by admin user."
                     )
                     
                     db.session.add(treatment)
@@ -799,3 +1009,32 @@ def create_treatment():
     db.session.commit()
     
     return jsonify({'success': True, 'id': treatment.id})
+
+@api.route('/api/report/<int:id>', methods=['DELETE'])
+@login_required
+def delete_report(id):
+    """Delete a patient report by ID"""
+    try:
+        # Find the report
+        report = PatientReport.query.get_or_404(id)
+        
+        # Get the patient ID for permission checking if needed
+        patient_id = report.patient_id
+        
+        # Delete the report
+        db.session.delete(report)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Report {id} successfully deleted',
+            'patient_id': patient_id
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting report: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500

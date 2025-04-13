@@ -17,7 +17,7 @@
                             <h6>Basic Information</h6>
                             <dl class="row">
                                 <dt class="col-sm-4">Date</dt>
-                                <dd class="col-sm-8">{{ treatment.date.strftime('%Y-%m-%d') }}</dd>
+                                <dd class="col-sm-8">{{ treatment.created_at.strftime('%Y-%m-%d') }}</dd>
 
                                 <dt class="col-sm-4">Pain Level</dt>
                                 <dd class="col-sm-8">
@@ -40,10 +40,10 @@
                             </dl>
 
                             <h6 class="mt-4">Description</h6>
-                            <p>{{ treatment.description }}</p>
+                            <p>{{ treatment.treatment_type }}</p>
 
                             <h6 class="mt-4">Progress Notes</h6>
-                            <p>{{ treatment.progress_notes }}</p>
+                            <p>{{ treatment.notes }}</p>
                         </div>
 
                         <div class="col-md-6">
@@ -142,15 +142,15 @@
                 </div>
                 <div class="card-body">
                     <div class="timeline">
-                        {% for t in treatment.patient.treatments|sort(attribute='date', reverse=true) %}
+                        {% for t in treatment.patient.treatments|sort(attribute='created_at', reverse=true) %}
                         <div class="timeline-item">
                             <div class="timeline-marker {{ 'bg-primary' if t.id == treatment.id else '' }}"></div>
                             <div class="timeline-content">
                                 <div class="d-flex justify-content-between">
-                                    <small>{{ t.date.strftime('%Y-%m-%d') }}</small>
+                                    <small>{{ t.created_at.strftime('%Y-%m-%d') }}</small>
                                     <small>Pain: {{ t.pain_level }}/10</small>
                                 </div>
-                                <p class="mb-0">{{ t.description }}</p>
+                                <p class="mb-0">{{ t.treatment_type }}</p>
                                 {% if t.id == treatment.id %}
                                 <span class="badge bg-primary">Current</span>
                                 {% endif %}

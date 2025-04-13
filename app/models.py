@@ -29,6 +29,7 @@ class Treatment(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
     body_chart_url = db.Column(db.String(255))
+    #next_appointment = db.Column(db.Date)
     
     # New fields
     pain_level = db.Column(db.Integer)

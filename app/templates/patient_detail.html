@@ -20,21 +20,21 @@
 
     <!-- Patient Header -->
     <div class="row mb-4">
-        <div class="col-md-8">
-            <h1 class="mb-3">{{ patient.name }}</h1>
+        <div class="col-md-8 mb-3 mb-md-0">
+            <h1 class="mb-3 h3">{{ patient.name }}</h1>
             <div class="patient-info mb-3">
                 <p class="mb-1"><strong>Date of Birth:</strong> {{ patient.date_of_birth.strftime('%Y-%m-%d') if patient.date_of_birth else 'Not provided' }}</p>
                 <p class="mb-1"><strong>Contact:</strong> {{ patient.contact }}</p>
                 <p class="mb-1"><strong>Status:</strong> <span class="badge bg-{{ 'success' if patient.status == 'Active' else 'secondary' }}">{{ patient.status }}</span></p>
             </div>
         </div>
-        <div class="col-md-4 text-md-end">
-            <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end">
+        <div class="col-md-4">
+            <div class="d-grid gap-2">
                 <a href="{{ url_for('main.edit_patient', id=patient.id) }}" class="btn btn-primary">
                     <i class="bi bi-pencil"></i> Edit Patient
                 </a>
-                <button id="generateReportBtn" class="btn btn-info">
-                    <i class="bi bi-file-earmark-text"></i> Generate Report
+                <button id="generateReportBtn" class="btn btn-success">
+                    <i class="bi bi-file-earmark-text"></i> Generate AI Report
                 </button>
                 <a href="{{ url_for('main.patient_report', id=patient.id) }}" class="btn btn-outline-secondary">
                     <i class="bi bi-file-text"></i> View Latest Report
@@ -79,27 +79,27 @@
                 </div>
                 <div class="card-body">
                     {% set has_upcoming = false %}
-                    {% for treatment in patient.treatments|sort(attribute='next_appointment') %}
-                        {% if treatment.next_appointment and treatment.status != 'Cancelled' %}
-                            {% if (today is defined and treatment.next_appointment >= today) or (treatment.next_appointment and treatment.next_appointment.date() >= today.date()) %}
+                    {% for treatment in treatments|sort(attribute='created_at') %}
+                        {% if treatment.created_at and treatment.status != 'Cancelled' %}
+                            {% if (today is defined and treatment.created_at >= today) or (treatment.created_at and treatment.created_at.date() >= today.date()) %}
                                 {% set has_upcoming = true %}
                                 <div class="upcoming-session p-3 mb-3 border rounded">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h6 class="mb-1">{{ treatment.description }}</h6>
+                                            <h6 class="mb-1">{{ treatment.treatment_type }}</h6>
                                             <p class="mb-1">
                                                 <strong>Date:</strong> 
-                                                {% if treatment.next_appointment %}
-                                                    {% if today is defined and treatment.next_appointment.date() == today.date() %}
-                                                        <span class="badge bg-success">Today</span> {{ treatment.next_appointment.strftime('%H:%M') }}
+                                                {% if treatment.created_at %}
+                                                    {% if today is defined and treatment.created_at.date() == today.date() %}
+                                                        <span class="badge bg-success">Today</span> {{ treatment.created_at.strftime('%H:%M') }}
                                                     {% else %}
-                                                        {{ treatment.next_appointment.strftime('%Y-%m-%d %H:%M') }}
+                                                        {{ treatment.created_at.strftime('%Y-%m-%d %H:%M') }}
                                                     {% endif %}
                                                 {% else %}
                                                     <span class="text-muted">No date set</span>
                                                 {% endif %}
                                             </p>
-                                            <p class="mb-0 text-muted small">{{ treatment.progress_notes|truncate(100) }}</p>
+                                            <p class="mb-0 text-muted small">{{ treatment.notes|truncate(100) if treatment.notes else 'No notes available' }}</p>
                                         </div>
                                         <div class="btn-group">
                                             <button class="btn btn-sm btn-primary view-treatment-btn" data-treatment-id="{{ treatment.id }}">
@@ -127,63 +127,132 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-clipboard-data"></i> Treatment History</h5>
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                    <h5 class="mb-2 mb-md-0"><i class="bi bi-clipboard-data"></i> Past Treatments</h5>
                     <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newTreatmentModal">
                         <i class="bi bi-plus-circle"></i> Add Treatment
                     </button>
                 </div>
                 <div class="card-body">
-                    {% set has_history = false %}
-                    {% for treatment in patient.treatments|sort(attribute='date', reverse=true) %}
-                        {% if treatment.date %}
-                            {% if (not treatment.next_appointment) or 
-                                  (today is defined and treatment.next_appointment < today) or 
-                                  (treatment.next_appointment and treatment.next_appointment.date() < today.date()) or 
-                                  treatment.status == 'Completed' %}
-                                {% set has_history = true %}
-                                <div class="treatment-entry p-3 mb-3 border rounded">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">{{ treatment.description }}</h6>
-                                            <p class="mb-1">
-                                                <strong>Date:</strong> 
-                                                {% if treatment.date %}
-                                                    {% if today is defined and treatment.date.date() == today.date() %}
-                                                        <span class="badge bg-success">Today</span>
-                                                    {% else %}
-                                                        {{ treatment.date.strftime('%Y-%m-%d') }}
-                                                    {% endif %}
-                                                {% else %}
-                                                    <span class="text-muted">No date set</span>
-                                                {% endif %}
-                                                <span class="badge bg-{{ treatment.status|lower|replace(' ', '-') }}">{{ treatment.status }}</span>
-                                            </p>
-                                            <p class="mb-0 text-muted small">{{ treatment.progress_notes|truncate(100) }}</p>
-                                        </div>
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-primary view-treatment-btn" data-treatment-id="{{ treatment.id }}">
-                                                <i class="bi bi-eye"></i> View
-                                            </button>
-                                            <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-sm btn-secondary">
-                                                <i class="bi bi-pencil"></i> Edit
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        {% endif %}
-                    {% endfor %}
+                    <!-- Debug information to check patient treatments are loaded -->
+                    <p class="text-muted small">Total treatments for this patient: {{ treatments|length }}</p>
+                    <!-- Note about past treatments -->
+                    <p class="text-muted small">Showing treatments completed on or before today ({{ today.strftime('%Y-%m-%d') }})</p>
                     
-                    {% if not has_history %}
-                        <p class="text-muted">No treatment history available.</p>
+                    <!-- Simple, direct treatment listing without modals -->
+                    {% if treatments|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Treatment Type</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for treatment in treatments|sort(attribute='created_at', reverse=true) %}
+                                        {% if treatment.created_at and treatment.created_at <= today %}
+                                        <tr>
+                                            <td>
+                                                {% if treatment.created_at %}
+                                                    {{ treatment.created_at.strftime('%-d') }}{% if treatment.created_at.day in [1, 21, 31] %}st{% elif treatment.created_at.day in [2, 22] %}nd{% elif treatment.created_at.day in [3, 23] %}rd{% else %}th{% endif %} {{ treatment.created_at.strftime('%B %y') }}
+                                                {% else %}
+                                                    <span class="text-muted">No date</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ treatment.treatment_type or 'Unknown' }}</td>
+                                            <td>
+                                                <div class="btn-group d-flex d-md-inline-flex flex-wrap">
+                                                    <a href="{{ url_for('main.view_treatment', id=treatment.id) }}" class="btn btn-sm btn-primary">
+                                                        <i class="bi bi-eye"></i><span class="d-none d-md-inline"> View</span>
+                                                    </a>
+                                                    <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-sm btn-secondary">
+                                                        <i class="bi bi-pencil"></i><span class="d-none d-md-inline"> Edit</span>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> No treatments found for this patient.
+                        </div>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Add this section after the Treatment History section -->
+    <!-- Upcoming Treatments Section -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Upcoming Treatments</h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newTreatmentModal">
+                        <i class="bi bi-plus-circle"></i> Schedule Treatment
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% set future_treatments = [] %}
+                    {% for treatment in treatments %}
+                        {% if treatment.created_at and treatment.created_at > today %}
+                            {% set future_treatments = future_treatments + [treatment] %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if future_treatments|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Treatment Type</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for treatment in future_treatments|sort(attribute='created_at') %}
+                                        <tr>
+                                            <td>
+                                                {% if treatment.created_at %}
+                                                    {{ treatment.created_at.strftime('%-d') }}{% if treatment.created_at.day in [1, 21, 31] %}st{% elif treatment.created_at.day in [2, 22] %}nd{% elif treatment.created_at.day in [3, 23] %}rd{% else %}th{% endif %} {{ treatment.created_at.strftime('%B %y') }}
+                                                {% else %}
+                                                    <span class="text-muted">No date</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ treatment.treatment_type or 'Unknown' }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="{{ url_for('main.view_treatment', id=treatment.id) }}" class="btn btn-sm btn-primary">
+                                                        <i class="bi bi-eye"></i> View
+                                                    </a>
+                                                    <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-sm btn-secondary">
+                                                        <i class="bi bi-pencil"></i> Edit
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> No upcoming treatments scheduled.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Section -->
     <div class="row mt-4">
         <div class="col-md-12">
             <div class="card">
@@ -267,12 +336,12 @@
             <div class="modal-body">
                 <form id="treatmentForm">
                     <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <input type="text" class="form-control" id="description" name="description" required>
+                        <label for="treatment_type" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="treatment_type" name="treatment_type">
                     </div>
                     <div class="mb-3">
                         <label for="date" class="form-label">Date</label>
-                        <input type="datetime-local" class="form-control" id="date" name="date" required>
+                        <input type="hidden" id="date" name="date">
                     </div>
                     <div class="mb-3">
                         <label for="pain_level" class="form-label">Pain Level (0-10)</label>
@@ -283,13 +352,67 @@
                         <label for="movement_restriction" class="form-label">Movement Restriction</label>
                         <textarea class="form-control" id="movement_restriction" name="movement_restriction" rows="3"></textarea>
                     </div>
+                    
+                    <!-- Body Chart Section -->
                     <div class="mb-3">
-                        <label for="progress_notes" class="form-label">Progress Notes</label>
-                        <textarea class="form-control" id="progress_notes" name="progress_notes" rows="3"></textarea>
+                        <label class="form-label">Body Chart</label>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">Add Trigger Points</h6>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-danger active" data-point-type="active">Active</button>
+                                        <button type="button" class="btn btn-outline-warning" data-point-type="latent">Latent</button>
+                                        <button type="button" class="btn btn-outline-info" data-point-type="satellite">Satellite</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="body-map-container">
+                                    <img src="{{ url_for('static', filename='images/bodychart.svg') }}" class="body-map" id="bodyMapImageAdd" alt="Body chart">
+                                    <svg class="body-map-overlay" id="bodyMapOverlayAdd" viewBox="0 0 500 800" xmlns="http://www.w3.org/2000/svg">
+                                        <g id="addTriggerPoints"></g>
+                                    </svg>
+                                </div>
+                                <div class="text-muted small mt-2">Click on the body map to add trigger points</div>
+                                
+                                <!-- Trigger Points Table -->
+                                <div class="mt-3">
+                                    <h6>Trigger Points</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Type</th>
+                                                    <th>Muscle</th>
+                                                    <th>Intensity</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="addPointsTableBody">
+                                                <!-- Trigger points will be added here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden input to store trigger points data -->
+                    <input type="hidden" id="addTriggerPointsData" name="trigger_points_data" value="[]">
+                    
+                    <div class="mb-3">
+                        <label for="assessment" class="form-label">Assessment</label>
+                        <textarea class="form-control" id="assessment" name="assessment" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Progress Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
                     </div>
                     <div class="mb-3">
                         <label for="status" class="form-label">Status</label>
-                        <select class="form-select" id="status" name="status" required>
+                        <select class="form-select" id="status" name="status">
                             <option value="" disabled selected>Select status</option>
                             <option value="Scheduled">Scheduled</option>
                             <option value="In Progress">In Progress</option>
@@ -305,18 +428,54 @@
                         <label for="provider" class="form-label">Provider</label>
                         <input type="text" class="form-control" id="provider" name="provider">
                     </div>
+                    
+                    <!-- Calendly Integration Section -->
                     <div class="mb-3">
-                        <label for="assessment" class="form-label">Assessment</label>
-                        <textarea class="form-control" id="assessment" name="assessment" rows="3"></textarea>
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-calendar-check"></i> Calendly Integration</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info mb-3">
+                                    <strong>Note:</strong> Your appointment can be booked through Calendly scheduling.
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="syncWithCalendly" name="sync_with_calendly" value="true">
+                                    <label class="form-check-label" for="syncWithCalendly">
+                                        <strong>Enable Calendly scheduling for this appointment</strong>
+                                    </label>
+                                </div>
+                                
+                                <!-- Calendly options that appear when checkbox is checked -->
+                                <div id="calendlyOptions" class="mt-3" style="display: none;">
+                                    <div class="mb-3">
+                                        <label for="calendlyEventType" class="form-label">Event Type</label>
+                                        <select class="form-select" id="calendlyEventType" name="calendly_event_type">
+                                            <option value="" selected>Select Calendly event type</option>
+                                            <option value="initial-consultation">Initial Consultation (30 min)</option>
+                                            <option value="follow-up">Follow-up Session (45 min)</option>
+                                            <option value="therapy-session">Therapy Session (60 min)</option>
+                                        </select>
+                                        <small class="text-muted">Select the appropriate event type from your Calendly account</small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="calendlyLocation" class="form-label">Location</label>
+                                        <input type="text" class="form-control" id="calendlyLocation" name="calendly_location" placeholder="e.g. Office, Video Call">
+                                        <small class="text-muted">Where will this appointment take place?</small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="calendlyAppointmentDate" class="form-label">Preferred Date (Optional)</label>
+                                        <input type="date" class="form-control" id="calendlyAppointmentDate" name="appointment_date">
+                                        <small class="text-muted">If you have a preferred date in mind, otherwise Calendly will show available slots</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="notes" class="form-label">Notes</label>
-                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="body_chart_url" class="form-label">Body Chart URL</label>
-                        <input type="text" class="form-control" id="body_chart_url" name="body_chart_url">
-                    </div>
+                    
                     <button type="submit" class="btn btn-primary">Add Treatment</button>
                 </form>
             </div>
@@ -325,69 +484,6 @@
             </div>
         </div>
     </div>
-</div>
-
-<!-- Find the treatment view modal in patient_detail.html and add this code -->
-<div class="modal fade" id="treatmentViewModal" tabindex="-1" aria-labelledby="treatmentViewModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="treatmentViewModalLabel">Treatment Details</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <!-- Treatment details -->
-        <div class="row mb-4">
-          <div class="col-md-6">
-            <h6>Treatment Information</h6>
-            <table class="table table-sm">
-              <tr>
-                <th>Date:</th>
-                <td id="view-treatment-date"></td>
-              </tr>
-              <tr>
-                <th>Type:</th>
-                <td id="view-treatment-type"></td>
-              </tr>
-              <tr>
-                <th>Status:</th>
-                <td id="view-treatment-status"></td>
-              </tr>
-              <tr>
-                <th>Provider:</th>
-                <td id="view-treatment-provider"></td>
-              </tr>
-            </table>
-          </div>
-          <div class="col-md-6">
-            <h6>Assessment</h6>
-            <p id="view-treatment-assessment" class="border p-2 rounded bg-light" style="min-height: 100px;"></p>
-          </div>
-        </div>
-        
-        <!-- Body Chart Section - Add this new section -->
-        <div class="row mb-4">
-          <div class="col-12">
-            <h6>Body Chart</h6>
-            <div class="text-center">
-              <img id="view-body-chart" src="" alt="Body Chart" class="img-fluid border rounded" style="max-height: 400px;">
-              <p class="text-muted small mt-2" id="no-body-chart-message">No body chart available for this treatment.</p>
-            </div>
-          </div>
-        </div>
-        
-        <div class="row">
-          <div class="col-12">
-            <h6>Notes</h6>
-            <p id="view-treatment-notes" class="border p-2 rounded bg-light" style="min-height: 100px;"></p>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <style>
@@ -402,10 +498,11 @@
     
     .treatment-entry {
         transition: background-color 0.2s;
+        background-color: white;
     }
     
     .treatment-entry:hover {
-        background-color: #f8f9fa;
+        background-color: #f0f8ff;
     }
     
     .badge.bg-scheduled {
@@ -413,7 +510,7 @@
     }
     
     .badge.bg-completed {
-        background-color: #3498db;
+        background-color: #28a745;
     }
     
     .badge.bg-cancelled {
@@ -423,203 +520,391 @@
     .badge.bg-in-progress {
         background-color: #fd7e14;
     }
+
+    #treatmentsList {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    
+    /* Body Chart Styles */
+    .body-map-container {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+        position: relative;
+        cursor: crosshair;
+    }
+    
+    .body-map {
+        width: 100%;
+        height: auto;
+        display: block;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+    }
+    
+    .body-map-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 10; /* Ensure overlay is above the image */
+    }
+    
+    .trigger-point {
+        cursor: pointer;
+        transition: r 0.2s ease;
+        pointer-events: all;
+    }
 </style>
 
 <script>
     // Define patient ID for use in JavaScript
     const patientId = parseInt("{{ patient.id }}");
     
-    // Function to view treatment details
-    function viewTreatmentDetails(treatmentId) {
-        // Fetch treatment details
-        fetch(`/api/treatment/${treatmentId}`)
-            .then(response => response.json())
-            .then(data => {
-                // Populate modal with treatment data
-                document.getElementById('treatmentDate').textContent = data.date;
-                document.getElementById('treatmentDescription').textContent = data.description;
-                document.getElementById('treatmentStatus').textContent = data.status;
-                document.getElementById('treatmentNotes').textContent = data.progress_notes || 'No notes available';
-                
-                // Set pain level if available
-                const painLevel = document.getElementById('treatmentPainLevel');
-                if (painLevel) {
-                    painLevel.textContent = data.pain_level ? data.pain_level + '/10' : 'Not recorded';
-                }
-                
-                // Set movement restriction if available
-                const movementRestriction = document.getElementById('treatmentMovementRestriction');
-                if (movementRestriction) {
-                    movementRestriction.textContent = data.movement_restriction || 'None recorded';
-                }
-                
-                // Set the edit button URL
-                const editBtn = document.getElementById('editTreatmentBtn');
-                if (editBtn) {
-                    editBtn.href = `/treatment/${treatmentId}/edit`;
-                }
-                
-                // Show the modal
-                const modal = new bootstrap.Modal(document.getElementById('treatmentDetailModal'));
-                modal.show();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to load treatment details.');
-            });
-    }
-
+    // Add treatment form submission handler
     document.addEventListener('DOMContentLoaded', function() {
-        // Add event listeners to all view treatment buttons
-        document.querySelectorAll('.view-treatment-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const treatmentId = this.getAttribute('data-treatment-id');
-                viewTreatmentDetails(treatmentId);
+        // Trigger point management for the add treatment form
+        let addTriggerPoints = [];
+        let addPointIdCounter = 1;
+        let currentPointType = 'active';
+        
+        // Point type selection
+        const pointTypeButtons = document.querySelectorAll('[data-point-type]');
+        pointTypeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                pointTypeButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentPointType = this.dataset.pointType;
             });
         });
-    });
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const generateReportBtn = document.getElementById('generateReportBtn');
         
-        if (generateReportBtn) {
-            generateReportBtn.addEventListener('click', function() {
-                // Show loading state
-                const originalText = generateReportBtn.innerHTML;
-                generateReportBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
-                generateReportBtn.disabled = true;
+        // Get color for point type
+        function getPointColor(type) {
+            switch(type) {
+                case 'active': return '#dc3545';
+                case 'latent': return '#ffc107';
+                case 'satellite': return '#17a2b8';
+                default: return '#dc3545';
+            }
+        }
+        
+        // Create table row for a point
+        function createTableRow(point) {
+            const row = document.createElement('tr');
+            row.dataset.pointId = point.id;
+            
+            row.innerHTML = `
+                <td>
+                    <span class="badge bg-${point.type === 'active' ? 'danger' : (point.type === 'latent' ? 'warning' : 'info')}">
+                        ${point.type}
+                    </span>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm" onchange="updateAddPointData('${point.id}', 'muscle', this.value)">
+                        <option value="">Select muscle</option>
+                        <option value="Trapezius" ${point.muscle === 'Trapezius' ? 'selected' : ''}>Trapezius</option>
+                        <option value="Levator Scapulae" ${point.muscle === 'Levator Scapulae' ? 'selected' : ''}>Levator Scapulae</option>
+                        <option value="Rhomboids" ${point.muscle === 'Rhomboids' ? 'selected' : ''}>Rhomboids</option>
+                        <option value="Deltoid" ${point.muscle === 'Deltoid' ? 'selected' : ''}>Deltoid</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" min="1" max="10" 
+                           onchange="updateAddPointData('${point.id}', 'intensity', this.value)" value="${point.intensity || ''}"
+                           placeholder="1-10">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeAddPoint('${point.id}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            return row;
+        }
+        
+        // Add point to both SVG and table
+        function addNewPoint(x, y, type = currentPointType, existingData = null) {
+            const pointId = existingData ? existingData.id : `point-${addPointIdCounter++}`;
+            const pointData = existingData || {
+                id: pointId,
+                x: Math.round(x),
+                y: Math.round(y),
+                type: type,
+                intensity: '',
+                muscle: '',
+                symptoms: '',
+                referral: ''
+            };
+            
+            // Check if this point already exists to prevent duplicates
+            if (!existingData && addTriggerPoints.some(p => p.id === pointId)) {
+                console.warn('Point already exists:', pointId);
+                return;
+            }
+            
+            // Create SVG point
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", pointData.x);
+            circle.setAttribute("cy", pointData.y);
+            
+            // Make lower points larger and add stroke
+            const isLowerPoint = pointData.y > 400;
+            circle.setAttribute("r", isLowerPoint ? "7" : "4");
+            
+            circle.setAttribute("fill", getPointColor(pointData.type));
+            circle.setAttribute("class", "trigger-point");
+            circle.setAttribute("data-point-id", pointId);
+            
+            // Add a stroke to lower points to make them more visible
+            if (isLowerPoint) {
+                circle.setAttribute("stroke", "black");
+                circle.setAttribute("stroke-width", "1");
+            }
+            
+            circle.addEventListener('mouseover', () => circle.setAttribute("r", isLowerPoint ? "9" : "6"));
+            circle.addEventListener('mouseout', () => circle.setAttribute("r", isLowerPoint ? "7" : "4"));
+            
+            const pointsGroup = document.getElementById('addTriggerPoints');
+            
+            // To ensure correct z-order, lower points should appear last in the DOM
+            // First, get all existing points
+            const allExistingCircles = pointsGroup.querySelectorAll('circle');
+            
+            // If this is a lower point, append it to ensure it's rendered on top
+            if (isLowerPoint) {
+                pointsGroup.appendChild(circle);
+            } else {
+                // If it's an upper point, insert it at the beginning
+                if (allExistingCircles.length > 0) {
+                    pointsGroup.insertBefore(circle, allExistingCircles[0]);
+                } else {
+                    pointsGroup.appendChild(circle);
+                }
+            }
+            
+            const tbody = document.getElementById('addPointsTableBody');
+            tbody.appendChild(createTableRow(pointData));
+            
+            if (!existingData) {
+                addTriggerPoints.push(pointData);
+            } else if (!addTriggerPoints.find(p => p.id === pointData.id)) {
+                addTriggerPoints.push(pointData);
+            }
+            
+            updateAddFormData();
+        }
+        
+        window.updateAddPointData = function(pointId, field, value) {
+            const point = addTriggerPoints.find(p => p.id === pointId);
+            if (point) {
+                point[field] = value;
+                updateAddFormData();
+            }
+        };
+        
+        window.removeAddPoint = function(pointId) {
+            const index = addTriggerPoints.findIndex(p => p.id === pointId);
+            if (index > -1) {
+                addTriggerPoints.splice(index, 1);
+                document.querySelector(`#addTriggerPoints circle[data-point-id="${pointId}"]`)?.remove();
+                document.querySelector(`#addPointsTableBody tr[data-point-id="${pointId}"]`)?.remove();
+                updateAddFormData();
+            }
+        };
+        
+        function updateAddFormData() {
+            const dataInput = document.getElementById('addTriggerPointsData');
+            dataInput.value = JSON.stringify(addTriggerPoints);
+        }
+        
+        // Setup SVG click handler
+        const bodyMapOverlay = document.getElementById('bodyMapOverlayAdd');
+        
+        if (bodyMapOverlay) {
+            bodyMapOverlay.style.pointerEvents = 'all'; // Make overlay clickable
+            
+            bodyMapOverlay.addEventListener('click', function(evt) {
+                evt.preventDefault();
+                evt.stopPropagation(); // Prevent event from bubbling
                 
-                // Add a toast notification
-                const toastContainer = document.createElement('div');
-                toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
-                toastContainer.style.zIndex = '5';
+                // Get click coordinates in SVG space
+                const pt = bodyMapOverlay.createSVGPoint();
+                pt.x = evt.clientX;
+                pt.y = evt.clientY;
                 
-                toastContainer.innerHTML = `
-                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="toast-header">
-                            <strong class="me-auto">Generating Report</strong>
-                            <small>Just now</small>
-                        </div>
-                        <div class="toast-body">
-                            <div class="d-flex align-items-center">
-                                <div class="spinner-border spinner-border-sm me-2" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <span>This may take up to 30 seconds...</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                // Transform to SVG coordinate system
+                const svgP = pt.matrixTransform(bodyMapOverlay.getScreenCTM().inverse());
                 
-                document.body.appendChild(toastContainer);
+                console.log(`SVG click at (${svgP.x}, ${svgP.y})`);
                 
-                // Set a timeout to show a message if it's taking too long
-                const timeoutId = setTimeout(() => {
-                    const toastBody = toastContainer.querySelector('.toast-body');
-                    if (toastBody) {
-                        toastBody.innerHTML = `
-                            <div class="d-flex align-items-center">
-                                <div class="spinner-border spinner-border-sm me-2" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <span>Still working... This is taking longer than expected.</span>
-                            </div>
-                        `;
-                    }
-                }, 15000);
+                // Add the point
+                addNewPoint(svgP.x, svgP.y);
+            });
+        }
+        
+        // Treatment form submission handler
+        const treatmentForm = document.getElementById('treatmentForm');
+        if (treatmentForm) {
+            treatmentForm.addEventListener('submit', function(event) {
+                event.preventDefault();
                 
-                // Call the API to generate the report - Use patientId instead of patient.id
-                fetch(`/api/patient/${patientId}/generate-report`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    clearTimeout(timeoutId);
-                    document.body.removeChild(toastContainer);
+                // Create FormData object
+                const formData = new FormData(treatmentForm);
+                
+                // The description field maps to treatment_type if treatment_type is not already set
+                if (!formData.get('treatment_type') || formData.get('treatment_type').trim() === '') {
+                    // No need to map now since we're using treatment_type directly
+                }
+                
+                // Progress notes maps to notes if notes is not already set
+                if (!formData.get('notes') || formData.get('notes').trim() === '') {
+                    // No need to map now since we're using notes directly
+                }
+                
+                // Make sure date is included
+                if (!formData.get('date')) {
+                    formData.set('date', new Date().toISOString().slice(0, 16));
+                }
+                
+                // Set evaluation_data from the trigger points data
+                formData.set('evaluation_data', document.getElementById('addTriggerPointsData').value);
+                
+                // Handle Calendly integration
+                const syncWithCalendly = document.getElementById('syncWithCalendly');
+                if (syncWithCalendly && syncWithCalendly.checked) {
+                    // Get Calendly details
+                    const eventType = document.getElementById('calendlyEventType').value;
+                    const location = document.getElementById('calendlyLocation').value;
+                    const appointmentDate = document.getElementById('calendlyAppointmentDate').value;
                     
-                    if (data.success) {
-                        // Show success message
-                        alert('Report generated successfully!');
+                    // Add specific Calendly fields to the form data
+                    formData.set('calendly_integration', 'true');
+                    formData.set('calendly_event_type', eventType);
+                    formData.set('calendly_location', location);
+                    
+                    // Set appointment_date if provided (this prevents the next_appointment error)
+                    if (appointmentDate) {
+                        formData.set('appointment_date', appointmentDate);
+                    }
+                    
+                    // Add a note about Calendly integration
+                    let currentNotes = formData.get('notes') || '';
+                    const calendlyInfo = `\n\n--- Calendly Integration Enabled ---
+Event Type: ${eventType}
+Location: ${location}
+${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date preference'}`;
+                    
+                    formData.set('notes', currentNotes + calendlyInfo);
+                }
+                
+                // Submit form via AJAX
+                fetch(`/patient/${patientId}/treatment`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Close the modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('newTreatmentModal'));
+                        modal.hide();
                         
-                        // Open the report in a new tab/window - Use patientId instead of patient.id
-                        window.open(`/patient/${patientId}/report`, '_blank');
+                        // Reload the page to show the new treatment
+                        window.location.reload();
                     } else {
-                        // Show error message
-                        alert('Error generating report: ' + data.message);
+                        return response.json().then(data => {
+                            throw new Error(data.message || 'Error adding treatment');
+                        });
                     }
                 })
                 .catch(error => {
-                    clearTimeout(timeoutId);
-                    document.body.removeChild(toastContainer);
-                    
                     console.error('Error:', error);
-                    alert('An error occurred while generating the report.');
-                })
-                .finally(() => {
-                    // Reset button state
-                    generateReportBtn.innerHTML = originalText;
-                    generateReportBtn.disabled = false;
+                    alert(`Failed to add treatment: ${error.message}`);
                 });
             });
         }
-    });
-
-    // Find your existing viewTreatment function and modify it
-    function viewTreatment(treatmentId) {
-        fetch(`/api/treatments/${treatmentId}`)
-            .then(response => response.json())
-            .then(data => {
-                // Populate existing fields
-                document.getElementById('view-treatment-date').textContent = new Date(data.created_at).toLocaleString();
-                document.getElementById('view-treatment-type').textContent = data.treatment_type;
-                document.getElementById('view-treatment-status').textContent = data.status;
-                document.getElementById('view-treatment-provider').textContent = data.provider || 'Not specified';
-                document.getElementById('view-treatment-assessment').textContent = data.assessment || 'No assessment provided';
-                document.getElementById('view-treatment-notes').textContent = data.notes || 'No notes provided';
-                
-                // Handle body chart
-                const bodyChartImg = document.getElementById('view-body-chart');
-                const noChartMessage = document.getElementById('no-body-chart-message');
-                
-                if (data.body_chart_url) {
-                    bodyChartImg.src = data.body_chart_url;
-                    bodyChartImg.style.display = 'inline-block';
-                    noChartMessage.style.display = 'none';
-                } else {
-                    bodyChartImg.style.display = 'none';
-                    noChartMessage.style.display = 'block';
+        
+        // Set up generate report button
+        const generateReportBtn = document.getElementById('generateReportBtn');
+        if (generateReportBtn) {
+            generateReportBtn.addEventListener('click', function() {
+                // Show confirmation dialog
+                if (confirm('Generate a comprehensive physiotherapy report based on all treatment history?\n\nThis process may take up to 30 seconds as it uses AI to analyze the treatment data.')) {
+                    // Show loading state
+                    const originalText = generateReportBtn.innerHTML;
+                    generateReportBtn.innerHTML = '<i class="bi bi-hourglass-split fa-spin"></i> Generating AI Report...';
+                    generateReportBtn.disabled = true;
+                    generateReportBtn.classList.add('position-relative');
+                    
+                    // Add a spinner overlay
+                    const spinnerOverlay = document.createElement('div');
+                    spinnerOverlay.classList.add('position-absolute', 'top-0', 'start-0', 'w-100', 'h-100', 'd-flex', 'align-items-center', 'justify-content-center');
+                    spinnerOverlay.innerHTML = '<div class="spinner-border spinner-border-sm text-light" role="status"><span class="visually-hidden">Loading...</span></div>';
+                    generateReportBtn.appendChild(spinnerOverlay);
+                    
+                    // Call the API to generate the report
+                    fetch(`/api/patient/${patientId}/generate-report`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Show success message
+                            alert('Report generated successfully! Opening the report now.');
+                            
+                            // Open the report in a new tab/window
+                            window.location.href = `/patient/${patientId}/report?report_id=${data.report_id}`;
+                        } else {
+                            // Show error message
+                            alert('Error generating report: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while generating the report.');
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        generateReportBtn.innerHTML = originalText;
+                        generateReportBtn.disabled = false;
+                        generateReportBtn.classList.remove('position-relative');
+                    });
                 }
-                
-                // Handle pain level display
-                const painLevelElement = document.getElementById('view-treatment-pain-level');
-                if (painLevelElement) {
-                    painLevelElement.textContent = data.pain_level !== null ? 
-                        `${data.pain_level}/10` : 
-                        'Not recorded';
-                }
-                
-                // Show the modal
-                const modal = new bootstrap.Modal(document.getElementById('treatmentViewModal'));
-                modal.show();
-            })
-            .catch(error => {
-                console.error('Error fetching treatment details:', error);
-                alert('Failed to load treatment details. Please try again.');
             });
-    }
+        }
 
-    // Find your form validation JavaScript and update it
-    function validateTreatmentForm() {
-        // Other required field validations...
+        // Add event listener for new treatment modal
+        const newTreatmentModal = document.getElementById('newTreatmentModal');
+        if (newTreatmentModal) {
+            newTreatmentModal.addEventListener('show.bs.modal', function () {
+                // Always set the current date and time when the modal is opened
+                const dateField = document.getElementById('date');
+                if (dateField) {
+                    dateField.value = new Date().toISOString().slice(0, 16);
+                }
+            });
+        }
         
-        // Make sure pain_level is not required
-        const painLevel = document.getElementById('pain_level').value;
-        // No validation needed for pain level since it's optional
-        
-        return true; // Return true if all required fields are valid
-    }
+        // Handle Calendly sync checkbox toggling
+        const syncWithCalendlyCheckbox = document.getElementById('syncWithCalendly');
+        if (syncWithCalendlyCheckbox) {
+            syncWithCalendlyCheckbox.addEventListener('change', function() {
+                const calendlyOptions = document.getElementById('calendlyOptions');
+                if (calendlyOptions) {
+                    if (this.checked) {
+                        calendlyOptions.style.display = 'block';
+                    } else {
+                        calendlyOptions.style.display = 'none';
+                    }
+                }
+            });
+        }
+    });
 </script>
 {% endblock %} 

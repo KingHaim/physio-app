@@ -9,44 +9,44 @@
     
     <!-- Stats Cards -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-6 col-md-3 mb-3 mb-md-0">
             <div class="card stats-card">
                 <div class="card-body">
                     <h5 class="card-title text-white">Total Patients</h5>
-                    <h2 class="display-4 text-white">{{ total_patients }}</h2>
+                    <h2 class="display-6 display-md-4 text-white">{{ total_patients }}</h2>
                     <p class="card-text text-white-50">
                         <i class="bi bi-people"></i> All registered patients
                     </p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3 mb-3 mb-md-0">
             <div class="card stats-card">
                 <div class="card-body">
                     <h5 class="card-title text-white">Active Patients</h5>
-                    <h2 class="display-4 text-white">{{ active_patients }}</h2>
+                    <h2 class="display-6 display-md-4 text-white">{{ active_patients }}</h2>
                     <p class="card-text text-white-50">
                         <i class="bi bi-person-check"></i> Currently under treatment
                     </p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3 mb-3 mb-md-0">
             <div class="card stats-card">
                 <div class="card-body">
                     <h5 class="card-title text-white">Today's Appointments</h5>
-                    <h2 class="display-4 text-white">{{ today_appointments }}</h2>
+                    <h2 class="display-6 display-md-4 text-white">{{ today_appointments }}</h2>
                     <p class="card-text text-white-50">
                         <i class="bi bi-calendar-day"></i> Scheduled for today
                     </p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="card stats-card">
                 <div class="card-body">
                     <h5 class="card-title text-white">Pending Review</h5>
-                    <h2 class="display-4 text-white">{{ pending_review_count }}</h2>
+                    <h2 class="display-6 display-md-4 text-white">{{ pending_review_count }}</h2>
                     <p class="card-text text-white-50">
                         <i class="bi bi-clipboard-check"></i> Patients needing review
                     </p>
@@ -58,11 +58,11 @@
     <!-- Main Content Area -->
     <div class="row">
         <!-- Upcoming Appointments -->
-        <div class="col-md-8">
+        <div class="col-md-8 mb-4 mb-md-0">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-white border-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-calendar-week"></i> Upcoming Appointments</h5>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h5 class="mb-2 mb-md-0"><i class="bi bi-calendar-week"></i> Upcoming Appointments</h5>
                         <a href="{{ url_for('main.appointments') }}" class="btn btn-sm btn-outline-primary">View All</a>
                     </div>
                 </div>
@@ -73,8 +73,9 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Patient</th>
-                                    <th>Date & Time</th>
-                                    <th>Description</th>
+                                    <th class="d-none d-md-table-cell">Date & Time</th>
+                                    <th class="d-md-none">Date</th>
+                                    <th class="d-none d-md-table-cell">Description</th>
                                     <th>Status</th>
                                     <th class="text-end">Actions</th>
                                 </tr>
@@ -85,38 +86,54 @@
                                     <td>
                                         <a href="{{ url_for('main.patient_detail', id=appointment.patient.id) }}" 
                                            class="text-decoration-none text-dark fw-medium">
-                                           {{ appointment.patient.name }}
+                                           {{ appointment.patient.name|truncate(15) }}
                                         </a>
                                     </td>
-                                    <td>
-                                        {% if appointment.next_appointment %}
-                                            {% if appointment.next_appointment_date == today %}
+                                    <td class="d-none d-md-table-cell">
+                                        {% if appointment.created_at %}
+                                            {% if appointment.created_at.date() == today %}
                                                 <span class="badge bg-danger">Today</span>
-                                            {% elif appointment.next_appointment_date <= week_end %}
+                                            {% elif appointment.created_at.date() <= week_end %}
                                                 <span class="badge bg-warning text-dark">This Week</span>
                                             {% endif %}
                                             <span class="text-dark">
-                                                {{ appointment.next_appointment.strftime('%Y-%m-%d %H:%M') }}
+                                                {{ appointment.created_at.strftime('%Y-%m-%d %H:%M') }}
                                             </span>
                                         {% else %}
                                             <span class="text-muted">Not scheduled</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ appointment.description|truncate(30) }}</td>
+                                    <td class="d-md-none">
+                                        {% if appointment.created_at %}
+                                            {% if appointment.created_at.date() == today %}
+                                                <span class="badge bg-danger">Today</span>
+                                            {% elif appointment.created_at.date() <= week_end %}
+                                                <span class="badge bg-warning text-dark">This Week</span>
+                                            {% endif %}
+                                            <span class="text-dark">
+                                                {{ appointment.created_at.strftime('%H:%M') }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="d-none d-md-table-cell">{{ appointment.description|truncate(30) }}</td>
                                     <td>
                                         <span class="badge bg-{{ 'primary' if appointment.status == 'Scheduled' else 'success' }}">
                                             {{ appointment.status }}
                                         </span>
                                     </td>
                                     <td class="text-end">
-                                        <a href="{{ url_for('main.view_treatment', id=appointment.id) }}" 
-                                           class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <a href="{{ url_for('main.edit_treatment', id=appointment.id) }}" 
-                                           class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('main.view_treatment', id=appointment.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('main.edit_treatment', id=appointment.id) }}" 
+                                               class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -144,10 +161,10 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-3">
-                        <a href="{{ url_for('main.new_patient') }}" class="btn btn-primary">
+                        <a href="{{ url_for('main.new_patient') }}" class="btn btn-primary btn-lg">
                             <i class="bi bi-person-plus"></i> New Patient
                         </a>
-                        <button class="btn btn-outline-primary" onclick="openCalendly()">
+                        <button class="btn btn-outline-primary btn-lg" onclick="openCalendly()">
                             <i class="bi bi-calendar-plus"></i> Schedule Appointment
                         </button>
                         <a href="{{ url_for('main.patients_list', status='Pending Review') }}" class="btn btn-outline-primary">

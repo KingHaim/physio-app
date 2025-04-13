@@ -102,13 +102,13 @@
                     <tbody>
                         {% for appointment in appointments %}
                         <tr>
-                            <td>{{ appointment.next_appointment.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ appointment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                             <td>
                                 <a href="{{ url_for('main.patient_detail', id=appointment.patient.id) }}">
                                     {{ appointment.patient.name }}
                                 </a>
                             </td>
-                            <td>{{ appointment.description }}</td>
+                            <td>{{ appointment.treatment_type }}</td>
                             <td>30 min</td>
                             <td>
                                 <span class="badge bg-{% if appointment.status == 'Scheduled' %}primary
@@ -118,7 +118,7 @@
                                     {{ appointment.status }}
                                 </span>
                             </td>
-                            <td>{{ appointment.progress_notes|truncate(30) }}</td>
+                            <td>{{ appointment.notes|truncate(30) }}</td>
                             <td class="text-end">
                                 <div class="btn-group">
                                     <!-- Edit button -->

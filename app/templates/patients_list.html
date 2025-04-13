@@ -88,8 +88,8 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if patient.treatments and patient.treatments[-1].next_appointment %}
-                                    {{ patient.treatments[-1].next_appointment.strftime('%Y-%m-%d') }}
+                                {% if patient.treatments and patient.treatments[-1].created_at %}
+                                    {{ patient.treatments[-1].created_at.strftime('%Y-%m-%d') }}
                                 {% else %}
                                     <span class="text-muted">Not scheduled</span>
                                 {% endif %}
@@ -145,16 +145,16 @@
             <div class="modal-body">
                 <form id="quickTreatmentForm" method="POST">
                     <div class="mb-3">
-                        <label for="description" class="form-label">Treatment Description</label>
-                        <textarea class="form-control" name="description" required></textarea>
+                        <label for="treatment_type" class="form-label">Treatment Description</label>
+                        <textarea class="form-control" name="treatment_type" required></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="progress_notes" class="form-label">Progress Notes</label>
-                        <textarea class="form-control" name="progress_notes"></textarea>
+                        <label for="notes" class="form-label">Progress Notes</label>
+                        <textarea class="form-control" name="notes"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="next_appointment" class="form-label">Next Appointment</label>
-                        <input type="date" class="form-control" name="next_appointment">
+                        <label for="created_at" class="form-label">Appointment Date</label>
+                        <input type="date" class="form-control" name="created_at">
                     </div>
                     <button type="submit" class="btn btn-primary">Save Treatment</button>
                 </form>

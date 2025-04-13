@@ -120,9 +120,9 @@
                     <tbody>
                         {% for activity in recent_activity %}
                         <tr>
-                            <td>{{ activity.date.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                             <td>{{ activity.name }}</td>
-                            <td>{{ activity.description }}</td>
+                            <td>{{ activity.treatment_type }}</td>
                             <td>
                                 <span class="badge bg-{{ 'success' if activity.status == 'Completed' else 'primary' }}">
                                     {{ activity.status }}

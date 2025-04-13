@@ -33,11 +33,11 @@
             <h6 class="mb-3">Basic Information</h6>
             <div class="mb-3">
                 <label class="form-label">Treatment Description</label>
-                <textarea class="form-control" name="description"></textarea>
+                <textarea class="form-control" name="treatment_type" required></textarea>
             </div>
             <div class="mb-3">
                 <label class="form-label">Progress Notes</label>
-                <textarea class="form-control" name="progress_notes"></textarea>
+                <textarea class="form-control" name="notes"></textarea>
             </div>
             <div class="mb-3">
                 <label class="form-label">Pain Level (1-10)</label>
@@ -66,11 +66,11 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for treatment in patient.treatments|sort(attribute='date', reverse=true) %}
+                                    {% for treatment in patient.treatments|sort(attribute='created_at', reverse=true) %}
                                     <tr>
-                                        <td>{{ treatment.date.strftime('%Y-%m-%d') }}</td>
-                                        <td>{{ treatment.description }}</td>
-                                        <td>{{ treatment.progress_notes }}</td>
+                                        <td>{{ treatment.created_at.strftime('%Y-%m-%d') }}</td>
+                                        <td>{{ treatment.treatment_type }}</td>
+                                        <td>{{ treatment.notes }}</td>
                                         <td>
                                             <button type="button" class="btn btn-sm btn-primary view-treatment-btn" data-treatment-id="{{ treatment.id }}">
                                                 <i class="bi bi-eye"></i> View Details
@@ -199,11 +199,11 @@
                             <h6 class="mb-3">Basic Information</h6>
                             <div class="mb-3">
                                 <label class="form-label">Treatment Description</label>
-                                <textarea class="form-control" name="description" required></textarea>
+                                <textarea class="form-control" name="treatment_type" required></textarea>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Progress Notes</label>
-                                <textarea class="form-control" name="progress_notes"></textarea>
+                                <textarea class="form-control" name="notes"></textarea>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Pain Level (1-10)</label>
@@ -350,11 +350,11 @@
             .then(treatment => {
                 // Fill in basic information
                 document.getElementById('treatment-date').textContent = 
-                    new Date(treatment.date).toLocaleDateString();
+                    new Date(treatment.created_at).toLocaleDateString();
                 document.getElementById('treatment-description').textContent = 
-                    treatment.description || 'N/A';
+                    treatment.treatment_type || 'N/A';
                 document.getElementById('treatment-progress-notes').textContent = 
-                    treatment.progress_notes || 'N/A';
+                    treatment.notes || 'N/A';
                 document.getElementById('treatment-pain-level').textContent = 
                     treatment.pain_level || 'N/A';
                 
@@ -468,7 +468,7 @@
         }
 
         // Remove required attribute from description textarea
-        const descriptionTextarea = document.querySelector('textarea[name="description"]');
+        const descriptionTextarea = document.querySelector('textarea[name="treatment_type"]');
         if (descriptionTextarea) {
             descriptionTextarea.removeAttribute('required');
         }

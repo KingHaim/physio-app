@@ -18,7 +18,7 @@
                 <div class="card-body">
                     <div style="background-color: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
                         <h4><i class="bi bi-info-circle"></i> Editing Treatment for {{ patient.name }}</h4>
-                        <p>You are editing the treatment session from <strong>{{ treatment.date.strftime('%Y-%m-%d') }}</strong>.</p>
+                        <p>You are editing the treatment session from <strong>{{ treatment.created_at.strftime('%Y-%m-%d') }}</strong>.</p>
                     </div>
                     
                     <form action="{{ url_for('main.edit_treatment', id=treatment.id) }}" method="POST" id="editTreatmentForm">
@@ -30,12 +30,12 @@
                                 <div class="mb-3">
                                     <label for="date" class="form-label">Treatment Date</label>
                                     <input type="date" class="form-control" id="date" name="date" 
-                                           value="{{ treatment.date.strftime('%Y-%m-%d') }}" required>
+                                           value="{{ treatment.created_at.strftime('%Y-%m-%d') }}" required>
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <label for="description" class="form-label">Treatment Description</label>
-                                    <input type="text" class="form-control" id="description" name="description" 
+                                    <label for="treatment_type" class="form-label">Treatment Description</label>
+                                    <input type="text" class="form-control" id="treatment_type" name="treatment_type" 
                                            value="{{ treatment.description }}" required>
                                 </div>
                                 
@@ -55,7 +55,7 @@
                                 <div class="mb-3">
                                     <label for="next_appointment" class="form-label">Next Appointment Date</label>
                                     <input type="date" class="form-control" id="next_appointment" name="next_appointment" 
-                                           value="{{ treatment.next_appointment.strftime('%Y-%m-%d') if treatment.next_appointment else '' }}">
+                                           value="{{ treatment.created_at.strftime('%Y-%m-%d') if treatment.created_at else '' }}">
                                     <div class="form-text">Leave blank if no follow-up is scheduled</div>
                                 </div>
                                 
@@ -72,8 +72,8 @@
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <label for="progress_notes" class="form-label">Progress Notes</label>
-                                    <textarea class="form-control" id="progress_notes" name="progress_notes" 
+                                    <label for="notes" class="form-label">Progress Notes</label>
+                                    <textarea class="form-control" id="notes" name="notes" 
                                               rows="6">{{ treatment.progress_notes }}</textarea>
                                 </div>
                             </div>
@@ -296,16 +296,41 @@
             const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             circle.setAttribute("cx", pointData.x);
             circle.setAttribute("cy", pointData.y);
-            circle.setAttribute("r", "4");
+            
+            // Make lower points larger and add stroke
+            const isLowerPoint = pointData.y > 400;
+            circle.setAttribute("r", isLowerPoint ? "7" : "4");
+            
             circle.setAttribute("fill", getPointColor(pointData.type));
             circle.setAttribute("class", "trigger-point");
             circle.setAttribute("data-point-id", pointId);
             
-            circle.addEventListener('mouseover', () => circle.setAttribute("r", "6"));
-            circle.addEventListener('mouseout', () => circle.setAttribute("r", "4"));
+            // Add a stroke to lower points to make them more visible
+            if (isLowerPoint) {
+                circle.setAttribute("stroke", "black");
+                circle.setAttribute("stroke-width", "1");
+            }
+            
+            circle.addEventListener('mouseover', () => circle.setAttribute("r", isLowerPoint ? "9" : "6"));
+            circle.addEventListener('mouseout', () => circle.setAttribute("r", isLowerPoint ? "7" : "4"));
             
             const pointsGroup = document.getElementById('triggerPoints');
-            pointsGroup.appendChild(circle);
+            
+            // To ensure correct z-order, lower points should appear last in the DOM
+            // First, get all existing points
+            const allExistingCircles = pointsGroup.querySelectorAll('circle');
+            
+            // If this is a lower point, append it to ensure it's rendered on top
+            if (isLowerPoint) {
+                pointsGroup.appendChild(circle);
+            } else {
+                // If it's an upper point, insert it at the beginning
+                if (allExistingCircles.length > 0) {
+                    pointsGroup.insertBefore(circle, allExistingCircles[0]);
+                } else {
+                    pointsGroup.appendChild(circle);
+                }
+            }
             
             const tbody = document.getElementById('pointsTableBody');
             tbody.appendChild(createTableRow(pointData));
