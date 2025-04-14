@@ -55,7 +55,20 @@
                         </tr>
                         <tr>
                             <th>Pain Level:</th>
-                            <td>{{ treatment.pain_level|string + '/10' if treatment.pain_level is not none else 'Not recorded' }}</td>
+                            <td>
+                                {% if treatment.pain_level is not none %}
+                                    {% set width = treatment.pain_level * 10 %}
+                                    <div class="progress" style="height: 20px;" title="Pain: {{ treatment.pain_level }}/10">
+                                        <div class="progress-bar bg-danger" role="progressbar"
+                                             style="width: {{ width }}%;"
+                                             aria-valuenow="{{ treatment.pain_level }}" aria-valuemin="0" aria-valuemax="10">
+                                            {{ treatment.pain_level }}/10
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">N/E</span>
+                                {% endif %}
+                            </td>
                         </tr>
                         <tr>
                             <th>Movement Restriction:</th>
