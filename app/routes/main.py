@@ -548,6 +548,8 @@ def edit_treatment(id):
         
         # Handle trigger points data
         if request.form.get('trigger_points_data'):
+            # Print the raw data received from the form for debugging
+            print(f"DEBUG: Received trigger_points_data: {request.form.get('trigger_points_data')}")
             treatment.evaluation_data = json.loads(request.form['trigger_points_data'])
             
             # Update or create trigger points in the database
