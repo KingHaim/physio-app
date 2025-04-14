@@ -425,7 +425,6 @@ def generate_patient_report(id):
         # Prepare the prompt for the AI with more structured data
         prompt = f"""
         # PATIENT INFORMATION
-        - Patient Name: {patient.name}
         - Diagnosis: {patient.diagnosis}
         - Treatment Plan: {patient.treatment_plan}
         - Total Treatment Sessions: {len(treatments)}
@@ -499,7 +498,7 @@ def generate_patient_report(id):
         ---
         
         **Haim Ganancia, Physiotherapist**  
-        ICPFA 7595 Clinic  
+        ICPFA 7595   
         Report Date: {datetime.now().strftime('%Y-%m-%d')}
         """
         
