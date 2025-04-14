@@ -298,11 +298,9 @@
                     <div class="col-md-6">
                         <p><strong>Date:</strong> <span id="treatmentDate"></span></p>
                         <p><strong>Description:</strong> <span id="treatmentDescription"></span></p>
-                        <p><strong>Status:</strong> <span id="treatmentStatus"></span></p>
                     </div>
                     <div class="col-md-6">
                         <p><strong>Pain Level:</strong> <span id="treatmentPainLevel"></span></p>
-                        <p><strong>Movement Restriction:</strong> <span id="treatmentMovementRestriction"></span></p>
                     </div>
                 </div>
                 <div class="row mt-3">
@@ -913,7 +911,7 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
             .then(data => {
                 document.getElementById('treatmentDate').textContent = data.date ? new Date(data.date).toLocaleDateString() : 'N/A';
                 document.getElementById('treatmentDescription').textContent = data.description || 'No description';
-                document.getElementById('treatmentStatus').textContent = data.status || 'Unknown';
+                document.getElementById('treatmentNotes').textContent = data.progress_notes || 'No notes';
                 
                 // Update Pain Level display
                 const painLevelSpan = document.getElementById('treatmentPainLevel');
@@ -931,9 +929,6 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
                 } else {
                     painLevelSpan.innerHTML = '<span class="text-muted">N/E</span>';
                 }
-                
-                document.getElementById('treatmentMovementRestriction').textContent = data.movement_restriction || 'N/E';
-                document.getElementById('treatmentNotes').textContent = data.progress_notes || 'No notes';
                 
                 // Set the href for the edit button
                 const editButton = document.getElementById('editTreatmentBtn');

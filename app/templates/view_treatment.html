@@ -42,18 +42,6 @@
                             <td>{{ treatment.treatment_type }}</td>
                         </tr>
                         <tr>
-                            <th>Status:</th>
-                            <td>
-                                <span class="badge bg-{{ treatment.status|lower|replace(' ', '-') }}">
-                                    {{ treatment.status }}
-                                </span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Provider:</th>
-                            <td>{{ treatment.provider or 'Not specified' }}</td>
-                        </tr>
-                        <tr>
                             <th>Pain Level:</th>
                             <td>
                                 {% if treatment.pain_level is not none %}
@@ -69,10 +57,6 @@
                                     <span class="text-muted">N/E</span>
                                 {% endif %}
                             </td>
-                        </tr>
-                        <tr>
-                            <th>Movement Restriction:</th>
-                            <td>{{ treatment.movement_restriction or 'None recorded' }}</td>
                         </tr>
                     </table>
                 </div>
