@@ -23,7 +23,7 @@ This guide will help you deploy PhysioApp to PythonAnywhere.
 1. Open a Bash console from the PythonAnywhere dashboard
 2. Clone your GitHub repository:
    ```
-   git clone https://github.com/yourusername/physio-app.git
+   git clone https://github.com/kinghaim/physio-app.git
    ```
    (Replace with your actual GitHub repository URL)
 
@@ -57,8 +57,8 @@ This guide will help you deploy PhysioApp to PythonAnywhere.
 1. Go back to the "Web" tab in the PythonAnywhere dashboard
 2. In the "Code" section:
 
-   - Set "Source code" to `/home/yourusername/physio-app`
-   - Set "Working directory" to `/home/yourusername/physio-app`
+   - Set "Source code" to `/home/kinghaim/physio-app`
+   - Set "Working directory" to `/home/kinghaim/physio-app`
    - Set "WSGI configuration file" to the default path PythonAnywhere provides
 
 3. Edit the WSGI configuration file by clicking the link, and replace its contents with:
@@ -69,7 +69,7 @@ This guide will help you deploy PhysioApp to PythonAnywhere.
    from dotenv import load_dotenv
 
    # Add your project directory to the path
-   path = '/home/yourusername/physio-app'
+   path = '/home/kinghaim/physio-app'
    if path not in sys.path:
        sys.path.append(path)
 
@@ -84,7 +84,7 @@ This guide will help you deploy PhysioApp to PythonAnywhere.
    (Replace `yourusername` with your actual PythonAnywhere username)
 
 4. In the "Virtualenv" section:
-   - Set it to `/home/yourusername/physio-app/venv`
+   - Set it to `/home/kinghaim/physio-app/venv`
 
 ### 6. Initialize the Database
 
@@ -136,7 +136,7 @@ To update your application after pushing changes to GitHub:
 2. Navigate to your project directory
 3. Pull the latest changes:
    ```
-   cd physio-app
+   cd ~/physio-app
    git pull
    ```
 4. Reload your web app from the "Web" tab

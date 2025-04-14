@@ -30,13 +30,47 @@
                             
                             <div class="mb-3">
                                 <label for="movement_restriction" class="form-label">Movement Restriction</label>
-                                <input type="text" class="form-control" id="movement_restriction" name="movement_restriction">
+                                <textarea class="form-control" id="movement_restriction" name="movement_restriction" rows="3"></textarea>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="notes" class="form-label">Progress Notes</label>
                                 <textarea class="form-control" id="notes" name="notes" rows="5"></textarea>
                             </div>
+
+                            {# New Financial Fields #}
+                            <div class="mb-3">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" name="location" 
+                                       placeholder="e.g., CostaSpine Clinic, Home Visit">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="visit_type" class="form-label">Visit Type</label>
+                                <select class="form-select" id="visit_type" name="visit_type">
+                                    <option value="" selected>Select Type</option>
+                                    <option value="Initial">Initial Visit</option>
+                                    <option value="Follow-up">Follow-up</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="fee_charged" class="form-label">Fee Charged (€)</label>
+                                <input type="number" step="0.01" class="form-control" id="fee_charged" name="fee_charged" 
+                                       placeholder="e.g., 70.00">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="payment_method" class="form-label">Payment Method</label>
+                                <select class="form-select" id="payment_method" name="payment_method">
+                                    <option value="" selected>Select Method</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Card">Card</option>
+                                    <option value="Transfer">Transfer</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            {# End New Financial Fields #}
                         </div>
                         
                         <!-- Right Column - Body Chart -->

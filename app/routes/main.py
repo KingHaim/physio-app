@@ -1,7 +1,7 @@
 # app/routes.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from datetime import datetime, timedelta
-from sqlalchemy import func, extract, or_
+from sqlalchemy import func, extract, or_, case, cast, Float
 from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport  # Changed PatientNote to TriggerPoint
 import json
 from app.utils import mark_past_treatments_as_completed, mark_inactive_patients
@@ -211,12 +211,17 @@ def patient_detail(id):
     for t in direct_treatments:
         print(f"Direct treatment: ID={t.id}, Type={t.treatment_type}, Date={t.created_at}, Status={t.status}")
     
+    # Determine if this is the patient's first visit (based on existing treatments)
+    is_first_visit = len(direct_treatments) == 0
+    print(f"Is first visit for patient {patient.id}? {is_first_visit}") # Debugging
+
     # Use direct queried treatments in the template
     # This bypasses any possible issues with the relationship loading
     return render_template('patient_detail.html', 
                           patient=patient, 
                           today=today, 
-                          treatments=direct_treatments)
+                          treatments=direct_treatments,
+                          is_first_visit=is_first_visit) # Pass the flag to the template
 
 
 @main.route('/patient/<int:patient_id>/treatment', methods=['POST'])
@@ -546,6 +551,13 @@ def edit_treatment(id):
         if request.form.get('movement_restriction'):
             treatment.movement_restriction = request.form['movement_restriction']
         
+        # Handle new financial fields
+        treatment.location = request.form.get('location')
+        treatment.visit_type = request.form.get('visit_type')
+        fee_str = request.form.get('fee_charged')
+        treatment.fee_charged = float(fee_str) if fee_str else None
+        treatment.payment_method = request.form.get('payment_method')
+
         # Handle trigger points data
         if request.form.get('trigger_points_data'):
             trigger_data_string = request.form.get('trigger_points_data')
@@ -591,6 +603,10 @@ def edit_treatment(id):
                                           'status': treatment.status,
                                           'pain_level': treatment.pain_level,
                                           'movement_restriction': treatment.movement_restriction,
+                                          'location': treatment.location,
+                                          'visit_type': treatment.visit_type,
+                                          'fee_charged': treatment.fee_charged,
+                                          'payment_method': treatment.payment_method,
                                           'evaluation_data': original_treatment_data.evaluation_data if original_treatment_data else [], # Use original data
                                           'trigger_points': treatment.trigger_points,
                                           'body_chart_url': treatment.body_chart_url
@@ -598,24 +614,80 @@ def edit_treatment(id):
                                       patient=patient)
         
         # If try block succeeded or no trigger_points_data was present, commit other changes
-        db.session.commit()
-        flash(f'Treatment session on {treatment.created_at.strftime("%Y-%m-%d")} updated successfully!', 'success')
+        try:
+            db.session.commit()
+            flash(f'Treatment session on {treatment.created_at.strftime("%Y-%m-%d")} updated successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash('Error saving treatment changes. Please try again.', 'danger')
+            print(f"Error committing changes for treatment {id}: {e}")
+            # Re-render the edit form if commit fails
+            return render_template('edit_treatment.html',
+                                  treatment={ # Rebuild context
+                                      'id': treatment.id,
+                                      'created_at': treatment.created_at,
+                                      'description': treatment.treatment_type,
+                                      'progress_notes': treatment.notes,
+                                      'status': treatment.status,
+                                      'pain_level': treatment.pain_level,
+                                      'movement_restriction': treatment.movement_restriction,
+                                      'location': treatment.location,
+                                      'visit_type': treatment.visit_type,
+                                      'fee_charged': treatment.fee_charged,
+                                      'payment_method': treatment.payment_method,
+                                      'evaluation_data': treatment.evaluation_data,
+                                      'trigger_points': treatment.trigger_points,
+                                      'body_chart_url': treatment.body_chart_url
+                                  },
+                                  patient=patient)
+
         return redirect(url_for('main.patient_detail', id=patient.id))
     
-    # For GET requests, prepare the data for the template with proper field mapping
+    # --- GET Request Logic ---
+    # Validate evaluation_data before passing to template
+    valid_evaluation_data = [] # Default to empty list
+    if treatment.evaluation_data:
+        # Check if it's already a Python list/dict (might happen if loaded correctly)
+        if isinstance(treatment.evaluation_data, (list, dict)):
+            valid_evaluation_data = treatment.evaluation_data
+        # If it's a string, try to parse it
+        elif isinstance(treatment.evaluation_data, str):
+            try:
+                parsed_data = json.loads(treatment.evaluation_data)
+                # Ensure it's a list after parsing
+                if isinstance(parsed_data, list):
+                    valid_evaluation_data = parsed_data
+                else:
+                    print(f"Warning: Parsed evaluation_data for treatment {id} is not a list. Type: {type(parsed_data)}")
+            except json.JSONDecodeError:
+                print(f"Warning: evaluation_data for treatment {id} is invalid JSON. Value: {treatment.evaluation_data}")
+        else:
+            # Handle other potential types if necessary, or log a warning
+            print(f"Warning: evaluation_data for treatment {id} has unexpected type: {type(treatment.evaluation_data)}")
+
+    # Prepare context for the template
+    template_context = {
+        'id': treatment.id,
+        'created_at': treatment.created_at,
+        'description': treatment.treatment_type,
+        'progress_notes': treatment.notes,
+        'status': treatment.status,
+        'pain_level': treatment.pain_level,
+        'movement_restriction': treatment.movement_restriction,
+        'location': treatment.location,
+        'visit_type': treatment.visit_type,
+        'fee_charged': treatment.fee_charged,
+        'payment_method': treatment.payment_method,
+        'evaluation_data': valid_evaluation_data, # Pass the validated data
+        'trigger_points': treatment.trigger_points, # This is the relationship, usually okay
+        'body_chart_url': treatment.body_chart_url
+    }
+    
+    # Explicitly convert the validated data to a JSON string for the template
+    template_context['evaluation_data_json'] = json.dumps(valid_evaluation_data)
+
     return render_template('edit_treatment.html', 
-                          treatment={
-                              'id': treatment.id,
-                              'created_at': treatment.created_at,
-                              'description': treatment.treatment_type,  # Map treatment_type to description 
-                              'progress_notes': treatment.notes,        # Map notes to progress_notes
-                              'status': treatment.status,
-                              'pain_level': treatment.pain_level,
-                              'movement_restriction': treatment.movement_restriction,
-                              'evaluation_data': treatment.evaluation_data,
-                              'trigger_points': treatment.trigger_points,
-                              'body_chart_url': treatment.body_chart_url
-                          }, 
+                          treatment=template_context, 
                           patient=patient)
 
 @main.route('/treatment/<int:id>/view')
@@ -745,6 +817,51 @@ def analytics():
         func.avg(treatment_counts_subquery.c.treatment_count)
     ).scalar() or 0
     
+    # --- New Financial Analytics ---
+    
+    # Calculate Average Monthly Revenue (from past treatments with a fee)
+    monthly_revenue_subquery = db.session.query(
+        func.strftime('%Y-%m', Treatment.created_at).label('month'),
+        func.sum(Treatment.fee_charged).label('monthly_total')
+    ).filter(
+        Treatment.created_at < today, 
+        Treatment.fee_charged.isnot(None)
+    ).group_by('month').subquery()
+    
+    avg_monthly_revenue = db.session.query(
+        func.avg(monthly_revenue_subquery.c.monthly_total)
+    ).scalar() or 0
+    
+    # Revenue by Visit Type (for past treatments with a fee)
+    revenue_by_visit_type = db.session.query(
+        Treatment.visit_type,
+        func.sum(Treatment.fee_charged).label('total_fee')
+    ).filter(Treatment.fee_charged.isnot(None), Treatment.visit_type.isnot(None)) \
+     .group_by(Treatment.visit_type) \
+     .order_by(func.sum(Treatment.fee_charged).desc()) \
+     .all()
+
+    # Revenue by Location (for ALL treatments with a fee)
+    revenue_by_location = db.session.query(
+        Treatment.location,
+        func.sum(Treatment.fee_charged).label('total_fee')
+    ).filter(Treatment.fee_charged.isnot(None), Treatment.location.isnot(None), Treatment.location != '') \
+     .group_by(Treatment.location) \
+     .order_by(func.sum(Treatment.fee_charged).desc()) \
+     .limit(10) \
+     .all()
+
+    # Payment Method Distribution (Keeping status filter for this one, assuming it makes sense)
+    payment_method_distribution = db.session.query(
+        Treatment.payment_method,
+        func.count(Treatment.id).label('count')
+    ).filter(Treatment.status == 'Completed', Treatment.payment_method.isnot(None), Treatment.payment_method != '') \
+     .group_by(Treatment.payment_method) \
+     .order_by(func.count(Treatment.id).desc()) \
+     .all()
+    
+    # --- End New Financial Analytics ---
+
     return render_template('analytics.html',
                           total_patients=total_patients,
                           active_patients=active_patients,
@@ -753,7 +870,11 @@ def analytics():
                           treatments_by_month=treatments_by_month,
                           patients_by_month=patients_by_month,
                           common_diagnoses=common_diagnoses,
-                          avg_treatments=round(avg_treatments, 1))
+                          avg_treatments=round(avg_treatments, 1),
+                          avg_monthly_revenue=avg_monthly_revenue,
+                          revenue_by_visit_type=revenue_by_visit_type,
+                          revenue_by_location=revenue_by_location,
+                          payment_method_distribution=payment_method_distribution)
 
 @main.route('/admin/update-treatments')
 def update_treatments_demo():

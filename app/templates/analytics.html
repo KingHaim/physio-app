@@ -33,6 +33,15 @@
             </div>
         </div>
         <div class="col-md-3">
+            <div class="card shadow-sm stats-card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Avg. Monthly Revenue</h5>
+                    {# Format as currency if possible, adjust locale as needed #}
+                    <h2 class="display-4">£{{ "{:,.2f}".format(avg_monthly_revenue or 0) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mt-3"> 
             <div class="card shadow-sm stats-card">
                 <div class="card-body">
                     <h5 class="card-title">Avg. Treatments/Patient</h5>
@@ -42,49 +51,83 @@
         </div>
     </div>
     
-    <!-- Charts -->
+    <!-- Treatment & Patient Charts -->
     <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Treatments by Month</h5>
                 </div>
-                <div class="card-body">
-                    <canvas id="treatmentsChart" height="250"></canvas>
+                <div class="card-body d-flex flex-column">
+                    <canvas id="treatmentsChart"></canvas>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card shadow-sm">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
                 <div class="card-header">
                     <h5 class="card-title mb-0">New Patients by Month</h5>
                 </div>
-                <div class="card-body">
-                    <canvas id="patientsChart" height="250"></canvas>
+                <div class="card-body d-flex flex-column">
+                    <canvas id="patientsChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- More Analytics -->
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
+
+    <!-- Revenue Charts -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Common Diagnoses</h5>
+                    <h5 class="card-title mb-0">Revenue by Visit Type</h5>
                 </div>
-                <div class="card-body">
-                    <canvas id="diagnosesChart" height="300"></canvas>
+                <div class="card-body d-flex flex-column">
+                    <canvas id="revenueByVisitTypeChart"></canvas>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card shadow-sm">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Revenue by Location (Top 10)</h5>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <canvas id="revenueByLocationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Other Analytics Charts -->
+    <div class="row mb-4">
+        <div class="col-lg-4 mb-4"> 
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Common Diagnoses</h5>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <canvas id="diagnosesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Patient Status Distribution</h5>
                 </div>
-                <div class="card-body">
-                    <canvas id="statusChart" height="300"></canvas>
+                <div class="card-body d-flex flex-column">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4"> 
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Payment Method Distribution</h5>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <canvas id="paymentMethodChart"></canvas>
                 </div>
             </div>
         </div>
@@ -94,124 +137,201 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script>
+    // Helper function for consistent chart colors
+    const chartColors = [
+        'rgba(52, 152, 219, 0.7)', // Blue
+        'rgba(46, 204, 113, 0.7)', // Green
+        'rgba(155, 89, 182, 0.7)', // Purple
+        'rgba(241, 196, 15, 0.7)', // Yellow
+        'rgba(230, 126, 34, 0.7)', // Orange
+        'rgba(231, 76, 60, 0.7)',  // Red
+        'rgba(52, 73, 94, 0.7)',   // Dark Blue/Gray
+        'rgba(26, 188, 156, 0.7)', // Teal
+        'rgba(149, 165, 166, 0.7)', // Gray
+        'rgba(41, 128, 185, 0.7)'  // Darker Blue
+    ];
+    const chartBorderColors = chartColors.map(color => color.replace('0.7', '1'));
+    const chartBackgroundColors = chartColors.map(color => color.replace('0.7', '0.2'));
+
     document.addEventListener('DOMContentLoaded', function() {
-        // Treatments by Month Chart
-        const treatmentsCtx = document.getElementById('treatmentsChart').getContext('2d');
-        new Chart(treatmentsCtx, {
-            type: 'line',
-            data: {
-                labels: [{% for t in treatments_by_month %}'{{ t.month }}'{% if not loop.last %}, {% endif %}{% endfor %}],
-                datasets: [{
-                    label: 'Treatments',
-                    data: [{% for t in treatments_by_month %}{{ t.count }}{% if not loop.last %}, {% endif %}{% endfor %}],
-                    backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                    borderColor: 'rgba(52, 152, 219, 1)',
-                    borderWidth: 2,
-                    tension: 0.1
-                }]
+        const defaultChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 }
+                }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
+            plugins: {
+                legend: {
+                    display: false // Generally hide legend for bar/line unless needed
                 }
             }
-        });
+        };
+
+        const defaultPieChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        };
         
-        // Patients by Month Chart
-        const patientsCtx = document.getElementById('patientsChart').getContext('2d');
-        new Chart(patientsCtx, {
-            type: 'bar',
-            data: {
-                labels: [{% for p in patients_by_month %}'{{ p.month }}'{% if not loop.last %}, {% endif %}{% endfor %}],
-                datasets: [{
-                    label: 'New Patients',
-                    data: [{% for p in patients_by_month %}{{ p.count }}{% if not loop.last %}, {% endif %}{% endfor %}],
-                    backgroundColor: 'rgba(46, 204, 113, 0.2)',
-                    borderColor: 'rgba(46, 204, 113, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                }
-            }
-        });
+        // Treatments by Month Chart (Line)
+        const treatmentsCtx = document.getElementById('treatmentsChart')?.getContext('2d');
+        if (treatmentsCtx) {
+            new Chart(treatmentsCtx, {
+                type: 'line',
+                data: {
+                    labels: JSON.parse('{{ treatments_by_month | map(attribute="month") | list | tojson | safe }}'),
+                    datasets: [{
+                        label: 'Treatments',
+                        data: JSON.parse('{{ treatments_by_month | map(attribute="count") | list | tojson | safe }}'),
+                        backgroundColor: chartBackgroundColors[0],
+                        borderColor: chartBorderColors[0],
+                        borderWidth: 2,
+                        tension: 0.1
+                    }]
+                },
+                options: defaultChartOptions
+            });
+        }
         
-        // Common Diagnoses Chart
-        const diagnosesCtx = document.getElementById('diagnosesChart').getContext('2d');
-        new Chart(diagnosesCtx, {
-            type: 'pie',
-            data: {
-                labels: [{% for d in common_diagnoses %}'{{ d.diagnosis }}'{% if not loop.last %}, {% endif %}{% endfor %}],
-                datasets: [{
-                    data: [{% for d in common_diagnoses %}{{ d.count }}{% if not loop.last %}, {% endif %}{% endfor %}],
-                    backgroundColor: [
-                        'rgba(52, 152, 219, 0.7)',
-                        'rgba(46, 204, 113, 0.7)',
-                        'rgba(155, 89, 182, 0.7)',
-                        'rgba(52, 73, 94, 0.7)',
-                        'rgba(241, 196, 15, 0.7)',
-                        'rgba(230, 126, 34, 0.7)',
-                        'rgba(231, 76, 60, 0.7)',
-                        'rgba(149, 165, 166, 0.7)',
-                        'rgba(26, 188, 156, 0.7)',
-                        'rgba(41, 128, 185, 0.7)'
-                    ],
-                    borderWidth: 1
-                }]
+        // Patients by Month Chart (Bar)
+        const patientsCtx = document.getElementById('patientsChart')?.getContext('2d');
+        if (patientsCtx) {
+            new Chart(patientsCtx, {
+                type: 'bar',
+                data: {
+                    labels: JSON.parse('{{ patients_by_month | map(attribute="month") | list | tojson | safe }}'),
+                    datasets: [{
+                        label: 'New Patients',
+                        data: JSON.parse('{{ patients_by_month | map(attribute="count") | list | tojson | safe }}'),
+                        backgroundColor: chartBackgroundColors[1],
+                        borderColor: chartBorderColors[1],
+                        borderWidth: 1
+                    }]
+                },
+                options: defaultChartOptions
+            });
+        }
+
+        // Define common options for Revenue charts
+        const revenueChartOptions = {
+            plugins: {
+                legend: { display: true }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right'
+            scales: {
+                 y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) { return '£' + value.toLocaleString(); }
                     }
                 }
             }
-        });
+        };
+
+        // Revenue by Visit Type Chart (Bar)
+        const revenueVisitTypeCtx = document.getElementById('revenueByVisitTypeChart')?.getContext('2d');
+        if (revenueVisitTypeCtx) {
+            new Chart(revenueVisitTypeCtx, {
+                type: 'bar',
+                data: {
+                    labels: JSON.parse('{{ revenue_by_visit_type | map(attribute="treatment_type") | map("replace", none, "Unspecified") | list | tojson | safe }}'),
+                    datasets: [{
+                        label: 'Revenue (£)',
+                        data: JSON.parse('{{ revenue_by_visit_type | map(attribute="total_fee") | map("replace", none, 0) | list | tojson | safe }}'),
+                        backgroundColor: chartBackgroundColors[2],
+                        borderColor: chartBorderColors[2],
+                        borderWidth: 1
+                    }]
+                },
+                options: Object.assign({}, defaultChartOptions, revenueChartOptions)
+            });
+        }
+
+        // Revenue by Location Chart (Bar)
+        const revenueLocationCtx = document.getElementById('revenueByLocationChart')?.getContext('2d');
+        if (revenueLocationCtx) {
+            new Chart(revenueLocationCtx, {
+                type: 'bar',
+                data: {
+                    labels: JSON.parse('{{ revenue_by_location | map(attribute="location") | map("replace", none, "Unspecified") | list | tojson | safe }}'),
+                    datasets: [{
+                        label: 'Revenue (£)',
+                        data: JSON.parse('{{ revenue_by_location | map(attribute="total_fee") | map("replace", none, 0) | list | tojson | safe }}'),
+                        backgroundColor: chartBackgroundColors[3],
+                        borderColor: chartBorderColors[3],
+                        borderWidth: 1
+                    }]
+                },
+                options: Object.assign({}, defaultChartOptions, revenueChartOptions)
+            });
+        }
         
-        // Patient Status Chart
-        const statusCtx = document.getElementById('statusChart').getContext('2d');
-        new Chart(statusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Active', 'Inactive'],
-                datasets: [{
-                    data: [{{ active_patients }}, {{ inactive_patients }}],
-                    backgroundColor: [
-                        'rgba(52, 152, 219, 0.7)',
-                        'rgba(149, 165, 166, 0.7)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right'
-                    }
-                }
-            }
-        });
+        // Common Diagnoses Chart (Pie)
+        const diagnosesCtx = document.getElementById('diagnosesChart')?.getContext('2d');
+        if (diagnosesCtx) {
+            const diagnosesLabels = JSON.parse('{{ common_diagnoses | map(attribute="diagnosis") | map("replace", none, "Unspecified") | list | tojson | safe }}');
+            const diagnosesData = JSON.parse('{{ common_diagnoses | map(attribute="count") | list | tojson | safe }}');
+            const numDiagnoses = diagnosesData.length;
+
+            new Chart(diagnosesCtx, {
+                type: 'pie',
+                data: {
+                    labels: diagnosesLabels,
+                    datasets: [{
+                        data: diagnosesData,
+                        backgroundColor: chartColors.slice(0, numDiagnoses),
+                        borderWidth: 1
+                    }]
+                },
+                options: defaultPieChartOptions
+            });
+        }
+        
+        // Patient Status Chart (Doughnut)
+        const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+        if (statusCtx) {
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active', 'Inactive'], // Assuming these statuses exist
+                    datasets: [{
+                        data: JSON.parse('{{ [active_patients, inactive_patients] | tojson | safe }}'), // Use JSON parse for consistency
+                        backgroundColor: [chartColors[0], chartColors[8]], // Blue and Gray
+                        borderWidth: 1
+                    }]
+                },
+                options: defaultPieChartOptions
+            });
+        }
+
+        // Payment Method Chart (Pie)
+        const paymentMethodCtx = document.getElementById('paymentMethodChart')?.getContext('2d');
+        if (paymentMethodCtx) {
+            const paymentLabels = JSON.parse('{{ payment_method_distribution | map(attribute="payment_method") | map("replace", none, "Unspecified") | list | tojson | safe }}');
+            const paymentData = JSON.parse('{{ payment_method_distribution | map(attribute="count") | list | tojson | safe }}');
+            const numPaymentMethods = paymentData.length;
+
+            new Chart(paymentMethodCtx, {
+                type: 'pie',
+                data: {
+                    labels: paymentLabels,
+                    datasets: [{
+                        data: paymentData,
+                        backgroundColor: chartColors.slice(0, numPaymentMethods), // Use distinct colors
+                        borderWidth: 1
+                    }]
+                },
+                options: defaultPieChartOptions
+            });
+        }
     });
 </script>
 {% endblock %} 

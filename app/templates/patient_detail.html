@@ -323,7 +323,7 @@
 </div>
 
 <!-- New Treatment Modal -->
-<div class="modal fade" id="newTreatmentModal" tabindex="-1" aria-labelledby="newTreatmentModalLabel" aria-hidden="true">
+<div class="modal fade" id="newTreatmentModal" tabindex="-1" aria-labelledby="newTreatmentModalLabel" aria-hidden="true" data-is-first-visit="{{ is_first_visit|tojson|safe }}">
     <!-- Modal content here -->
     <div class="modal-dialog">
         <div class="modal-content">
@@ -880,12 +880,53 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
         // Add event listener for new treatment modal
         const newTreatmentModal = document.getElementById('newTreatmentModal');
         if (newTreatmentModal) {
-            newTreatmentModal.addEventListener('show.bs.modal', function () {
+            newTreatmentModal.addEventListener('show.bs.modal', function (event) {
+                // Read the flag from the modal's data attribute
+                const isFirstVisit = event.target.dataset.isFirstVisit === 'true'; // Convert string 'true' to boolean
+                console.log("Is first visit?", isFirstVisit);
+
                 // Always set the current date and time when the modal is opened
                 const dateField = document.getElementById('date');
                 if (dateField) {
                     dateField.value = new Date().toISOString().slice(0, 16);
                 }
+
+                // Pre-fill financial fields based on visit history
+                const visitTypeSelect = newTreatmentModal.querySelector('#visit_type');
+                const feeChargedInput = newTreatmentModal.querySelector('#fee_charged');
+                const locationInput = newTreatmentModal.querySelector('#location');
+                
+                if (visitTypeSelect && feeChargedInput && locationInput) {
+                    if (isFirstVisit === true) { // Explicit boolean check
+                        visitTypeSelect.value = 'Initial';
+                        feeChargedInput.value = '80.00';
+                        locationInput.value = 'CostaSpine Clinic'; // Default location
+                    } else {
+                        visitTypeSelect.value = 'Follow-up';
+                        feeChargedInput.value = '70.00';
+                        locationInput.value = 'CostaSpine Clinic'; // Default location
+                    }
+                }
+                
+                // Reset other fields 
+                newTreatmentModal.querySelector('#treatment_type').value = '';
+                newTreatmentModal.querySelector('#pain_level').value = '';
+                newTreatmentModal.querySelector('#movement_restriction').value = '';
+                newTreatmentModal.querySelector('#assessment').value = '';
+                newTreatmentModal.querySelector('#notes').value = '';
+                newTreatmentModal.querySelector('#status').value = 'Scheduled'; // Default status
+                newTreatmentModal.querySelector('#provider').value = ''; 
+                newTreatmentModal.querySelector('#payment_method').value = ''; 
+                
+                // Reset trigger points
+                addTriggerPoints = []; // Assuming addTriggerPoints is accessible here
+                if (typeof updateAddFormData === 'function') {
+                  updateAddFormData(); // Update the hidden input
+                }
+                const addPointsGroup = document.getElementById('addTriggerPoints');
+                if (addPointsGroup) addPointsGroup.innerHTML = '';
+                const addPointsTable = document.getElementById('addPointsTableBody');
+                if (addPointsTable) addPointsTable.innerHTML = '';
             });
         }
         

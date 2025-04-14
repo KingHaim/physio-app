@@ -35,6 +35,13 @@ class Treatment(db.Model):
     pain_level = db.Column(db.Integer)
     movement_restriction = db.Column(db.String(50))
     evaluation_data = db.Column(db.JSON)
+    
+    # Fields for analytics and form
+    location = db.Column(db.String(100))
+    visit_type = db.Column(db.String(50))
+    fee_charged = db.Column(db.Float)
+    payment_method = db.Column(db.String(50))
+    
     trigger_points = db.relationship('TriggerPoint', backref='treatment', lazy=True)
 
 class TriggerPoint(db.Model):
