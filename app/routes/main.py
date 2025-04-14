@@ -548,28 +548,56 @@ def edit_treatment(id):
         
         # Handle trigger points data
         if request.form.get('trigger_points_data'):
-            # Print the raw data received from the form for debugging
-            print(f"DEBUG: Received trigger_points_data: {request.form.get('trigger_points_data')}")
-            treatment.evaluation_data = json.loads(request.form['trigger_points_data'])
-            
-            # Update or create trigger points in the database
-            # First, remove existing trigger points
-            TriggerPoint.query.filter_by(treatment_id=treatment.id).delete()
-            
-            # Then add the new ones
-            for point_data in treatment.evaluation_data:
-                trigger_point = TriggerPoint(
-                    treatment_id=treatment.id,
-                    location_x=float(point_data['x']),
-                    location_y=float(point_data['y']),
-                    type=point_data['type'],
-                    muscle=point_data.get('muscle', ''),
-                    intensity=int(point_data['intensity']) if point_data.get('intensity') else None,
-                    symptoms=point_data.get('symptoms', ''),
-                    referral_pattern=point_data.get('referral', '')
-                )
-                db.session.add(trigger_point)
+            trigger_data_string = request.form.get('trigger_points_data')
+            print(f"DEBUG: Received trigger_points_data: {trigger_data_string}") # Keep for server log
+            try:
+                treatment.evaluation_data = json.loads(trigger_data_string)
+                
+                # Update or create trigger points in the database
+                # First, remove existing trigger points
+                TriggerPoint.query.filter_by(treatment_id=treatment.id).delete()
+                
+                # Then add the new ones
+                for point_data in treatment.evaluation_data:
+                    trigger_point = TriggerPoint(
+                        treatment_id=treatment.id,
+                        location_x=float(point_data['x']),
+                        location_y=float(point_data['y']),
+                        type=point_data['type'],
+                        muscle=point_data.get('muscle', ''),
+                        intensity=int(point_data['intensity']) if point_data.get('intensity') else None,
+                        symptoms=point_data.get('symptoms', ''),
+                        referral_pattern=point_data.get('referral', '')
+                    )
+                    db.session.add(trigger_point)
+                    
+            except json.JSONDecodeError as e:
+                # Log the error and the problematic string to the error log
+                print(f"ERROR: JSONDecodeError processing trigger points for treatment {id}")
+                print(f"ERROR_STRING: {trigger_data_string}")
+                print(f"ERROR_DETAILS: {e}")
+                flash('Error processing trigger point data. Please check the format or report this issue.', 'danger')
+                # Rollback to avoid partial updates
+                db.session.rollback()
+                # Re-render the edit form to avoid losing other user input
+                # Reload original evaluation data to avoid showing corrupted data
+                original_treatment_data = Treatment.query.get(id)
+                return render_template('edit_treatment.html',
+                                      treatment={ # Rebuild the context for the template
+                                          'id': treatment.id,
+                                          'created_at': treatment.created_at,
+                                          'description': treatment.treatment_type,
+                                          'progress_notes': treatment.notes,
+                                          'status': treatment.status,
+                                          'pain_level': treatment.pain_level,
+                                          'movement_restriction': treatment.movement_restriction,
+                                          'evaluation_data': original_treatment_data.evaluation_data if original_treatment_data else [], # Use original data
+                                          'trigger_points': treatment.trigger_points,
+                                          'body_chart_url': treatment.body_chart_url
+                                      },
+                                      patient=patient)
         
+        # If try block succeeded or no trigger_points_data was present, commit other changes
         db.session.commit()
         flash(f'Treatment session on {treatment.created_at.strftime("%Y-%m-%d")} updated successfully!', 'success')
         return redirect(url_for('main.patient_detail', id=patient.id))
