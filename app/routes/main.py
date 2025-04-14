@@ -703,13 +703,16 @@ def analytics():
         .limit(10) \
         .all()
     
-    # Get average treatments per patient
+    # Get average treatments per patient - Corrected query
+    # Subquery to count treatments per patient
+    treatment_counts_subquery = db.session.query(
+        Treatment.patient_id,
+        func.count(Treatment.id).label('treatment_count')
+    ).group_by(Treatment.patient_id).subquery()
+    
+    # Query to calculate the average of the counts from the subquery
     avg_treatments = db.session.query(
-        func.avg(
-            db.session.query(func.count(Treatment.id))
-            .filter(Treatment.patient_id == Patient.id)
-            .scalar_subquery()
-        )
+        func.avg(treatment_counts_subquery.c.treatment_count)
     ).scalar() or 0
     
     return render_template('analytics.html',
