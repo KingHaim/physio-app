@@ -51,6 +51,40 @@
                                         Tip: Mark treatments as "Completed" after they're done to improve AI-generated reports.
                                     </div>
                                 </div>
+
+                                {# New Financial Fields #}
+                                <div class="mb-3">
+                                    <label for="location" class="form-label">Location</label>
+                                    <input type="text" class="form-control" id="location" name="location" 
+                                           value="{{ treatment.location or '' }}" placeholder="e.g., CostaSpine Clinic, Home Visit">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="visit_type" class="form-label">Visit Type</label>
+                                    <select class="form-select" id="visit_type" name="visit_type">
+                                        <option value="" {% if not treatment.visit_type %}selected{% endif %}>Select Type</option>
+                                        <option value="Initial" {% if treatment.visit_type == 'Initial' %}selected{% endif %}>Initial Visit</option>
+                                        <option value="Follow-up" {% if treatment.visit_type == 'Follow-up' %}selected{% endif %}>Follow-up</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="fee_charged" class="form-label">Fee Charged (€)</label>
+                                    <input type="number" step="0.01" class="form-control" id="fee_charged" name="fee_charged" 
+                                           value="{{ treatment.fee_charged or '' }}" placeholder="e.g., 70.00">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="payment_method" class="form-label">Payment Method</label>
+                                    <select class="form-select" id="payment_method" name="payment_method">
+                                        <option value="" {% if not treatment.payment_method %}selected{% endif %}>Select Method</option>
+                                        <option value="Cash" {% if treatment.payment_method == 'Cash' %}selected{% endif %}>Cash</option>
+                                        <option value="Card" {% if treatment.payment_method == 'Card' %}selected{% endif %}>Card</option>
+                                        <option value="Transfer" {% if treatment.payment_method == 'Transfer' %}selected{% endif %}>Transfer</option>
+                                        <option value="Other" {% if treatment.payment_method == 'Other' %}selected{% endif %}>Other</option>
+                                    </select>
+                                </div>
+                                {# End New Financial Fields #}
                                 
                                 <div class="mb-3">
                                     <label for="next_appointment" class="form-label">Next Appointment Date</label>
@@ -131,9 +165,6 @@
                             </div>
                         </div>
                         
-                        <!-- Hidden input to store trigger points data -->
-                        <input type="hidden" id="triggerPointsData" name="trigger_points_data" value="{{ treatment.evaluation_data|tojson if treatment.evaluation_data else '[]' }}">
-                        
                         <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                             <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle"></i> Cancel
@@ -189,6 +220,10 @@
 </style>
 
 <script>
+  var initialTriggerPointsData = {{ treatment.evaluation_data_json | safe }};
+</script>
+
+<script>
     document.addEventListener('DOMContentLoaded', function() {
         // Trigger point management
         let triggerPoints = [];
@@ -196,10 +231,9 @@
         let currentPointType = 'active';
         
         // Load existing trigger points if available
-        const triggerPointsData = document.getElementById('triggerPointsData');
-        if (triggerPointsData.value) {
+        if (typeof initialTriggerPointsData !== 'undefined' && initialTriggerPointsData) {
             try {
-                const existingPoints = JSON.parse(triggerPointsData.value);
+                const existingPoints = initialTriggerPointsData;
                 existingPoints.forEach(point => {
                     addPoint(point.x, point.y, point.type, point);
                 });
@@ -272,100 +306,132 @@
             return row;
         }
         
-        // Add point to both SVG and table
-        function addPoint(x, y, type = currentPointType, existingData = null) {
-            const pointId = existingData ? existingData.id : `point-${pointIdCounter++}`;
-            const pointData = existingData || {
-                id: pointId,
-                x: Math.round(x),
-                y: Math.round(y),
-                type: type,
-                intensity: '',
-                muscle: '',
-                symptoms: '',
-                referral: ''
-            };
-            
-            // Check if this point already exists to prevent duplicates
-            if (!existingData && triggerPoints.some(p => p.id === pointId)) {
-                console.warn('Point already exists:', pointId);
-                return;
+        // Function to update the hidden form input
+        function updateFormData() {
+            let dataInput = document.getElementById('trigger_points_data_hidden');
+            if (!dataInput) {
+                dataInput = document.createElement('input');
+                dataInput.type = 'hidden';
+                dataInput.id = 'trigger_points_data_hidden';
+                dataInput.name = 'trigger_points_data';
+                document.getElementById('editTreatmentForm').appendChild(dataInput);
             }
-            
-            // Create SVG point
-            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            circle.setAttribute("cx", pointData.x);
-            circle.setAttribute("cy", pointData.y);
-            
-            // Make lower points larger and add stroke
-            const isLowerPoint = pointData.y > 400;
-            circle.setAttribute("r", isLowerPoint ? "7" : "4");
-            
-            circle.setAttribute("fill", getPointColor(pointData.type));
-            circle.setAttribute("class", "trigger-point");
-            circle.setAttribute("data-point-id", pointId);
-            
-            // Add a stroke to lower points to make them more visible
-            if (isLowerPoint) {
-                circle.setAttribute("stroke", "black");
-                circle.setAttribute("stroke-width", "1");
+            try {
+                dataInput.value = JSON.stringify(triggerPoints);
+            } catch (e) {
+                console.error('Error stringifying trigger points:', e);
+                dataInput.value = '[]'; 
             }
-            
-            circle.addEventListener('mouseover', () => circle.setAttribute("r", isLowerPoint ? "9" : "6"));
-            circle.addEventListener('mouseout', () => circle.setAttribute("r", isLowerPoint ? "7" : "4"));
-            
-            const pointsGroup = document.getElementById('triggerPoints');
-            
-            // To ensure correct z-order, lower points should appear last in the DOM
-            // First, get all existing points
-            const allExistingCircles = pointsGroup.querySelectorAll('circle');
-            
-            // If this is a lower point, append it to ensure it's rendered on top
-            if (isLowerPoint) {
-                pointsGroup.appendChild(circle);
-            } else {
-                // If it's an upper point, insert it at the beginning
-                if (allExistingCircles.length > 0) {
-                    pointsGroup.insertBefore(circle, allExistingCircles[0]);
-                } else {
-                    pointsGroup.appendChild(circle);
-                }
-            }
-            
-            const tbody = document.getElementById('pointsTableBody');
-            tbody.appendChild(createTableRow(pointData));
-            
-            if (!existingData) {
-                triggerPoints.push(pointData);
-            } else if (!triggerPoints.find(p => p.id === pointData.id)) {
-                triggerPoints.push(pointData);
-            }
-            
-            updateFormData();
         }
         
+        // Add point to both SVG and table - Enhanced for robustness
+        function addPoint(x, y, type = currentPointType, existingData = null) {
+            console.log('addPoint called with:', x, y, type, existingData);
+            
+            const pointId = existingData && existingData.id ? existingData.id : `point-${pointIdCounter++}`;
+            
+            // Ensure pointData is a clean object with defaults
+            const pointData = {
+                id: pointId,
+                x: parseFloat(existingData?.x ?? x) || 0,
+                y: parseFloat(existingData?.y ?? y) || 0,
+                type: existingData?.type ?? type ?? 'active', // Default to active if null/undefined
+                intensity: existingData?.intensity ?? '',
+                muscle: existingData?.muscle ?? '',
+                symptoms: existingData?.symptoms ?? '',
+                referral: existingData?.referral ?? ''
+            };
+            // Ensure intensity is numeric string or empty
+            pointData.intensity = pointData.intensity !== '' ? parseInt(pointData.intensity, 10) : '';
+            if (isNaN(pointData.intensity)) pointData.intensity = '';
+
+            console.log('Processing pointData:', pointData);
+
+            // --- Manage JS Array --- 
+            const existingIndex = triggerPoints.findIndex(p => p.id === pointId);
+            if (existingIndex === -1) {
+                console.log(`Adding new point ${pointId} to JS array.`);
+                triggerPoints.push(pointData);
+            } else {
+                console.log(`Updating existing point ${pointId} in JS array.`);
+                triggerPoints[existingIndex] = pointData; // Update existing entry
+            }
+
+            // --- Create/Update SVG point ---
+            const pointsGroup = document.getElementById('triggerPoints');
+            let circle = pointsGroup.querySelector(`circle[data-point-id="${pointId}"]`);
+            if (!circle) {
+                console.log(`Creating SVG circle for ${pointId}`);
+                circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("data-point-id", pointId);
+                circle.setAttribute("class", "trigger-point");
+                // Add listeners only when creating
+                circle.addEventListener('mouseover', () => {
+                     const isLower = parseFloat(circle.getAttribute("cy")) > 400;
+                     circle.setAttribute("r", isLower ? "9" : "6");
+                });
+                circle.addEventListener('mouseout', () => {
+                    const isLower = parseFloat(circle.getAttribute("cy")) > 400;
+                    circle.setAttribute("r", isLower ? "7" : "4");
+                });
+                // Z-order insertion logic
+                const allExistingCircles = pointsGroup.querySelectorAll('circle');
+                if (pointData.y > 400) {
+                    pointsGroup.appendChild(circle);
+                } else {
+                     pointsGroup.insertBefore(circle, allExistingCircles[0] || null);
+                }
+            } else {
+                 console.log(`Updating SVG circle for ${pointId}`);
+            }
+            // Update attributes
+            circle.setAttribute("cx", pointData.x);
+            circle.setAttribute("cy", pointData.y);
+            const isLowerPoint = pointData.y > 400;
+            circle.setAttribute("r", isLowerPoint ? "7" : "4");
+            circle.setAttribute("fill", getPointColor(pointData.type));
+            circle.setAttribute("stroke", isLowerPoint ? "black" : "none");
+            circle.setAttribute("stroke-width", isLowerPoint ? "1" : "0");
+
+            // --- Create or Update Table Row ---
+            const tbody = document.getElementById('pointsTableBody');
+            let row = tbody.querySelector(`tr[data-point-id="${pointId}"]`);
+            const newRowContent = createTableRow(pointData); // createTableRow generates the full TR element
+            if (row) {
+                 console.log(`Updating table row for ${pointId}`);
+                 row.innerHTML = newRowContent.innerHTML; // Update inner HTML of existing row
+            } else {
+                 console.log(`Creating table row for ${pointId}`);
+                 tbody.appendChild(newRowContent); // Append the new row element
+            }
+            
+            // --- Update Form Data ---
+            updateFormData(); 
+        }
+        
+        // Update existing point data
         window.updatePointData = function(pointId, field, value) {
             const point = triggerPoints.find(p => p.id === pointId);
             if (point) {
-                point[field] = value;
-                updateFormData();
+                if (field === 'intensity') {
+                    point[field] = value ? parseInt(value, 10) : '';
+                } else {
+                    point[field] = value;
+                }
+                updateFormData(); // Call update here
             }
         };
         
+        // Remove point
         window.removePoint = function(pointId) {
             const index = triggerPoints.findIndex(p => p.id === pointId);
             if (index > -1) {
                 triggerPoints.splice(index, 1);
                 document.querySelector(`circle[data-point-id="${pointId}"]`)?.remove();
                 document.querySelector(`tr[data-point-id="${pointId}"]`)?.remove();
-                updateFormData();
+                updateFormData(); // Call update here
             }
         };
-        
-        function updateFormData() {
-            const dataInput = document.getElementById('triggerPointsData');
-            dataInput.value = JSON.stringify(triggerPoints);
-        }
         
         // Setup SVG click handler with improved calibration
         const bodyMapContainer = document.querySelector('.body-map-container');
@@ -412,6 +478,35 @@
             const pointsGroup = document.getElementById('triggerPoints');
             pointsGroup.appendChild(circle);
         }
+
+        // --- Initial Load Logic --- (Keep the existing structure but rely on robust addPoint)
+        console.log('Starting initial load of trigger points...');
+        if (typeof initialTriggerPointsData !== 'undefined' && initialTriggerPointsData && Array.isArray(initialTriggerPointsData)) {
+            try {
+                const initialPoints = initialTriggerPointsData;
+                 if (Array.isArray(initialPoints)) {
+                    console.log(`Found ${initialPoints.length} initial points to load.`);
+                    
+                    initialPoints.forEach((point, index) => {
+                        console.log(`Loading point ${index + 1}:`, point);
+                        if (typeof point === 'object' && point !== null) {
+                            addPoint(point.x, point.y, point.type, point);
+                        } else {
+                             console.error(`Invalid point data found at index ${index}:`, point);
+                        }
+                    });
+                    console.log('Finished loading initial points. Current JS array:', triggerPoints);
+                } else {
+                     console.error('Initial trigger points data parsed but is not an array:', initialPoints);
+                }
+            } catch (e) {
+                console.error('Error processing initial trigger points data:', e, initialTriggerPointsData);
+                alert('Could not load existing trigger points. Check console for details.');
+            }
+        } else {
+             console.log('No initial trigger points data found or data is empty/invalid array.');
+        }
+        console.log('Initial load complete.');
     });
 </script>
 {% endblock %} 
