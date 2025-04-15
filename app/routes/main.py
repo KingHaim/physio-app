@@ -76,7 +76,7 @@ def get_treatment_details(id):
             'symptoms': point.symptoms,
             'referral': point.referral_pattern
         } for point in treatment.trigger_points]
-    
+
         # Return all fields that might be needed by the frontend
         # Include both original field names and mapped field names for backward compatibility
         return jsonify({
@@ -295,7 +295,7 @@ def add_treatment(patient_id):
                 referral_pattern=point_data.get('referral', '')
             )
             db.session.add(trigger_point)
-        db.session.commit()
+    db.session.commit()
     
     flash('Treatment added successfully', 'success')
     return redirect(url_for('main.patient_detail', id=patient_id))
@@ -557,32 +557,42 @@ def edit_treatment(id):
         fee_str = request.form.get('fee_charged')
         treatment.fee_charged = float(fee_str) if fee_str else None
         treatment.payment_method = request.form.get('payment_method')
-
+        
         # Handle trigger points data
         if request.form.get('trigger_points_data'):
             trigger_data_string = request.form.get('trigger_points_data')
             print(f"DEBUG: Received trigger_points_data: {trigger_data_string}") # Keep for server log
             try:
-                treatment.evaluation_data = json.loads(trigger_data_string)
+                # Parse JSON first
+                parsed_evaluation_data = json.loads(trigger_data_string)
+                treatment.evaluation_data = parsed_evaluation_data # Assign only if parsing succeeds
                 
-                # Update or create trigger points in the database
+                # Update or create trigger points in the database (NOW INDENTED)
                 # First, remove existing trigger points
                 TriggerPoint.query.filter_by(treatment_id=treatment.id).delete()
                 
                 # Then add the new ones
-                for point_data in treatment.evaluation_data:
-                    trigger_point = TriggerPoint(
-                        treatment_id=treatment.id,
-                        location_x=float(point_data['x']),
-                        location_y=float(point_data['y']),
-                        type=point_data['type'],
-                        muscle=point_data.get('muscle', ''),
-                        intensity=int(point_data['intensity']) if point_data.get('intensity') else None,
-                        symptoms=point_data.get('symptoms', ''),
-                        referral_pattern=point_data.get('referral', '')
-                    )
-                    db.session.add(trigger_point)
-                    
+                if isinstance(parsed_evaluation_data, list): # Ensure it's a list before iterating
+                    for point_data in parsed_evaluation_data:
+                        # Basic validation (optional but recommended)
+                        if not isinstance(point_data, dict) or 'x' not in point_data or 'y' not in point_data or 'type' not in point_data:
+                             print(f"Warning: Skipping invalid point data: {point_data}")
+                             continue
+                             
+                        trigger_point = TriggerPoint(
+                            treatment_id=treatment.id,
+                            location_x=float(point_data['x']),
+                            location_y=float(point_data['y']),
+                            type=point_data['type'],
+                            muscle=point_data.get('muscle', ''),
+                            intensity=int(point_data['intensity']) if point_data.get('intensity') else None,
+                            symptoms=point_data.get('symptoms', ''),
+                            referral_pattern=point_data.get('referral', '')
+                        )
+                        db.session.add(trigger_point)
+                else:
+                     print(f"Warning: Parsed trigger point data is not a list for treatment {id}. Skipping point creation.")
+
             except json.JSONDecodeError as e:
                 # Log the error and the problematic string to the error log
                 print(f"ERROR: JSONDecodeError processing trigger points for treatment {id}")
@@ -613,17 +623,20 @@ def edit_treatment(id):
                                       },
                                       patient=patient)
         
-        # If try block succeeded or no trigger_points_data was present, commit other changes
+        # --- Correct Commit Logic --- 
+        # Commit all changes AFTER potentially updating trigger points
         try:
-            db.session.commit()
-            flash(f'Treatment session on {treatment.created_at.strftime("%Y-%m-%d")} updated successfully!', 'success')
+            db.session.commit() # Indent this line
+            flash(f'Treatment session on {treatment.created_at.strftime("%Y-%m-%d")} updated successfully!', 'success') # Indent this line
         except Exception as e:
-            db.session.rollback()
-            flash('Error saving treatment changes. Please try again.', 'danger')
-            print(f"Error committing changes for treatment {id}: {e}")
-            # Re-render the edit form if commit fails
+            db.session.rollback() # Indent this line
+            flash('Error saving treatment changes. Please try again.', 'danger') # Indent this line
+            print(f"Error committing changes for treatment {id}: {e}") # Indent this line
+            # Re-render the edit form if commit fails - reload original data
+            original_treatment_data = Treatment.query.get(id) # Indent this line
+            # Indent the return statement and its content
             return render_template('edit_treatment.html',
-                                  treatment={ # Rebuild context
+                                  treatment={ # Rebuild context with original data if needed
                                       'id': treatment.id,
                                       'created_at': treatment.created_at,
                                       'description': treatment.treatment_type,
@@ -635,7 +648,7 @@ def edit_treatment(id):
                                       'visit_type': treatment.visit_type,
                                       'fee_charged': treatment.fee_charged,
                                       'payment_method': treatment.payment_method,
-                                      'evaluation_data': treatment.evaluation_data,
+                                      'evaluation_data': original_treatment_data.evaluation_data if original_treatment_data else [],
                                       'trigger_points': treatment.trigger_points,
                                       'body_chart_url': treatment.body_chart_url
                                   },
@@ -861,6 +874,10 @@ def analytics():
      .all()
     
     # --- End New Financial Analytics ---
+    
+    # Calculate completion rate (Added missing calculation)
+    completed_treatments = Treatment.query.filter_by(status='Completed').count()
+    completion_rate = (completed_treatments / total_treatments * 100) if total_treatments > 0 else 0
 
     return render_template('analytics.html',
                           total_patients=total_patients,
@@ -871,6 +888,7 @@ def analytics():
                           patients_by_month=patients_by_month,
                           common_diagnoses=common_diagnoses,
                           avg_treatments=round(avg_treatments, 1),
+                          completion_rate=completion_rate,
                           avg_monthly_revenue=avg_monthly_revenue,
                           revenue_by_visit_type=revenue_by_visit_type,
                           revenue_by_location=revenue_by_location,

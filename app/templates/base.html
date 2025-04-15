@@ -281,17 +281,115 @@
         .border-primary {
             border-color: #2980b9 !important;
         }
+
+        /* Specific style for offcanvas links */
+        #offcanvasSidebar .nav-link {
+            color: #ecf0f1; /* Light color for text */
+        }
+        #offcanvasSidebar .nav-link:hover {
+            color: #ffffff; /* Brighter white on hover */
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        #offcanvasSidebar .nav-link.active {
+            color: #ffffff;
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        #offcanvasSidebar .nav-section-title {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        #offcanvasSidebar .sidebar-footer .user-info {
+            color: white;
+        }
+        #offcanvasSidebar .sidebar-footer .logout-link {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        #offcanvasSidebar .sidebar-footer .logout-link:hover {
+            color: white;
+        }
     </style>
 </head>
 <body>
+    <!-- Navbar (visible on small screens, toggles the offcanvas menu) -->
+    <nav class="navbar navbar-dark bg-primary fixed-top d-md-none">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSidebar" aria-controls="offcanvasSidebar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">PhysioTracker</a>
+        </div>
+    </nav>
+
+    <!-- Separate Offcanvas Sidebar for small screens -->
+    <div class="offcanvas offcanvas-start bg-primary text-white d-md-none" tabindex="-1" id="offcanvasSidebar" aria-labelledby="offcanvasSidebarLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="offcanvasSidebarLabel">Menu</h5>
+            <button type="button" class="btn-close btn-close-white text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <!-- Duplicate the nav links here for the offcanvas menu -->
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{{ url_for('main.index') }}">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if '/patients' in request.path %}active{% endif %}" href="{{ url_for('main.patients_list') }}">
+                        <i class="bi bi-people"></i> Patients
+                    </a>
+                </li>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Management</div>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/calendly/review' in request.path %}active{% endif %}" href="{{ url_for('main.review_calendly_bookings') }}">
+                            <i class="bi bi-calendar-check"></i> Calendly Bookings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/patients' in request.path and request.args.get('status') == 'Pending Review' %}active{% endif %}" 
+                           href="{{ url_for('main.patients_list', status='Pending Review') }}">
+                            <i class="bi bi-clipboard-check"></i> Pending Review
+                            {% set pending_count = get_pending_review_count() %}
+                            {% if pending_count > 0 %}
+                            <span class="badge bg-danger rounded-pill ms-1">{{ pending_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Reports</div>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/analytics' in request.path %}active{% endif %}" href="{{ url_for('main.analytics') }}">
+                            <i class="bi bi-graph-up"></i> Analytics
+                        </a>
+                    </li>
+                </div>
+            </ul>
+            <div class="sidebar-footer mt-auto">
+                <div class="user-info">
+                    <span class="user-name">{{ current_user.username }}</span>
+                    <a href="{{ url_for('auth.logout') }}" class="logout-link">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container-fluid">
         <div class="row">
-            <div class="sidebar col-md-2 col-lg-2 d-md-block">
+            <!-- Permanent Sidebar for medium screens and up -->
+            <div class="sidebar col-md-3 col-lg-2 d-none d-md-flex flex-column p-0">
+                <!-- Removed offcanvas classes, added flex-column and d-none/d-md-flex -->
                 <div class="sidebar-header">
                     <h3>PhysioTracker</h3>
                 </div>
                 
-                <ul class="nav flex-column">
+                <ul class="nav flex-column mb-auto">
+                    <!-- Nav items are the same as in the offcanvas menu -->
                     <li class="nav-item">
                         <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{{ url_for('main.index') }}">
                             <i class="bi bi-speedometer2"></i> Dashboard
@@ -316,7 +414,7 @@
                                 <i class="bi bi-clipboard-check"></i> Pending Review
                                 {% set pending_count = get_pending_review_count() %}
                                 {% if pending_count > 0 %}
-                                <span class="badge bg-danger rounded-pill">{{ pending_count }}</span>
+                                <span class="badge bg-danger rounded-pill ms-1">{{ pending_count }}</span>
                                 {% endif %}
                             </a>
                         </li>
@@ -342,7 +440,11 @@
                 </div>
             </div>
 
-            <main class="col-md-10 ms-sm-auto content">
+            <!-- Main Content: Adjust column offset and padding -->
+            <main class="col-md-9 ms-md-auto col-lg-10 px-md-4 content">
+                <!-- Add padding-top for small screens due to fixed navbar -->
+                <div class="d-md-none" style="padding-top: 56px;"></div> 
+
                 <div class="alert-container position-fixed top-0 end-0 p-3" style="z-index: 1050">
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
