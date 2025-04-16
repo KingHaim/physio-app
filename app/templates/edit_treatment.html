@@ -130,7 +130,7 @@
                                     <div class="card-body">
                                         <div class="body-map-container">
                                             <img src="{{ url_for('static', filename='images/bodychart.svg') }}" class="body-map" id="bodyMapImage" alt="Body chart">
-                                            <svg class="body-map-overlay" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
+                                            <svg class="body-map-overlay" viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg">
                                                 <g id="triggerPoints"></g>
                                             </svg>
                                         </div>
@@ -174,6 +174,13 @@
                             </button>
                         </div>
                     </form>
+
+                    {# Hidden div to store initial trigger points data #}
+                    <div id="initialDataContainer" 
+                         data-points='{{ treatment.evaluation_data | tojson | safe }}'
+                         style="display: none;">
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -220,28 +227,40 @@
 </style>
 
 <script>
-  var initialTriggerPointsData = {{ treatment.evaluation_data_json | safe }};
-</script>
-
-<script>
     document.addEventListener('DOMContentLoaded', function() {
         // Trigger point management
         let triggerPoints = [];
         let pointIdCounter = 1;
         let currentPointType = 'active';
         
-        // Load existing trigger points if available
-        if (typeof initialTriggerPointsData !== 'undefined' && initialTriggerPointsData) {
+        // Load existing trigger points from data attribute
+        let initialPoints = []; // Default to empty array
+        const initialDataContainer = document.getElementById('initialDataContainer');
+        if (initialDataContainer && initialDataContainer.dataset.points) {
             try {
-                const existingPoints = initialTriggerPointsData;
-                existingPoints.forEach(point => {
-                    addPoint(point.x, point.y, point.type, point);
-                });
+                initialPoints = JSON.parse(initialDataContainer.dataset.points);
+                if (!Array.isArray(initialPoints)) { // Ensure it's an array
+                    console.error('Initial trigger points data is not an array:', initialPoints);
+                    initialPoints = []; // Reset to empty if not array
+                }
             } catch (e) {
-                console.error('Error loading trigger points:', e);
+                console.error('Error parsing initial trigger points data:', e, initialDataContainer.dataset.points);
+                // Keep initialPoints as empty array
             }
         }
-        
+
+        // Load the parsed points using the addPoint function
+        console.log(`Found ${initialPoints.length} initial points to load.`);
+        initialPoints.forEach((point, index) => {
+            console.log(`Loading point ${index + 1}:`, point);
+            if (typeof point === 'object' && point !== null) {
+                addPoint(point.x, point.y, point.type, point);
+            } else {
+                console.error(`Invalid point data found at index ${index}:`, point);
+            }
+        });
+        console.log('Finished loading initial points. Current JS array:', triggerPoints);
+
         // Point type selection
         const pointTypeButtons = document.querySelectorAll('[data-point-type]');
         pointTypeButtons.forEach(btn => {
@@ -324,40 +343,36 @@
             }
         }
         
-        // Add point to both SVG and table - Enhanced for robustness
+        // Add point to both SVG and table - Standardized (Existing code, adjusted to use global triggerPoints)
         function addPoint(x, y, type = currentPointType, existingData = null) {
             console.log('addPoint called with:', x, y, type, existingData);
             
             const pointId = existingData && existingData.id ? existingData.id : `point-${pointIdCounter++}`;
             
-            // Ensure pointData is a clean object with defaults
             const pointData = {
                 id: pointId,
                 x: parseFloat(existingData?.x ?? x) || 0,
                 y: parseFloat(existingData?.y ?? y) || 0,
-                type: existingData?.type ?? type ?? 'active', // Default to active if null/undefined
+                type: existingData?.type ?? type ?? 'active',
                 intensity: existingData?.intensity ?? '',
                 muscle: existingData?.muscle ?? '',
                 symptoms: existingData?.symptoms ?? '',
                 referral: existingData?.referral ?? ''
             };
-            // Ensure intensity is numeric string or empty
             pointData.intensity = pointData.intensity !== '' ? parseInt(pointData.intensity, 10) : '';
             if (isNaN(pointData.intensity)) pointData.intensity = '';
 
             console.log('Processing pointData:', pointData);
 
-            // --- Manage JS Array --- 
             const existingIndex = triggerPoints.findIndex(p => p.id === pointId);
             if (existingIndex === -1) {
                 console.log(`Adding new point ${pointId} to JS array.`);
                 triggerPoints.push(pointData);
             } else {
                 console.log(`Updating existing point ${pointId} in JS array.`);
-                triggerPoints[existingIndex] = pointData; // Update existing entry
+                triggerPoints[existingIndex] = pointData;
             }
 
-            // --- Create/Update SVG point ---
             const pointsGroup = document.getElementById('triggerPoints');
             let circle = pointsGroup.querySelector(`circle[data-point-id="${pointId}"]`);
             if (!circle) {
@@ -365,47 +380,30 @@
                 circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 circle.setAttribute("data-point-id", pointId);
                 circle.setAttribute("class", "trigger-point");
-                // Add listeners only when creating
-                circle.addEventListener('mouseover', () => {
-                     const isLower = parseFloat(circle.getAttribute("cy")) > 400;
-                     circle.setAttribute("r", isLower ? "9" : "6");
-                });
-                circle.addEventListener('mouseout', () => {
-                    const isLower = parseFloat(circle.getAttribute("cy")) > 400;
-                    circle.setAttribute("r", isLower ? "7" : "4");
-                });
-                // Z-order insertion logic
-                const allExistingCircles = pointsGroup.querySelectorAll('circle');
-                if (pointData.y > 400) {
-                    pointsGroup.appendChild(circle);
-                } else {
-                     pointsGroup.insertBefore(circle, allExistingCircles[0] || null);
-                }
+                circle.addEventListener('mouseover', () => circle.setAttribute("r", "5"));
+                circle.addEventListener('mouseout', () => circle.setAttribute("r", "3"));
+                pointsGroup.appendChild(circle);
             } else {
                  console.log(`Updating SVG circle for ${pointId}`);
             }
-            // Update attributes
             circle.setAttribute("cx", pointData.x);
             circle.setAttribute("cy", pointData.y);
-            const isLowerPoint = pointData.y > 400;
-            circle.setAttribute("r", isLowerPoint ? "7" : "4");
+            circle.setAttribute("r", "3");
             circle.setAttribute("fill", getPointColor(pointData.type));
-            circle.setAttribute("stroke", isLowerPoint ? "black" : "none");
-            circle.setAttribute("stroke-width", isLowerPoint ? "1" : "0");
+            circle.setAttribute("stroke", "none");
+            circle.setAttribute("stroke-width", "0");
 
-            // --- Create or Update Table Row ---
             const tbody = document.getElementById('pointsTableBody');
             let row = tbody.querySelector(`tr[data-point-id="${pointId}"]`);
-            const newRowContent = createTableRow(pointData); // createTableRow generates the full TR element
+            const newRowContent = createTableRow(pointData);
             if (row) {
                  console.log(`Updating table row for ${pointId}`);
-                 row.innerHTML = newRowContent.innerHTML; // Update inner HTML of existing row
+                 row.innerHTML = newRowContent.innerHTML;
             } else {
                  console.log(`Creating table row for ${pointId}`);
-                 tbody.appendChild(newRowContent); // Append the new row element
+                 tbody.appendChild(newRowContent);
             }
             
-            // --- Update Form Data ---
             updateFormData(); 
         }
         
@@ -418,7 +416,7 @@
                 } else {
                     point[field] = value;
                 }
-                updateFormData(); // Call update here
+                updateFormData();
             }
         };
         
@@ -429,84 +427,33 @@
                 triggerPoints.splice(index, 1);
                 document.querySelector(`circle[data-point-id="${pointId}"]`)?.remove();
                 document.querySelector(`tr[data-point-id="${pointId}"]`)?.remove();
-                updateFormData(); // Call update here
+                updateFormData();
             }
         };
         
-        // Setup SVG click handler with improved calibration
+        // Setup SVG click handler
         const bodyMapContainer = document.querySelector('.body-map-container');
         const bodyMapImage = document.getElementById('bodyMapImage');
         const bodyMapOverlay = document.querySelector('.body-map-overlay');
         
-        // Remove the container click handler and only use the SVG overlay
         if (bodyMapOverlay) {
-            bodyMapOverlay.style.pointerEvents = 'all'; // Make overlay clickable
-            
-            // Remove any existing click handlers
-            bodyMapOverlay.onclick = null;
-            bodyMapContainer.onclick = null;
-            
-            // Add a single click handler to the overlay
+            bodyMapOverlay.style.pointerEvents = 'all';
             bodyMapOverlay.addEventListener('click', function(evt) {
                 evt.preventDefault();
-                evt.stopPropagation(); // Prevent event from bubbling to container
+                evt.stopPropagation();
                 
-                // Get click coordinates in SVG space
                 const pt = bodyMapOverlay.createSVGPoint();
                 pt.x = evt.clientX;
                 pt.y = evt.clientY;
-                
-                // Transform to SVG coordinate system
                 const svgP = pt.matrixTransform(bodyMapOverlay.getScreenCTM().inverse());
                 
                 console.log(`SVG click at (${svgP.x}, ${svgP.y})`);
-                
-                // Add the point
                 addPoint(svgP.x, svgP.y);
             });
         }
 
-        // Add this function for debugging
-        function addDebugMarker(x, y, color = 'blue') {
-            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            circle.setAttribute("cx", x);
-            circle.setAttribute("cy", y);
-            circle.setAttribute("r", "2");
-            circle.setAttribute("fill", color);
-            circle.setAttribute("class", "debug-marker");
-            
-            const pointsGroup = document.getElementById('triggerPoints');
-            pointsGroup.appendChild(circle);
-        }
-
-        // --- Initial Load Logic --- (Keep the existing structure but rely on robust addPoint)
-        console.log('Starting initial load of trigger points...');
-        if (typeof initialTriggerPointsData !== 'undefined' && initialTriggerPointsData && Array.isArray(initialTriggerPointsData)) {
-            try {
-                const initialPoints = initialTriggerPointsData;
-                 if (Array.isArray(initialPoints)) {
-                    console.log(`Found ${initialPoints.length} initial points to load.`);
-                    
-                    initialPoints.forEach((point, index) => {
-                        console.log(`Loading point ${index + 1}:`, point);
-                        if (typeof point === 'object' && point !== null) {
-                            addPoint(point.x, point.y, point.type, point);
-                        } else {
-                             console.error(`Invalid point data found at index ${index}:`, point);
-                        }
-                    });
-                    console.log('Finished loading initial points. Current JS array:', triggerPoints);
-                } else {
-                     console.error('Initial trigger points data parsed but is not an array:', initialPoints);
-                }
-            } catch (e) {
-                console.error('Error processing initial trigger points data:', e, initialTriggerPointsData);
-                alert('Could not load existing trigger points. Check console for details.');
-            }
-        } else {
-             console.log('No initial trigger points data found or data is empty/invalid array.');
-        }
-        console.log('Initial load complete.');
+        // Initialize form data just once after loading points
+        updateFormData();
     });
 </script>
 {% endblock %} 

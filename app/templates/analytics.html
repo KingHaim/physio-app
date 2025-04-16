@@ -6,61 +6,46 @@
 <div class="container-fluid py-4">
     <h1 class="h3 mb-4"><i class="bi bi-graph-up"></i> Practice Analytics</h1>
     
-    <!-- Key Metrics -->
+    <!-- Summary Cards -->
     <div class="row mb-4">
-        <div class="col-3">
-            <div class="card bg-primary text-white h-100">
-                <div class="card-body d-flex flex-column">
-                    <h6 class="card-title">Total Patients</h6>
-                    <h2 class="display-4 mt-auto">{{ total_patients }}</h2>
-                    <p class="mb-0">
-                        <span class="badge bg-light text-primary">
-                            {{ active_patients }} Active
-                        </span>
-                    </p>
+        <div class="col-md-3">
+            <div class="card shadow-sm stats-card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Patients</h5>
+                    <h2 class="display-4">{{ total_patients }}</h2>
                 </div>
             </div>
         </div>
-        <div class="col-3">
-            <div class="card bg-success text-white h-100">
-                <div class="card-body d-flex flex-column">
-                    <h6 class="card-title">Treatment Completion Rate</h6>
-                    <h2 class="display-4 mt-auto">{{ "%.1f"|format(completion_rate) }}%</h2>
-                    <div class="progress mt-auto mb-2">
-                        <div class="progress-bar bg-white" 
-                             role="progressbar" 
-                             {% if completion_rate %}style="width: {{ completion_rate|string }}%"{% endif %}
-                             aria-valuenow="{{ completion_rate|int }}"
-                             aria-valuemin="0"
-                             aria-valuemax="100">
-                            <span class="visually-hidden">{{ completion_rate|int }}% Complete</span>
-                        </div>
-                    </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm stats-card">
+                <div class="card-body">
+                    <h5 class="card-title">Active Patients</h5>
+                    <h2 class="display-4">{{ active_patients }}</h2>
                 </div>
             </div>
         </div>
-        <div class="col-3">
-            <div class="card bg-info text-white h-100">
-                <div class="card-body d-flex flex-column">
-                    <h6 class="card-title">Avg. Treatments/Patient</h6>
-                    <h2 class="display-4 mt-auto">{{ "%.1f"|format(avg_treatments) }}</h2>
-                    <p class="mb-0">Sessions per patient</p>
+        <div class="col-md-3">
+            <div class="card shadow-sm stats-card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Treatments</h5>
+                    <h2 class="display-4">{{ total_treatments }}</h2>
                 </div>
             </div>
         </div>
-        <div class="col-3">
-            <div class="card bg-warning text-white h-100">
-                <div class="card-body d-flex flex-column">
-                    <h6 class="card-title">Monthly Growth</h6>
-                    <h2 class="display-4 mt-auto">
-                        {% if monthly_treatments|length >= 2 %}
-                            {% set growth = ((monthly_treatments[0][1] - monthly_treatments[1][1]) / monthly_treatments[1][1] * 100)|round(1) %}
-                            {{ growth }}%
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </h2>
-                    <p class="mb-0">Compared to last month</p>
+        <div class="col-md-3">
+            <div class="card shadow-sm stats-card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Avg. Monthly Revenue</h5>
+                    {# Format as currency if possible, adjust locale as needed #}
+                    <h2 class="display-4">£{{ "{:,.2f}".format(avg_monthly_revenue or 0) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mt-3"> 
+            <div class="card shadow-sm stats-card">
+                <div class="card-body">
+                    <h5 class="card-title">Avg. Treatments/Patient</h5>
+                    <h2 class="display-4">{{ avg_treatments }}</h2>
                 </div>
             </div>
         </div>

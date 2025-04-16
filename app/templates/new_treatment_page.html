@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Treatment Session{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center"> <!-- Changed bg to success -->
+                    <h5 class="mb-0">
+                        <i class="bi bi-plus-circle"></i> Add New Treatment Session for {{ patient.name }}
+                    </h5>
+                    <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-arrow-left"></i> Back to Patient
+                    </a>
+                </div>
+                <div class="card-body">
+                    
+                    <form action="{{ url_for('main.add_treatment', patient_id=patient.id) }}" method="POST" id="newTreatmentForm"> {# Changed action to add_treatment #}
+                        {# Hidden inputs to store selections #}
+                        <input type="hidden" id="location" name="location" value="">
+                        <input type="hidden" id="visit_type" name="visit_type" value="">
+
+                        <div class="row">
+                            <!-- Left Column -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Treatment Information</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="date" class="form-label">Treatment Date</label>
+                                    <input type="date" class="form-control" id="date" name="date" 
+                                           value="{{ now.strftime('%Y-%m-%d') }}" required> {# Set value to today's date #}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="treatment_type" class="form-label">Treatment Description</label>
+                                    <input type="text" class="form-control" id="treatment_type" name="treatment_type" 
+                                           value="" placeholder="e.g., Initial Assessment, Follow-up" required> {# Cleared value #}
+                                </div>
+
+                                {# --- New Location Selection --- #}
+                                <div class="mb-3">
+                                    <label class="form-label">Location</label>
+                                    <div class="row g-2">
+                                        <div class="col">
+                                            <div class="location-card card card-body text-center" data-location="CostaSpine Clinic">
+                                                <i class="bi bi-hospital fs-1 mb-2"></i>
+                                                <div>CostaSpine Clinic</div>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="location-card card card-body text-center" data-location="Home Visit">
+                                                <i class="bi bi-house-door fs-1 mb-2"></i>
+                                                <div>Home Visit</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {# --- Conditional Visit Type/Fee Section (for CostaSpine) --- #}
+                                <div id="costaspineOptions" class="mb-3 border p-3 rounded" style="display: none;">
+                                    <label class="form-label">Visit Type (CostaSpine)</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="costaspine_visit_type" id="firstVisitRadio" value="Initial" data-fee="80.00">
+                                        <label class="form-check-label" for="firstVisitRadio">
+                                            First Visit (€80.00)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="costaspine_visit_type" id="followUpRadio" value="Follow-up" data-fee="70.00">
+                                        <label class="form-check-label" for="followUpRadio">
+                                            Follow-up (€70.00)
+                                        </label>
+                                    </div>
+                                </div>
+                                {# --- End Conditional Section --- #}
+
+                                <div class="mb-3">
+                                    <label for="fee_charged" class="form-label">Fee Charged (€)</label>
+                                    <input type="number" step="0.01" class="form-control" id="fee_charged" name="fee_charged" 
+                                           value="" placeholder="Select location first"> {# Cleared value, updated placeholder #}
+                                </div>
+                                {# --- End Location/Fee Changes --- #}
+                                
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="Scheduled" selected>Scheduled</option> {# Default to Scheduled #}
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                    </select>
+                                    <div class="form-text text-muted">
+                                        Status will default to 'Scheduled'.
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="payment_method" class="form-label">Payment Method</label>
+                                    <select class="form-select" id="payment_method" name="payment_method">
+                                        <option value="" selected>Select Method</option> {# Default blank #}
+                                        <option value="Cash">Cash</option>
+                                        <option value="Card">Card</option>
+                                        <option value="Transfer">Transfer</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="next_appointment" class="form-label">Next Appointment Date</label>
+                                    <input type="date" class="form-control" id="next_appointment" name="next_appointment" 
+                                           value=""> {# Cleared value #}
+                                    <div class="form-text">Leave blank if no follow-up is scheduled</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="pain_level" class="form-label">Pain Level (1-10)</label>
+                                    <input type="number" class="form-control" id="pain_level" name="pain_level" 
+                                           min="1" max="10" value=""> {# Cleared value #}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="movement_restriction" class="form-label">Movement Restriction</label>
+                                    <input type="text" class="form-control" id="movement_restriction" name="movement_restriction" 
+                                           value=""> {# Cleared value #}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">Progress Notes</label>
+                                    <textarea class="form-control" id="notes" name="notes" 
+                                              rows="6"></textarea> {# Cleared value #}
+                                </div>
+                            </div>
+                            
+                            <!-- Right Column - Body Chart -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Body Chart & Trigger Points</h5>
+                                
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">Body Map</h6>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-danger active" data-point-type="active">Active</button>
+                                                <button type="button" class="btn btn-outline-warning" data-point-type="latent">Latent</button>
+                                                <button type="button" class="btn btn-outline-info" data-point-type="satellite">Satellite</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="body-map-container">
+                                            <img src="{{ url_for('static', filename='images/bodychart.svg') }}" class="body-map" id="bodyMapImage" alt="Body chart">
+                                            <svg class="body-map-overlay" viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg">
+                                                <g id="triggerPoints"></g>
+                                            </svg>
+                                        </div>
+                                        <div class="text-muted small mt-2">Click on the body map to add trigger points</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Trigger Points</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Type</th>
+                                                        <th>Muscle</th>
+                                                        <th>Intensity</th>
+                                                        <th>Symptoms</th>
+                                                        <th>Referral</th>
+                                                        <th></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="pointsTableBody">
+                                                    <!-- Trigger points will be added here -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Hidden input to store trigger points data -->
+                                <input type="hidden" id="triggerPointsData" name="trigger_points_data" value="[]">
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success"> {# Changed style to success #}
+                                <i class="bi bi-plus-circle"></i> Add Treatment Session
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Styles copied from edit_treatment.html, added new styles #}
+<style>
+    .body-map-container {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+        position: relative;
+        cursor: crosshair;
+    }
+    
+    .body-map {
+        width: 100%;
+        height: auto;
+        display: block;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+    }
+    
+    .body-map-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 10; /* Ensure overlay is above the image */
+    }
+    
+    .trigger-point {
+        cursor: pointer;
+        transition: r 0.2s ease;
+        pointer-events: all;
+    }
+    
+    .muscle-select {
+        min-width: 120px;
+    }
+
+    /* New styles for location cards */
+    .location-card {
+        cursor: pointer;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        border: 2px solid transparent;
+    }
+
+    .location-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,.1);
+    }
+
+    .location-card.selected {
+        border-color: var(--bs-primary); /* Bootstrap primary color */
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), .5);
+        background-color: var(--bs-light);
+    }
+
+    .location-card i {
+        color: var(--bs-secondary);
+    }
+    .location-card.selected i {
+         color: var(--bs-primary);
+    }
+
+
+</style>
+
+{# Removed script loading initial data, keep the rest for interactivity, added new JS logic #}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- Location/Fee Logic ---
+        const locationCards = document.querySelectorAll('.location-card');
+        const costaspineOptionsDiv = document.getElementById('costaspineOptions');
+        const feeInput = document.getElementById('fee_charged');
+        const hiddenLocationInput = document.getElementById('location');
+        const hiddenVisitTypeInput = document.getElementById('visit_type');
+        const costaspineRadios = document.querySelectorAll('input[name="costaspine_visit_type"]');
+
+        locationCards.forEach(card => {
+            card.addEventListener('click', function() {
+                locationCards.forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+
+                const selectedLocation = this.dataset.location;
+                hiddenLocationInput.value = selectedLocation;
+
+                if (selectedLocation === 'CostaSpine Clinic') {
+                    costaspineOptionsDiv.style.display = 'block';
+                    costaspineRadios.forEach(radio => radio.checked = false);
+                    feeInput.value = '';
+                    feeInput.readOnly = true; // Make read-only initially for CostaSpine
+                    feeInput.placeholder = 'Select visit type above'; // Updated placeholder
+                    hiddenVisitTypeInput.value = '';
+                } else { // Home Visit selected
+                    costaspineOptionsDiv.style.display = 'none';
+                    costaspineRadios.forEach(radio => radio.checked = false);
+                    feeInput.value = ''; 
+                    feeInput.readOnly = false; // Make editable for Home Visit
+                    feeInput.placeholder = 'Enter fee for home visit';
+                    hiddenVisitTypeInput.value = ''; 
+                }
+            });
+        });
+
+        costaspineRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    feeInput.value = this.dataset.fee;
+                    feeInput.readOnly = true; // Ensure it stays read-only
+                    hiddenVisitTypeInput.value = this.value;
+                }
+            });
+        });
+        // --- End Location/Fee Logic ---
+
+
+        // --- Trigger point management (Existing Code) ---
+        let triggerPoints = [];
+        let pointIdCounter = 1;
+        let currentPointType = 'active';
+        
+        const pointTypeButtons = document.querySelectorAll('[data-point-type]');
+        pointTypeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                pointTypeButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentPointType = this.dataset.pointType;
+            });
+        });
+        
+        function getPointColor(type) {
+            switch(type) {
+                case 'active': return '#dc3545'; // Red
+                case 'latent': return '#ffc107'; // Yellow
+                case 'satellite': return '#17a2b8'; // Blue
+                default: return '#6c757d'; // Grey
+            }
+        }
+        
+        function createTableRow(point) {
+            const row = document.createElement('tr');
+            row.dataset.pointId = point.id;
+            
+            row.innerHTML = `
+                <td>
+                    <span class="badge" style="background-color: ${getPointColor(point.type)};">${point.type}</span>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm muscle-select" onchange="updatePointData('${point.id}', 'muscle', this.value)">
+                        <option value="" ${!point.muscle ? 'selected' : ''}>Select Muscle</option>
+                        <option value="Trapezius" ${point.muscle === 'Trapezius' ? 'selected' : ''}>Trapezius</option>
+                        <option value="Levator Scapulae" ${point.muscle === 'Levator Scapulae' ? 'selected' : ''}>Levator Scapulae</option>
+                        <option value="Rhomboids" ${point.muscle === 'Rhomboids' ? 'selected' : ''}>Rhomboids</option>
+                        <option value="Deltoid" ${point.muscle === 'Deltoid' ? 'selected' : ''}>Deltoid</option>
+                        <option value="Infraspinatus" ${point.muscle === 'Infraspinatus' ? 'selected' : ''}>Infraspinatus</option>
+                        <option value="Supraspinatus" ${point.muscle === 'Supraspinatus' ? 'selected' : ''}>Supraspinatus</option>
+                        <option value="Gluteus Medius" ${point.muscle === 'Gluteus Medius' ? 'selected' : ''}>Gluteus Medius</option>
+                        <option value="Gluteus Minimus" ${point.muscle === 'Gluteus Minimus' ? 'selected' : ''}>Gluteus Minimus</option>
+                        <option value="Piriformis" ${point.muscle === 'Piriformis' ? 'selected' : ''}>Piriformis</option>
+                        <option value="Quadratus Lumborum" ${point.muscle === 'Quadratus Lumborum' ? 'selected' : ''}>Quadratus Lumborum</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" min="1" max="10" 
+                           onchange="updatePointData('${point.id}', 'intensity', this.value)" value="${point.intensity || ''}"
+                           placeholder="1-10">
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm" 
+                           onchange="updatePointData('${point.id}', 'symptoms', this.value)" value="${point.symptoms || ''}"
+                           placeholder="e.g., Local ache">
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm" 
+                           onchange="updatePointData('${point.id}', 'referral', this.value)" value="${point.referral || ''}"
+                           placeholder="e.g., Down arm">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removePoint('${point.id}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            return row;
+        }
+        
+        function addPoint(x, y, type = currentPointType, existingData = null) {
+            const pointId = existingData ? existingData.id : `point-${pointIdCounter++}`;
+            const pointData = existingData || {
+                id: pointId,
+                x: Math.round(x),
+                y: Math.round(y),
+                type: type,
+                intensity: '',
+                muscle: '',
+                symptoms: '',
+                referral: ''
+            };
+            
+            if (!existingData && triggerPoints.some(p => p.id === pointId)) {
+                console.warn('Point already exists:', pointId);
+                return;
+            }
+            
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", pointData.x);
+            circle.setAttribute("cy", pointData.y);
+            circle.setAttribute("r", "3"); 
+            circle.setAttribute("fill", getPointColor(pointData.type));
+            circle.setAttribute("class", "trigger-point");
+            circle.setAttribute("data-point-id", pointId);
+            
+            circle.addEventListener('mouseover', () => circle.setAttribute("r", "5"));
+            circle.addEventListener('mouseout', () => circle.setAttribute("r", "3"));
+            
+            const pointsGroup = document.getElementById('triggerPoints');
+            pointsGroup.appendChild(circle);
+            
+            const tbody = document.getElementById('pointsTableBody');
+            tbody.appendChild(createTableRow(pointData));
+            
+            if (!existingData) {
+                triggerPoints.push(pointData);
+            } else if (!triggerPoints.find(p => p.id === pointData.id)) {
+                triggerPoints.push(pointData);
+            }
+            
+            updateFormData();
+        }
+        
+        window.updatePointData = function(pointId, field, value) {
+            const point = triggerPoints.find(p => p.id === pointId);
+            if (point) {
+                point[field] = value;
+                updateFormData();
+            }
+        };
+        
+        window.removePoint = function(pointId) {
+            const index = triggerPoints.findIndex(p => p.id === pointId);
+            if (index > -1) {
+                triggerPoints.splice(index, 1);
+                document.querySelector(`#triggerPoints circle[data-point-id="${pointId}"]`)?.remove();
+                document.querySelector(`#pointsTableBody tr[data-point-id="${pointId}"]`)?.remove();
+                updateFormData();
+            }
+        };
+        
+        function updateFormData() {
+            const dataInput = document.getElementById('triggerPointsData');
+            dataInput.value = JSON.stringify(triggerPoints);
+            console.log('Updated triggerPointsData:', dataInput.value); // Debug
+        }
+        
+        const bodyMapImage = document.getElementById('bodyMapImage');
+        if (bodyMapImage) {
+            const bodyMapOverlay = bodyMapImage.nextElementSibling; 
+            if (bodyMapOverlay && bodyMapOverlay.tagName === 'svg') {
+                bodyMapOverlay.style.pointerEvents = 'all';
+                
+                bodyMapOverlay.addEventListener('click', function(evt) {
+                    evt.preventDefault(); 
+                    evt.stopPropagation();
+                    
+                    const rect = bodyMapOverlay.getBoundingClientRect();
+                    const svgPoint = bodyMapOverlay.createSVGPoint();
+                    svgPoint.x = evt.clientX;
+                    svgPoint.y = evt.clientY;
+                    const svgP = svgPoint.matrixTransform(bodyMapOverlay.getScreenCTM().inverse());
+
+                    console.log(`SVG click at (${svgP.x}, ${svgP.y})`); 
+                    
+                    addPoint(svgP.x, svgP.y);
+                });
+            }
+        }
+        
+        updateFormData(); // Initialize hidden field
+         // --- End Trigger Point Management ---
+
+    });
+</script>
+{% endblock %} 

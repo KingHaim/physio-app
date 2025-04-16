@@ -513,6 +513,8 @@ def edit_treatment(id):
     treatment = Treatment.query.get_or_404(id)
     patient = treatment.patient
     
+    print(f"DEBUG: Raw treatment.evaluation_data for ID {id}: {treatment.evaluation_data!r}") 
+    
     if request.method == 'POST':
         # Update date field
         if request.form.get('date'):
@@ -563,35 +565,22 @@ def edit_treatment(id):
             trigger_data_string = request.form.get('trigger_points_data')
             print(f"DEBUG: Received trigger_points_data: {trigger_data_string}") # Keep for server log
             try:
-                # Parse JSON first
-                parsed_evaluation_data = json.loads(trigger_data_string)
-                treatment.evaluation_data = parsed_evaluation_data # Assign only if parsing succeeds
-                
-                # Update or create trigger points in the database (NOW INDENTED)
-                # First, remove existing trigger points
+                treatment.evaluation_data = json.loads(trigger_data_string)
+
+                # Update or create trigger points in the database
                 TriggerPoint.query.filter_by(treatment_id=treatment.id).delete()
-                
-                # Then add the new ones
-                if isinstance(parsed_evaluation_data, list): # Ensure it's a list before iterating
-                    for point_data in parsed_evaluation_data:
-                        # Basic validation (optional but recommended)
-                        if not isinstance(point_data, dict) or 'x' not in point_data or 'y' not in point_data or 'type' not in point_data:
-                             print(f"Warning: Skipping invalid point data: {point_data}")
-                             continue
-                             
-                        trigger_point = TriggerPoint(
-                            treatment_id=treatment.id,
-                            location_x=float(point_data['x']),
-                            location_y=float(point_data['y']),
-                            type=point_data['type'],
-                            muscle=point_data.get('muscle', ''),
-                            intensity=int(point_data['intensity']) if point_data.get('intensity') else None,
-                            symptoms=point_data.get('symptoms', ''),
-                            referral_pattern=point_data.get('referral', '')
-                        )
-                        db.session.add(trigger_point)
-                else:
-                     print(f"Warning: Parsed trigger point data is not a list for treatment {id}. Skipping point creation.")
+                for point_data in treatment.evaluation_data:
+                    trigger_point = TriggerPoint(
+                        treatment_id=treatment.id,
+                        location_x=float(point_data['x']),
+                        location_y=float(point_data['y']),
+                        type=point_data['type'],
+                        muscle=point_data.get('muscle', ''),
+                        intensity=int(point_data['intensity']) if point_data.get('intensity') else None,
+                        symptoms=point_data.get('symptoms', ''),
+                        referral_pattern=point_data.get('referral', '')
+                    )
+                    db.session.add(trigger_point)
 
             except json.JSONDecodeError as e:
                 # Log the error and the problematic string to the error log
@@ -599,10 +588,7 @@ def edit_treatment(id):
                 print(f"ERROR_STRING: {trigger_data_string}")
                 print(f"ERROR_DETAILS: {e}")
                 flash('Error processing trigger point data. Please check the format or report this issue.', 'danger')
-                # Rollback to avoid partial updates
                 db.session.rollback()
-                # Re-render the edit form to avoid losing other user input
-                # Reload original evaluation data to avoid showing corrupted data
                 original_treatment_data = Treatment.query.get(id)
                 return render_template('edit_treatment.html',
                                       treatment={ # Rebuild the context for the template
@@ -622,21 +608,18 @@ def edit_treatment(id):
                                           'body_chart_url': treatment.body_chart_url
                                       },
                                       patient=patient)
-        
-        # --- Correct Commit Logic --- 
-        # Commit all changes AFTER potentially updating trigger points
+
+        # If try block succeeded or no trigger_points_data was present, commit other changes
         try:
-            db.session.commit() # Indent this line
-            flash(f'Treatment session on {treatment.created_at.strftime("%Y-%m-%d")} updated successfully!', 'success') # Indent this line
+            db.session.commit()
+            flash(f'Treatment session on {treatment.created_at.strftime("%Y-%m-%d")} updated successfully!', 'success')
         except Exception as e:
-            db.session.rollback() # Indent this line
-            flash('Error saving treatment changes. Please try again.', 'danger') # Indent this line
-            print(f"Error committing changes for treatment {id}: {e}") # Indent this line
-            # Re-render the edit form if commit fails - reload original data
-            original_treatment_data = Treatment.query.get(id) # Indent this line
-            # Indent the return statement and its content
+            db.session.rollback()
+            flash('Error saving treatment changes. Please try again.', 'danger')
+            print(f"Error committing changes for treatment {id}: {e}")
+            # Re-render the edit form if commit fails
             return render_template('edit_treatment.html',
-                                  treatment={ # Rebuild context with original data if needed
+                                  treatment={ # Rebuild context
                                       'id': treatment.id,
                                       'created_at': treatment.created_at,
                                       'description': treatment.treatment_type,
@@ -648,7 +631,7 @@ def edit_treatment(id):
                                       'visit_type': treatment.visit_type,
                                       'fee_charged': treatment.fee_charged,
                                       'payment_method': treatment.payment_method,
-                                      'evaluation_data': original_treatment_data.evaluation_data if original_treatment_data else [],
+                                      'evaluation_data': treatment.evaluation_data,
                                       'trigger_points': treatment.trigger_points,
                                       'body_chart_url': treatment.body_chart_url
                                   },
@@ -657,32 +640,27 @@ def edit_treatment(id):
         return redirect(url_for('main.patient_detail', id=patient.id))
     
     # --- GET Request Logic ---
-    # Validate evaluation_data before passing to template
-    valid_evaluation_data = [] # Default to empty list
+    valid_evaluation_data = [] 
     if treatment.evaluation_data:
-        # Check if it's already a Python list/dict (might happen if loaded correctly)
         if isinstance(treatment.evaluation_data, (list, dict)):
             valid_evaluation_data = treatment.evaluation_data
-        # If it's a string, try to parse it
         elif isinstance(treatment.evaluation_data, str):
             try:
                 parsed_data = json.loads(treatment.evaluation_data)
-                # Ensure it's a list after parsing
                 if isinstance(parsed_data, list):
                     valid_evaluation_data = parsed_data
                 else:
-                    print(f"Warning: Parsed evaluation_data for treatment {id} is not a list. Type: {type(parsed_data)}")
+                    print(f"Warning: Parsed evaluation_data for treatment {id} is not a list.")
             except json.JSONDecodeError:
-                print(f"Warning: evaluation_data for treatment {id} is invalid JSON. Value: {treatment.evaluation_data}")
+                print(f"Warning: evaluation_data for treatment {id} is invalid JSON.")
         else:
-            # Handle other potential types if necessary, or log a warning
-            print(f"Warning: evaluation_data for treatment {id} has unexpected type: {type(treatment.evaluation_data)}")
+            print(f"Warning: evaluation_data for treatment {id} has unexpected type.")
 
-    # Prepare context for the template
+    # Prepare context - Pass the validated Python list/dict directly
     template_context = {
         'id': treatment.id,
         'created_at': treatment.created_at,
-        'description': treatment.treatment_type,
+        'description': treatment.treatment_type, 
         'progress_notes': treatment.notes,
         'status': treatment.status,
         'pain_level': treatment.pain_level,
@@ -691,14 +669,11 @@ def edit_treatment(id):
         'visit_type': treatment.visit_type,
         'fee_charged': treatment.fee_charged,
         'payment_method': treatment.payment_method,
-        'evaluation_data': valid_evaluation_data, # Pass the validated data
-        'trigger_points': treatment.trigger_points, # This is the relationship, usually okay
+        'evaluation_data': valid_evaluation_data, # Pass the Python list directly
+        'trigger_points': treatment.trigger_points, 
         'body_chart_url': treatment.body_chart_url
     }
     
-    # Explicitly convert the validated data to a JSON string for the template
-    template_context['evaluation_data_json'] = json.dumps(valid_evaluation_data)
-
     return render_template('edit_treatment.html', 
                           treatment=template_context, 
                           patient=patient)
@@ -754,6 +729,14 @@ def patient_edit_treatments(id):
     patient = Patient.query.get_or_404(id)
     treatments = Treatment.query.filter_by(patient_id=id).order_by(Treatment.created_at.desc()).all()
     return render_template('edit_treatments_list.html', patient=patient, treatments=treatments)
+
+@main.route('/patient/<int:patient_id>/new_treatment_page', methods=['GET'])
+@login_required
+def new_treatment_page(patient_id):
+    patient = Patient.query.get_or_404(patient_id)
+    now = datetime.now() # Get current datetime
+    # Pass patient and now to the template
+    return render_template('new_treatment_page.html', patient=patient, now=now)
 
 @main.route('/admin/fix-calendly-dates')
 def fix_calendly_dates():
@@ -875,10 +858,6 @@ def analytics():
     
     # --- End New Financial Analytics ---
     
-    # Calculate completion rate (Added missing calculation)
-    completed_treatments = Treatment.query.filter_by(status='Completed').count()
-    completion_rate = (completed_treatments / total_treatments * 100) if total_treatments > 0 else 0
-
     return render_template('analytics.html',
                           total_patients=total_patients,
                           active_patients=active_patients,
@@ -888,7 +867,6 @@ def analytics():
                           patients_by_month=patients_by_month,
                           common_diagnoses=common_diagnoses,
                           avg_treatments=round(avg_treatments, 1),
-                          completion_rate=completion_rate,
                           avg_monthly_revenue=avg_monthly_revenue,
                           revenue_by_visit_type=revenue_by_visit_type,
                           revenue_by_location=revenue_by_location,
