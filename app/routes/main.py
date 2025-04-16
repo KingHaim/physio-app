@@ -1,11 +1,15 @@
 # app/routes.py
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract, or_, case, cast, Float
 from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport  # Changed PatientNote to TriggerPoint
 import json
 from app.utils import mark_past_treatments_as_completed, mark_inactive_patients
 from flask_login import login_required
+from io import BytesIO
+from xhtml2pdf import pisa
+import markdown
+import os
 
 main = Blueprint('main', __name__)
 
@@ -234,6 +238,21 @@ def add_treatment(patient_id):
     status = request.form.get('status')
     provider = request.form.get('provider')
     
+    # --- Location Logic ---
+    location = request.form.get('location')
+    sync_with_calendly = request.form.get('sync_with_calendly') == 'true' # Check if Calendly sync enabled
+    
+    if not location or location.strip() == "": # If no location explicitly provided
+        if sync_with_calendly:
+            location = 'Home Visit' # Default for Calendly sync
+            print(f"DEBUG: Defaulting location to 'Home Visit' due to Calendly sync for patient {patient_id}")
+        else:
+            location = 'CostaSpine Clinic' # Default for manual entry without explicit selection
+            print(f"DEBUG: Defaulting location to 'CostaSpine Clinic' for patient {patient_id}")
+    else:
+         print(f"DEBUG: Using provided location: {location} for patient {patient_id}")
+    # --- End Location Logic ---
+
     # Get optional fields
     pain_level = request.form.get('pain_level')
     if pain_level:  # Only convert to int if a value was provided
@@ -244,21 +263,38 @@ def add_treatment(patient_id):
     movement_restriction = request.form.get('movement_restriction')
     body_chart_url = request.form.get('body_chart_url')
     
+    # Get new financial fields (these might be set by the location logic or form)
+    visit_type = request.form.get('visit_type') 
+    fee_str = request.form.get('fee_charged')
+    fee_charged = float(fee_str) if fee_str else None
+    payment_method = request.form.get('payment_method')
+    
     # Get trigger points / evaluation data
     evaluation_data = None
-    if request.form.get('trigger_points_data'):
-        evaluation_data = json.loads(request.form.get('trigger_points_data'))
-    elif request.form.get('evaluation_data'):
-        evaluation_data = json.loads(request.form.get('evaluation_data'))
+    trigger_data_str = request.form.get('trigger_points_data') or request.form.get('evaluation_data')
+    if trigger_data_str:
+        try:
+            evaluation_data = json.loads(trigger_data_str)
+        except json.JSONDecodeError:
+            flash('Error decoding trigger points data.', 'danger')
+            # Decide how to handle this - maybe redirect back with error?
+            # For now, just log and continue without trigger points
+            print(f"ERROR: Invalid JSON for trigger points data for patient {patient_id}")
+            evaluation_data = None # Ensure it's reset
     
     # Get date field if provided
     date_str = request.form.get('date')
     created_at = None
     if date_str:
         try:
-            created_at = datetime.strptime(date_str, '%Y-%m-%dT%H:%M')
+            # Try parsing Date first, then DateTime
+            try:
+                 created_at = datetime.strptime(date_str, '%Y-%m-%d')
+            except ValueError:
+                 created_at = datetime.strptime(date_str, '%Y-%m-%dT%H:%M')
         except ValueError:
             # If date parsing fails, use current datetime
+            flash('Invalid date format provided. Using current date/time.', 'warning')
             created_at = datetime.now()
     else:
         created_at = datetime.now()
@@ -275,28 +311,46 @@ def add_treatment(patient_id):
         movement_restriction=movement_restriction,
         body_chart_url=body_chart_url,
         created_at=created_at,
-        evaluation_data=evaluation_data  # Add the evaluation_data
+        evaluation_data=evaluation_data,  # Add the evaluation_data
+        location=location,                # Add determined location
+        visit_type=visit_type,            # Add visit type
+        fee_charged=fee_charged,          # Add fee
+        payment_method=payment_method     # Add payment method
     )
     
     db.session.add(treatment)
-    db.session.commit()
-    
+    # Commit here to get treatment.id for trigger points
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error adding treatment: {e}', 'danger')
+        return redirect(url_for('main.patient_detail', id=patient_id)) # Redirect back on error
+        
     # If we have trigger points data, create those records too
-    if evaluation_data:
-        for point_data in evaluation_data:
-            trigger_point = TriggerPoint(
-                treatment_id=treatment.id,
-                location_x=float(point_data['x']),
-                location_y=float(point_data['y']),
-                type=point_data['type'],
-                muscle=point_data.get('muscle', ''),
-                intensity=int(point_data['intensity']) if point_data.get('intensity') and point_data['intensity'] != '' else None,
-                symptoms=point_data.get('symptoms', ''),
-                referral_pattern=point_data.get('referral', '')
-            )
-            db.session.add(trigger_point)
-    db.session.commit()
-    
+    if evaluation_data and isinstance(evaluation_data, list): # Ensure it's a list
+        try:
+            for point_data in evaluation_data:
+                if isinstance(point_data, dict): # Check if item is a dictionary
+                    trigger_point = TriggerPoint(
+                        treatment_id=treatment.id,
+                        location_x=float(point_data.get('x', 0)), # Use .get with default
+                        location_y=float(point_data.get('y', 0)), # Use .get with default
+                        type=point_data.get('type', 'unknown'),   # Use .get with default
+                        muscle=point_data.get('muscle', ''),
+                        intensity=int(point_data['intensity']) if point_data.get('intensity') else None,
+                        symptoms=point_data.get('symptoms', ''),
+                        referral_pattern=point_data.get('referral', '')
+                    )
+                    db.session.add(trigger_point)
+            db.session.commit() # Commit trigger points
+        except Exception as e:
+            db.session.rollback() # Rollback trigger points if error
+            # Optionally delete the treatment itself or leave it without points?
+            # Let's leave the treatment but flash an error about points
+            flash(f'Treatment added, but failed to save trigger points: {e}', 'warning') 
+            print(f"ERROR: Failed adding trigger points for treatment {treatment.id}: {e}")
+
     flash('Treatment added successfully', 'success')
     return redirect(url_for('main.patient_detail', id=patient_id))
 
@@ -484,24 +538,39 @@ def patient_report(id):
             flash('Report does not belong to this patient.', 'danger')
             return redirect(url_for('main.patient_detail', id=id))
     else:
-        # Get the most recent report
-        report = PatientReport.query.filter_by(
-            patient_id=id
+        # Get the most recent *non-homework* report if no ID specified
+        report = PatientReport.query.filter(
+            PatientReport.patient_id == id,
+            PatientReport.report_type != 'Exercise Homework' # Exclude homework from default view
         ).order_by(PatientReport.generated_date.desc()).first()
     
+    # If still no main report found (maybe only homework exists?), get the absolute latest one
     if not report:
-        flash('No report found for this patient.', 'warning')
+         report = PatientReport.query.filter_by(
+            patient_id=id
+        ).order_by(PatientReport.generated_date.desc()).first()
+
+    # If *still* no report, redirect
+    if not report:
+        flash('No reports found for this patient.', 'warning')
         return redirect(url_for('main.patient_detail', id=id))
     
-    # Get all reports for the dropdown
+    # Get all reports for the dropdown (including homework)
     all_reports = PatientReport.query.filter_by(
         patient_id=id
     ).order_by(PatientReport.generated_date.desc()).all()
     
+    # Get specifically the Exercise Homework reports
+    exercise_homework_reports = PatientReport.query.filter_by(
+        patient_id=id,
+        report_type='Exercise Homework'
+    ).order_by(PatientReport.generated_date.desc()).all()
+    
     return render_template('patient_report.html', 
                           patient=patient, 
-                          report=report,
-                          all_reports=all_reports)
+                          report=report, # The currently viewed report
+                          all_reports=all_reports, # For dropdown
+                          exercise_homework_reports=exercise_homework_reports) # For bottom section
 
 @main.route('/calendly/review')
 def review_calendly_bookings():
@@ -640,6 +709,13 @@ def edit_treatment(id):
         return redirect(url_for('main.patient_detail', id=patient.id))
     
     # --- GET Request Logic ---
+    # Check if patient has other treatments besides this one
+    has_past_treatments = db.session.query(Treatment.id).filter(
+        Treatment.patient_id == patient.id, 
+        Treatment.id != id
+    ).first() is not None
+    print(f"DEBUG: Patient {patient.id} has past treatments (excluding current {id}): {has_past_treatments}")
+
     valid_evaluation_data = [] 
     if treatment.evaluation_data:
         if isinstance(treatment.evaluation_data, (list, dict)):
@@ -656,7 +732,6 @@ def edit_treatment(id):
         else:
             print(f"Warning: evaluation_data for treatment {id} has unexpected type.")
 
-    # Prepare context - Pass the validated Python list/dict directly
     template_context = {
         'id': treatment.id,
         'created_at': treatment.created_at,
@@ -669,14 +744,15 @@ def edit_treatment(id):
         'visit_type': treatment.visit_type,
         'fee_charged': treatment.fee_charged,
         'payment_method': treatment.payment_method,
-        'evaluation_data': valid_evaluation_data, # Pass the Python list directly
+        'evaluation_data': valid_evaluation_data, 
         'trigger_points': treatment.trigger_points, 
         'body_chart_url': treatment.body_chart_url
     }
     
     return render_template('edit_treatment.html', 
                           treatment=template_context, 
-                          patient=patient)
+                          patient=patient,
+                          has_past_treatments=has_past_treatments) # Pass the flag
 
 @main.route('/treatment/<int:id>/view')
 def view_treatment(id):
@@ -735,8 +811,17 @@ def patient_edit_treatments(id):
 def new_treatment_page(patient_id):
     patient = Patient.query.get_or_404(patient_id)
     now = datetime.now() # Get current datetime
-    # Pass patient and now to the template
-    return render_template('new_treatment_page.html', patient=patient, now=now)
+    # Check if patient has any treatments at all
+    has_past_treatments = db.session.query(Treatment.id).filter(
+        Treatment.patient_id == patient_id
+    ).first() is not None
+    print(f"DEBUG: Patient {patient_id} has past treatments (for new page): {has_past_treatments}")
+    
+    # Pass patient, now, and the flag to the template
+    return render_template('new_treatment_page.html', 
+                          patient=patient, 
+                          now=now,
+                          has_past_treatments=has_past_treatments)
 
 @main.route('/admin/fix-calendly-dates')
 def fix_calendly_dates():
@@ -855,6 +940,17 @@ def analytics():
      .group_by(Treatment.payment_method) \
      .order_by(func.count(Treatment.id).desc()) \
      .all()
+     
+    # Calculate CostaSpine Revenue and Service Fee
+    costaspine_revenue_query = db.session.query(
+        func.sum(Treatment.fee_charged)
+    ).filter(
+        Treatment.location == 'CostaSpine Clinic', 
+        Treatment.fee_charged.isnot(None)
+    ).scalar() or 0
+    
+    costaspine_revenue = float(costaspine_revenue_query)
+    costaspine_service_fee = costaspine_revenue * 0.30
     
     # --- End New Financial Analytics ---
     
@@ -870,7 +966,9 @@ def analytics():
                           avg_monthly_revenue=avg_monthly_revenue,
                           revenue_by_visit_type=revenue_by_visit_type,
                           revenue_by_location=revenue_by_location,
-                          payment_method_distribution=payment_method_distribution)
+                          payment_method_distribution=payment_method_distribution,
+                          costaspine_revenue=costaspine_revenue,
+                          costaspine_service_fee=costaspine_service_fee) # Pass new data
 
 @main.route('/admin/update-treatments')
 def update_treatments_demo():
@@ -980,3 +1078,71 @@ def update_treatments_demo():
     </body>
     </html>
     """
+
+@main.route('/report/<int:report_id>/pdf')
+@login_required # Ensure user is logged in
+def download_report_pdf(report_id):
+    """Generates and serves a PDF version of a specific report."""
+    report = PatientReport.query.get_or_404(report_id)
+    patient = report.patient # Assuming relationship is set up
+
+    # Convert report content from Markdown to HTML
+    try:
+        report_html = markdown.markdown(report.content)
+    except Exception as e:
+        print(f"Error converting markdown for report {report_id}: {e}")
+        flash('Error generating PDF: Could not parse report content.', 'danger')
+        return redirect(url_for('main.patient_report', id=patient.id, report_id=report.id))
+
+    # Read the CSS content
+    css_content = ""
+    try:
+        # Construct the absolute path to the CSS file
+        css_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'css', 'report.css')
+        with open(css_path, 'r') as f:
+            css_content = f.read()
+    except FileNotFoundError:
+        print("Warning: report.css not found. PDF will have basic styling.")
+    except Exception as e:
+        print(f"Error reading report.css: {e}")
+
+    # Basic HTML structure for the PDF
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Report: {patient.name}</title>
+        <style>
+            {css_content} /* Inject the CSS content here */
+        </style>
+    </head>
+    <body>
+        <div class="report-content">
+            {report_html}
+        </div>
+    </body>
+    </html>
+    """
+
+    # Generate PDF
+    pdf_file = BytesIO()
+    try:
+        pisa_status = pisa.CreatePDF(html_content, dest=pdf_file)
+        if pisa_status.err:
+            raise Exception(f"pisa error: {pisa_status.err}")
+    except Exception as e:
+        print(f"Error creating PDF for report {report_id}: {e}")
+        flash('Error generating PDF. Please check report content or server logs.', 'danger')
+        return redirect(url_for('main.patient_report', id=patient.id, report_id=report.id))
+
+    pdf_file.seek(0)
+
+    # Create response
+    response = make_response(pdf_file.read())
+    response.headers['Content-Type'] = 'application/pdf'
+    # Suggest filename for download
+    filename = f"Report_{patient.name.replace(' ', '_')}_{report.generated_date.strftime('%Y%m%d')}.pdf"
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    return response
