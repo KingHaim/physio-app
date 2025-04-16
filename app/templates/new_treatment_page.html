@@ -6,8 +6,9 @@
 <div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-md-10">
-            <div class="card">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center"> <!-- Changed bg to success -->
+            {# Pass the flag to the JS via a data attribute on a main element #}
+            <div class="card" data-has-past-treatments="{{ has_past_treatments | tojson }}">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> <!-- Changed bg-success to bg-primary -->
                     <h5 class="mb-0">
                         <i class="bi bi-plus-circle"></i> Add New Treatment Session for {{ patient.name }}
                     </h5>
@@ -17,182 +18,158 @@
                 </div>
                 <div class="card-body">
                     
-                    <form action="{{ url_for('main.add_treatment', patient_id=patient.id) }}" method="POST" id="newTreatmentForm"> {# Changed action to add_treatment #}
-                        {# Hidden inputs to store selections #}
+                    <form action="{{ url_for('main.add_treatment', patient_id=patient.id) }}" method="POST" id="newTreatmentForm">
+                        {# Hidden inputs remain part of the form #}
                         <input type="hidden" id="location" name="location" value="">
                         <input type="hidden" id="visit_type" name="visit_type" value="">
+                        <input type="hidden" id="payment_method" name="payment_method" value="">
+                        <input type="hidden" id="triggerPointsData" name="trigger_points_data" value="[]"> {# Ensure TP data input is here #}
 
-                        <div class="row">
-                            <!-- Left Column -->
-                            <div class="col-md-6">
-                                <h5 class="mb-3">Treatment Information</h5>
-                                
-                                <div class="mb-3">
-                                    <label for="date" class="form-label">Treatment Date</label>
-                                    <input type="date" class="form-control" id="date" name="date" 
-                                           value="{{ now.strftime('%Y-%m-%d') }}" required> {# Set value to today's date #}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="treatment_type" class="form-label">Treatment Description</label>
-                                    <input type="text" class="form-control" id="treatment_type" name="treatment_type" 
-                                           value="" placeholder="e.g., Initial Assessment, Follow-up" required> {# Cleared value #}
-                                </div>
+                        {# Tab Navigation #}
+                        <ul class="nav nav-tabs mb-3" id="treatmentTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="clinical-tab" data-bs-toggle="tab" data-bs-target="#clinical" type="button" role="tab" aria-controls="clinical" aria-selected="true">Clinical Details</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial" type="button" role="tab" aria-controls="financial" aria-selected="false">Financial & Scheduling</button>
+                            </li>
+                        </ul>
 
-                                {# --- New Location Selection --- #}
-                                <div class="mb-3">
-                                    <label class="form-label">Location</label>
-                                    <div class="row g-2">
-                                        <div class="col">
-                                            <div class="location-card card card-body text-center" data-location="CostaSpine Clinic">
-                                                <i class="bi bi-hospital fs-1 mb-2"></i>
-                                                <div>CostaSpine Clinic</div>
+                        {# Tab Content #}
+                        <div class="tab-content" id="treatmentTabContent">
+                            {# Clinical Details Tab Pane #}
+                            <div class="tab-pane fade show active" id="clinical" role="tabpanel" aria-labelledby="clinical-tab">
+                                <div class="row">
+                                    <!-- Left Column: Clinical Fields -->
+                                    <div class="col-md-6">
+                                        <h5 class="mb-3">Clinical Information</h5>
+                                        <div class="mb-3">
+                                            <label for="date" class="form-label">Treatment Date</label>
+                                            <input type="date" class="form-control" id="date" name="date" value="{{ now.strftime('%Y-%m-%d') }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="treatment_type" class="form-label">Treatment Description</label>
+                                            <input type="text" class="form-control" id="treatment_type" name="treatment_type" value="" placeholder="e.g., Initial Assessment, Follow-up" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="status" class="form-label">Status</label>
+                                            <select class="form-select" id="status" name="status">
+                                                <option value="Scheduled" selected>Scheduled</option>
+                                                <option value="In Progress">In Progress</option>
+                                                <option value="Completed">Completed</option>
+                                                <option value="Cancelled">Cancelled</option>
+                                            </select>
+                                        </div>
+                                         <div class="mb-3">
+                                            <label for="pain_level" class="form-label">Pain Level (1-10)</label>
+                                            <input type="number" class="form-control" id="pain_level" name="pain_level" min="1" max="10" value="">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="movement_restriction" class="form-label">Movement Restriction</label>
+                                            <input type="text" class="form-control" id="movement_restriction" name="movement_restriction" value="">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="notes" class="form-label">Progress Notes</label>
+                                            <textarea class="form-control" id="notes" name="notes" rows="6"></textarea>
+                                        </div>
+                                    </div>
+                                    <!-- Right Column: Body Chart -->
+                                    <div class="col-md-6">
+                                        <h5 class="mb-3">Body Chart & Trigger Points</h5>
+                                        <div class="card mb-3">
+                                            <div class="card-header">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0">Body Map</h6>
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <button type="button" class="btn btn-outline-danger active" data-point-type="active">Active</button>
+                                                        <button type="button" class="btn btn-outline-warning" data-point-type="latent">Latent</button>
+                                                        <button type="button" class="btn btn-outline-info" data-point-type="satellite">Satellite</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                 <div class="body-map-container">
+                                                    <img src="{{ url_for('static', filename='images/bodychart.svg') }}" class="body-map" id="bodyMapImage" alt="Body chart">
+                                                    <svg class="body-map-overlay" viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg">
+                                                        <g id="triggerPoints"></g>
+                                                    </svg>
+                                                </div>
+                                                <div class="text-muted small mt-2">Click on the body map to add trigger points</div>
                                             </div>
                                         </div>
-                                        <div class="col">
-                                            <div class="location-card card card-body text-center" data-location="Home Visit">
-                                                <i class="bi bi-house-door fs-1 mb-2"></i>
-                                                <div>Home Visit</div>
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Trigger Points</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm">
+                                                        <thead><tr><th>Type</th><th>Muscle</th><th>Intensity</th><th>Symptoms</th><th>Referral</th><th></th></tr></thead>
+                                                        <tbody id="pointsTableBody"></tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                {# --- Conditional Visit Type/Fee Section (for CostaSpine) --- #}
-                                <div id="costaspineOptions" class="mb-3 border p-3 rounded" style="display: none;">
-                                    <label class="form-label">Visit Type (CostaSpine)</label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="costaspine_visit_type" id="firstVisitRadio" value="Initial" data-fee="80.00">
-                                        <label class="form-check-label" for="firstVisitRadio">
-                                            First Visit (€80.00)
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="costaspine_visit_type" id="followUpRadio" value="Follow-up" data-fee="70.00">
-                                        <label class="form-check-label" for="followUpRadio">
-                                            Follow-up (€70.00)
-                                        </label>
-                                    </div>
-                                </div>
-                                {# --- End Conditional Section --- #}
-
-                                <div class="mb-3">
-                                    <label for="fee_charged" class="form-label">Fee Charged (€)</label>
-                                    <input type="number" step="0.01" class="form-control" id="fee_charged" name="fee_charged" 
-                                           value="" placeholder="Select location first"> {# Cleared value, updated placeholder #}
-                                </div>
-                                {# --- End Location/Fee Changes --- #}
-                                
-                                <div class="mb-3">
-                                    <label for="status" class="form-label">Status</label>
-                                    <select class="form-select" id="status" name="status">
-                                        <option value="Scheduled" selected>Scheduled</option> {# Default to Scheduled #}
-                                        <option value="In Progress">In Progress</option>
-                                        <option value="Completed">Completed</option>
-                                        <option value="Cancelled">Cancelled</option>
-                                    </select>
-                                    <div class="form-text text-muted">
-                                        Status will default to 'Scheduled'.
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="payment_method" class="form-label">Payment Method</label>
-                                    <select class="form-select" id="payment_method" name="payment_method">
-                                        <option value="" selected>Select Method</option> {# Default blank #}
-                                        <option value="Cash">Cash</option>
-                                        <option value="Card">Card</option>
-                                        <option value="Transfer">Transfer</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="next_appointment" class="form-label">Next Appointment Date</label>
-                                    <input type="date" class="form-control" id="next_appointment" name="next_appointment" 
-                                           value=""> {# Cleared value #}
-                                    <div class="form-text">Leave blank if no follow-up is scheduled</div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="pain_level" class="form-label">Pain Level (1-10)</label>
-                                    <input type="number" class="form-control" id="pain_level" name="pain_level" 
-                                           min="1" max="10" value=""> {# Cleared value #}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="movement_restriction" class="form-label">Movement Restriction</label>
-                                    <input type="text" class="form-control" id="movement_restriction" name="movement_restriction" 
-                                           value=""> {# Cleared value #}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="notes" class="form-label">Progress Notes</label>
-                                    <textarea class="form-control" id="notes" name="notes" 
-                                              rows="6"></textarea> {# Cleared value #}
                                 </div>
                             </div>
-                            
-                            <!-- Right Column - Body Chart -->
-                            <div class="col-md-6">
-                                <h5 class="mb-3">Body Chart & Trigger Points</h5>
-                                
-                                <div class="card mb-3">
-                                    <div class="card-header">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <h6 class="mb-0">Body Map</h6>
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <button type="button" class="btn btn-outline-danger active" data-point-type="active">Active</button>
-                                                <button type="button" class="btn btn-outline-warning" data-point-type="latent">Latent</button>
-                                                <button type="button" class="btn btn-outline-info" data-point-type="satellite">Satellite</button>
+
+                            {# Financial & Scheduling Tab Pane #}
+                            <div class="tab-pane fade" id="financial" role="tabpanel" aria-labelledby="financial-tab">
+                                <h5 class="mb-3">Financial & Scheduling Information</h5>
+                                 <div class="row">
+                                    <div class="col-md-6"> {# Arrange in columns if needed #}
+                                        {# --- Location Selection --- #}
+                                        <div class="mb-3">
+                                            <label class="form-label">Location</label>
+                                            <div class="row g-2">
+                                                <div class="col">
+                                                    <div class="location-card card card-body text-center" data-location="CostaSpine Clinic"> <i class="bi bi-hospital fs-1 mb-2"></i> <div>CostaSpine Clinic</div> </div>
+                                                </div>
+                                                <div class="col">
+                                                    <div class="location-card card card-body text-center" data-location="Home Visit"> <i class="bi bi-house-door fs-1 mb-2"></i> <div>Home Visit</div> </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="body-map-container">
-                                            <img src="{{ url_for('static', filename='images/bodychart.svg') }}" class="body-map" id="bodyMapImage" alt="Body chart">
-                                            <svg class="body-map-overlay" viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg">
-                                                <g id="triggerPoints"></g>
-                                            </svg>
+                                        {# --- Conditional Visit Type/Fee Section (for CostaSpine) --- #}
+                                        <div id="costaspineOptions" class="mb-3 border p-3 rounded" style="display: none;">
+                                            <label class="form-label">Visit Type (CostaSpine)</label>
+                                            <div class="form-check"> <input class="form-check-input" type="radio" name="costaspine_visit_type" id="firstVisitRadio" value="Initial" data-fee="80.00"> <label class="form-check-label" for="firstVisitRadio">First Visit (€80.00)</label> </div>
+                                            <div class="form-check"> <input class="form-check-input" type="radio" name="costaspine_visit_type" id="followUpRadio" value="Follow-up" data-fee="70.00"> <label class="form-check-label" for="followUpRadio">Follow-up (€70.00)</label> </div>
                                         </div>
-                                        <div class="text-muted small mt-2">Click on the body map to add trigger points</div>
-                                    </div>
-                                </div>
-                                
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">Trigger Points</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="table-responsive">
-                                            <table class="table table-sm">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Type</th>
-                                                        <th>Muscle</th>
-                                                        <th>Intensity</th>
-                                                        <th>Symptoms</th>
-                                                        <th>Referral</th>
-                                                        <th></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="pointsTableBody">
-                                                    <!-- Trigger points will be added here -->
-                                                </tbody>
-                                            </table>
+                                        {# --- Fee Charged --- #}
+                                        <div class="mb-3">
+                                            <label for="fee_charged" class="form-label">Fee Charged (€)</label>
+                                            <input type="number" step="0.01" class="form-control" id="fee_charged" name="fee_charged" value="" placeholder="Select location first">
                                         </div>
                                     </div>
-                                </div>
-                                <!-- Hidden input to store trigger points data -->
-                                <input type="hidden" id="triggerPointsData" name="trigger_points_data" value="[]">
+                                    <div class="col-md-6">
+                                        {# --- Payment Method Selection --- #}
+                                        <div class="mb-3">
+                                            <label class="form-label">Payment Method</label>
+                                            <div class="row g-2">
+                                                <div class="col"> <div class="location-card payment-card card card-body text-center" data-payment="Cash"> <i class="bi bi-cash-coin fs-1 mb-2"></i> <div>Cash</div> </div> </div>
+                                                <div class="col"> <div class="location-card payment-card card card-body text-center" data-payment="Card"> <i class="bi bi-credit-card fs-1 mb-2"></i> <div>Card</div> </div> </div>
+                                            </div>
+                                        </div>
+                                        {# --- Next Appointment --- #}
+                                        <div class="mb-3">
+                                            <label for="next_appointment" class="form-label">Next Appointment Date</label>
+                                            <input type="date" class="form-control" id="next_appointment" name="next_appointment" value="">
+                                            <div class="form-text">Optional: Leave blank if no follow-up is scheduled yet</div>
+                                        </div>
+                                    </div>
+                                 </div>
                             </div>
-                        </div>
-                        
+                        </div> 
+                        {# End Tab Content #}
+
+                        {# Submit Button (outside tabs, inside form) #}
                         <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                             <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle"></i> Cancel
                             </a>
-                            <button type="submit" class="btn btn-success"> {# Changed style to success #}
+                            <button type="submit" class="btn btn-primary"> 
                                 <i class="bi bi-plus-circle"></i> Add Treatment Session
                             </button>
                         </div>
@@ -273,20 +250,24 @@
 {# Removed script loading initial data, keep the rest for interactivity, added new JS logic #}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Get the flag from the data attribute
+        const cardElement = document.querySelector('.card[data-has-past-treatments]');
+        const hasPastTreatments = cardElement ? cardElement.dataset.hasPastTreatments === 'true' : false;
+        console.log("Patient Has Past Treatments (from template):", hasPastTreatments);
         
         // --- Location/Fee Logic ---
-        const locationCards = document.querySelectorAll('.location-card');
+        const locationCards = document.querySelectorAll('.location-card[data-location]');
         const costaspineOptionsDiv = document.getElementById('costaspineOptions');
         const feeInput = document.getElementById('fee_charged');
         const hiddenLocationInput = document.getElementById('location');
         const hiddenVisitTypeInput = document.getElementById('visit_type');
         const costaspineRadios = document.querySelectorAll('input[name="costaspine_visit_type"]');
+        const followUpRadio = document.getElementById('followUpRadio'); // Get specific radio
 
         locationCards.forEach(card => {
             card.addEventListener('click', function() {
                 locationCards.forEach(c => c.classList.remove('selected'));
                 this.classList.add('selected');
-
                 const selectedLocation = this.dataset.location;
                 hiddenLocationInput.value = selectedLocation;
 
@@ -294,16 +275,26 @@
                     costaspineOptionsDiv.style.display = 'block';
                     costaspineRadios.forEach(radio => radio.checked = false);
                     feeInput.value = '';
-                    feeInput.readOnly = true; // Make read-only initially for CostaSpine
-                    feeInput.placeholder = 'Select visit type above'; // Updated placeholder
+                    feeInput.readOnly = true;
+                    feeInput.placeholder = 'Select visit type above';
                     hiddenVisitTypeInput.value = '';
-                } else { // Home Visit selected
+                    
+                    // *** Check for past treatments ***
+                    if (hasPastTreatments && followUpRadio) {
+                        console.log("Auto-selecting Follow-up due to past treatments.");
+                        followUpRadio.checked = true;
+                        // Trigger change event manually to update fee and hidden inputs
+                        followUpRadio.dispatchEvent(new Event('change')); 
+                    }
+                    // *** End check ***
+
+                } else { // Home Visit
                     costaspineOptionsDiv.style.display = 'none';
                     costaspineRadios.forEach(radio => radio.checked = false);
-                    feeInput.value = ''; 
-                    feeInput.readOnly = false; // Make editable for Home Visit
+                    feeInput.value = '';
+                    feeInput.readOnly = false;
                     feeInput.placeholder = 'Enter fee for home visit';
-                    hiddenVisitTypeInput.value = ''; 
+                    hiddenVisitTypeInput.value = '';
                 }
             });
         });
@@ -312,13 +303,26 @@
             radio.addEventListener('change', function() {
                 if (this.checked) {
                     feeInput.value = this.dataset.fee;
-                    feeInput.readOnly = true; // Ensure it stays read-only
+                    feeInput.readOnly = true;
                     hiddenVisitTypeInput.value = this.value;
                 }
             });
         });
         // --- End Location/Fee Logic ---
 
+        // --- Payment Method Logic --- 
+        const paymentCards = document.querySelectorAll('.payment-card'); // Target payment cards
+        const hiddenPaymentInput = document.getElementById('payment_method');
+
+        paymentCards.forEach(card => {
+            card.addEventListener('click', function() {
+                paymentCards.forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                hiddenPaymentInput.value = this.dataset.payment; // Update hidden payment input
+                console.log('Payment Method Selected:', hiddenPaymentInput.value);
+            });
+        });
+        // --- End Payment Method Logic ---
 
         // --- Trigger point management (Existing Code) ---
         let triggerPoints = [];

@@ -49,6 +49,16 @@
                 </div>
             </div>
         </div>
+        {# New Card for CostaSpine Revenue and Fee #}
+        <div class="col-md-3 mt-3"> 
+            <div class="card shadow-sm stats-card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">CostaSpine Fee (30%)</h5>
+                    <h2 class="display-5 mb-1">£{{ "{:,.2f}".format(costaspine_service_fee or 0) }}</h2>
+                    <small class="text-light">Total CostaSpine Revenue: £{{ "{:,.2f}".format(costaspine_revenue or 0) }}</small>
+                </div>
+            </div>
+        </div>
     </div>
     
     <!-- Treatment & Patient Charts -->

@@ -1037,3 +1037,174 @@ def delete_report(id):
             'success': False,
             'message': str(e)
         }), 500
+
+@api.route('/api/patient/<int:id>/generate-exercise-prescription', methods=['POST'])
+def generate_exercise_prescription(id):
+    try:
+        patient = Patient.query.get_or_404(id)
+        print(f"Starting exercise prescription generation for patient {id}")
+
+        # Get the last 3 completed or past treatments for recent context
+        today = datetime.now().date()
+        recent_treatments = Treatment.query.filter(
+            Treatment.patient_id == id,
+            (Treatment.status == 'Completed') | 
+            (Treatment.created_at < today)
+        ).order_by(Treatment.created_at.desc()).limit(3).all()
+        
+        # Reverse list to have oldest first for prompt sequence
+        recent_treatments.reverse()
+
+        if not recent_treatments:
+            print(f"No recent completed/past treatments found for patient {id} to generate prescription.")
+            # Optionally check for diagnosis/plan even without treatments
+            if patient.diagnosis or patient.treatment_plan:
+                 print("Proceeding with diagnosis/plan only.")
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'No diagnosis, plan, or recent completed treatments found to generate exercise prescription.'
+                })
+
+        print(f"Found {len(recent_treatments)} recent treatments for patient {id}")
+
+        # Prepare the prompt for the AI
+        prompt = f"""
+        # PATIENT CONTEXT
+        - Diagnosis: {patient.diagnosis or 'Not specified'}
+        - Treatment Plan Goal: {patient.treatment_plan or 'Not specified'}
+        
+        # RECENT TREATMENT SUMMARY ({len(recent_treatments)} sessions)
+        """
+        
+        for idx, t in enumerate(recent_treatments, 1):
+            prompt += f"""
+        ## Session {idx} ({t.created_at.strftime('%Y-%m-%d') if t.created_at else 'N/A'}):
+        - Treatment Notes: {t.notes or 'None'}
+        - Pain Level: {t.pain_level or 'N/A'} / 10
+        - Movement Restriction: {t.movement_restriction or 'None recorded'}
+        """
+        
+        prompt += """
+        # EXERCISE PRESCRIPTION INSTRUCTIONS
+        
+        As a professional physiotherapist, generate a concise home exercise program (HEP) suitable for this patient's current stage based on their diagnosis, treatment plan goal, and the recent session summaries provided. 
+        
+        The HEP should include 3 to 5 exercises.
+        
+        For each exercise, clearly specify:
+        1.  **Exercise Name:** (e.g., Cat-Cow Stretch, Bridging)
+        2.  **Sets & Reps:** (e.g., 2 sets of 10 repetitions)
+        3.  **Frequency:** (e.g., Daily, 3 times per week)
+        4.  **Hold Time:** (if applicable, e.g., Hold 5 seconds)
+        5.  **Key Cues:** Provide 1-2 brief, critical instructions for proper form or safety (e.g., 'Engage core', 'Keep back flat', 'Move within pain-free range').
+        
+        Ensure the exercises are appropriate for the patient's likely condition based *only* on the information provided. Prioritize safety and foundational movements if details are sparse. Format the prescription clearly using Markdown (e.g., use headings for exercise names, bullet points for details).
+        
+        Start the prescription directly with the first exercise name. Do not include introductory or concluding remarks outside the exercise list.
+        """
+        
+        # Call the AI Service (adapted from report generation)
+        api_key = os.environ.get('DEEPSEEK_API_KEY')
+        api_endpoint = os.environ.get('DEEPSEEK_API_ENDPOINT', 'https://api.deepseek.com/v1/chat/completions')
+        working_endpoint_file = 'working_endpoint.txt'
+
+        if not api_key:
+            # Try reading from .env if not in environment
+            try:
+                with open('.env', 'r') as file:
+                    for line in file:
+                        if line.startswith('DEEPSEEK_API_KEY='):
+                            api_key = line.strip().split('=', 1)[1].strip('"\'')
+                            break
+            except FileNotFoundError:
+                pass # .env not found, api_key remains None
+
+            if not api_key:
+                print("ERROR: DeepSeek API key not found.")
+                return jsonify({'success': False, 'message': 'AI service API key not configured.'}) 
+
+        # Try reading working endpoint
+        try:
+            with open(working_endpoint_file, 'r') as file:
+                saved_endpoint = file.read().strip()
+                if saved_endpoint:
+                    api_endpoint = saved_endpoint
+                    print(f"Using saved endpoint: {api_endpoint}")
+        except FileNotFoundError:
+            print(f"No {working_endpoint_file}, using default/env endpoint: {api_endpoint}")
+
+        try:
+            print(f"Calling AI for exercise prescription for patient {id} at {api_endpoint}")
+            response = requests.post(
+                api_endpoint,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "deepseek-chat", # Or choose another appropriate model
+                    "messages": [
+                        {"role": "system", "content": "You are a professional physiotherapist creating clear, concise, and safe home exercise programs based on provided patient context. Focus on accuracy and clarity."}, 
+                        {"role": "user", "content": prompt}
+                    ],
+                    "temperature": 0.5, # Slightly higher temp for some variability but still grounded
+                    "max_tokens": 1000   # Adjust as needed for prescription length
+                },
+                timeout=45 # Adjust timeout as needed
+            )
+
+            print(f"AI API response status: {response.status_code}")
+
+            if response.status_code != 200:
+                print(f"AI API Error: {response.text}")
+                # TODO: Implement endpoint fallback logic if needed, similar to report generation
+                return jsonify({'success': False, 'message': f'AI service error: {response.status_code}'})
+            
+            # Extract prescription content
+            try:
+                prescription_content = response.json()['choices'][0]['message']['content']
+                print(f"Successfully generated exercise prescription content of length {len(prescription_content)}")
+                
+                # Save the prescription as a PatientReport
+                try:
+                    homework_report = PatientReport(
+                        patient_id=id,
+                        content=prescription_content,
+                        generated_date=datetime.now(),
+                        report_type='Exercise Homework' # New report type
+                    )
+                    db.session.add(homework_report)
+                    db.session.commit()
+                    print(f"Exercise homework saved to database with ID {homework_report.id}")
+                except Exception as db_err:
+                    db.session.rollback()
+                    print(f"Database error saving exercise homework: {db_err}")
+                    # Return success but maybe indicate saving failed?
+                    # For now, return success but don't guarantee it saved.
+                    # Consider adding a warning message in the response.
+                return jsonify({
+                    'success': True,
+                    'prescription': prescription_content
+                })
+                
+            except (KeyError, IndexError, ValueError) as e:
+                print(f"Error parsing AI API response: {str(e)}")
+                return jsonify({'success': False, 'message': 'Error parsing AI response.'})
+
+        except requests.exceptions.Timeout:
+            print("AI API request timed out for exercise prescription")
+            return jsonify({'success': False, 'message': 'AI service request timed out.'})
+        except requests.exceptions.RequestException as e:
+            print(f"AI API request exception: {str(e)}")
+            return jsonify({'success': False, 'message': 'Could not connect to AI service.'})
+
+    except Exception as e:
+        db.session.rollback() # Just in case, though unlikely needed here
+        print(f"Exception in generate_exercise_prescription: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': 'An internal error occurred generating the prescription.'
+        })

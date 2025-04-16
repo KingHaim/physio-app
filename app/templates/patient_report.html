@@ -31,9 +31,9 @@
             <button class="btn btn-outline-secondary" onclick="window.print()">
                 <i class="bi bi-printer"></i> Print Report
             </button>
-            <button class="btn btn-outline-success" onclick="exportToPDF()">
+            <a href="{{ url_for('main.download_report_pdf', report_id=report.id) }}" class="btn btn-outline-success">
                 <i class="bi bi-file-earmark-pdf"></i> Export to PDF
-            </button>
+            </a>
             <button class="btn btn-outline-danger" onclick="deleteReport({{ report.id }})">
                 <i class="bi bi-trash"></i> Delete Report
             </button>
@@ -91,6 +91,37 @@
             <small>This report was automatically generated based on treatment history. Please review for accuracy.</small>
         </div>
     </div>
+
+    {# Past Exercise Homework Section #}
+    {% if exercise_homework_reports %}
+    <div class="mt-5">
+        <h2><i class="bi bi-clipboard-heart"></i> Past Exercise Homework</h2>
+        {% for homework in exercise_homework_reports %}
+        <div class="card mb-3">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Exercise Homework - {{ homework.generated_date.strftime('%Y-%m-%d') }}</h6>
+                <div>
+                    <a href="{{ url_for('main.patient_report', id=patient.id) }}?report_id={{ homework.id }}" 
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> View Full
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteReport({{ homework.id }})">
+                         <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                {# Display first few lines or summary here if needed, or just link #}
+                <div class="report-content">
+                    {{ homework.content|markdown|truncate(500, True) }} {# Show a truncated preview #}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {# End Past Exercise Homework Section #}
+
 </div>
 
 <style>
@@ -123,16 +154,10 @@
             color: #000;
         }
         
-        .report-content h1 {
-            font-size: 18pt;
-        }
-        
-        .report-content h2 {
-            font-size: 16pt;
-        }
-        
+        .report-content h1,
+        .report-content h2,
         .report-content h3 {
-            font-size: 14pt;
+            color: #000;
         }
     }
     
@@ -144,29 +169,35 @@
     
     .report-content {
         font-size: 1rem;
-        line-height: 1.6;
+        line-height: 1.7;
+        color: #333;
     }
     
     .report-content h1, 
     .report-content h2, 
     .report-content h3 {
-        margin-top: 1.5rem;
+        margin-top: 2rem;
         margin-bottom: 1rem;
         color: #2c3e50;
+        font-weight: 600;
     }
     
     .report-content h1 {
         font-size: 1.8rem;
-        border-bottom: 1px solid #eaecef;
-        padding-bottom: 0.3rem;
+        border-bottom: 2px solid #dee2e6;
+        padding-bottom: 0.5rem;
+        margin-top: 0;
     }
     
     .report-content h2 {
         font-size: 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 0.4rem;
     }
     
     .report-content h3 {
         font-size: 1.25rem;
+        font-weight: 500;
     }
     
     .report-content ul, 
@@ -177,11 +208,16 @@
     
     .report-content ul li,
     .report-content ol li {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.6rem;
     }
     
     .report-content p {
-        margin-bottom: 1rem;
+        margin-bottom: 1.1rem;
+    }
+    
+    .report-content strong {
+        font-weight: 600;
+        color: #2c3e50;
     }
     
     .report-content blockquote {
@@ -189,11 +225,12 @@
         padding-left: 1rem;
         color: #6c757d;
         margin-bottom: 1rem;
+        font-style: italic;
     }
     
     .patient-summary {
         background-color: #f8f9fa;
-        border-left: 4px solid #4e73df;
+        border-left: 4px solid #2980b9;
     }
     
     .clinic-header {
@@ -202,11 +239,6 @@
 </style>
 
 <script>
-    function exportToPDF() {
-        alert('Preparing PDF for download...');
-        window.print();
-    }
-    
     function deleteReport(reportId) {
         if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
             fetch(`/api/report/${reportId}`, {
