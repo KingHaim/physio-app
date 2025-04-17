@@ -15,13 +15,26 @@
             --primary-color: #2980b9;
             --secondary-color: #2980b9;
             --accent-color: #e74c3c;
+            --sidebar-width: 250px; /* Define sidebar width */
         }
         
+        body {
+            /* Removed padding-left: var(--sidebar-width); */
+        }
+
         .sidebar {
+            position: fixed; /* Fix the sidebar */
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
             background: linear-gradient(135deg, var(--primary-color), #2c3e50);
-            min-height: 100vh;
+            /* min-height: 100vh; /* No longer needed with fixed positioning */
             padding-top: 20px;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto; /* Allow sidebar to scroll if content overflows */
+            /* Removed flexbox for simplicity with fixed positioning */
+            /* flex-direction: column; */ /* Removed flexbox for simplicity */
         }
         
         .sidebar .nav-link {
@@ -51,9 +64,11 @@
         }
         
         .content {
-            padding: 20px;
-            background-color: #f8f9fa;
-            min-height: 100vh;
+            margin-left: var(--sidebar-width); /* Adjust margin for fixed sidebar */ 
+            padding: 20px; /* Restore general padding */
+            background-color: #f8f9fa; /* Restore background */
+            min-height: 100vh; /* Restore min-height */
+            /* Removed padding overrides, restored general padding above */
         }
         
         .card {
@@ -172,7 +187,7 @@
         }
 
         .sidebar-footer {
-            margin-top: auto;
+            margin-top: auto; /* Push footer to the bottom */
             padding: 15px 20px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -327,6 +342,11 @@
                         <li class="nav-item">
                             <a class="nav-link {% if '/analytics' in request.path %}active{% endif %}" href="{{ url_for('main.analytics') }}">
                                 <i class="bi bi-graph-up"></i> Analytics
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-link {% if request.endpoint == 'main.financials' %}active{% endif %}" href="{{ url_for('main.financials') }}">
+                                <i class="bi bi-currency-pound me-2"></i>Financials
                             </a>
                         </li>
                     </div>

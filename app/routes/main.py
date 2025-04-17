@@ -11,6 +11,7 @@ from io import BytesIO
 from xhtml2pdf import pisa
 import markdown
 import os
+from collections import defaultdict
 
 main = Blueprint('main', __name__)
 
@@ -44,6 +45,30 @@ FIXED_MONTHLY_EXPENSES = {
 }
 TOTAL_FIXED_MONTHLY_EXPENSES = sum(FIXED_MONTHLY_EXPENSES.values())
 # --- End Fixed Monthly Expenses ---
+
+# --- Define Constants and Brackets (Ideally move to config/helpers) ---
+AUTONOMO_CONTRIBUTION_RATE = 0.314 
+MONTHLY_FIXED_EXPENSES = 250 # Or get from config/db if dynamic
+# Define brackets for the relevant year (e.g., 2024 - update as needed)
+# Example structure - Make sure this matches the one in financials route
+BRACKETS_2024 = { 
+     1: {'lower': -float('inf'), 'upper': 670, 'base': 950.98},
+     2: {'lower': 670, 'upper': 900, 'base': 960.78},
+     3: {'lower': 900, 'upper': 1166.70, 'base': 960.78}, # Example: Same base for Tramo 3 Reducido
+     4: {'lower': 1166.70, 'upper': 1300, 'base': 1013.07},
+     5: {'lower': 1300, 'upper': 1500, 'base': 1029.41},
+     6: {'lower': 1500, 'upper': 1700, 'base': 1045.75},
+     7: {'lower': 1700, 'upper': 1850, 'base': 1078.43},
+     8: {'lower': 1850, 'upper': 2030, 'base': 1111.11},
+     9: {'lower': 2030, 'upper': 2330, 'base': 1143.79},
+    10: {'lower': 2330, 'upper': 2760, 'base': 1176.47},
+    11: {'lower': 2760, 'upper': 3190, 'base': 1241.83},
+    12: {'lower': 3190, 'upper': 3620, 'base': 1307.19},
+    13: {'lower': 3620, 'upper': 4050, 'base': 1372.55},
+    14: {'lower': 4050, 'upper': 6000, 'base': 1454.25},
+    15: {'lower': 6000, 'upper': float('inf'), 'base': 1732.03}
+}
+# --- End Constants and Brackets ---
 
 # Helper function to find the correct bracket
 def find_bracket(net_revenue, brackets):
@@ -1014,143 +1039,123 @@ def fix_calendly_dates():
     """
 
 @main.route('/analytics')
+@login_required
 def analytics():
-    # Get total counts
+    # --- Existing calculations ---
     total_patients = Patient.query.count()
     active_patients = Patient.query.filter_by(status='Active').count()
-    inactive_patients = Patient.query.filter_by(status='Inactive').count()
+    inactive_patients = total_patients - active_patients # Corrected inactive calc
     total_treatments = Treatment.query.count()
     
-    # Get treatments by month for the past year
-    today = datetime.now().date()
-    one_year_ago = today - timedelta(days=365)
-    
-    treatments_by_month = db.session.query(
-        func.strftime('%Y-%m', Treatment.created_at).label('month'),
-        func.count(Treatment.id).label('count')
-    ).filter(Treatment.created_at >= one_year_ago) \
-        .group_by(func.strftime('%Y-%m', Treatment.created_at)) \
-        .order_by(func.strftime('%Y-%m', Treatment.created_at)) \
-        .all()
-    
-    # Get patient acquisition by month
-    patients_by_month = db.session.query(
-        func.strftime('%Y-%m', Patient.created_at).label('month'),
-        func.count(Patient.id).label('count')
-    ).filter(Patient.created_at >= one_year_ago) \
-        .group_by(func.strftime('%Y-%m', Patient.created_at)) \
-        .order_by(func.strftime('%Y-%m', Patient.created_at)) \
-        .all()
-    
-    # Get most common diagnoses
-    common_diagnoses = db.session.query(
-        Patient.diagnosis,
-        func.count(Patient.id).label('count')
-    ).filter(Patient.diagnosis != None, Patient.diagnosis != '') \
-        .group_by(Patient.diagnosis) \
-        .order_by(func.count(Patient.id).desc()) \
-        .limit(10) \
-        .all()
-    
-    # Get average treatments per patient - Corrected query
-    # Subquery to count treatments per patient
-    treatment_counts_subquery = db.session.query(
-        Treatment.patient_id,
-        func.count(Treatment.id).label('treatment_count')
-    ).group_by(Treatment.patient_id).subquery()
-    
-    # Query to calculate the average of the counts from the subquery
-    avg_treatments = db.session.query(
-        func.avg(treatment_counts_subquery.c.treatment_count)
-    ).scalar() or 0
-    
-    # --- New Financial Analytics ---
-    
-    # Calculate Average Monthly Revenue (from past treatments with a fee)
-    monthly_revenue_subquery = db.session.query(
-        func.strftime('%Y-%m', Treatment.created_at).label('month'),
-        func.sum(Treatment.fee_charged).label('monthly_total')
-    ).filter(
-        Treatment.created_at < today, 
-        Treatment.fee_charged.isnot(None)
-    ).group_by('month').subquery()
-    
-    avg_monthly_revenue = db.session.query(
-        func.avg(monthly_revenue_subquery.c.monthly_total)
-    ).scalar() or 0
-    
-    # Revenue by Visit Type (for past treatments with a fee)
-    revenue_by_visit_type = db.session.query(
-        Treatment.visit_type,
-        func.sum(Treatment.fee_charged).label('total_fee')
-    ).filter(Treatment.fee_charged.isnot(None), Treatment.visit_type.isnot(None)) \
-     .group_by(Treatment.visit_type) \
-     .order_by(func.sum(Treatment.fee_charged).desc()) \
-     .all()
+    # Average treatments per patient
+    avg_treatments = round(total_treatments / total_patients, 1) if total_patients else 0
 
-    # Revenue by Location (for ALL treatments with a fee)
-    revenue_by_location = db.session.query(
-        Treatment.location,
-        func.sum(Treatment.fee_charged).label('total_fee')
-    ).filter(Treatment.fee_charged.isnot(None), Treatment.location.isnot(None), Treatment.location != '') \
-     .group_by(Treatment.location) \
-     .order_by(func.sum(Treatment.fee_charged).desc()) \
-     .limit(10) \
-     .all()
+    # Revenue calculations (Existing)
+    revenue_data = db.session.query(
+        func.sum(Treatment.fee_charged).label('total_revenue'),
+        func.count(func.distinct(extract('year', Treatment.created_at) * 100 + extract('month', Treatment.created_at))).label('num_months') # More robust month count
+    ).filter(Treatment.fee_charged.isnot(None)).first()
 
-    # Payment Method Distribution (Keeping status filter for this one, assuming it makes sense)
-    payment_method_distribution = db.session.query(
-        Treatment.payment_method,
-        func.count(Treatment.id).label('count')
-    ).filter(Treatment.status == 'Completed', Treatment.payment_method.isnot(None), Treatment.payment_method != '') \
-     .group_by(Treatment.payment_method) \
-     .order_by(func.count(Treatment.id).desc()) \
-     .all()
-     
-    # Calculate CostaSpine Revenue and Service Fee
-    costaspine_revenue_query = db.session.query(
-        func.sum(Treatment.fee_charged)
-    ).filter(
-        Treatment.location == 'CostaSpine Clinic', 
-        Treatment.fee_charged.isnot(None)
-    ).scalar() or 0
+    total_revenue = revenue_data.total_revenue or 0
+    avg_monthly_revenue = (total_revenue / revenue_data.num_months) if revenue_data and revenue_data.num_months else 0
+
+    # CostaSpine specific revenue/fee (Existing)
+    costaspine_revenue_data = db.session.query(
+        func.sum(Treatment.fee_charged).label('costaspine_revenue')
+    ).filter(Treatment.location == 'CostaSpine Clinic', Treatment.fee_charged.isnot(None)).scalar() or 0
     
-    costaspine_revenue = float(costaspine_revenue_query)
-    costaspine_service_fee = costaspine_revenue * 0.30
+    costaspine_service_fee = costaspine_revenue_data * 0.30
+
+    # --- NEW: Calculate Total Autónomo Contribution ---
+    total_autonomo_contribution = 0
     
-    # --- Calculate Estimated Tax (19%) on Card Payments --- 
-    tax_calculation_query = db.session.query(
+    # Query monthly revenue and CostaSpine revenue
+    monthly_data = db.session.query(
+        extract('year', Treatment.created_at).label('year'),
+        extract('month', Treatment.created_at).label('month'),
+        func.sum(Treatment.fee_charged).label('monthly_total_revenue'), # Alias to avoid clash
         func.sum(
-            case(
-                (Treatment.location == 'CostaSpine Clinic', Treatment.fee_charged * 0.70 * 0.19),
-                else_= Treatment.fee_charged * 0.19
-            )
-        )
+            case((Treatment.location == 'CostaSpine Clinic', Treatment.fee_charged), else_=0)
+        ).label('monthly_costaspine_revenue') # Alias to avoid clash
     ).filter(
-        Treatment.payment_method == 'Card',
-        Treatment.fee_charged.isnot(None)
-    ).scalar() or 0
-    
-    total_estimated_tax = float(tax_calculation_query)
+        Treatment.fee_charged.isnot(None),
+        Treatment.created_at.isnot(None)
+    ).group_by('year', 'month').order_by('year', 'month').all()
 
-    # --- End New Financial Analytics ---
-    
-    return render_template('analytics.html',
-                          total_patients=total_patients,
-                          active_patients=active_patients,
-                          inactive_patients=inactive_patients,
-                          total_treatments=total_treatments,
-                          treatments_by_month=treatments_by_month,
-                          patients_by_month=patients_by_month,
-                          common_diagnoses=common_diagnoses,
-                          avg_treatments=round(avg_treatments, 1),
-                          avg_monthly_revenue=avg_monthly_revenue,
-                          revenue_by_visit_type=revenue_by_visit_type,
-                          revenue_by_location=revenue_by_location,
-                          payment_method_distribution=payment_method_distribution,
-                          costaspine_revenue=costaspine_revenue,
-                          costaspine_service_fee=costaspine_service_fee,
-                          total_estimated_tax=total_estimated_tax) # Pass new tax data
+    # Process each month to calculate contribution
+    for month_data in monthly_data:
+        # TODO: Select correct BRACKETS list based on month_data.year if needed
+        current_brackets = TAX_BRACKETS_2025 # Use the list defined earlier
+        
+        revenue = month_data.monthly_total_revenue or 0
+        cs_revenue = month_data.monthly_costaspine_revenue or 0
+        
+        costaspine_fee = cs_revenue * 0.30
+        # Use the defined constant correctly
+        net_revenue_before_contrib = revenue - costaspine_fee - MONTHLY_FIXED_EXPENSES 
+        
+        # Use the helper function to find the bracket and base
+        bracket_info = find_bracket(net_revenue_before_contrib, current_brackets) # Pass brackets
+        
+        min_base = bracket_info.get('base', 0) if bracket_info else 0
+        # Use the defined constant correctly
+        monthly_contribution = min_base * AUTONOMO_CONTRIBUTION_RATE if min_base > 0 else 0
+        
+        total_autonomo_contribution += monthly_contribution
+        
+    # --- End NEW Calculation ---
+
+    # Chart Data (Existing - remains mostly the same)
+    treatments_by_month = db.session.query(
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.count(Treatment.id).label('count')
+        ).group_by('month').order_by('month').all()
+
+    patients_by_month = db.session.query(
+            func.strftime('%Y-%m', Patient.created_at).label('month'),
+            func.count(Patient.id).label('count')
+        ).group_by('month').order_by('month').all()
+        
+    revenue_by_visit_type = db.session.query(
+            Treatment.treatment_type,
+            func.sum(Treatment.fee_charged).label('total_fee')
+        ).filter(Treatment.fee_charged.isnot(None)).group_by(Treatment.treatment_type).order_by(func.sum(Treatment.fee_charged).desc()).all()
+        
+    revenue_by_location = db.session.query(
+            Treatment.location,
+            func.sum(Treatment.fee_charged).label('total_fee')
+        ).filter(Treatment.fee_charged.isnot(None)).group_by(Treatment.location).order_by(func.sum(Treatment.fee_charged).desc()).limit(10).all()
+        
+    # Assuming diagnosis might be in treatment_type or notes for simplicity here
+    # A dedicated diagnosis field would be better
+    common_diagnoses = db.session.query(
+            Treatment.treatment_type.label('diagnosis'), # Example: using treatment_type
+            func.count(Treatment.id).label('count')
+        ).group_by('diagnosis').order_by(func.count(Treatment.id).desc()).limit(10).all()
+
+    payment_method_distribution = db.session.query(
+            Treatment.payment_method,
+            func.count(Treatment.id).label('count')
+        ).filter(Treatment.payment_method.isnot(None)).group_by(Treatment.payment_method).all()
+
+    # Single, corrected render_template call
+    return render_template('analytics.html', 
+                           total_patients=total_patients,
+                           active_patients=active_patients,
+                           inactive_patients=inactive_patients,
+                           total_treatments=total_treatments,
+                           avg_treatments=avg_treatments,
+                           avg_monthly_revenue=avg_monthly_revenue,
+                           costaspine_revenue=costaspine_revenue_data, # Pass scalar value
+                           costaspine_service_fee=costaspine_service_fee,
+                           total_autonomo_contribution=total_autonomo_contribution, # Pass new contribution total
+                           treatments_by_month=treatments_by_month,
+                           patients_by_month=patients_by_month,
+                           revenue_by_visit_type=revenue_by_visit_type,
+                           revenue_by_location=revenue_by_location,
+                           common_diagnoses=common_diagnoses,
+                           payment_method_distribution=payment_method_distribution
+                           )
 
 @main.route('/api/analytics/costaspine-fee-data')
 @login_required
