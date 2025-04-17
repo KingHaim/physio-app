@@ -296,12 +296,68 @@
         .border-primary {
             border-color: #2980b9 !important;
         }
+
+        /* Style for the sidebar toggle button (initially hidden on large screens) */
+        .sidebar-toggle {
+            display: none; /* Hide by default */
+            position: fixed; /* Keep it fixed for easy access */
+            top: 10px;
+            left: 10px;
+            z-index: 1050; /* Ensure it's above other content */
+            background-color: rgba(41, 128, 185, 0.8);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 991.98px) { /* Bootstrap lg breakpoint */
+            .sidebar {
+                position: fixed; /* Keep fixed for sliding */
+                left: -var(--sidebar-width); /* Start off-screen */
+                z-index: 1040; /* Below toggle button */
+                transition: left 0.3s ease-in-out;
+                height: 100vh; /* Ensure full height */
+            }
+
+            .sidebar.show {
+                left: 0; /* Slide in */
+                box-shadow: 4px 0 15px rgba(0,0,0,0.2); /* Stronger shadow when overlaying */
+            }
+
+            .content {
+                margin-left: 0; /* Full width content */
+                padding-top: 60px; /* Add padding to account for potential fixed top toggle */
+            }
+
+            .sidebar-toggle {
+                display: block; /* Show toggle button on small screens */
+            }
+            
+            /* Optional: Add an overlay for the content when sidebar is open */
+            body.sidebar-open::after {
+                 content: '';
+                 position: fixed;
+                 top: 0;
+                 left: 0;
+                 right: 0;
+                 bottom: 0;
+                 background-color: rgba(0, 0, 0, 0.5);
+                 z-index: 1030; /* Below sidebar, above content */
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <div class="sidebar col-md-2 col-lg-2 d-md-block">
+    {# Add the toggle button - hidden on large screens via CSS #}
+    <button class="btn sidebar-toggle" type="button" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <div class="container-fluid p-0"> {# Remove default padding for full control #}
+        <div class="row g-0"> {# Remove gutters for seamless edge #}
+            <div class="sidebar col-lg-2 col-xl-2" id="sidebar"> {# Adjust col sizes if needed #}
                 <div class="sidebar-header">
                     <h3>PhysioTracker</h3>
                 </div>
@@ -362,7 +418,7 @@
                 </div>
             </div>
 
-            <main class="col-md-10 ms-sm-auto content">
+            <main class="col-lg-10 col-xl-10 ms-sm-auto content" id="mainContent">
                 <div class="alert-container position-fixed top-0 end-0 p-3" style="z-index: 1050">
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
@@ -487,6 +543,34 @@
         }
     </script>
     <script src="{{ url_for('static', filename='js/voice-notes.js') }}"></script> 
+    {# Add JavaScript for sidebar toggle #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const mainContent = document.getElementById('mainContent'); // Optional: for overlay click
+
+            if (sidebar && sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                    document.body.classList.toggle('sidebar-open');
+                });
+
+                // Optional: Close sidebar if clicking outside of it (on the overlay)
+                document.body.addEventListener('click', function(event) {
+                    // Check if sidebar is open, the click was outside the sidebar, and not on the toggle button itself
+                    if (document.body.classList.contains('sidebar-open') && 
+                        !sidebar.contains(event.target) && 
+                        event.target !== sidebarToggle && 
+                        !sidebarToggle.contains(event.target)) { // Check if click inside toggle icon
+                        
+                        sidebar.classList.remove('show');
+                        document.body.classList.remove('sidebar-open');
+                    }
+                }, true); // Use capture phase to catch clicks on overlay before they bubble
+            }
+        });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

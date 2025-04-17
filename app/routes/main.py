@@ -1,6 +1,6 @@
 # app/routes.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date, time
 from calendar import monthrange
 from sqlalchemy import func, extract, or_, case, cast, Float
 from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport, RecurringAppointment  # Added RecurringAppointment
@@ -12,6 +12,7 @@ from xhtml2pdf import pisa
 import markdown
 import os
 from collections import defaultdict
+from sqlalchemy.orm import joinedload
 
 main = Blueprint('main', __name__)
 
@@ -566,20 +567,127 @@ def appointments():
 
 @main.route('/api/appointments')
 def get_appointments():
-    start = request.args.get('start', datetime.now().date().isoformat())
-    end = request.args.get('end', (datetime.now() + timedelta(days=30)).date().isoformat())
+    # 1. Get date range from request args (ensure they are dates)
+    try:
+        start_str = request.args.get('start', datetime.now().date().isoformat())
+        # Default end is 90 days from start for a reasonable lookahead
+        start_date_obj = date.fromisoformat(start_str.split('T')[0])
+        end_str = request.args.get('end', (start_date_obj + timedelta(days=90)).isoformat())
+        
+        # Parse start/end into date objects for comparison. FullCalendar sends dates or datetime strings.
+        start_date = date.fromisoformat(start_str.split('T')[0])
+        end_date = date.fromisoformat(end_str.split('T')[0])
+    except ValueError:
+        # Handle invalid date format
+        return jsonify({"error": "Invalid date format for start or end parameter"}), 400
+        
+    events = []
+    existing_treatments_datetimes = set() # Store (patient_id, datetime) tuples
 
-    appointments = Treatment.query.filter(
-        Treatment.created_at.between(start, end)
-    ).all()
+    # 2. Fetch existing treatments within the broader range (datetime comparison)
+    # Need to convert start/end dates to datetimes for comparison with Treatment.created_at
+    start_dt = datetime.combine(start_date, time.min)
+    # Make end_dt exclusive for the query to match FullCalendar's range typical behavior
+    # Or ensure we include the full end_date by using time.max if necessary
+    end_dt = datetime.combine(end_date, time.min) # Fetch treatments strictly *before* the end date's start
 
-    events = [{
-        'id': apt.id,
-        'title': f"{apt.patient.name} - {apt.treatment_type}",
-        'start': apt.created_at.isoformat(),
-        'end': (apt.created_at + timedelta(minutes=30)).isoformat(),
-        'color': '#3498db' if apt.status == 'Scheduled' else '#2ecc71'
-    } for apt in appointments]
+    treatments = Treatment.query.filter(
+        Treatment.created_at >= start_dt,
+        Treatment.created_at < end_dt # Use < end_dt
+    ).options(joinedload(Treatment.patient)).all() # Eager load patient
+
+    for apt in treatments:
+        # Use patient name safely
+        patient_name = apt.patient.name if apt.patient else "Unknown Patient"
+        # Determine color based on status
+        color = '#2980b9' # Default/Scheduled Blue
+        if apt.status == 'Completed':
+            color = '#27ae60' # Green
+        elif apt.status == 'Cancelled':
+             color = '#e74c3c' # Red
+        elif apt.status == 'In Progress':
+             color = '#f1c40f' # Yellow
+
+        events.append({
+            'id': apt.id,
+            'title': f"{patient_name} - {apt.treatment_type}",
+            'start': apt.created_at.isoformat(),
+            'end': (apt.created_at + timedelta(minutes=45)).isoformat(), # Assuming 45 min duration
+            'color': color,
+            'textColor': 'white',
+            'extendedProps': {
+                'status': apt.status,
+                'isRecurring': False,
+                'treatmentId': apt.id, # Add real ID here
+                'patientId': apt.patient_id
+            }
+        })
+        # Store the combination of patient_id and datetime to check against recurring ones
+        existing_treatments_datetimes.add((apt.patient_id, apt.created_at))
+
+    # 3. Fetch active recurring appointments
+    active_rules = RecurringAppointment.query.filter_by(is_active=True).options(joinedload(RecurringAppointment.patient)).all()
+
+    # 4. Calculate future occurrences within the requested window [start_date, end_date)
+    for rule in active_rules:
+        # Ensure patient relationship is loaded
+        if not rule.patient:
+            print(f"Warning: Recurring rule ID {rule.id} missing patient relationship. Skipping.")
+            continue
+            
+        patient_name = rule.patient.name
+
+        # Start checking from the rule's start or window start, whichever is later
+        current_check_date = max(start_date, rule.start_date) 
+        # Determine the effective end date for this rule's calculation
+        effective_rule_end = rule.end_date or end_date # Use rule's end if defined, else window's end
+
+        while current_check_date < end_date and current_check_date <= effective_rule_end: 
+            is_valid_occurrence = False
+            
+            # Check based on recurrence type
+            if rule.recurrence_type == 'weekly':
+                # Occurs if the current day's weekday matches the rule's start_date weekday
+                if current_check_date.weekday() == rule.start_date.weekday():
+                    is_valid_occurrence = True
+            elif rule.recurrence_type == 'daily-mon-fri':
+                # Occurs if the current day is Monday (0) to Friday (4)
+                if current_check_date.weekday() < 5: 
+                    is_valid_occurrence = True
+            # Potential future expansion: Add monthly, specific days, etc.
+
+            if is_valid_occurrence:
+                # Combine date with the rule's time_of_day to get the exact datetime
+                # Handle case where time_of_day might be None (though model requires it)
+                if rule.time_of_day:
+                    occurrence_datetime = datetime.combine(current_check_date, rule.time_of_day)
+                    
+                    # Check if a real treatment already exists for this patient/datetime
+                    if (rule.patient_id, occurrence_datetime) not in existing_treatments_datetimes:
+                        # Create event object for this potential/recurring occurrence
+                        events.append({
+                            'id': f'recurring_{rule.id}_{current_check_date.isoformat()}', # Unique ID for potential events
+                            'title': f"{patient_name} - {rule.treatment_type} (Recurring)",
+                            'start': occurrence_datetime.isoformat(),
+                            'end': (occurrence_datetime + timedelta(minutes=45)).isoformat(), # Assuming 45 min duration
+                            'color': '#f39c12', # Orange for recurring potential
+                            'textColor': 'white',
+                            'display': 'block', # Ensures it's treated like a normal event visually
+                            'extendedProps': {
+                                'status': 'Recurring (Potential)',
+                                'isRecurring': True,
+                                'ruleId': rule.id,
+                                'patientId': rule.patient_id
+                            }
+                            # Note: These events are not directly editable/deletable via standard event handlers
+                            # unless specific JS logic is added to handle 'recurring_*' IDs
+                        })
+                else:
+                     print(f"Warning: Rule {rule.id} has no time_of_day set for date {current_check_date}. Skipping occurrence.")
+
+
+            # Move to the next day for the check loop
+            current_check_date += timedelta(days=1)
 
     return jsonify(events)
 
