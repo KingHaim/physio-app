@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from datetime import datetime, timedelta
 from calendar import monthrange
 from sqlalchemy import func, extract, or_, case, cast, Float
-from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport  # Changed PatientNote to TriggerPoint
+from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport, RecurringAppointment  # Added RecurringAppointment
 import json
 from app.utils import mark_past_treatments_as_completed, mark_inactive_patients
 from flask_login import login_required
@@ -398,6 +398,127 @@ def add_treatment(patient_id):
 
     flash('Treatment added successfully', 'success')
     return redirect(url_for('main.patient_detail', id=patient_id))
+
+# --- Recurring Appointments --- 
+
+@main.route('/patient/<int:patient_id>/recurring/new', methods=['GET', 'POST'])
+@login_required
+def new_recurring_appointment(patient_id):
+    patient = Patient.query.get_or_404(patient_id)
+    
+    if request.method == 'POST':
+        try:
+            start_date_str = request.form.get('start_date')
+            end_date_str = request.form.get('end_date')
+            time_str = request.form.get('time_of_day')
+            
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else None
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else None
+            time_of_day = datetime.strptime(time_str, '%H:%M').time() if time_str else None
+            
+            recurrence_type = request.form.get('recurrence_type')
+            treatment_type = request.form.get('treatment_type')
+            notes = request.form.get('notes')
+            location = request.form.get('location')
+            provider = request.form.get('provider')
+            fee_str = request.form.get('fee_charged')
+            fee_charged = float(fee_str) if fee_str else None
+            payment_method = request.form.get('payment_method')
+            is_active = request.form.get('is_active') == 'on' # Checkbox value
+
+            if not all([start_date, time_of_day, recurrence_type, treatment_type]):
+                flash('Start Date, Time, Recurrence Type, and Treatment Type are required.', 'danger')
+            else:
+                new_rule = RecurringAppointment(
+                    patient_id=patient_id,
+                    start_date=start_date,
+                    end_date=end_date,
+                    recurrence_type=recurrence_type,
+                    time_of_day=time_of_day,
+                    treatment_type=treatment_type,
+                    notes=notes,
+                    location=location,
+                    provider=provider,
+                    fee_charged=fee_charged,
+                    payment_method=payment_method,
+                    is_active=is_active
+                )
+                db.session.add(new_rule)
+                db.session.commit()
+                flash('Recurring appointment rule created successfully!', 'success')
+                return redirect(url_for('main.patient_detail', id=patient_id))
+
+        except ValueError:
+             flash('Invalid date or time format. Please use YYYY-MM-DD and HH:MM.', 'danger')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating recurring rule: {e}', 'danger')
+            print(f"Error creating recurring rule: {e}")
+            
+    # GET request
+    return render_template('new_recurring_appointment.html', patient=patient)
+
+@main.route('/recurring/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_recurring_appointment(id):
+    rule = RecurringAppointment.query.get_or_404(id)
+    patient = rule.patient
+    
+    if request.method == 'POST':
+        try:
+            start_date_str = request.form.get('start_date')
+            end_date_str = request.form.get('end_date')
+            time_str = request.form.get('time_of_day')
+            
+            rule.start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else rule.start_date
+            rule.end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else None
+            rule.time_of_day = datetime.strptime(time_str, '%H:%M').time() if time_str else rule.time_of_day
+            
+            rule.recurrence_type = request.form.get('recurrence_type', rule.recurrence_type)
+            rule.treatment_type = request.form.get('treatment_type', rule.treatment_type)
+            rule.notes = request.form.get('notes')
+            rule.location = request.form.get('location') # Update to read from hidden input later if needed
+            rule.provider = request.form.get('provider')
+            fee_str = request.form.get('fee_charged')
+            rule.fee_charged = float(fee_str) if fee_str else None
+            rule.payment_method = request.form.get('payment_method')
+            rule.is_active = request.form.get('is_active') == 'on'
+
+            # Basic validation
+            if not all([rule.start_date, rule.time_of_day, rule.recurrence_type, rule.treatment_type]):
+                flash('Start Date, Time, Recurrence Type, and Treatment Type are required.', 'danger')
+            else:
+                db.session.commit()
+                flash('Recurring appointment rule updated successfully!', 'success')
+                return redirect(url_for('main.patient_detail', id=patient.id))
+
+        except ValueError:
+             flash('Invalid date or time format. Please use YYYY-MM-DD and HH:MM.', 'danger')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating recurring rule: {e}', 'danger')
+            print(f"Error updating recurring rule {id}: {e}")
+            
+    # GET request - Pass the existing rule to the template
+    return render_template('edit_recurring_appointment.html', rule=rule, patient=patient)
+
+@main.route('/recurring/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_recurring_appointment(id):
+    rule = RecurringAppointment.query.get_or_404(id)
+    patient_id = rule.patient_id
+    try:
+        db.session.delete(rule)
+        db.session.commit()
+        flash('Recurring appointment rule deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting recurring rule: {e}', 'danger')
+        print(f"Error deleting recurring rule {id}: {e}")
+        
+    return redirect(url_for('main.patient_detail', id=patient_id))
+
+# --- End Recurring Appointments ---
 
 @main.route('/appointments')
 def appointments():

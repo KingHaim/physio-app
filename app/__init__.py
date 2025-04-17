@@ -9,12 +9,16 @@ from markupsafe import Markup
 from flask_login import LoginManager
 
 db = SQLAlchemy()
-migrate = Migrate()
 
 # Initialize login manager
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
+
+# Import models here *before* Migrate is instantiated
+from app import models 
+
+migrate = Migrate()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -24,6 +28,10 @@ def create_app(config_class=Config):
     os.makedirs(os.path.join(app.root_path, '..', 'instance'), exist_ok=True)
     
     db.init_app(app)
+    
+    # Models are already imported above
+    # from app import models 
+    
     migrate.init_app(app, db)
     login_manager.init_app(app)
 
@@ -38,8 +46,8 @@ def create_app(config_class=Config):
     app.register_blueprint(auth)
 
     # Create all tables
-    with app.app_context():
-        db.create_all()
+    # with app.app_context():
+    #     db.create_all()
         
     # Add this after creating the app
     def markdown_filter(text):

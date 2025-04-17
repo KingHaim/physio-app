@@ -79,6 +79,30 @@ class PatientReport(db.Model):
     
     patient = db.relationship('Patient', backref=db.backref('reports', lazy=True))
 
+class RecurringAppointment(db.Model):
+    __tablename__ = 'recurring_appointment'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=True) # Nullable for indefinite recurrence
+    recurrence_type = db.Column(db.String(50), nullable=False) # e.g., 'daily-mon-fri', 'weekly'
+    time_of_day = db.Column(db.Time, nullable=False)
+    treatment_type = db.Column(db.String(150), nullable=False, default='Standard Session')
+    notes = db.Column(db.Text, nullable=True)
+    location = db.Column(db.String(100), nullable=True)
+    provider = db.Column(db.String(100), nullable=True)
+    fee_charged = db.Column(db.Float, nullable=True)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    payment_method = db.Column(db.String(50), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    patient = db.relationship('Patient', backref=db.backref('recurring_appointments', lazy=True))
+
+    def __repr__(self):
+        return f'<RecurringAppointment {self.id} for Patient {self.patient_id} ({self.recurrence_type})>'
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)

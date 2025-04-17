@@ -69,7 +69,24 @@
                                             <input type="text" class="form-control" id="movement_restriction" name="movement_restriction" value="">
                                         </div>
                                         <div class="mb-3">
-                                            <label for="notes" class="form-label">Progress Notes</label>
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <label for="notes" class="form-label mb-0">Progress Notes</label>
+                                                <div class="btn-group" role="group" aria-label="Voice note actions">
+                                                    <button type="button" id="recordNoteBtn" class="btn btn-sm btn-outline-secondary">
+                                                        <i class="bi bi-mic-fill"></i> Record
+                                                    </button>
+                                                    <div class="btn-group" role="group">
+                                                        <button id="languageSelectBtn" type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-current-lang="en-GB">
+                                                            EN
+                                                        </button>
+                                                        <ul class="dropdown-menu dropdown-menu-end" id="languageDropdownMenu" aria-labelledby="languageSelectBtn">
+                                                            <li><a class="dropdown-item lang-option" href="#" data-lang="en-GB">EN (UK)</a></li>
+                                                            <li><a class="dropdown-item lang-option" href="#" data-lang="es-ES">ES (Spain)</a></li>
+                                                        </ul>
+                                                    </div>
+                                                    <span id="recordingStatus" class="text-muted small ms-2 align-self-center" style="display: none;"></span>
+                                                </div>
+                                            </div>
                                             <textarea class="form-control" id="notes" name="notes" rows="6"></textarea>
                                         </div>
                                     </div>

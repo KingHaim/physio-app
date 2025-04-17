@@ -36,8 +36,14 @@ def get_engine_url():
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
+
+# Remove global model imports from here if they exist
+# from app.models import db
+# from app.models import *
+# target_metadata = db.metadata # Keep this line commented or removed
+
 config.set_main_option('sqlalchemy.url', get_engine_url())
-target_db = current_app.extensions['migrate'].db
+# target_db = current_app.extensions['migrate'].db # Keep commented
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -46,9 +52,10 @@ target_db = current_app.extensions['migrate'].db
 
 
 def get_metadata():
-    if hasattr(target_db, 'metadatas'):
-        return target_db.metadatas[None]
-    return target_db.metadata
+    # Revert to original dynamic metadata retrieval
+    if hasattr(current_app.extensions['migrate'].db, 'metadatas'):
+        return current_app.extensions['migrate'].db.metadatas[None]
+    return current_app.extensions['migrate'].db.metadata
 
 
 def run_migrations_offline():
@@ -63,9 +70,13 @@ def run_migrations_offline():
     script output.
 
     """
+    # Import models needed for offline mode (usually just db.metadata)
+    from app.models import db 
+    target_metadata = db.metadata
+    
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url, target_metadata=get_metadata(), literal_binds=True
+        url=url, target_metadata=target_metadata, literal_binds=True, compare_type=True 
     )
 
     with context.begin_transaction():
@@ -79,6 +90,10 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
+    
+    # Import models within the online function
+    from app.models import db, RecurringAppointment # Import db and the specific model
+    target_metadata = db.metadata # Get metadata after import
 
     # this callback is used to prevent an auto-migration from being generated
     # when there are no changes to the schema
@@ -86,20 +101,25 @@ def run_migrations_online():
     def process_revision_directives(context, revision, directives):
         if getattr(config.cmd_opts, 'autogenerate', False):
             script = directives[0]
-            if script.upgrade_ops.is_empty():
+            # Revert to original check
+            if script.upgrade_ops.is_empty(): 
                 directives[:] = []
                 logger.info('No changes in schema detected.')
 
     conf_args = current_app.extensions['migrate'].configure_args
     if conf_args.get("process_revision_directives") is None:
         conf_args["process_revision_directives"] = process_revision_directives
+        
+    # Set compare_type if not already in conf_args (needed for SQLite)
+    if 'compare_type' not in conf_args:
+        conf_args['compare_type'] = True 
 
     connectable = get_engine()
 
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
-            target_metadata=get_metadata(),
+            target_metadata=target_metadata, # Use metadata obtained after import
             **conf_args
         )
 
