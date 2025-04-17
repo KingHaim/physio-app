@@ -1103,13 +1103,19 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
                 const selectedIds = Array.from(document.querySelectorAll('.treatment-checkbox:checked')).map(cb => cb.value);
                 const field = this.dataset.field;
                 const value = this.dataset.value;
+                let confirmMessage = `Are you sure you want to set "${field}" to "${value}" for ${selectedIds.length} treatment(s)?`;
+
+                // Add specific message for CostaSpine location
+                if (field === 'location' && value === 'CostaSpine Clinic') {
+                    confirmMessage += `\n\nNote: This will also automatically set the fee to €80 for the patient's earliest treatment (if selected) and €70 for all other selected treatments.`;
+                }
 
                 if (selectedIds.length === 0) {
                     alert('Please select at least one treatment to update.');
                     return;
                 }
 
-                if (confirm(`Are you sure you want to set "${field}" to "${value}" for ${selectedIds.length} treatment(s)?`)) {
+                if (confirm(confirmMessage)) {
                     // Disable buttons while processing
                     bulkActionButtons.forEach(btn => btn.disabled = true);
                     

@@ -1179,7 +1179,9 @@ def download_report_pdf(report_id):
 @main.route('/api/treatments/bulk-update', methods=['POST'])
 @login_required
 def bulk_update_treatments():
-    """Updates location or payment method for a list of treatment IDs."""
+    """Updates location or payment method for a list of treatment IDs.
+       If location is set to 'CostaSpine Clinic', it also sets the fee
+       (€80 for the patient's first ever treatment, €70 otherwise)."""
     data = request.get_json()
     
     treatment_ids = data.get('treatment_ids')
@@ -1199,20 +1201,60 @@ def bulk_update_treatments():
          return jsonify({'success': False, 'message': 'Invalid payment_method value.'}), 400
 
     try:
-        # Query the treatments to update
+        updated_count = 0
+        earliest_treatment_id = None
+        patient_id_for_check = None
+
+        # --- Determine if auto-fee logic applies --- 
+        is_costaspine_auto_fee = (field_to_update == 'location' and new_value == 'CostaSpine Clinic')
+
+        # --- Get patient ID and earliest treatment if auto-fee applies --- 
+        if is_costaspine_auto_fee:
+            # Find the patient ID from the first treatment ID in the list
+            first_treatment_check = Treatment.query.options(db.joinedload(Treatment.patient)).get(treatment_ids[0])
+            if not first_treatment_check:
+                 return jsonify({'success': False, 'message': 'Invalid treatment ID found in list.'}), 400
+            patient_id_for_check = first_treatment_check.patient_id
+            
+            # Find the earliest treatment for this specific patient
+            earliest_patient_treatment = Treatment.query.filter_by(patient_id=patient_id_for_check)\
+                                                 .order_by(Treatment.created_at.asc(), Treatment.id.asc())\
+                                                 .first()
+            earliest_treatment_id = earliest_patient_treatment.id if earliest_patient_treatment else None
+
+        # --- Query and update selected treatments --- 
         treatments_to_update = Treatment.query.filter(Treatment.id.in_(treatment_ids)).all()
         
-        updated_count = 0
         for treatment in treatments_to_update:
-            # Optional: Add authorization check here if needed later
-            # e.g., if treatment.patient.user_id != current_user.id: continue
-            setattr(treatment, field_to_update, new_value)
+            # Consistency check: Ensure all selected treatments belong to the same patient if auto-fee applies
+            if patient_id_for_check is not None and treatment.patient_id != patient_id_for_check:
+                 print(f"Warning: Skipping treatment {treatment.id} belonging to different patient during CostaSpine auto-fee update.")
+                 continue
+
+            # Apply updates
+            if is_costaspine_auto_fee:
+                treatment.location = new_value # 'CostaSpine Clinic'
+                # Set fee based on whether it's the patient's absolute earliest treatment
+                if earliest_treatment_id is not None and treatment.id == earliest_treatment_id:
+                    treatment.fee_charged = 80.00
+                    print(f"Setting fee to 80 for treatment {treatment.id} (earliest)")
+                else:
+                    treatment.fee_charged = 70.00
+                    print(f"Setting fee to 70 for treatment {treatment.id}")
+            else:
+                # Standard update for other fields/values (Home Visit, Cash, Card)
+                setattr(treatment, field_to_update, new_value)
+
             updated_count += 1
-            
-        db.session.commit()
-        
-        return jsonify({'success': True, 'message': f'Successfully updated {updated_count} treatments.'})
-        
+
+        # --- Commit and return --- 
+        if updated_count > 0: 
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'Successfully updated {updated_count} treatments.'})
+        else:
+             # Handle case where all treatments were skipped or list was empty
+             return jsonify({'success': False, 'message': 'No valid treatments were updated.'}), 400 # Return 400 Bad Request
+
     except Exception as e:
         db.session.rollback()
         print(f"Error during bulk treatment update: {e}")
