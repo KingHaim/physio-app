@@ -1742,6 +1742,14 @@ def financials():
 def review_payments():
     """Displays treatments with fees but missing payment methods."""
     try:
+        # --- Add call to update statuses first ---
+        marked_count = mark_past_treatments_as_completed() 
+        if marked_count > 0:
+            print(f"Marked {marked_count} past treatments as completed before loading review page.")
+            # Optionally flash a message, but might be noisy if frequent
+            # flash(f"{marked_count} past treatment(s) automatically marked as completed.", "info")
+        # --- End added call ---
+
         treatments_to_review = Treatment.query.join(Patient).filter(
             Treatment.fee_charged.isnot(None),
             Treatment.fee_charged > 0,
