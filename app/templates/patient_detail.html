@@ -224,8 +224,10 @@
                                     <tr>
                                         <th><input class="form-check-input" type="checkbox" id="selectAllCheckbox"></th>
                                         <th>Date</th>
-                                        <th>Treatment Type</th>
-                                        <th>Location</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Pain Level</th>
+                                        <th>Fee (€)</th>
                                         <th>Payment</th>
                                         <th>Actions</th>
                                     </tr>
@@ -235,39 +237,62 @@
                                     {% for treatment in treatments|sort(attribute='created_at', reverse=true) %}
                                         {% if treatment.created_at and treatment.created_at <= today %}
                                         {% set has_past_treatments = true %}
-                                        <tr>
+                                        <tr id="treatment-row-{{ treatment.id }}">
                                             <td><input class="form-check-input treatment-checkbox" type="checkbox" value="{{ treatment.id }}"></td>
+                                            <td>{{ treatment.created_at.strftime('%Y-%m-%d %H:%M') if treatment.created_at else 'N/A' }}</td>
+                                            <td>{{ treatment.treatment_type or 'N/A' }}</td>
                                             <td>
-                                                {% if treatment.created_at %}
-                                                    {{ treatment.created_at.strftime('%-d') }}{% if treatment.created_at.day in [1, 21, 31] %}st{% elif treatment.created_at.day in [2, 22] %}nd{% elif treatment.created_at.day in [3, 23] %}rd{% else %}th{% endif %} {{ treatment.created_at.strftime('%B %y') }}
-                                                {% else %}
-                                                    <span class="text-muted">No date</span>
-                                                {% endif %}
+                                                <span class="badge {% if treatment.status == 'Completed' %}bg-primary{% elif treatment.status == 'Scheduled' %}bg-info text-dark{% elif treatment.status == 'Cancelled' %}bg-danger{% else %}bg-secondary{% endif %} status-badge" id="status-{{ treatment.id }}">
+                                                    {{ treatment.status or 'N/A' }}
+                                                </span>
                                             </td>
-                                            <td>{{ treatment.treatment_type or 'Unknown' }}</td>
-                                            <td>{{ treatment.location or '-' }}</td>
-                                            <td>{{ treatment.payment_method or '-' }}</td>
+                                            <td>{{ treatment.pain_level if treatment.pain_level is not none else 'N/A' }}/10</td>
+                                            <td class="fee-column">
+                                                <div class="input-group input-group-sm">
+                                                    <input type="number" class="form-control form-control-sm fee-input" id="fee-input-{{ treatment.id }}" value="{{ treatment.fee_charged if treatment.fee_charged is not none else '' }}" placeholder="Fee" step="0.01" style="width: 70px;">
+                                                    <button class="btn btn-outline-secondary btn-sm set-fee-btn" data-treatment-id="{{ treatment.id }}" type="button" title="Set Fee">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                </div>
+                                                <small id="fee-status-{{ treatment.id }}" class="text-muted d-block mt-1"></small>
+                                            </td>
+                                            <td class="payment-column">
+                                                <span id="payment-status-{{ treatment.id }}" class="d-block mb-1">
+                                                    {% if treatment.payment_method %}
+                                                        Paid - {{ treatment.payment_method }}
+                                                    {% else %}
+                                                        Unpaid
+                                                    {% endif %}
+                                                </span>
+                                                {% if not treatment.payment_method %}
+                                                <div class="btn-group btn-group-sm payment-buttons" id="payment-buttons-{{ treatment.id }}">
+                                                    <button class="btn btn-outline-success btn-sm set-payment-btn" data-treatment-id="{{ treatment.id }}" data-method="Cash">Cash</button>
+                                                    <button class="btn btn-outline-primary btn-sm set-payment-btn" data-treatment-id="{{ treatment.id }}" data-method="Card">Card</button>
+                                                </div>
+                                                {% endif %}
+                                                <small id="payment-update-status-{{ treatment.id }}" class="text-muted d-block mt-1"></small>
+                                            </td>
                                             <td>
-                                        <div class="btn-group">
+                                                <div class="btn-group">
                                                     <a href="{{ url_for('main.view_treatment', id=treatment.id) }}" class="btn btn-sm btn-primary">
-                                                <i class="bi bi-eye"></i> View
+                                                        <i class="bi bi-eye"></i> View
                                                     </a>
-                                            <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-sm btn-secondary">
-                                                <i class="bi bi-pencil"></i> Edit
-                                            </a>
-                                        </div>
+                                                    <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-sm btn-secondary">
+                                                        <i class="bi bi-pencil"></i> Edit
+                                                    </a>
+                                                </div>
                                             </td>
                                         </tr>
                                         {% endif %}
                                     {% endfor %}
                                 </tbody>
                             </table>
-                                    </div>
+                        </div>
                     {% else %}
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i> No treatments found for this patient.
-                                </div>
-                            {% endif %}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -541,32 +566,32 @@
                                             <option value="therapy-session">Therapy Session (60 min)</option>
                                         </select>
                                         <small class="text-muted">Select the appropriate event type from your Calendly account</small>
-                    </div>
+                                    </div>
                                     
-                    <div class="mb-3">
+                                    <div class="mb-3">
                                         <label for="calendlyLocation" class="form-label">Location</label>
                                         <input type="text" class="form-control" id="calendlyLocation" name="calendly_location" placeholder="e.g. Office, Video Call">
                                         <small class="text-muted">Where will this appointment take place?</small>
-                    </div>
+                                    </div>
                                     
-                    <div class="mb-3">
+                                    <div class="mb-3">
                                         <label for="calendlyAppointmentDate" class="form-label">Preferred Date (Optional)</label>
                                         <input type="date" class="form-control" id="calendlyAppointmentDate" name="appointment_date">
                                         <small class="text-muted">If you have a preferred date in mind, otherwise Calendly will show available slots</small>
-            </div>
-            </div>
-        </div>
-    </div>
-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <button type="submit" class="btn btn-primary">Add Treatment</button>
                 </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- New Exercise Prescription Modal -->
@@ -923,9 +948,9 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
                             throw new Error(data.message || 'Error adding treatment');
                         });
                     }
-            })
-            .catch(error => {
-                console.error('Error:', error);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
                     alert(`Failed to add treatment: ${error.message}`);
                 });
             });
