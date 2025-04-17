@@ -140,6 +140,25 @@
                     </button>
                 </div>
                 <div class="card-body">
+                    <!-- Bulk Action Controls - Moved above table -->
+                    <div id="bulkActions" class="mb-3 p-3 bg-light rounded" style="display: none;"> 
+                        <h6>Bulk Actions for Selected (<span id="selectedCount">0</span>):</h6>
+                        <div class="row gx-2 gy-2">
+                            <div class="col-auto">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Set Location">
+                                    <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="location" data-value="CostaSpine Clinic">Set Loc: CostaSpine</button>
+                                    <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="location" data-value="Home Visit">Set Loc: Home Visit</button>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Set Payment Method">
+                                    <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="payment_method" data-value="Cash">Set Pmt: Cash</button>
+                                    <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="payment_method" data-value="Card">Set Pmt: Card</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Debug information to check patient treatments are loaded -->
                     <p class="text-muted small">Total treatments for this patient: {{ treatments|length }}</p>
                     <!-- Note about past treatments -->
@@ -151,15 +170,21 @@
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
+                                        <th><input class="form-check-input" type="checkbox" id="selectAllCheckbox"></th>
                                         <th>Date</th>
                                         <th>Treatment Type</th>
+                                        <th>Location</th>
+                                        <th>Payment</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% set has_past_treatments = false %}
                                     {% for treatment in treatments|sort(attribute='created_at', reverse=true) %}
                                         {% if treatment.created_at and treatment.created_at <= today %}
+                                        {% set has_past_treatments = true %}
                                         <tr>
+                                            <td><input class="form-check-input treatment-checkbox" type="checkbox" value="{{ treatment.id }}"></td>
                                             <td>
                                                 {% if treatment.created_at %}
                                                     {{ treatment.created_at.strftime('%-d') }}{% if treatment.created_at.day in [1, 21, 31] %}st{% elif treatment.created_at.day in [2, 22] %}nd{% elif treatment.created_at.day in [3, 23] %}rd{% else %}th{% endif %} {{ treatment.created_at.strftime('%B %y') }}
@@ -168,6 +193,8 @@
                                                 {% endif %}
                                             </td>
                                             <td>{{ treatment.treatment_type or 'Unknown' }}</td>
+                                            <td>{{ treatment.location or '-' }}</td>
+                                            <td>{{ treatment.payment_method or '-' }}</td>
                                             <td>
                                         <div class="btn-group">
                                                     <a href="{{ url_for('main.view_treatment', id=treatment.id) }}" class="btn btn-sm btn-primary">
@@ -1029,6 +1056,97 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
                 }
             });
         }
+
+        // --- Bulk Treatment Update Logic ---
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const treatmentCheckboxes = document.querySelectorAll('.treatment-checkbox');
+        const bulkActionsDiv = document.getElementById('bulkActions');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const bulkActionButtons = document.querySelectorAll('.bulk-action-btn');
+        const patientId = parseInt("{{ patient.id }}"); // Get patient ID for context
+
+        function updateBulkActionVisibility() {
+            const selectedCheckboxes = document.querySelectorAll('.treatment-checkbox:checked');
+            const count = selectedCheckboxes.length;
+            selectedCountSpan.textContent = count;
+            if (count > 0) {
+                bulkActionsDiv.style.display = 'block';
+            } else {
+                bulkActionsDiv.style.display = 'none';
+            }
+        }
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                treatmentCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateBulkActionVisibility();
+            });
+        }
+
+        treatmentCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (!this.checked) {
+                    selectAllCheckbox.checked = false; // Uncheck 'Select All' if any individual is unchecked
+                }
+                // Check if all are checked to potentially check 'Select All'
+                else if (document.querySelectorAll('.treatment-checkbox:checked').length === treatmentCheckboxes.length) {
+                   selectAllCheckbox.checked = true;
+                }
+                updateBulkActionVisibility();
+            });
+        });
+
+        bulkActionButtons.forEach(button => {
+            button.addEventListener('click', async function() {
+                const selectedIds = Array.from(document.querySelectorAll('.treatment-checkbox:checked')).map(cb => cb.value);
+                const field = this.dataset.field;
+                const value = this.dataset.value;
+
+                if (selectedIds.length === 0) {
+                    alert('Please select at least one treatment to update.');
+                    return;
+                }
+
+                if (confirm(`Are you sure you want to set "${field}" to "${value}" for ${selectedIds.length} treatment(s)?`)) {
+                    // Disable buttons while processing
+                    bulkActionButtons.forEach(btn => btn.disabled = true);
+                    
+                    try {
+                        const response = await fetch('/api/treatments/bulk-update', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                treatment_ids: selectedIds,
+                                field: field,
+                                value: value
+                            })
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok && result.success) {
+                            alert(result.message);
+                            // Reload the page to see changes
+                            window.location.reload(); 
+                        } else {
+                            alert(`Error: ${result.message || 'Failed to update treatments.'}`);
+                        }
+                    } catch (error) {
+                        console.error('Bulk update error:', error);
+                        alert('An error occurred while performing the bulk update.');
+                    } finally {
+                        // Re-enable buttons
+                        bulkActionButtons.forEach(btn => btn.disabled = false);
+                    }
+                }
+            });
+        });
+        // --- End Bulk Treatment Update Logic ---
+
     });
 
     function openTreatmentModal(treatmentId) {

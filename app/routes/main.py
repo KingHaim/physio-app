@@ -970,6 +970,34 @@ def analytics():
                           costaspine_revenue=costaspine_revenue,
                           costaspine_service_fee=costaspine_service_fee) # Pass new data
 
+@main.route('/api/analytics/costaspine-fee-data')
+@login_required
+def get_costaspine_fee_data():
+    """Returns the date, fee, and patient name for all treatments at CostaSpine Clinic with a fee."""
+    try:
+        fee_data = db.session.query(
+            Treatment.created_at,
+            Treatment.fee_charged,
+            Patient.name
+        ).join(Patient, Treatment.patient_id == Patient.id) \
+         .filter(
+            Treatment.location == 'CostaSpine Clinic',
+            Treatment.fee_charged.isnot(None)
+        ).order_by(Treatment.created_at).all()
+        
+        # Convert to a list of dictionaries with ISO formatted dates
+        results = [
+            {'date': record.created_at.isoformat(), 
+             'fee': float(record.fee_charged),
+             'patient_name': record.name} # Add patient name
+            for record in fee_data
+        ]
+        
+        return jsonify(results)
+    except Exception as e:
+        print(f"Error fetching CostaSpine fee data: {e}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+
 @main.route('/admin/update-treatments')
 def update_treatments_demo():
     """Update all treatments with sample data for demonstration purposes."""
@@ -1146,3 +1174,46 @@ def download_report_pdf(report_id):
     response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
 
     return response
+
+# --- Bulk Update Endpoint --- 
+@main.route('/api/treatments/bulk-update', methods=['POST'])
+@login_required
+def bulk_update_treatments():
+    """Updates location or payment method for a list of treatment IDs."""
+    data = request.get_json()
+    
+    treatment_ids = data.get('treatment_ids')
+    field_to_update = data.get('field')
+    new_value = data.get('value')
+    
+    if not all([treatment_ids, field_to_update, new_value]):
+        return jsonify({'success': False, 'message': 'Missing required data (treatment_ids, field, value).'}), 400
+        
+    if field_to_update not in ['location', 'payment_method']:
+        return jsonify({'success': False, 'message': 'Invalid field specified. Can only update "location" or "payment_method".'}), 400
+        
+    # Basic validation for known values (can be expanded)
+    if field_to_update == 'location' and new_value not in ['CostaSpine Clinic', 'Home Visit']:
+        return jsonify({'success': False, 'message': 'Invalid location value.'}), 400
+    if field_to_update == 'payment_method' and new_value not in ['Cash', 'Card']:
+         return jsonify({'success': False, 'message': 'Invalid payment_method value.'}), 400
+
+    try:
+        # Query the treatments to update
+        treatments_to_update = Treatment.query.filter(Treatment.id.in_(treatment_ids)).all()
+        
+        updated_count = 0
+        for treatment in treatments_to_update:
+            # Optional: Add authorization check here if needed later
+            # e.g., if treatment.patient.user_id != current_user.id: continue
+            setattr(treatment, field_to_update, new_value)
+            updated_count += 1
+            
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': f'Successfully updated {updated_count} treatments.'})
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error during bulk treatment update: {e}")
+        return jsonify({'success': False, 'message': 'An internal error occurred during the update.'}), 500
