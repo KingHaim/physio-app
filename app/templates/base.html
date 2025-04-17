@@ -391,6 +391,11 @@
                                 {% endif %}
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'main.review_payments' %}active{% endif %}" href="{{ url_for('main.review_payments') }}">
+                                <i class="bi bi-credit-card-2-front"></i> Review Payments
+                            </a>
+                        </li>
                     </div>
                     
                     <div class="nav-section">
