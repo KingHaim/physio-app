@@ -59,6 +59,16 @@
                 </div>
             </div>
         </div>
+        {# New Card for Estimated Tax #}
+        <div class="col-md-3 mt-3"> 
+            <div class="card shadow-sm stats-card bg-warning text-dark"> {# Changed background/text for visibility #}
+                <div class="card-body">
+                    <h5 class="card-title">Est. Tax Due (Card Pmts)</h5>
+                    <h2 class="display-5 mb-1">£{{ "{:,.2f}".format(total_estimated_tax or 0) }}</h2>
+                    <small class="text-muted">19% on Card Payments (Adjusted for Clinic)</small>
+                </div>
+            </div>
+        </div>
     </div>
     
     <!-- Treatment & Patient Charts -->

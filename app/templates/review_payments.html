@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Review Pending Payments{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="h3 mb-4"><i class="bi bi-credit-card-2-front"></i> Review Pending Payments</h1>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">Treatments with Fees but Missing Payment Method</h5>
+        </div>
+        <div class="card-body">
+            {% if treatments %}
+                <p class="text-muted small">Found {{ treatments|length }} completed treatment(s) with a recorded fee but no payment method assigned.</p>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="reviewPaymentsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Patient Name</th>
+                                <th>Treatment Date</th>
+                                <th class="text-end">Fee Charged</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for treatment in treatments %}
+                            <tr id="treatment-row-{{ treatment.id }}">
+                                <td>
+                                    <a href="{{ url_for('main.patient_detail', id=treatment.patient.id) }}">{{ treatment.patient.name }}</a>
+                                </td>
+                                <td>{{ treatment.created_at.strftime('%Y-%m-%d') if treatment.created_at else 'N/A' }}</td>
+                                <td class="text-end">£{{ "{:,.2f}".format(treatment.fee_charged or 0) }}</td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button class="btn btn-outline-success set-payment-btn" data-treatment-id="{{ treatment.id }}" data-payment-method="Cash">
+                                            <i class="bi bi-cash-coin"></i> Set Cash
+                                        </button>
+                                        <button class="btn btn-outline-primary set-payment-btn" data-treatment-id="{{ treatment.id }}" data-payment-method="Card">
+                                            <i class="bi bi-credit-card"></i> Set Card
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-success" role="alert">
+                    <i class="bi bi-check-circle-fill"></i> No pending payments found. All completed treatments with fees have a payment method assigned.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tableBody = document.querySelector('#reviewPaymentsTable tbody');
+
+    if (tableBody) {
+        tableBody.addEventListener('click', function(event) {
+            const button = event.target.closest('.set-payment-btn');
+            if (!button) return; // Exit if click wasn't on a button
+
+            const treatmentId = button.dataset.treatmentId;
+            const paymentMethod = button.dataset.paymentMethod;
+            const row = document.getElementById(`treatment-row-${treatmentId}`);
+
+            if (!treatmentId || !paymentMethod || !row) {
+                console.error('Missing data for payment update.');
+                alert('Could not process payment update. Missing information.');
+                return;
+            }
+
+            // Disable buttons in the row to prevent double-clicks
+            row.querySelectorAll('.set-payment-btn').forEach(btn => btn.disabled = true);
+            const originalButtonText = button.innerHTML;
+            button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Setting...`;
+
+            // Make API call to update payment method
+            fetch(`/api/treatment/${treatmentId}/set-payment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Add CSRF token header if your app uses it
+                },
+                body: JSON.stringify({ payment_method: paymentMethod })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // Try to get error message from response body
+                    return response.json().then(errData => {
+                        throw new Error(errData.message || `HTTP error ${response.status}`);
+                    }).catch(() => {
+                        // Fallback if response body is not JSON or empty
+                        throw new Error(`HTTP error ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Visually confirm and remove row
+                    row.classList.add('table-success'); // Optional: Highlight success
+                    // Fade out and remove row
+                    row.style.transition = 'opacity 0.5s ease-out';
+                    row.style.opacity = '0';
+                    setTimeout(() => {
+                        row.remove();
+                        // Check if table is now empty
+                        if (tableBody.rows.length === 0) {
+                            const table = document.getElementById('reviewPaymentsTable');
+                            const cardBody = table.closest('.card-body');
+                            table.remove(); // Remove the table
+                            // Display success message
+                            cardBody.innerHTML = `
+                                <div class="alert alert-success" role="alert">
+                                    <i class="bi bi-check-circle-fill"></i> All pending payments have been reviewed!
+                                </div>`;
+                        }
+                    }, 500); // Wait for fade out animation
+                } else {
+                    throw new Error(data.message || 'Update failed.');
+                }
+            })
+            .catch(error => {
+                console.error('Error setting payment method:', error);
+                alert(`Failed to set payment method: ${error.message}`);
+                // Re-enable buttons and restore text on error
+                row.querySelectorAll('.set-payment-btn').forEach(btn => btn.disabled = false);
+                button.innerHTML = originalButtonText;
+            });
+        });
+    }
+});
+</script>
+{% endblock %} 

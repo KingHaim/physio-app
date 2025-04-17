@@ -320,6 +320,11 @@
                                 {% endif %}
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/review-payments' in request.path %}active{% endif %}" href="{{ url_for('main.review_payments') }}">
+                                <i class="bi bi-credit-card-2-front"></i> Review Payments
+                            </a>
+                        </li>
                     </div>
                     
                     <div class="nav-section">
@@ -327,6 +332,11 @@
                         <li class="nav-item">
                             <a class="nav-link {% if '/analytics' in request.path %}active{% endif %}" href="{{ url_for('main.analytics') }}">
                                 <i class="bi bi-graph-up"></i> Analytics
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-link {% if request.endpoint == 'main.financials' %}active{% endif %}" href="{{ url_for('main.financials') }}">
+                                <i class="bi bi-currency-pound me-2"></i>Financials
                             </a>
                         </li>
                     </div>

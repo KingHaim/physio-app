@@ -1208,3 +1208,34 @@ def generate_exercise_prescription(id):
             'success': False,
             'message': 'An internal error occurred generating the prescription.'
         })
+
+# --- API Endpoint to Set Payment Method ---
+@api.route('/api/treatment/<int:id>/set-payment', methods=['POST'])
+@login_required # Ensure user is logged in
+def set_treatment_payment_method(id):
+    """Sets the payment method for a specific treatment."""
+    try:
+        data = request.get_json()
+        payment_method = data.get('payment_method')
+
+        if not payment_method or payment_method not in ['Cash', 'Card']:
+            return jsonify({'success': False, 'message': 'Invalid or missing payment_method.'}), 400
+
+        treatment = Treatment.query.get_or_404(id)
+
+        # Optionally, check if the payment method is already set?
+        # if treatment.payment_method:
+        #     return jsonify({'success': False, 'message': 'Payment method already set.'}), 409 # 409 Conflict
+
+        treatment.payment_method = payment_method
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Payment method for treatment {id} set to {payment_method}.'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error setting payment method for treatment {id}: {e}")
+        return jsonify({'success': False, 'message': 'An internal server error occurred.'}), 500

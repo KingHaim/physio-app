@@ -1,6 +1,7 @@
 # app/routes.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response
 from datetime import datetime, timedelta
+from calendar import monthrange
 from sqlalchemy import func, extract, or_, case, cast, Float
 from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport  # Changed PatientNote to TriggerPoint
 import json
@@ -12,6 +13,50 @@ import markdown
 import os
 
 main = Blueprint('main', __name__)
+
+# Define the 2025 tax brackets based on the provided image
+# Each dict represents a bracket with its lower/upper income bounds,
+# description, and minimum contribution base.
+TAX_BRACKETS_2025 = [
+    {'lower': 0,       'upper': 670,      'desc': 'Hasta 670 €',              'base': 653.59},
+    {'lower': 670,     'upper': 900,      'desc': 'Entre 670 € y 900 €',      'base': 718.95},
+    {'lower': 900,     'upper': 1125.90,  'desc': 'Entre 900 € y 1.125,90 €', 'base': 849.67},
+    {'lower': 1125.90, 'upper': 1300,     'desc': 'Entre 1.125,90 € y 1.300 €','base': 950.98},
+    {'lower': 1300,    'upper': 1500,     'desc': 'Entre 1.300 € y 1.500 €',  'base': 960.78},
+    {'lower': 1500,    'upper': 1700,     'desc': 'Entre 1.500 € y 1.700 €',  'base': 960.78},
+    {'lower': 1700,    'upper': 1850,     'desc': 'Entre 1.700 € y 1.850 €',  'base': 1143.79},
+    {'lower': 1850,    'upper': 2030,     'desc': 'Entre 1.850 € y 2.030 €',  'base': 1209.15},
+    {'lower': 2030,    'upper': 2330,     'desc': 'Entre 2.030 € y 2.330 €',  'base': 1274.51}, # Adjusted range based on next
+    {'lower': 2330,    'upper': 2760,     'desc': 'Entre 2.330 € y 2.760 €',  'base': 1356.21},
+    {'lower': 2760,    'upper': 3190,     'desc': 'Entre 2.760 € y 3.190 €',  'base': 1437.91},
+    {'lower': 3190,    'upper': 3620,     'desc': 'Entre 3.190 € y 3.620 €',  'base': 1519.61},
+    {'lower': 3620,    'upper': 4050,     'desc': 'Entre 3.620 € y 4.050 €',  'base': 1601.31},
+    {'lower': 4050,    'upper': float('inf'), 'desc': 'Más de 4.050 €',       'base': 1601.31} # Assumed last base applies
+]
+
+# --- Define Fixed Monthly Expenses (Placeholder - Update with your actuals) ---
+# Expenses should be in EUR
+FIXED_MONTHLY_EXPENSES = {
+    'chatgpt': 24.20,
+    'icloud': 9.99,
+    'autonomos': 230.00,
+    'other': 100.00 # Catch-all for other fixed costs
+}
+TOTAL_FIXED_MONTHLY_EXPENSES = sum(FIXED_MONTHLY_EXPENSES.values())
+# --- End Fixed Monthly Expenses ---
+
+# Helper function to find the correct bracket
+def find_bracket(net_revenue, brackets):
+    for bracket in brackets:
+        # Check if revenue is within the lower (inclusive) and upper (exclusive) bounds
+        if net_revenue >= bracket['lower'] and net_revenue < bracket['upper']:
+            return bracket
+    # If revenue is exactly the lower bound of the highest bracket or more
+    # Use >= for the last bracket's lower bound check
+    if net_revenue >= brackets[-1]['lower']:
+         return brackets[-1]
+    # Should not happen if 0 is the lowest bound, but return None as fallback
+    return None
 
 @main.route('/')
 @login_required
@@ -952,6 +997,21 @@ def analytics():
     costaspine_revenue = float(costaspine_revenue_query)
     costaspine_service_fee = costaspine_revenue * 0.30
     
+    # --- Calculate Estimated Tax (19%) on Card Payments --- 
+    tax_calculation_query = db.session.query(
+        func.sum(
+            case(
+                (Treatment.location == 'CostaSpine Clinic', Treatment.fee_charged * 0.70 * 0.19),
+                else_= Treatment.fee_charged * 0.19
+            )
+        )
+    ).filter(
+        Treatment.payment_method == 'Card',
+        Treatment.fee_charged.isnot(None)
+    ).scalar() or 0
+    
+    total_estimated_tax = float(tax_calculation_query)
+
     # --- End New Financial Analytics ---
     
     return render_template('analytics.html',
@@ -968,7 +1028,8 @@ def analytics():
                           revenue_by_location=revenue_by_location,
                           payment_method_distribution=payment_method_distribution,
                           costaspine_revenue=costaspine_revenue,
-                          costaspine_service_fee=costaspine_service_fee) # Pass new data
+                          costaspine_service_fee=costaspine_service_fee,
+                          total_estimated_tax=total_estimated_tax) # Pass new tax data
 
 @main.route('/api/analytics/costaspine-fee-data')
 @login_required
@@ -1259,3 +1320,208 @@ def bulk_update_treatments():
         db.session.rollback()
         print(f"Error during bulk treatment update: {e}")
         return jsonify({'success': False, 'message': 'An internal error occurred during the update.'}), 500
+
+# --- Financials Page Route --- 
+@main.route('/financials')
+@login_required
+def financials():
+    selected_year = request.args.get('year', str(datetime.now().year))
+    try:
+        year = int(selected_year)
+    except ValueError:
+        flash('Invalid year selected.', 'warning')
+        year = datetime.now().year
+        selected_year = str(year)
+
+    # --- Get available years (existing logic) ---
+    available_years = db.session.query(
+        func.extract('year', Treatment.created_at)
+    ).distinct().order_by(func.extract('year', Treatment.created_at).desc()).all()
+    available_years = [int(y[0]) for y in available_years if y[0] is not None]
+    if not available_years:
+        available_years = [year]
+    # Ensure the selected year is in the list if it has data or is the current year
+    if int(selected_year) not in available_years:
+         # If the selected year isn't in the list (e.g., future year selected with no data),
+         # add it to the list to allow selection, or default to the latest available year.
+         # For simplicity, let's add it if it's the current year or later.
+         if year >= datetime.now().year:
+             available_years.insert(0, year)
+         elif available_years: # Default to latest year with data if selected year is invalid past
+             selected_year = str(available_years[0])
+             year = available_years[0]
+         else: # Default to current year if no data at all
+             selected_year = str(datetime.now().year)
+             year = int(selected_year)
+             available_years = [year]
+
+
+    # --- Initialize data structures ---
+    # For Quarterly/Annual Table
+    quarterly_data = {
+        'q1': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
+        'q2': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
+        'q3': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
+        'q4': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
+        'annual': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0}
+    }
+    # For Monthly Bracket Table
+    monthly_data = {} # Key will be month number (1-12)
+
+    tax_rate = 0.19
+    costaspine_fee_rate = 0.30
+    quarters_map = {1: 'q1', 2: 'q1', 3: 'q1',
+                    4: 'q2', 5: 'q2', 6: 'q2',
+                    7: 'q3', 8: 'q3', 9: 'q3',
+                    10: 'q4', 11: 'q4', 12: 'q4'}
+
+    # --- Loop through months 1-12 to calculate monthly and aggregate quarterly/annual data ---
+    for month in range(1, 13):
+        # Check if the month is in the future for the selected year
+        current_month = datetime.now().month
+        current_year = datetime.now().year
+        if year == current_year and month > current_month:
+            # Initialize future months with zeros and default bracket info
+            month_start_date = datetime(year, month, 1)
+            monthly_data[month] = {
+                'month_name': month_start_date.strftime('%B'),
+                'net_revenue': 0,
+                'bracket': '-',
+                'min_base': '-',
+                'monthly_contribution': 0,
+                'fixed_expenses': 0,
+                'net_revenue_final': 0,
+                'diff_to_upper': '-'
+            }
+            continue # Skip calculation for future months
+
+        month_start_date = datetime(year, month, 1)
+        # Get the last day of the month
+        month_end_day = monthrange(year, month)[1]
+        month_end_date = datetime(year, month, month_end_day, 23, 59, 59)
+        q_key = quarters_map[month]
+
+        # Query treatments for the specific month
+        monthly_treatments = Treatment.query.filter(
+            Treatment.created_at >= month_start_date,
+            Treatment.created_at <= month_end_date,
+            Treatment.status == 'Completed',
+            Treatment.fee_charged > 0
+        ).all()
+
+        # Calculate monthly figures
+        m_revenue = 0
+        m_costaspine_revenue = 0
+        m_costaspine_fee = 0
+        m_taxable_card_revenue = 0
+
+        for t in monthly_treatments:
+            fee = t.fee_charged or 0
+            m_revenue += fee
+
+            is_costaspine = t.location == 'CostaSpine Clinic'
+            is_card = t.payment_method == 'Card'
+
+            if is_costaspine:
+                m_costaspine_revenue += fee
+                m_costaspine_fee += fee * costaspine_fee_rate
+
+            if is_card:
+                if is_costaspine:
+                    m_taxable_card_revenue += fee * (1 - costaspine_fee_rate)
+                else:
+                    m_taxable_card_revenue += fee
+
+        m_tax = m_taxable_card_revenue * tax_rate
+        m_net = m_revenue - m_costaspine_fee - m_tax
+
+        # Find tax bracket for this month's net revenue
+        current_bracket = find_bracket(m_net, TAX_BRACKETS_2025)
+        bracket_desc = "-" # Default if no treatments/net revenue
+        min_base_value = 0 # Store numeric value for calculation
+        min_base_display = "-"
+        diff_to_upper = "-"
+        monthly_contribution = 0 # Default contribution
+
+        if current_bracket:
+            bracket_desc = current_bracket['desc']
+            min_base_value = current_bracket['base']
+            # Format min_base for display
+            min_base_display = f"€{min_base_value:,.2f}"
+            # Calculate the estimated monthly contribution (31.4%)
+            monthly_contribution = min_base_value * 0.314
+            
+            upper_bound = current_bracket['upper']
+            if upper_bound == float('inf'):
+                diff_to_upper = "Top Bracket"
+            else:
+                diff = upper_bound - m_net
+                # Format diff_to_upper as currency
+                diff_to_upper = f"€{diff:,.2f}"
+        elif m_net > 0: # Handle case where net is positive but doesn't match a bracket
+             bracket_desc = "Error: No bracket found"
+
+        # Final Net Revenue for the month (After all expenses and contributions)
+        m_net_final = m_net - monthly_contribution
+
+        # Store monthly breakdown (Updated)
+        monthly_data[month] = {
+            'month_name': month_start_date.strftime('%B'),
+            'net_revenue': m_net, # Revenue used for bracket calc
+            'bracket': bracket_desc,
+            'min_base': min_base_display,
+            'monthly_contribution': monthly_contribution,
+            'fixed_expenses': TOTAL_FIXED_MONTHLY_EXPENSES, # Store monthly fixed expenses
+            'net_revenue_final': m_net_final, # Store the final net after contribution
+            'diff_to_upper': diff_to_upper
+        }
+
+        # --- Aggregate into quarterly and annual data (Updated) ---
+        quarterly_data[q_key]['revenue'] += m_revenue
+        quarterly_data[q_key]['costaspine_revenue'] += m_costaspine_revenue
+        quarterly_data[q_key]['costaspine_fee'] += m_costaspine_fee
+        quarterly_data[q_key]['tax'] += monthly_contribution # Sum autonomo contributions
+        quarterly_data[q_key]['fixed_expenses'] += TOTAL_FIXED_MONTHLY_EXPENSES # Sum fixed expenses
+        # Recalculate Net for the quarter
+        quarterly_data[q_key]['net'] = quarterly_data[q_key]['revenue'] - quarterly_data[q_key]['costaspine_fee'] - quarterly_data[q_key]['tax'] - quarterly_data[q_key]['fixed_expenses']
+
+        quarterly_data['annual']['revenue'] += m_revenue
+        quarterly_data['annual']['costaspine_revenue'] += m_costaspine_revenue
+        quarterly_data['annual']['costaspine_fee'] += m_costaspine_fee
+        quarterly_data['annual']['tax'] += monthly_contribution # Sum autonomo contributions
+        quarterly_data['annual']['fixed_expenses'] += TOTAL_FIXED_MONTHLY_EXPENSES # Sum fixed expenses
+        # Recalculate Net for the year
+        quarterly_data['annual']['net'] = quarterly_data['annual']['revenue'] - quarterly_data['annual']['costaspine_fee'] - quarterly_data['annual']['tax'] - quarterly_data['annual']['fixed_expenses']
+
+    return render_template(
+        'financials.html',
+        data=quarterly_data, # Pass quarterly/annual data
+        monthly_breakdown=monthly_data, # Pass new monthly data
+        selected_year=selected_year,
+        available_years=sorted(list(set(available_years)), reverse=True), # Ensure unique and sorted
+        tax_year=2025 # Pass the year the brackets apply to
+    )
+
+# --- Review Missing Payments Route ---
+@main.route('/review-payments')
+@login_required
+def review_payments():
+    """Displays treatments with fees but missing payment methods."""
+    try:
+        treatments_to_review = Treatment.query.join(Patient).filter(
+            Treatment.fee_charged.isnot(None),
+            Treatment.fee_charged > 0,
+            or_(Treatment.payment_method.is_(None), Treatment.payment_method == ''),
+            Treatment.status == 'Completed' # Focus on completed treatments
+        ).options(
+            db.joinedload(Treatment.patient) # Eager load patient data
+        ).order_by(
+            Treatment.created_at.asc() # Show oldest first
+        ).all()
+
+        return render_template('review_payments.html', treatments=treatments_to_review)
+
+    except Exception as e:
+        print(f"Error loading review payments page: {e}")
+        flash('Could not load payment review page. Please try again.', 'danger')
+        return redirect(url_for('main.index'))
