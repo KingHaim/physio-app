@@ -1750,11 +1750,15 @@ def review_payments():
             # flash(f"{marked_count} past treatment(s) automatically marked as completed.", "info")
         # --- End added call ---
 
+        # Fetch treatments that are Completed and are missing a fee OR payment method
         treatments_to_review = Treatment.query.join(Patient).filter(
-            Treatment.fee_charged.isnot(None),
-            Treatment.fee_charged > 0,
-            or_(Treatment.payment_method.is_(None), Treatment.payment_method == ''),
-            Treatment.status == 'Completed' # Focus on completed treatments
+            Treatment.status == 'Completed', # Must be completed
+            or_(
+                Treatment.fee_charged.is_(None),
+                Treatment.fee_charged == 0,
+                Treatment.payment_method.is_(None),
+                Treatment.payment_method == ''
+            )
         ).options(
             db.joinedload(Treatment.patient) # Eager load patient data
         ).order_by(

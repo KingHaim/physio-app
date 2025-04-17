@@ -1239,3 +1239,28 @@ def set_treatment_payment_method(id):
         db.session.rollback()
         print(f"Error setting payment method for treatment {id}: {e}")
         return jsonify({'success': False, 'message': 'An internal server error occurred.'}), 500
+
+@api.route('/api/treatment/<int:id>/set-fee', methods=['POST'])
+@login_required
+def set_treatment_fee(id):
+    """Sets the fee for a specific treatment."""
+    treatment = Treatment.query.get_or_404(id)
+    data = request.get_json()
+    
+    if not data or 'fee' not in data:
+        return jsonify({'success': False, 'message': 'Missing fee amount in request.'}), 400
+        
+    try:
+        fee_value = float(data['fee'])
+        if fee_value < 0:
+             return jsonify({'success': False, 'message': 'Fee cannot be negative.'}), 400
+             
+        treatment.fee_charged = fee_value
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Fee updated successfully.', 'new_fee': fee_value})
+    except ValueError:
+         return jsonify({'success': False, 'message': 'Invalid fee amount provided.'}), 400
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error setting fee for treatment {id}: {e}")
+        return jsonify({'success': False, 'message': 'An internal error occurred.'}), 500

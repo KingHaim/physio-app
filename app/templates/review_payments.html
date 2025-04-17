@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Review Pending Payments{% endblock %}
+{% block title %}Review Incomplete Payments{% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <h1 class="h3 mb-4"><i class="bi bi-credit-card-2-front"></i> Review Pending Payments</h1>
+    <h1 class="h3 mb-4"><i class="bi bi-clipboard-data"></i> Review Incomplete Financial Details</h1>
 
     <div class="card shadow-sm">
         <div class="card-header">
-            <h5 class="mb-0">Treatments with Fees but Missing Payment Method</h5>
+            <h5 class="mb-0">Completed Treatments Missing Fee or Payment Method</h5>
         </div>
         <div class="card-body">
             {% if treatments %}
-                <p class="text-muted small">Found {{ treatments|length }} completed treatment(s) with a recorded fee but no payment method assigned.</p>
+                <p class="text-muted small">Found {{ treatments|length }} completed treatment(s) with missing fee or payment method.</p>
                 <div class="table-responsive">
                     <table class="table table-hover" id="reviewPaymentsTable">
                         <thead class="table-light">
@@ -20,6 +20,7 @@
                                 <th>Patient Name</th>
                                 <th>Treatment Date</th>
                                 <th class="text-end">Fee Charged</th>
+                                <th class="text-center">Payment Method</th>
                                 <th class="text-center">Actions</th>
                             </tr>
                         </thead>
@@ -30,16 +31,35 @@
                                     <a href="{{ url_for('main.patient_detail', id=treatment.patient.id) }}">{{ treatment.patient.name }}</a>
                                 </td>
                                 <td>{{ treatment.created_at.strftime('%Y-%m-%d') if treatment.created_at else 'N/A' }}</td>
-                                <td class="text-end">£{{ "{:,.2f}".format(treatment.fee_charged or 0) }}</td>
+                                <td class="text-end fee-cell">
+                                    {% if treatment.fee_charged is not none and treatment.fee_charged > 0 %}
+                                        £{{ "{:,.2f}".format(treatment.fee_charged) }}
+                                    {% else %}
+                                        <div class="input-group input-group-sm" style="width: 150px;">
+                                            <span class="input-group-text">£</span>
+                                            <input type="number" step="0.01" min="0" class="form-control fee-input" placeholder="Amount" aria-label="Fee Amount">
+                                            <button class="btn btn-outline-success save-fee-btn" type="button" data-treatment-id="{{ treatment.id }}"><i class="bi bi-check-lg"></i></button>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center payment-cell">
+                                    {% if treatment.payment_method %}
+                                        {{ treatment.payment_method }}
+                                    {% else %}
+                                         <div class="btn-group btn-group-sm" role="group">
+                                             <button class="btn btn-outline-success set-payment-btn" data-treatment-id="{{ treatment.id }}" data-payment-method="Cash">
+                                                 <i class="bi bi-cash-coin"></i> Cash
+                                             </button>
+                                             <button class="btn btn-outline-primary set-payment-btn" data-treatment-id="{{ treatment.id }}" data-payment-method="Card">
+                                                 <i class="bi bi-credit-card"></i> Card
+                                             </button>
+                                         </div>
+                                    {% endif %}
+                                </td>
                                 <td class="text-center">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <button class="btn btn-outline-success set-payment-btn" data-treatment-id="{{ treatment.id }}" data-payment-method="Cash">
-                                            <i class="bi bi-cash-coin"></i> Set Cash
-                                        </button>
-                                        <button class="btn btn-outline-primary set-payment-btn" data-treatment-id="{{ treatment.id }}" data-payment-method="Card">
-                                            <i class="bi bi-credit-card"></i> Set Card
-                                        </button>
-                                    </div>
+                                    <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-sm btn-outline-secondary edit-btn" title="Full Edit">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -48,7 +68,7 @@
                 </div>
             {% else %}
                 <div class="alert alert-success" role="alert">
-                    <i class="bi bi-check-circle-fill"></i> No pending payments found. All completed treatments with fees have a payment method assigned.
+                    <i class="bi bi-check-circle-fill"></i> No completed treatments found with missing fees or payment methods.
                 </div>
             {% endif %}
         </div>
@@ -63,79 +83,138 @@ document.addEventListener('DOMContentLoaded', function() {
     const tableBody = document.querySelector('#reviewPaymentsTable tbody');
 
     if (tableBody) {
-        tableBody.addEventListener('click', function(event) {
-            const button = event.target.closest('.set-payment-btn');
-            if (!button) return; // Exit if click wasn't on a button
+        tableBody.addEventListener('click', async function(event) {
+            const saveFeeButton = event.target.closest('.save-fee-btn');
+            const setPaymentButton = event.target.closest('.set-payment-btn');
 
-            const treatmentId = button.dataset.treatmentId;
-            const paymentMethod = button.dataset.paymentMethod;
-            const row = document.getElementById(`treatment-row-${treatmentId}`);
-
-            if (!treatmentId || !paymentMethod || !row) {
-                console.error('Missing data for payment update.');
-                alert('Could not process payment update. Missing information.');
-                return;
+            if (saveFeeButton) {
+                await handleSaveFee(saveFeeButton);
+            } else if (setPaymentButton) {
+                await handleSetPayment(setPaymentButton);
             }
+        });
+    }
 
-            // Disable buttons in the row to prevent double-clicks
-            row.querySelectorAll('.set-payment-btn').forEach(btn => btn.disabled = true);
-            const originalButtonText = button.innerHTML;
-            button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Setting...`;
+    async function handleSaveFee(button) {
+        const treatmentId = button.dataset.treatmentId;
+        const row = document.getElementById(`treatment-row-${treatmentId}`);
+        const feeInput = row.querySelector('.fee-input');
+        const feeCell = row.querySelector('.fee-cell');
+        const feeValue = parseFloat(feeInput.value);
 
-            // Make API call to update payment method
-            fetch(`/api/treatment/${treatmentId}/set-payment`, {
+        if (isNaN(feeValue) || feeValue <= 0) {
+            alert('Please enter a valid positive fee amount.');
+            feeInput.focus();
+            return;
+        }
+
+        // Disable button and show spinner
+        button.disabled = true;
+        button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+
+        try {
+            const response = await fetch(`/api/treatment/${treatmentId}/set-fee`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // Add CSRF token header if your app uses it
+                    // Add CSRF token header if needed
+                },
+                body: JSON.stringify({ fee: feeValue })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                // Update cell content
+                feeCell.innerHTML = `£${data.new_fee.toFixed(2)}`;
+                // Check if row can be removed
+                checkAndRemoveRow(row);
+            } else {
+                throw new Error(data.message || `HTTP error ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Error setting fee:', error);
+            alert(`Failed to set fee: ${error.message}`);
+            // Restore button state
+            button.disabled = false;
+            button.innerHTML = `<i class="bi bi-check-lg"></i>`;
+        }
+    }
+
+    async function handleSetPayment(button) {
+        const treatmentId = button.dataset.treatmentId;
+        const paymentMethod = button.dataset.paymentMethod;
+        const row = document.getElementById(`treatment-row-${treatmentId}`);
+        const paymentCell = row.querySelector('.payment-cell');
+        const buttonGroup = button.closest('.btn-group');
+
+        // Disable buttons in the group
+        buttonGroup.querySelectorAll('.set-payment-btn').forEach(btn => btn.disabled = true);
+        const originalButtonHtml = button.innerHTML; // Store original HTML of the clicked button
+        button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Setting...`;
+
+
+        try {
+            const response = await fetch(`/api/treatment/${treatmentId}/set-payment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                     // Add CSRF token header if needed
                 },
                 body: JSON.stringify({ payment_method: paymentMethod })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    // Try to get error message from response body
-                    return response.json().then(errData => {
-                        throw new Error(errData.message || `HTTP error ${response.status}`);
-                    }).catch(() => {
-                        // Fallback if response body is not JSON or empty
-                        throw new Error(`HTTP error ${response.status}`);
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    // Visually confirm and remove row
-                    row.classList.add('table-success'); // Optional: Highlight success
-                    // Fade out and remove row
-                    row.style.transition = 'opacity 0.5s ease-out';
-                    row.style.opacity = '0';
-                    setTimeout(() => {
-                        row.remove();
-                        // Check if table is now empty
-                        if (tableBody.rows.length === 0) {
-                            const table = document.getElementById('reviewPaymentsTable');
-                            const cardBody = table.closest('.card-body');
-                            table.remove(); // Remove the table
-                            // Display success message
-                            cardBody.innerHTML = `
-                                <div class="alert alert-success" role="alert">
-                                    <i class="bi bi-check-circle-fill"></i> All pending payments have been reviewed!
-                                </div>`;
-                        }
-                    }, 500); // Wait for fade out animation
-                } else {
-                    throw new Error(data.message || 'Update failed.');
-                }
-            })
-            .catch(error => {
-                console.error('Error setting payment method:', error);
-                alert(`Failed to set payment method: ${error.message}`);
-                // Re-enable buttons and restore text on error
-                row.querySelectorAll('.set-payment-btn').forEach(btn => btn.disabled = false);
-                button.innerHTML = originalButtonText;
             });
-        });
+
+            const data = await response.json();
+
+             if (response.ok && data.success) {
+                // Update cell content
+                paymentCell.innerHTML = paymentMethod; // Display the set payment method
+                // Check if row can be removed
+                checkAndRemoveRow(row);
+            } else {
+                 throw new Error(data.message || `HTTP error ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Error setting payment method:', error);
+            alert(`Failed to set payment method: ${error.message}`);
+            // Restore button state only for the clicked button
+            buttonGroup.querySelectorAll('.set-payment-btn').forEach(btn => btn.disabled = false);
+            button.innerHTML = originalButtonHtml; // Restore original HTML
+        }
+    }
+
+    function checkAndRemoveRow(row) {
+        const feeCell = row.querySelector('.fee-cell');
+        const paymentCell = row.querySelector('.payment-cell');
+
+        // Check if fee is present (not an input group) and positive
+        const hasFee = !feeCell.querySelector('.input-group') && feeCell.textContent.includes('£') && parseFloat(feeCell.textContent.replace('£','').replace(',','')) > 0;
+        // Check if payment method is present (not a button group)
+        const hasPayment = !paymentCell.querySelector('.btn-group');
+
+        console.log(`Checking row ${row.id}: hasFee=${hasFee}, hasPayment=${hasPayment}`); // Debug
+
+        if (hasFee && hasPayment) {
+            console.log(`Removing row ${row.id}`); // Debug
+            row.style.transition = 'opacity 0.5s ease-out';
+            row.style.opacity = '0';
+            setTimeout(() => {
+                row.remove();
+                // Check if table is empty
+                 if (tableBody.rows.length === 0) {
+                    const table = document.getElementById('reviewPaymentsTable');
+                    const cardBody = table.closest('.card-body');
+                    if(table && cardBody) {
+                        table.remove(); // Remove the table itself
+                        // Display success message within the card body
+                        cardBody.innerHTML = `
+                            <div class="alert alert-success" role="alert">
+                                <i class="bi bi-check-circle-fill"></i> All incomplete financial details have been reviewed!
+                            </div>`;
+                    }
+                 }
+            }, 500); // Match transition duration
+        }
     }
 });
 </script>
