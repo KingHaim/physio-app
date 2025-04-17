@@ -315,19 +315,19 @@
         @media (max-width: 991.98px) { /* Bootstrap lg breakpoint */
             .sidebar {
                 position: fixed; /* Keep fixed for sliding */
-                left: -var(--sidebar-width); /* Start off-screen */
+                left: calc(-1 * var(--sidebar-width)) !important; /* Start off-screen - Use calc() and !important */
                 z-index: 1040; /* Below toggle button */
                 transition: left 0.3s ease-in-out;
                 height: 100vh; /* Ensure full height */
             }
 
             .sidebar.show {
-                left: 0; /* Slide in */
+                left: 0 !important; /* Slide in - Add !important */
                 box-shadow: 4px 0 15px rgba(0,0,0,0.2); /* Stronger shadow when overlaying */
             }
 
             .content {
-                margin-left: 0; /* Full width content */
+                margin-left: 0 !important; /* Full width content - Add !important */
                 padding-top: 60px; /* Add padding to account for potential fixed top toggle */
             }
 
