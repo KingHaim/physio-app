@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    {# Welcome Message #}
+    {% if current_user.is_authenticated and current_user.role == 'patient' and current_user.patient %}
+    <h1 class="h3 mb-4">Welcome, {{ current_user.patient.name }}!</h1>
+    {% else %}
+    <h1 class="h3 mb-4">Patient Dashboard</h1>
+    {% endif %}
+
+    {# Action Buttons #}
+    <div class="mb-4">
+        <button class="btn btn-success" onclick="openCalendly()">
+            <i class="bi bi-calendar-plus"></i> Book New Appointment
+        </button>
+        {# Add other action buttons here later if needed #}
+    </div>
+
+    <div class="row">
+        {# Left Column: Upcoming Appointments & Homework #}
+        <div class="col-lg-6 mb-4">
+            {# Upcoming Appointments Section #}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Upcoming Appointments</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_appointments %}
+                        <ul class="list-group list-group-flush">
+                            {% for appointment in upcoming_appointments %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ appointment.created_at.strftime('%A, %b %d, %Y') }}</strong> at {{ appointment.created_at.strftime('%I:%M %p') }}
+                                        <br>
+                                        <small class="text-muted">{{ appointment.treatment_type }}</small>
+                                    </div>
+                                    <span class="badge bg-info rounded-pill">Scheduled</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="alert alert-secondary" role="alert">
+                            <i class="bi bi-calendar-x"></i> No upcoming appointments scheduled.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Latest Exercise Homework Section #}
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-heart"></i> Latest Exercise Homework</h5>
+                </div>
+                <div class="card-body">
+                    {% if latest_homework %}
+                        <h6 class="card-subtitle mb-2 text-muted">Assigned on: {{ latest_homework.generated_date.strftime('%Y-%m-%d') }}</h6>
+                        <div class="report-content p-3 bg-light rounded border">
+                            {{ latest_homework.content | markdown }}
+                        </div>
+                        {# Optional: Link to view full report if applicable #}
+                        <div class="mt-3">
+                             <a href="{{ url_for('main.view_homework', report_id=latest_homework.id) }}" class="btn btn-sm btn-outline-primary">
+                                 <i class="bi bi-eye"></i> View Full Homework Report
+                             </a>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info" role="alert">
+                            <i class="bi bi-info-circle-fill"></i> No exercise homework assigned yet.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Past Homework Section #}
+            <div class="card mt-4 shadow-sm">
+                <div class="card-header">
+                     <h5 class="mb-0"><i class="bi bi-clock-history"></i> Past Homework Reports</h5>
+                </div>
+                <div class="card-body">
+                    {% if past_homework_reports %}
+                        <ul class="list-group list-group-flush">
+                            {% for report in past_homework_reports %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>
+                                        Homework from: {{ report.generated_date.strftime('%Y-%m-%d %H:%M') }}
+                                    </span>
+                                    <a href="{{ url_for('main.view_homework', report_id=report.id) }}" class="btn btn-sm btn-outline-primary">
+                                         <i class="bi bi-eye"></i> View Report
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="alert alert-secondary" role="alert">
+                            <i class="bi bi-info-circle"></i> No past homework reports found.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div> {# End Left Column #}
+
+        {# Right Column: Placeholder for future content #}
+        <div class="col-lg-6 mb-4">
+            {# Example: Past Treatment Summary Card #}
+            {# <div class="card shadow-sm"> ... </div> #}
+        </div>
+    </div>
+
+    {# Add other patient-specific sections here later as needed #}
+
+</div>
+
+{# Add specific styles if needed, e.g., for report content rendering #}
+<style>
+    .report-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 5px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    .report-content h1, .report-content h2, .report-content h3 {
+        margin-top: 1.5rem;
+        margin-bottom: 0.8rem;
+        color: #2c3e50;
+    }
+     .report-content ul, .report-content ol {
+        padding-left: 2rem;
+        margin-bottom: 1rem;
+    }
+</style>
+
+{% endblock %} 

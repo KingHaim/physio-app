@@ -45,16 +45,16 @@
                         <div class="tab-content" id="treatmentTabContent">
                             {# Clinical Details Tab Pane #}
                             <div class="tab-pane fade show active" id="clinical" role="tabpanel" aria-labelledby="clinical-tab">
-                                <div class="row">
+                        <div class="row">
                                     <!-- Left Column: Clinical Fields -->
-                                    <div class="col-md-6">
+                            <div class="col-md-6">
                                         <h5 class="mb-3">Clinical Information</h5>
                                         <div class="mb-3"> <label for="date" class="form-label">Treatment Date</label> <input type="date" class="form-control" id="date" name="date" value="{{ treatment.created_at.strftime('%Y-%m-%d') }}" required> </div>
                                         <div class="mb-3"> <label for="treatment_type" class="form-label">Treatment Description</label> <input type="text" class="form-control" id="treatment_type" name="treatment_type" value="{{ treatment.description }}" required> </div>
                                         <div class="mb-3"> <label for="status" class="form-label">Status</label> <select class="form-select" id="status" name="status"> <option value="Scheduled" {% if treatment.status == 'Scheduled' %}selected{% endif %}>Scheduled</option> <option value="In Progress" {% if treatment.status == 'In Progress' %}selected{% endif %}>In Progress</option> <option value="Completed" {% if treatment.status == 'Completed' %}selected{% endif %}>Completed</option> <option value="Cancelled" {% if treatment.status == 'Cancelled' %}selected{% endif %}>Cancelled</option> </select> </div>
                                         <div class="mb-3"> <label for="pain_level" class="form-label">Pain Level (1-10)</label> <input type="number" class="form-control" id="pain_level" name="pain_level" min="1" max="10" value="{{ treatment.pain_level or '' }}"> </div>
                                         <div class="mb-3"> <label for="movement_restriction" class="form-label">Movement Restriction</label> <input type="text" class="form-control" id="movement_restriction" name="movement_restriction" value="{{ treatment.movement_restriction or '' }}"> </div>
-                                        <div class="mb-3">
+                                <div class="mb-3">
                                             <label for="notes" class="form-label mb-0">Progress Notes</label>
                                             <div class="btn-group" role="group" aria-label="Voice note actions">
                                                 <button type="button" id="recordNoteBtn" class="btn btn-sm btn-outline-secondary">
@@ -68,7 +68,7 @@
                                                         <li><a class="dropdown-item lang-option" href="#" data-lang="en-GB">EN (UK)</a></li>
                                                         <li><a class="dropdown-item lang-option" href="#" data-lang="es-ES">ES (Spain)</a></li>
                                                     </ul>
-                                                </div>
+                                </div>
                                                 <span id="recordingStatus" class="text-muted small ms-2 align-self-center" style="display: none;"></span>
                                             </div>
                                         </div>
@@ -86,9 +86,9 @@
                                              <div class="card-body"> <div class="table-responsive"> <table class="table table-sm"> <thead><tr><th>Type</th><th>Muscle</th><th>Intensity</th><th>Symptoms</th><th>Referral</th><th></th></tr></thead> <tbody id="pointsTableBody"></tbody> </table> </div> </div>
                                         </div>
                                     </div>
+                                    </div>
                                 </div>
-                            </div>
-
+                                
                             {# Financial & Scheduling Tab Pane #}
                             <div class="tab-pane fade" id="financial" role="tabpanel" aria-labelledby="financial-tab">
                                 <h5 class="mb-3">Financial & Scheduling Information</h5>
@@ -109,9 +109,9 @@
                                     </div>
                                 </div>
                             </div>
-                        </div> 
+                        </div>
                         {# End Tab Content #}
-
+                        
                         {# Submit Button (outside tabs, inside form) #}
                         <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                             <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-secondary">
@@ -242,7 +242,7 @@
             }
         });
         console.log('Finished loading initial points. Current JS array:', triggerPoints);
-
+        
         // Point type selection
         const pointTypeButtons = document.querySelectorAll('[data-point-type]');
         pointTypeButtons.forEach(btn => {
@@ -364,7 +364,7 @@
                 circle.setAttribute("class", "trigger-point");
                 circle.addEventListener('mouseover', () => circle.setAttribute("r", "5"));
                 circle.addEventListener('mouseout', () => circle.setAttribute("r", "3"));
-                pointsGroup.appendChild(circle);
+                    pointsGroup.appendChild(circle);
             } else {
                  console.log(`Updating SVG circle for ${pointId}`);
             }

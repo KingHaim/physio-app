@@ -363,54 +363,69 @@
                 </div>
                 
                 <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{{ url_for('main.index') }}">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if '/patients' in request.path %}active{% endif %}" href="{{ url_for('main.patients_list') }}">
-                            <i class="bi bi-people"></i> Patients
-                        </a>
-                    </li>
+                    <!-- Physio/Admin Dashboard Link -->
+                    {% if current_user.is_authenticated and current_user.role != 'patient' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{{ url_for('main.index') }}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                    {% endif %}
                     
-                    <div class="nav-section">
-                        <div class="nav-section-title">Management</div>
+                    <!-- Physio/Admin Specific Links -->
+                    {% if current_user.is_authenticated and current_user.role != 'patient' %}
                         <li class="nav-item">
-                            <a class="nav-link {% if '/calendly/review' in request.path %}active{% endif %}" href="{{ url_for('main.review_calendly_bookings') }}">
-                                <i class="bi bi-calendar-check"></i> Calendly Bookings
+                            <a class="nav-link {% if '/patients' in request.path %}active{% endif %}" href="{{ url_for('main.patients_list') }}">
+                                <i class="bi bi-people"></i> Patients
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if '/patients' in request.path and request.args.get('status') == 'Pending Review' %}active{% endif %}" 
-                               href="{{ url_for('main.patients_list', status='Pending Review') }}">
-                                <i class="bi bi-clipboard-check"></i> Pending Review
-                                {% set pending_count = get_pending_review_count() %}
-                                {% if pending_count > 0 %}
-                                <span class="badge bg-danger rounded-pill">{{ pending_count }}</span>
-                                {% endif %}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'main.review_payments' %}active{% endif %}" href="{{ url_for('main.review_payments') }}">
-                                <i class="bi bi-credit-card-2-front"></i> Review Payments
-                            </a>
-                        </li>
-                    </div>
+                        
+                        <div class="nav-section">
+                            <div class="nav-section-title">Management</div>
+                            <li class="nav-item">
+                                <a class="nav-link {% if '/calendly/review' in request.path %}active{% endif %}" href="{{ url_for('main.review_calendly_bookings') }}">
+                                    <i class="bi bi-calendar-check"></i> Calendly Bookings
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if '/patients' in request.path and request.args.get('status') == 'Pending Review' %}active{% endif %}" 
+                                   href="{{ url_for('main.patients_list', status='Pending Review') }}">
+                                    <i class="bi bi-clipboard-check"></i> Pending Review
+                                    {% set pending_count = get_pending_review_count() %}
+                                    {% if pending_count > 0 %}
+                                    <span class="badge bg-danger rounded-pill">{{ pending_count }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'main.review_payments' %}active{% endif %}" href="{{ url_for('main.review_payments') }}">
+                                    <i class="bi bi-credit-card-2-front"></i> Review Payments
+                                </a>
+                            </li>
+                        </div>
+                        
+                        <div class="nav-section">
+                            <div class="nav-section-title">Reports</div>
+                            <li class="nav-item">
+                                <a class="nav-link {% if '/analytics' in request.path %}active{% endif %}" href="{{ url_for('main.analytics') }}">
+                                    <i class="bi bi-graph-up"></i> Analytics
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-link {% if request.endpoint == 'main.financials' %}active{% endif %}" href="{{ url_for('main.financials') }}">
+                                    <i class="bi bi-currency-pound me-2"></i>Financials
+                                </a>
+                            </li>
+                        </div>
+                    {% endif %}
                     
-                    <div class="nav-section">
-                        <div class="nav-section-title">Reports</div>
+                    <!-- Patient-Specific Links (Only show if user is patient) -->
+                    {% if current_user.is_authenticated and current_user.role == 'patient' %}
                         <li class="nav-item">
-                            <a class="nav-link {% if '/analytics' in request.path %}active{% endif %}" href="{{ url_for('main.analytics') }}">
-                                <i class="bi bi-graph-up"></i> Analytics
-                            </a>
+                            <a class="nav-link {% if request.endpoint == 'main.patient_dashboard' %}active{% endif %}" href="{{ url_for('main.patient_dashboard') }}"><i class="bi bi-person-circle me-2"></i> My Dashboard</a>
                         </li>
-                        <li>
-                            <a class="nav-link {% if request.endpoint == 'main.financials' %}active{% endif %}" href="{{ url_for('main.financials') }}">
-                                <i class="bi bi-currency-pound me-2"></i>Financials
-                            </a>
-                        </li>
-                    </div>
+                        {# Add other patient-specific links here if needed #}
+                    {% endif %}
                 </ul>
 
                 <div class="sidebar-footer">

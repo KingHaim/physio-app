@@ -17,6 +17,7 @@ class Patient(db.Model):
     status = db.Column(db.String(20), default='Active')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     treatments = db.relationship('Treatment', backref='patient', lazy=True)
+    user = db.relationship('User', backref=db.backref('patient', uselist=False), lazy=True)
 
 class Treatment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -106,10 +107,15 @@ class RecurringAppointment(db.Model):
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)
-    email = db.Column(db.String(120), unique=True, index=True)
-    password_hash = db.Column(db.String(128))
+    email = db.Column(db.String(120), unique=True, index=True, nullable=False)
+    password_hash = db.Column(db.String(256))
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # --- Re-applying fields for Patient Portal ---
+    role = db.Column(db.String(20), nullable=False, default='physio')
+    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=True)
+    # --- End re-applied fields ---
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

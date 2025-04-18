@@ -102,6 +102,29 @@
                             </div>
                         </div>
 
+                        <hr class="my-4">
+
+                        <!-- Patient Portal Access Section -->
+                        <h5 class="mb-3">Patient Portal Access</h5>
+                        <p class="text-muted small">Manage the patient's login credentials to access their exercise prescriptions.</p>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="patient_email" class="form-label">Login Email</label>
+                                <input type="email" class="form-control" id="patient_email" name="patient_email" 
+                                       value="{{ patient.user.email if patient.user else '' }}" 
+                                       placeholder="patient.login@example.com">
+                                {% if not patient.user %}
+                                <small class="form-text text-info">Enter an email and password below to create a login.</small>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="patient_password" class="form-label">New Password</label>
+                                <input type="password" class="form-control" id="patient_password" name="patient_password" 
+                                       placeholder="Leave blank to keep current password">
+                                <small class="form-text text-muted">Only enter a new password if you want to change it.</small>
+                            </div>
+                        </div>
+
                         <!-- Form Actions -->
                         <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                             <button type="button" 
@@ -158,10 +181,20 @@
                     field.classList.remove('is-invalid');
                 }
             });
+
+            // Also validate that if email is provided, it's a valid format (basic)
+            const emailInput = document.getElementById('patient_email');
+            if (emailInput && emailInput.value.trim() && !emailInput.checkValidity()) {
+                 isValid = false;
+                 emailInput.classList.add('is-invalid');
+                 // Optionally add a specific message near the email field
+            } else if (emailInput) {
+                 emailInput.classList.remove('is-invalid');
+            }
             
             if (!isValid) {
                 e.preventDefault();
-                alert('Please fill in all required fields.');
+                alert('Please fill in all required fields correctly.');
             }
         });
     });

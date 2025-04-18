@@ -43,6 +43,23 @@
                             <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
                         </div>
 
+                        <hr class="my-4">
+
+                        {# Patient Portal Access Section #}
+                        <h5 class="mb-3">Patient Portal Access (Optional)</h5>
+                        <p class="text-muted small">Enter an email and password if you want the patient to be able to log in and view their exercise prescriptions.</p>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="patient_email" class="form-label">Login Email</label>
+                                <input type="email" class="form-control" id="patient_email" name="patient_email" placeholder="patient.login@example.com">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="patient_password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="patient_password" name="patient_password" placeholder="Set initial password">
+                                <small class="form-text text-muted">Leave blank if login email is not provided.</small>
+                            </div>
+                        </div>
+
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">Create Patient</button>
                             <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Cancel</a>
