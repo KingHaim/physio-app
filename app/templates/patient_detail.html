@@ -219,7 +219,7 @@
                     <!-- Simple, direct treatment listing without modals -->
                     {% if treatments|length > 0 %}
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover" id="treatmentsTable">
                                 <thead>
                                     <tr>
                                         <th><input class="form-check-input" type="checkbox" id="selectAllCheckbox"></th>
@@ -251,7 +251,7 @@
                                                 <div class="input-group input-group-sm">
                                                     <input type="number" class="form-control form-control-sm fee-input" id="fee-input-{{ treatment.id }}" value="{{ treatment.fee_charged if treatment.fee_charged is not none else '' }}" placeholder="Fee" step="0.01" style="width: 70px;">
                                                     <button class="btn btn-outline-secondary btn-sm set-fee-btn" data-treatment-id="{{ treatment.id }}" type="button" title="Set Fee">
-                                                        <i class="fas fa-check"></i>
+                                                        <i class="bi bi-check-lg"></i>
                                                     </button>
                                                 </div>
                                                 <small id="fee-status-{{ treatment.id }}" class="text-muted d-block mt-1"></small>
@@ -1271,5 +1271,131 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
                 alert('Failed to load treatment details.');
             });
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const treatmentsTableBody = document.querySelector('#treatmentsTable tbody'); // Target the table body
+
+        if (!treatmentsTableBody) {
+            console.error("Treatments table body not found!");
+            return;
+        }
+
+        // Use event delegation for handling clicks within the table body
+        treatmentsTableBody.addEventListener('click', async function(event) {
+            const setFeeBtn = event.target.closest('.set-fee-btn');
+            const setPaymentBtn = event.target.closest('.set-payment-btn');
+
+            if (setFeeBtn) {
+                await handleSetFee(setFeeBtn);
+            } else if (setPaymentBtn) {
+                await handleSetPayment(setPaymentBtn);
+            }
+        });
+
+        async function handleSetFee(button) {
+            const treatmentId = button.dataset.treatmentId;
+            const row = document.getElementById(`treatment-row-${treatmentId}`);
+            const feeInput = row.querySelector(`#fee-input-${treatmentId}`);
+            const feeStatus = row.querySelector(`#fee-status-${treatmentId}`);
+            const feeValue = parseFloat(feeInput.value);
+
+            if (isNaN(feeValue) || feeValue < 0) {
+                feeStatus.textContent = 'Invalid fee';
+                feeStatus.className = 'text-danger small d-block mt-1';
+                feeInput.focus();
+                return;
+            }
+
+            // UI feedback: loading
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+            feeStatus.textContent = 'Saving...';
+            feeStatus.className = 'text-muted small d-block mt-1';
+
+            try {
+                const response = await fetch(`/api/treatment/${treatmentId}/set-fee`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Add CSRF token header here if your app uses CSRF protection
+                    },
+                    body: JSON.stringify({ fee: feeValue })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    feeStatus.textContent = 'Saved!';
+                    feeStatus.className = 'text-success small d-block mt-1';
+                    // Optionally disable input or change display after save
+                    // feeInput.readOnly = true; 
+                } else {
+                    throw new Error(data.message || `HTTP error ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error setting fee:', error);
+                feeStatus.textContent = `Error: ${error.message}`;
+                feeStatus.className = 'text-danger small d-block mt-1';
+            } finally {
+                // Restore button
+                button.disabled = false;
+                button.innerHTML = '<i class="bi bi-check-lg"></i>';
+                // Clear status message after a few seconds
+                setTimeout(() => { feeStatus.textContent = ''; }, 3000);
+            }
+        }
+
+        async function handleSetPayment(button) {
+            const treatmentId = button.dataset.treatmentId;
+            const paymentMethod = button.dataset.method;
+            const row = document.getElementById(`treatment-row-${treatmentId}`);
+            const paymentStatusSpan = row.querySelector(`#payment-status-${treatmentId}`);
+            const paymentButtonsDiv = row.querySelector(`#payment-buttons-${treatmentId}`);
+            const paymentUpdateStatus = row.querySelector(`#payment-update-status-${treatmentId}`);
+
+            // UI feedback: loading
+            if (paymentButtonsDiv) {
+                 paymentButtonsDiv.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+            }
+            paymentUpdateStatus.textContent = 'Updating...';
+            paymentUpdateStatus.className = 'text-muted small d-block mt-1';
+
+            try {
+                const response = await fetch(`/api/treatment/${treatmentId}/set-payment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                         // Add CSRF token header here if your app uses CSRF protection
+                    },
+                    body: JSON.stringify({ payment_method: paymentMethod })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    paymentStatusSpan.textContent = `Paid - ${data.payment_method}`;
+                    paymentUpdateStatus.textContent = 'Saved!';
+                    paymentUpdateStatus.className = 'text-success small d-block mt-1';
+                    if (paymentButtonsDiv) {
+                        paymentButtonsDiv.remove(); // Remove buttons after successful update
+                    }
+                } else {
+                     throw new Error(data.message || `HTTP error ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error setting payment:', error);
+                paymentUpdateStatus.textContent = `Error: ${error.message}`;
+                paymentUpdateStatus.className = 'text-danger small d-block mt-1';
+                 // Restore buttons on error
+                 if (paymentButtonsDiv) {
+                     paymentButtonsDiv.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
+                 }
+            } finally {
+                 // Clear status message after a few seconds
+                 setTimeout(() => { paymentUpdateStatus.textContent = ''; }, 3000);
+            }
+        }
+
+    });
 </script>
 {% endblock %} 
