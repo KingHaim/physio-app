@@ -152,6 +152,40 @@
             </div>
         </div>
     </div>
+
+    <!-- AI Generated Report -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0"><i class="bi bi-robot"></i> AI Practice Insights</h5>
+                    {# Form to trigger new report generation #}
+                    <form action="{{ url_for('main.generate_new_analytics_report') }}" method="POST" class="ms-3">
+                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-arrow-clockwise"></i> Generate New Report
+                        </button>
+                    </form>
+                </div>
+                <div class="card-body">
+                    {# Render the HTML report content using the 'safe' filter #}
+                    {% if ai_report_html %}
+                        <div class="ai-report-content"> {# Optional: Add a wrapper div for specific styling #}
+                           {{ ai_report_html | safe }}
+                        </div>
+                    {% endif %}
+                </div>
+                 <div class="card-footer text-muted small">
+                    {% if ai_report_generated_at %}
+                        Report generated on: {{ ai_report_generated_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC
+                    {% else %}
+                         {# Keep this fallback or adjust if needed #}
+                        Using DeepSeek AI based on current practice data. 
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <!-- CostaSpine Fee Details Modal -->
@@ -201,21 +235,31 @@
 <script>
     // Helper function for consistent chart colors
     const chartColors = [
-        'rgba(52, 152, 219, 0.7)', // Blue
-        'rgba(46, 204, 113, 0.7)', // Green
-        'rgba(155, 89, 182, 0.7)', // Purple
-        'rgba(241, 196, 15, 0.7)', // Yellow
-        'rgba(230, 126, 34, 0.7)', // Orange
-        'rgba(231, 76, 60, 0.7)',  // Red
-        'rgba(52, 73, 94, 0.7)',   // Dark Blue/Gray
-        'rgba(26, 188, 156, 0.7)', // Teal
-        'rgba(149, 165, 166, 0.7)', // Gray
-        'rgba(41, 128, 185, 0.7)'  // Darker Blue
+        'rgba(52, 152, 219, 0.7)', 'rgba(46, 204, 113, 0.7)', 'rgba(155, 89, 182, 0.7)', 
+        'rgba(241, 196, 15, 0.7)', 'rgba(230, 126, 34, 0.7)', 'rgba(231, 76, 60, 0.7)',  
+        'rgba(52, 73, 94, 0.7)',   'rgba(26, 188, 156, 0.7)', 'rgba(149, 165, 166, 0.7)', 
+        'rgba(41, 128, 185, 0.7)' 
     ];
     const chartBorderColors = chartColors.map(color => color.replace('0.7', '1'));
     const chartBackgroundColors = chartColors.map(color => color.replace('0.7', '0.2'));
 
-    document.addEventListener('DOMContentLoaded', function() {
+    // Helper function to fetch chart data
+    async function fetchChartData(url) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                console.error(`Error fetching ${url}: ${response.statusText}`);
+                return null;
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(`Network error fetching ${url}:`, error);
+            return null;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() { // Make listener async
+        
         const defaultChartOptions = {
             responsive: true,
             maintainAspectRatio: false,
@@ -227,11 +271,10 @@
             },
             plugins: {
                 legend: {
-                    display: false // Generally hide legend for bar/line unless needed
+                    display: false
                 }
             }
         };
-
         const defaultPieChartOptions = {
             responsive: true,
             maintainAspectRatio: false,
@@ -241,47 +284,6 @@
                 }
             }
         };
-        
-        // Treatments by Month Chart (Line)
-        const treatmentsCtx = document.getElementById('treatmentsChart')?.getContext('2d');
-        if (treatmentsCtx) {
-            new Chart(treatmentsCtx, {
-                type: 'line',
-                data: {
-                    labels: JSON.parse('{{ treatments_by_month | map(attribute="month") | list | tojson | safe }}'),
-                    datasets: [{
-                        label: 'Treatments',
-                        data: JSON.parse('{{ treatments_by_month | map(attribute="count") | list | tojson | safe }}'),
-                        backgroundColor: chartBackgroundColors[0],
-                        borderColor: chartBorderColors[0],
-                        borderWidth: 2,
-                        tension: 0.1
-                    }]
-                },
-                options: defaultChartOptions
-            });
-        }
-        
-        // Patients by Month Chart (Bar)
-        const patientsCtx = document.getElementById('patientsChart')?.getContext('2d');
-        if (patientsCtx) {
-            new Chart(patientsCtx, {
-                type: 'bar',
-                data: {
-                    labels: JSON.parse('{{ patients_by_month | map(attribute="month") | list | tojson | safe }}'),
-                    datasets: [{
-                        label: 'New Patients',
-                        data: JSON.parse('{{ patients_by_month | map(attribute="count") | list | tojson | safe }}'),
-                        backgroundColor: chartBackgroundColors[1],
-                        borderColor: chartBorderColors[1],
-                        borderWidth: 1
-                    }]
-                },
-                options: defaultChartOptions
-            });
-        }
-
-        // Define common options for Revenue charts
         const revenueChartOptions = {
             plugins: {
                 legend: { display: true }
@@ -296,16 +298,60 @@
             }
         };
 
+        // --- Fetch and Render Charts --- 
+
+        // Treatments by Month Chart (Line)
+        const treatmentsData = await fetchChartData('/api/analytics/treatments-by-month');
+        const treatmentsCtx = document.getElementById('treatmentsChart')?.getContext('2d');
+        if (treatmentsCtx && treatmentsData) {
+            new Chart(treatmentsCtx, {
+                type: 'line',
+                data: {
+                    labels: treatmentsData.map(item => item.month),
+                    datasets: [{
+                        label: 'Treatments',
+                        data: treatmentsData.map(item => item.count),
+                        backgroundColor: chartBackgroundColors[0],
+                        borderColor: chartBorderColors[0],
+                        borderWidth: 2,
+                        tension: 0.1
+                    }]
+                },
+                options: defaultChartOptions
+            });
+        }
+
+        // Patients by Month Chart (Bar)
+        const patientsData = await fetchChartData('/api/analytics/patients-by-month');
+        const patientsCtx = document.getElementById('patientsChart')?.getContext('2d');
+        if (patientsCtx && patientsData) {
+            new Chart(patientsCtx, {
+                type: 'bar',
+                data: {
+                    labels: patientsData.map(item => item.month),
+                    datasets: [{
+                        label: 'New Patients',
+                        data: patientsData.map(item => item.count),
+                        backgroundColor: chartBackgroundColors[1],
+                        borderColor: chartBorderColors[1],
+                        borderWidth: 1
+                    }]
+                },
+                options: defaultChartOptions
+            });
+        }
+
         // Revenue by Visit Type Chart (Bar)
+        const revenueVisitData = await fetchChartData('/api/analytics/revenue-by-visit-type');
         const revenueVisitTypeCtx = document.getElementById('revenueByVisitTypeChart')?.getContext('2d');
-        if (revenueVisitTypeCtx) {
+        if (revenueVisitTypeCtx && revenueVisitData) {
             new Chart(revenueVisitTypeCtx, {
                 type: 'bar',
                 data: {
-                    labels: JSON.parse('{{ revenue_by_visit_type | map(attribute="treatment_type") | map("replace", none, "Unspecified") | list | tojson | safe }}'),
+                    labels: revenueVisitData.map(item => item.treatment_type),
                     datasets: [{
                         label: 'Revenue (£)',
-                        data: JSON.parse('{{ revenue_by_visit_type | map(attribute="total_fee") | map("replace", none, 0) | list | tojson | safe }}'),
+                        data: revenueVisitData.map(item => item.total_fee),
                         backgroundColor: chartBackgroundColors[2],
                         borderColor: chartBorderColors[2],
                         borderWidth: 1
@@ -316,15 +362,16 @@
         }
 
         // Revenue by Location Chart (Bar)
+        const revenueLocData = await fetchChartData('/api/analytics/revenue-by-location');
         const revenueLocationCtx = document.getElementById('revenueByLocationChart')?.getContext('2d');
-        if (revenueLocationCtx) {
+        if (revenueLocationCtx && revenueLocData) {
             new Chart(revenueLocationCtx, {
                 type: 'bar',
                 data: {
-                    labels: JSON.parse('{{ revenue_by_location | map(attribute="location") | map("replace", none, "Unspecified") | list | tojson | safe }}'),
+                    labels: revenueLocData.map(item => item.location),
                     datasets: [{
                         label: 'Revenue (£)',
-                        data: JSON.parse('{{ revenue_by_location | map(attribute="total_fee") | map("replace", none, 0) | list | tojson | safe }}'),
+                        data: revenueLocData.map(item => item.total_fee),
                         backgroundColor: chartBackgroundColors[3],
                         borderColor: chartBorderColors[3],
                         borderWidth: 1
@@ -333,20 +380,18 @@
                 options: Object.assign({}, defaultChartOptions, revenueChartOptions)
             });
         }
-        
-        // Common Diagnoses Chart (Pie)
-        const diagnosesCtx = document.getElementById('diagnosesChart')?.getContext('2d');
-        if (diagnosesCtx) {
-            const diagnosesLabels = JSON.parse('{{ common_diagnoses | map(attribute="diagnosis") | map("replace", none, "Unspecified") | list | tojson | safe }}');
-            const diagnosesData = JSON.parse('{{ common_diagnoses | map(attribute="count") | list | tojson | safe }}');
-            const numDiagnoses = diagnosesData.length;
 
+        // Common Diagnoses Chart (Pie)
+        const diagnosesData = await fetchChartData('/api/analytics/common-diagnoses');
+        const diagnosesCtx = document.getElementById('diagnosesChart')?.getContext('2d');
+        if (diagnosesCtx && diagnosesData) {
+            const numDiagnoses = diagnosesData.length;
             new Chart(diagnosesCtx, {
                 type: 'pie',
                 data: {
-                    labels: diagnosesLabels,
+                    labels: diagnosesData.map(item => item.diagnosis),
                     datasets: [{
-                        data: diagnosesData,
+                        data: diagnosesData.map(item => item.count),
                         backgroundColor: chartColors.slice(0, numDiagnoses),
                         borderWidth: 1
                     }]
@@ -354,17 +399,18 @@
                 options: defaultPieChartOptions
             });
         }
-        
+
         // Patient Status Chart (Doughnut)
+        const statusData = await fetchChartData('/api/analytics/patient-status');
         const statusCtx = document.getElementById('statusChart')?.getContext('2d');
-        if (statusCtx) {
+        if (statusCtx && statusData) {
             new Chart(statusCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Active', 'Inactive'], // Assuming these statuses exist
+                    labels: ['Active', 'Inactive'],
                     datasets: [{
-                        data: JSON.parse('{{ [active_patients, inactive_patients] | tojson | safe }}'), // Use JSON parse for consistency
-                        backgroundColor: [chartColors[0], chartColors[8]], // Blue and Gray
+                        data: [statusData.active, statusData.inactive],
+                        backgroundColor: [chartColors[0], chartColors[8]],
                         borderWidth: 1
                     }]
                 },
@@ -373,19 +419,17 @@
         }
 
         // Payment Method Chart (Pie)
+        const paymentData = await fetchChartData('/api/analytics/payment-methods');
         const paymentMethodCtx = document.getElementById('paymentMethodChart')?.getContext('2d');
-        if (paymentMethodCtx) {
-            const paymentLabels = JSON.parse('{{ payment_method_distribution | map(attribute="payment_method") | map("replace", none, "Unspecified") | list | tojson | safe }}');
-            const paymentData = JSON.parse('{{ payment_method_distribution | map(attribute="count") | list | tojson | safe }}');
+        if (paymentMethodCtx && paymentData) {
             const numPaymentMethods = paymentData.length;
-
             new Chart(paymentMethodCtx, {
                 type: 'pie',
                 data: {
-                    labels: paymentLabels,
+                    labels: paymentData.map(item => item.payment_method),
                     datasets: [{
-                        data: paymentData,
-                        backgroundColor: chartColors.slice(0, numPaymentMethods), // Use distinct colors
+                        data: paymentData.map(item => item.count),
+                        backgroundColor: chartColors.slice(0, numPaymentMethods),
                         borderWidth: 1
                     }]
                 },
@@ -393,7 +437,7 @@
             });
         }
 
-        // --- Add CostaSpine Fee Modal Logic --- 
+        // --- CostaSpine Fee Modal Logic --- 
         const costaspineFeeCard = document.getElementById('costaspineFeeCard');
         const costaspineFeeModalElement = document.getElementById('costaspineFeeModal');
         const feeTotalSpan = document.getElementById('feeTotal');
@@ -448,7 +492,6 @@
                     let yearRevenue = 0;
                     let monthRevenue = 0;
                     let weekRevenue = 0;
-                    let weekTreatmentsDetails = []; // Array to store details for tooltip
                     let weeklyPatientNames = new Set(); // Use a Set to avoid duplicate names
 
                     feeData.forEach(item => {
@@ -480,19 +523,12 @@
                     feeWeekSpan.textContent = formatCurrency(weekRevenue);
 
                     // --- Tooltip Logic --- 
-                    // Filter treatments for the current week again to get details
-                    weeklyPatientNames.clear(); // Clear the set before recalculating
+                    weeklyPatientNames.clear(); 
                     feeData.forEach(item => {
                         const itemDate = new Date(item.date);
-                        const itemFee = item.fee || 0;
-                        const patientName = item.patient_name || 'Unknown'; // Get patient name
+                        const patientName = item.patient_name || 'Unknown';
                         
-                        // Use the same startOfWeek and endOfWeek calculated earlier
-                        // Ensure treatment date is within the current Monday-Sunday week
                         if (itemDate >= startOfWeek && itemDate <= endOfWeek) { 
-                             // Format date as YYYY-MM-DD
-                             const formattedDate = itemDate.toISOString().split('T')[0];
-                             // Add only the first name to the Set
                              const firstName = patientName.split(' ')[0];
                              weeklyPatientNames.add(firstName);
                         }
@@ -500,18 +536,15 @@
 
                     if (feeWeekCell) { 
                         if (weeklyPatientNames.size > 0) {
-                            // Convert Set to array, sort, and join for the tooltip
                             const tooltipContent = Array.from(weeklyPatientNames).sort().join(', ');
-                            // Initialize Bootstrap tooltip
                             weekTooltipInstance = new bootstrap.Tooltip(feeWeekCell, {
                                 title: tooltipContent,
                                 html: true,
-                                placement: 'right', // Or 'top', 'bottom', 'left'
-                                trigger: 'hover' // Show on hover
+                                placement: 'right', 
+                                trigger: 'hover' 
                             });
-                            feeWeekCell._tooltip = weekTooltipInstance; // Store instance on the element
+                            feeWeekCell._tooltip = weekTooltipInstance; 
                         } else {
-                             // Optionally add a tooltip saying 'No treatments this week'
                              weekTooltipInstance = new bootstrap.Tooltip(feeWeekCell, {
                                 title: 'No treatments this week',
                                 html: false,

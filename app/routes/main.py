@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from datetime import datetime, timedelta, date, time
 from calendar import monthrange
 from sqlalchemy import func, extract, or_, case, cast, Float
-from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport, RecurringAppointment, User  # Added User
+from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport, RecurringAppointment, User, PracticeReport  # Added PracticeReport
 import json
 from app.utils import mark_past_treatments_as_completed, mark_inactive_patients
 from flask_login import login_required, current_user, logout_user # Import current_user and logout_user
@@ -11,10 +11,11 @@ from io import BytesIO
 from xhtml2pdf import pisa
 import markdown
 import os
-from collections import defaultdict
+from collections import defaultdict, Counter # Add Counter import
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash
 import functools # Import functools for wraps
+import requests
 
 main = Blueprint('main', __name__)
 
@@ -1205,125 +1206,235 @@ def fix_calendly_dates():
     </html>
     """
 
+# --- Helper function for DeepSeek ---
+DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY')
+DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions" # Or your specific endpoint
+
+def generate_deepseek_report(analytics_data):
+    if not DEEPSEEK_API_KEY:
+        return "DeepSeek API key not configured. Please set the DEEPSEEK_API_KEY environment variable."
+
+    # --- Prepare the prompt data (more structured) ---
+    try:
+        total_patients = analytics_data.get('total_patients', 'N/A')
+        active_patients = analytics_data.get('active_patients', 'N/A')
+        total_treatments = analytics_data.get('total_treatments', 'N/A')
+        avg_treatments = analytics_data.get('avg_treatments', 'N/A')
+        avg_revenue = analytics_data.get('avg_monthly_revenue', 0)
+
+        # Common Diagnoses (list of dicts)
+        common_diagnoses = analytics_data.get('common_diagnoses', [])
+        common_diagnoses_str = ", ".join([f"{d.get('diagnosis','?')} ({d.get('count',0)})" for d in common_diagnoses]) or "N/A"
+
+        # Revenue by Visit Type (list of dicts)
+        revenue_by_type = analytics_data.get('revenue_by_visit_type', [])
+        revenue_by_type_str = ", ".join([f"{r.get('type','?')}: £{r.get('revenue', 0):,.2f}" for r in revenue_by_type]) or "N/A"
+
+        # Age Distribution (dict)
+        age_dist = analytics_data.get('age_distribution', {})
+        age_dist_str = ", ".join([f"{bracket}: {count}" for bracket, count in age_dist.items()]) or "N/A"
+        
+        # Treatment Trends (list of dicts)
+        treatment_trends = analytics_data.get('treatments_by_month', [])
+        treatment_trends_str = "See monthly data below." if treatment_trends else "N/A"
+        treatment_months_detail = "\n".join([f"  - {t.get('month','?')}: {t.get('count',0)} treatments" for t in treatment_trends]) if treatment_trends else ""
+
+        # Patient Trends (list of dicts)
+        patient_trends = analytics_data.get('patients_by_month', [])
+        patient_trends_str = "See monthly data below." if patient_trends else "N/A"
+        patient_months_detail = "\n".join([f"  - {p.get('month','?')}: {p.get('count',0)} new patients" for p in patient_trends]) if patient_trends else ""
+        
+    except Exception as e:
+        print(f"Error formatting data for DeepSeek prompt: {e}")
+        return "Error: Could not format analytics data for AI report generation."
+
+    # --- Updated, Detailed Prompt ---
+    prompt = f"""
+    Generate a comprehensive practice analytics report for a physiotherapist using the following data. 
+    Focus on providing actionable insights and identifying interesting patterns.
+
+    **Practice Overview:**
+    - Total Patients: {total_patients}
+    - Active Patients: {active_patients}
+    - Total Treatments Logged: {total_treatments}
+    - Average Treatments per Patient: {avg_treatments}
+    - Average Monthly Revenue: £{avg_revenue:,.2f}
+
+    **Patient Demographics:**
+    - Age Distribution: {age_dist_str}
+
+    **Clinical Insights:**
+    - Most Common Diagnoses (Top 10): {common_diagnoses_str}
+    - Revenue by Visit Type: {revenue_by_type_str}
+
+    **Trends:**
+    - Treatment Volume Trend: {treatment_trends_str}
+    {treatment_months_detail}
+    
+    - New Patient Acquisition Trend: {patient_trends_str}
+    {patient_months_detail}
+
+    **Analysis Request:**
+    Based *only* on the data provided above, please generate a report covering:
+    1.  **Executive Summary:** A brief overview of the practice's current state.
+    2.  **Key Findings:** Highlight the most significant data points (e.g., top 2-3 diagnoses, dominant age group, busiest months).
+    3.  **Treatment Analysis:** Discuss the frequency and trends related to different treatment types (if discernible from revenue/diagnoses data).
+    4.  **Potential Patterns & Correlations:** Explicitly look for and mention any surprising or interesting patterns, correlations, or outliers. Examples:
+        *   Is there a peak season for certain injuries/diagnoses?
+        *   Are specific diagnoses strongly correlated with particular age groups?
+        *   Are there any unusual revenue patterns by treatment type or month?
+        *   Are new patient numbers correlated with treatment volume?
+    5.  **Actionable Insights/Curious Takeaways:** Offer 1-2 concrete, data-driven insights or thought-provoking observations the physiotherapist could consider for practice improvement or further investigation.
+
+    Keep the tone professional, analytical, and insightful. Structure the report clearly with headings for each section (Executive Summary, Key Findings, Treatment Analysis, Patterns & Correlations, Actionable Insights).
+    """
+
+    headers = {
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "model": "deepseek-chat", # Or the specific model you want to use
+        "messages": [
+            {"role": "system", "content": "You are an expert AI assistant analyzing physiotherapy practice data to provide insightful reports."}, # Updated system message
+            {"role": "user", "content": prompt}
+        ],
+        "max_tokens": 800, # Increased max_tokens for a more detailed report
+        "temperature": 0.6, # Slightly increased temperature for potentially more nuanced insights
+    }
+
+    try:
+        # ... (keep the existing API call and error handling logic) ...
+        response = requests.post(DEEPSEEK_API_URL, headers=headers, json=payload, timeout=45) # Increased timeout
+        response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+        
+        result = response.json()
+        
+        # Check if the expected response structure is present
+        if 'choices' in result and len(result['choices']) > 0 and 'message' in result['choices'][0] and 'content' in result['choices'][0]['message']:
+            report_content = result['choices'][0]['message']['content'].strip()
+            # Simple post-processing: Replace potential markdown list markers if needed
+            report_content = report_content.replace("- ", "\n- ") # Ensure lists start on new lines
+            return report_content
+        else:
+            # Log unexpected structure for debugging
+            print(f"Unexpected DeepSeek API response structure: {result}")
+            return "Error: Could not parse the report from the AI response."
+
+    except requests.exceptions.RequestException as e:
+        # Log the error for debugging
+        print(f"Error calling DeepSeek API: {e}")
+        # Provide a user-friendly error message
+        if isinstance(e, requests.exceptions.Timeout):
+            return "Error: The request to the AI service timed out."
+        elif isinstance(e, requests.exceptions.HTTPError):
+             return f"Error: Received an error from the AI service (Status Code: {response.status_code}). Please check your API key and endpoint."
+        else:
+            return "Error: Could not connect to the AI service to generate the report."
+    except json.JSONDecodeError:
+        # Log the raw response if it's not valid JSON
+        print(f"Failed to decode JSON response from DeepSeek API: {response.text}")
+        return "Error: Received an invalid response from the AI service."
+    except Exception as e: # Catch any other unexpected errors
+        print(f"An unexpected error occurred during AI report generation: {e}")
+        return "An unexpected error occurred while generating the AI report."
+
+# Helper function to calculate age
+def calculate_age(born):
+    if not born:
+        return None
+    today = date.today()
+    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+
 @main.route('/analytics')
 @login_required
-@physio_required # <<< ADD DECORATOR
+@physio_required
 def analytics():
-    # --- Existing calculations ---
+    # Fetch latest AI report from the database
+    latest_report = PracticeReport.query.order_by(PracticeReport.generated_at.desc()).first()
+    ai_report_html = "" # Initialize as empty string
+    ai_report_generated_at = None
+    if latest_report:
+        ai_report_generated_at = latest_report.generated_at
+        try:
+            ai_report_html = markdown.markdown(latest_report.content, extensions=['fenced_code', 'tables'])
+        except Exception as e:
+            print(f"Error converting practice report markdown: {e}")
+            ai_report_html = "<p class=\"text-danger\">Error rendering report content.</p>"
+    else:
+        ai_report_html = "<p class=\"text-info\">No practice report generated yet. Click 'Generate New Report' to create one.</p>"
+
+    # --- Data JUST for Summary Cards ---
     total_patients = Patient.query.count()
-    active_patients = Patient.query.filter_by(status='Active').count()
-    inactive_patients = total_patients - active_patients # Corrected inactive calc
+    active_patients = Patient.query.filter(Patient.status == 'Active').count()
+    inactive_patients = total_patients - active_patients
     total_treatments = Treatment.query.count()
-    
-    # Average treatments per patient
     avg_treatments = round(total_treatments / total_patients, 1) if total_patients else 0
-
-    # Revenue calculations (Existing)
-    revenue_data = db.session.query(
-        func.sum(Treatment.fee_charged).label('total_revenue'),
-        func.count(func.distinct(extract('year', Treatment.created_at) * 100 + extract('month', Treatment.created_at))).label('num_months') # More robust month count
-    ).filter(Treatment.fee_charged.isnot(None)).first()
-
-    total_revenue = revenue_data.total_revenue or 0
-    avg_monthly_revenue = (total_revenue / revenue_data.num_months) if revenue_data and revenue_data.num_months else 0
-
-    # CostaSpine specific revenue/fee (Existing)
-    costaspine_revenue_data = db.session.query(
-        func.sum(Treatment.fee_charged).label('costaspine_revenue')
-    ).filter(Treatment.location == 'CostaSpine Clinic', Treatment.fee_charged.isnot(None)).scalar() or 0
     
+    # Monthly Revenue Calc...
+    monthly_revenue = db.session.query(
+        func.strftime('%Y-%m', Treatment.created_at).label('month'),
+        func.sum(Treatment.fee_charged).label('monthly_total')
+    ).filter(Treatment.fee_charged.isnot(None)).group_by('month').all()
+    total_revenue = sum(m.monthly_total for m in monthly_revenue if m.monthly_total)
+    num_months = len(monthly_revenue)
+    avg_monthly_revenue = total_revenue / num_months if num_months else 0
+    
+    # CostaSpine Calcs...
+    costaspine_revenue_query = db.session.query(
+        func.sum(Treatment.fee_charged).label('total_costaspine_revenue')
+    ).filter(
+        Treatment.location == 'CostaSpine Clinic',
+        Treatment.fee_charged.isnot(None)
+    ).scalar()
+    costaspine_revenue_data = costaspine_revenue_query or 0
     costaspine_service_fee = costaspine_revenue_data * 0.30
 
-    # --- NEW: Calculate Total Autónomo Contribution ---
+    # Autonomo Calcs...
     total_autonomo_contribution = 0
-    
-    # Query monthly revenue and CostaSpine revenue
-    monthly_data = db.session.query(
-        extract('year', Treatment.created_at).label('year'),
-        extract('month', Treatment.created_at).label('month'),
-        func.sum(Treatment.fee_charged).label('monthly_total_revenue'), # Alias to avoid clash
+    monthly_data_autonomo = db.session.query(
+        # ... autonomo query ...
+        func.strftime('%Y-%m', Treatment.created_at).label('month'),
+        func.strftime('%Y', Treatment.created_at).label('year'),
+        func.sum(Treatment.fee_charged).label('monthly_total_revenue'),
         func.sum(
             case((Treatment.location == 'CostaSpine Clinic', Treatment.fee_charged), else_=0)
-        ).label('monthly_costaspine_revenue') # Alias to avoid clash
+        ).label('monthly_costaspine_revenue')
     ).filter(
         Treatment.fee_charged.isnot(None),
         Treatment.created_at.isnot(None)
     ).group_by('year', 'month').order_by('year', 'month').all()
 
-    # Process each month to calculate contribution
-    for month_data in monthly_data:
-        # TODO: Select correct BRACKETS list based on month_data.year if needed
-        current_brackets = TAX_BRACKETS_2025 # Use the list defined earlier
-        
+    for month_data in monthly_data_autonomo:
+        # ... autonomo calculation loop ...
+        current_brackets = TAX_BRACKETS_2025 
         revenue = month_data.monthly_total_revenue or 0
         cs_revenue = month_data.monthly_costaspine_revenue or 0
-        
         costaspine_fee = cs_revenue * 0.30
-        # Use the defined constant correctly
         net_revenue_before_contrib = revenue - costaspine_fee - MONTHLY_FIXED_EXPENSES 
-        
-        # Use the helper function to find the bracket and base
-        bracket_info = find_bracket(net_revenue_before_contrib, current_brackets) # Pass brackets
-        
+        bracket_info = find_bracket(net_revenue_before_contrib, current_brackets)
         min_base = bracket_info.get('base', 0) if bracket_info else 0
-        # Use the defined constant correctly
         monthly_contribution = min_base * AUTONOMO_CONTRIBUTION_RATE if min_base > 0 else 0
-        
         total_autonomo_contribution += monthly_contribution
-        
-    # --- End NEW Calculation ---
-
-    # Chart Data (Existing - remains mostly the same)
-    treatments_by_month = db.session.query(
-        func.strftime('%Y-%m', Treatment.created_at).label('month'),
-            func.count(Treatment.id).label('count')
-        ).group_by('month').order_by('month').all()
-
-    patients_by_month = db.session.query(
-            func.strftime('%Y-%m', Patient.created_at).label('month'),
-            func.count(Patient.id).label('count')
-        ).group_by('month').order_by('month').all()
-        
-    revenue_by_visit_type = db.session.query(
-            Treatment.treatment_type,
-        func.sum(Treatment.fee_charged).label('total_fee')
-        ).filter(Treatment.fee_charged.isnot(None)).group_by(Treatment.treatment_type).order_by(func.sum(Treatment.fee_charged).desc()).all()
-
-    revenue_by_location = db.session.query(
-        Treatment.location,
-        func.sum(Treatment.fee_charged).label('total_fee')
-        ).filter(Treatment.fee_charged.isnot(None)).group_by(Treatment.location).order_by(func.sum(Treatment.fee_charged).desc()).limit(10).all()
-        
-    # Assuming diagnosis might be in treatment_type or notes for simplicity here
-    # A dedicated diagnosis field would be better
-    common_diagnoses = db.session.query(
-            Treatment.treatment_type.label('diagnosis'), # Example: using treatment_type
-            func.count(Treatment.id).label('count')
-        ).group_by('diagnosis').order_by(func.count(Treatment.id).desc()).limit(10).all()
-
-    payment_method_distribution = db.session.query(
-        Treatment.payment_method,
-        func.count(Treatment.id).label('count')
-        ).filter(Treatment.payment_method.isnot(None)).group_by(Treatment.payment_method).all()
+    # --- End Summary Card Data Fetching ---
     
-    # Single, corrected render_template call
+    # Render Template (Only pass data needed for cards and AI report)
     return render_template('analytics.html',
+                          # Pass summary card data
                           total_patients=total_patients,
                           active_patients=active_patients,
                           inactive_patients=inactive_patients,
                           total_treatments=total_treatments,
-                           avg_treatments=avg_treatments,
-                           avg_monthly_revenue=avg_monthly_revenue,
-                           costaspine_revenue=costaspine_revenue_data, # Pass scalar value
-                           costaspine_service_fee=costaspine_service_fee,
-                           total_autonomo_contribution=total_autonomo_contribution, # Pass new contribution total
-                          treatments_by_month=treatments_by_month,
-                          patients_by_month=patients_by_month,
-                          revenue_by_visit_type=revenue_by_visit_type,
-                          revenue_by_location=revenue_by_location,
-                           common_diagnoses=common_diagnoses,
-                           payment_method_distribution=payment_method_distribution
-                           )
+                          avg_treatments=avg_treatments,
+                          avg_monthly_revenue=avg_monthly_revenue,
+                          costaspine_revenue=costaspine_revenue_data,
+                          costaspine_service_fee=costaspine_service_fee,
+                          total_autonomo_contribution=total_autonomo_contribution,
+                          # Chart data is no longer passed here
+                          ai_report_html=ai_report_html, 
+                          ai_report_generated_at=ai_report_generated_at
+                          )
 
 @main.route('/api/analytics/costaspine-fee-data')
 @login_required
@@ -2116,3 +2227,228 @@ def view_homework(report_id):
     # 4. Render the dedicated homework template
     return render_template('view_homework.html', report=report)
 # --- End View Homework ---
+
+# --- NEW Route to Generate Report --- 
+@main.route('/analytics/generate', methods=['POST']) # Use POST for action
+@login_required
+@physio_required
+def generate_new_analytics_report():
+    print("Generating new analytics report...") # Log start
+    try:
+        # --- Gather Data (Replicate the data gathering needed for the AI function) ---
+        total_patients = Patient.query.count()
+        active_patients = Patient.query.filter(Patient.status == 'Active').count()
+        total_treatments = Treatment.query.count()
+        avg_treatments = round(total_treatments / total_patients, 1) if total_patients else 0
+        
+        monthly_revenue_query = db.session.query(
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.sum(Treatment.fee_charged).label('monthly_total')
+        ).filter(Treatment.fee_charged.isnot(None)).group_by('month').all()
+        total_revenue = sum(m.monthly_total for m in monthly_revenue_query if m.monthly_total)
+        num_months = len(monthly_revenue_query)
+        avg_monthly_revenue = total_revenue / num_months if num_months else 0
+        
+        common_diagnoses_query = db.session.query(
+            Patient.diagnosis, 
+            func.count(Patient.id).label('count')
+        ).filter(Patient.diagnosis.isnot(None), Patient.diagnosis != '').group_by(Patient.diagnosis).order_by(func.count(Patient.id).desc()).limit(10).all()
+        common_diagnoses = [{'diagnosis': d.diagnosis, 'count': d.count} for d in common_diagnoses_query]
+        
+        revenue_by_visit_type_query = db.session.query(
+            Treatment.treatment_type,
+            func.sum(Treatment.fee_charged).label('total_fee')
+        ).filter(Treatment.fee_charged.isnot(None)).group_by(Treatment.treatment_type).order_by(func.sum(Treatment.fee_charged).desc()).all()
+        revenue_by_visit_type = [{'type': r.treatment_type, 'revenue': r.total_fee} for r in revenue_by_visit_type_query]
+        
+        treatments_by_month_query = db.session.query(
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.count(Treatment.id).label('count')
+        ).group_by('month').order_by('month').all()
+        treatments_by_month = [{'month': t.month, 'count': t.count} for t in treatments_by_month_query]
+        
+        patients_by_month_query = db.session.query(
+            func.strftime('%Y-%m', Patient.created_at).label('month'),
+            func.count(Patient.id).label('count')
+        ).group_by('month').order_by('month').all()
+        patients_by_month = [{'month': p.month, 'count': p.count} for p in patients_by_month_query]
+        
+        patients_with_dob = Patient.query.filter(Patient.date_of_birth.isnot(None)).all()
+        age_brackets = {
+            "0-17": 0,
+            "18-30": 0,
+            "31-45": 0,
+            "46-60": 0,
+            "61+": 0,
+            "Unknown": 0
+        }
+        for p in patients_with_dob:
+            age = calculate_age(p.date_of_birth)
+            if age is None:
+                age_brackets["Unknown"] += 1
+            elif age <= 17:
+                age_brackets["0-17"] += 1
+            elif age <= 30:
+                age_brackets["18-30"] += 1
+            elif age <= 45:
+                age_brackets["31-45"] += 1
+            elif age <= 60:
+                age_brackets["46-60"] += 1
+            else:
+                age_brackets["61+"] += 1
+        unknown_dob_count = Patient.query.filter(Patient.date_of_birth.is_(None)).count()
+        age_brackets["Unknown"] += unknown_dob_count
+        age_distribution_data = age_brackets
+        
+        ai_analytics_data = {
+            'total_patients': total_patients,
+            'active_patients': active_patients,
+            'total_treatments': total_treatments,
+            'avg_treatments': avg_treatments,
+            'avg_monthly_revenue': avg_monthly_revenue,
+            'common_diagnoses': common_diagnoses, 
+            'revenue_by_visit_type': revenue_by_visit_type, 
+            'treatments_by_month': treatments_by_month, 
+            'patients_by_month': patients_by_month, 
+            'age_distribution': age_distribution_data, 
+        }
+
+        # --- Generate the report using the existing helper ---
+        report_content = generate_deepseek_report(ai_analytics_data)
+        
+        # --- Save the new report to the database ---
+        if not report_content.startswith("Error:"):
+            new_report = PracticeReport(content=report_content, generated_at=datetime.utcnow())
+            db.session.add(new_report)
+            db.session.commit()
+            flash('New AI practice insights generated successfully!', 'success')
+            print("New report saved successfully.")
+        else:
+            # Don't save if there was an error generating
+            flash(f'Failed to generate new insights: {report_content}', 'danger')
+            print(f"Failed to generate/save report: {report_content}")
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'An unexpected error occurred while generating the report: {str(e)}', 'danger')
+        print(f"Error in /analytics/generate: {e}") # Log the exception
+        
+    return redirect(url_for('main.analytics')) # Redirect back to analytics page
+
+# --- NEW: API Endpoints for Chart Data ---
+
+@main.route('/api/analytics/treatments-by-month')
+@login_required
+@physio_required
+def api_treatments_by_month():
+    try:
+        data = db.session.query(
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.count(Treatment.id).label('count')
+        ).group_by('month').order_by('month').all()
+        # Convert Row objects to list of dicts for JSON
+        result = [{'month': row.month, 'count': row.count} for row in data]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error in /api/analytics/treatments-by-month: {e}")
+        return jsonify({"error": "Failed to fetch treatments by month data"}), 500
+
+@main.route('/api/analytics/patients-by-month')
+@login_required
+@physio_required
+def api_patients_by_month():
+    try:
+        data = db.session.query(
+            func.strftime('%Y-%m', Patient.created_at).label('month'),
+            func.count(Patient.id).label('count')
+        ).group_by('month').order_by('month').all()
+        result = [{'month': row.month, 'count': row.count} for row in data]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error in /api/analytics/patients-by-month: {e}")
+        return jsonify({"error": "Failed to fetch patients by month data"}), 500
+
+@main.route('/api/analytics/revenue-by-visit-type')
+@login_required
+@physio_required
+def api_revenue_by_visit_type():
+    try:
+        data = db.session.query(
+            Treatment.treatment_type,
+            func.sum(Treatment.fee_charged).label('total_fee')
+        ).filter(Treatment.fee_charged.isnot(None)).group_by(Treatment.treatment_type).order_by(func.sum(Treatment.fee_charged).desc()).all()
+        # Handle potential None values during conversion
+        result = [{'treatment_type': row.treatment_type if row.treatment_type else 'Unspecified', 
+                   'total_fee': float(row.total_fee) if row.total_fee else 0} 
+                  for row in data]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error in /api/analytics/revenue-by-visit-type: {e}")
+        return jsonify({"error": "Failed to fetch revenue by visit type data"}), 500
+
+@main.route('/api/analytics/revenue-by-location')
+@login_required
+@physio_required
+def api_revenue_by_location():
+    try:
+        data = db.session.query(
+            Treatment.location,
+            func.sum(Treatment.fee_charged).label('total_fee')
+        ).filter(Treatment.fee_charged.isnot(None)).group_by(Treatment.location).order_by(func.sum(Treatment.fee_charged).desc()).limit(10).all()
+        result = [{'location': row.location if row.location else 'Unspecified', 
+                   'total_fee': float(row.total_fee) if row.total_fee else 0} 
+                  for row in data]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error in /api/analytics/revenue-by-location: {e}")
+        return jsonify({"error": "Failed to fetch revenue by location data"}), 500
+
+@main.route('/api/analytics/common-diagnoses')
+@login_required
+@physio_required
+def api_common_diagnoses():
+    try:
+        data = db.session.query(
+            Patient.diagnosis, 
+            func.count(Patient.id).label('count')
+        ).filter(Patient.diagnosis.isnot(None), Patient.diagnosis != '').group_by(Patient.diagnosis).order_by(func.count(Patient.id).desc()).limit(10).all()
+        result = [{'diagnosis': row.diagnosis if row.diagnosis else 'Unspecified', 
+                   'count': row.count} 
+                  for row in data]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error in /api/analytics/common-diagnoses: {e}")
+        return jsonify({"error": "Failed to fetch common diagnoses data"}), 500
+
+@main.route('/api/analytics/patient-status')
+@login_required
+@physio_required
+def api_patient_status():
+    try:
+        total_patients = Patient.query.count()
+        active_patients = Patient.query.filter(Patient.status == 'Active').count()
+        inactive_patients = total_patients - active_patients
+        result = {'active': active_patients, 'inactive': inactive_patients} # Simpler structure for this chart
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error in /api/analytics/patient-status: {e}")
+        return jsonify({"error": "Failed to fetch patient status data"}), 500
+
+@main.route('/api/analytics/payment-methods')
+@login_required
+@physio_required
+def api_payment_methods():
+    try:
+        data = db.session.query(
+            Treatment.payment_method,
+            func.count(Treatment.id).label('count')
+        ).filter(Treatment.payment_method.isnot(None)).group_by(Treatment.payment_method).all()
+        result = [{'payment_method': row.payment_method if row.payment_method else 'Unspecified', 
+                   'count': row.count} 
+                  for row in data]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error in /api/analytics/payment-methods: {e}")
+        return jsonify({"error": "Failed to fetch payment method data"}), 500
+
+# --- End API Endpoints for Chart Data ---

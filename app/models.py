@@ -104,6 +104,18 @@ class RecurringAppointment(db.Model):
     def __repr__(self):
         return f'<RecurringAppointment {self.id} for Patient {self.patient_id} ({self.recurrence_type})>'
 
+# --- NEW: Model for storing practice-wide AI reports ---
+class PracticeReport(db.Model):
+    __tablename__ = 'practice_reports'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    generated_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    def __repr__(self):
+        return f'<PracticeReport {self.id} generated at {self.generated_at.strftime("%Y-%m-%d %H:%M")}>'
+# --- End NEW Model ---
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)
