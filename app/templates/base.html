@@ -424,7 +424,16 @@
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'main.patient_dashboard' %}active{% endif %}" href="{{ url_for('main.patient_dashboard') }}"><i class="bi bi-person-circle me-2"></i> My Dashboard</a>
                         </li>
-                        {# Add other patient-specific links here if needed #}
+                        {# Removed Profile link from here #}
+                        {# Add other patient-specific links here if needed (e.g., Homework history?) #}
+
+                        <div class="nav-section">
+                            <div class="nav-section-title">Account</div>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'main.patient_profile' %}active{% endif %}" href="{{ url_for('main.patient_profile') }}"><i class="bi bi-person-vcard me-2"></i> My Profile</a>
+                            </li>
+                            {# Add other account/settings links here later #}
+                        </div>
                     {% endif %}
                 </ul>
 
@@ -460,9 +469,28 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Replace the existing Calendly script with this one -->
     <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript"></script>
+
+    <!-- Script dedicated to setting prefill data via Jinja -->
     <script>
-        // Auto-dismiss alerts after 5 seconds
+        window.calendlyPrefillData = {}; // Default to empty object
+        {% if current_user.is_authenticated and current_user.role == 'patient' and current_user.patient %}
+            // Note: Full address logic removed for simplicity in this example,
+            // ensure your actual prefill logic matches Calendly's expectations.
+            window.calendlyPrefillData = {{ {
+                "name": current_user.patient.name,
+                "email": current_user.patient.email or current_user.email,
+                "customAnswers": {
+                    "a1": current_user.patient.phone or '',
+                    "a2": ('Home Visit' if current_user.patient.preferred_location == 'Home Visit' else 'Clinic Visit')
+                }
+            } | tojson | safe }};
+        {% endif %}
+    </script>
+
+    <!-- Main application script -->
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Auto-dismiss alerts after 5 seconds
             setTimeout(function() {
                 var alerts = document.querySelectorAll('.alert');
                 alerts.forEach(function(alert) {
@@ -470,105 +498,94 @@
                     bsAlert.close();
                 });
             }, 5000);
-        });
-        
-        // Modified Calendly inline widget initialization function
-        function initCalendlyWidget(url) {
-            // Check if Calendly is loaded
-            if (typeof Calendly !== 'undefined') {
-                Calendly.initInlineWidget({
-                    url: url,
-                    parentElement: document.getElementById('calendly-container'),
-                    prefill: {},
-                    utm: {}
-                });
-            } else {
-                console.error("Calendly script not loaded properly");
-                // Try to load it again
-                var script = document.createElement('script');
-                script.src = "https://assets.calendly.com/assets/external/widget.js";
-                script.onload = function() {
-                    if (typeof Calendly !== 'undefined') {
-                        Calendly.initInlineWidget({
-                            url: url,
-                            parentElement: document.getElementById('calendly-container'),
-                            prefill: {},
-                            utm: {}
-                        });
-                    }
-                };
-                document.body.appendChild(script);
-            }
-        }
 
-        // Quick search functionality
-        const searchButton = document.getElementById('searchButton');
-        if (searchButton) {
-            searchButton.addEventListener('click', function() {
-                performSearch();
-            });
-        }
-        
-        const quickSearchInput = document.getElementById('quickSearch');
-        if (quickSearchInput) {
-            quickSearchInput.addEventListener('keyup', function(event) {
-                if (event.key === 'Enter') {
+            // Modified Calendly inline widget initialization function
+            function initCalendlyWidget(url, prefill = {}) { // Added prefill parameter
+                if (typeof Calendly !== 'undefined') {
+                    Calendly.initInlineWidget({
+                        url: url,
+                        parentElement: document.getElementById('calendly-container'),
+                        prefill: prefill, // Use the passed prefill data
+                        utm: {}
+                    });
+                } else {
+                    console.error("Calendly script not loaded properly");
+                }
+            }
+
+            // Quick search functionality
+            const searchButton = document.getElementById('searchButton');
+            if (searchButton) {
+                searchButton.addEventListener('click', function() {
                     performSearch();
-                }
-            });
-        }
-        
-        function performSearch() {
-            const searchInput = document.getElementById('quickSearch');
-            if (searchInput) {
-                const searchTerm = searchInput.value.trim();
-                if (searchTerm) {
-                    window.location.href = "{{ url_for('main.search') }}?q=" + encodeURIComponent(searchTerm);
-                }
-            } else {
-                console.warn('Quick search input not found when trying to perform search.');
+                });
             }
-        }
+            const quickSearchInput = document.getElementById('quickSearch');
+            if (quickSearchInput) {
+                quickSearchInput.addEventListener('keyup', function(event) {
+                    if (event.key === 'Enter') {
+                        performSearch();
+                    }
+                });
+            }
+            function performSearch() {
+                const searchInput = document.getElementById('quickSearch');
+                if (searchInput) {
+                    const searchTerm = searchInput.value.trim();
+                    if (searchTerm) {
+                        window.location.href = "{{ url_for('main.search') }}?q=" + encodeURIComponent(searchTerm);
+                    }
+                } else {
+                    console.warn('Quick search input not found when trying to perform search.');
+                }
+            }
 
-        // Function to open Calendly in a modal
-        function openCalendly() {
-            // Create modal if it doesn't exist
-            if (!document.getElementById('calendlyModal')) {
-                const modal = document.createElement('div');
-                modal.id = 'calendlyModal';
-                modal.className = 'modal fade';
-                modal.setAttribute('tabindex', '-1');
-                modal.innerHTML = `
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Schedule Appointment</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div id="calendly-container" class="calendly-inline-widget"></div>
+            // Function to open Calendly in a modal - made globally accessible
+            window.openCalendly = function() {
+                // Create modal if it doesn't exist
+                if (!document.getElementById('calendlyModal')) {
+                    const modal = document.createElement('div');
+                    modal.id = 'calendlyModal';
+                    modal.className = 'modal fade';
+                    modal.setAttribute('tabindex', '-1');
+                    modal.innerHTML = `
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Schedule Appointment</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div id="calendly-container" class="calendly-inline-widget"></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
+                    `;
+                    document.body.appendChild(modal);
+                }
+
+                // Show the modal
+                const calendlyModal = new bootstrap.Modal(document.getElementById('calendlyModal'));
+                calendlyModal.show();
+
+                // Prepare prefill data from the global variable
+                let prefillData = {};
+                try {
+                    // Use the global variable set by the dedicated script tag
+                    prefillData = window.calendlyPrefillData || {};
+                } catch (e) {
+                    console.error("Error reading Calendly prefill data:", e);
+                    prefillData = {}; // Fallback
+                }
+
+                // Initialize Calendly widget using the helper function
+                initCalendlyWidget('https://calendly.com/haimphysio', prefillData);
             }
-            
-            // Show the modal
-            const calendlyModal = new bootstrap.Modal(document.getElementById('calendlyModal'));
-            calendlyModal.show();
-            
-            // Initialize Calendly widget
-            initCalendlyWidget('https://calendly.com/haimphysio');
-        }
-    </script>
-    <script src="{{ url_for('static', filename='js/voice-notes.js') }}"></script> 
-    {# Add JavaScript for sidebar toggle #}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
+
+            // Sidebar Toggle Logic
             const sidebar = document.getElementById('sidebar');
             const sidebarToggle = document.getElementById('sidebarToggle');
-            const mainContent = document.getElementById('mainContent'); // Optional: for overlay click
+            const mainContent = document.getElementById('mainContent');
 
             if (sidebar && sidebarToggle) {
                 sidebarToggle.addEventListener('click', function() {
@@ -576,21 +593,19 @@
                     document.body.classList.toggle('sidebar-open');
                 });
 
-                // Optional: Close sidebar if clicking outside of it (on the overlay)
                 document.body.addEventListener('click', function(event) {
-                    // Check if sidebar is open, the click was outside the sidebar, and not on the toggle button itself
-                    if (document.body.classList.contains('sidebar-open') && 
-                        !sidebar.contains(event.target) && 
-                        event.target !== sidebarToggle && 
-                        !sidebarToggle.contains(event.target)) { // Check if click inside toggle icon
-                        
+                    if (document.body.classList.contains('sidebar-open') &&
+                        !sidebar.contains(event.target) &&
+                        event.target !== sidebarToggle &&
+                        !sidebarToggle.contains(event.target)) {
                         sidebar.classList.remove('show');
                         document.body.classList.remove('sidebar-open');
                     }
-                }, true); // Use capture phase to catch clicks on overlay before they bubble
+                }, true);
             }
         });
     </script>
+    <script src="{{ url_for('static', filename='js/voice-notes.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

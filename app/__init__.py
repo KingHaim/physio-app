@@ -7,6 +7,7 @@ from config import Config
 import markdown
 from markupsafe import Markup
 from flask_login import LoginManager
+from flask_wtf.csrf import CSRFProtect
 
 db = SQLAlchemy()
 
@@ -14,6 +15,9 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
+
+# Initialize CSRF protection
+csrf = CSRFProtect()
 
 # Import models here *before* Migrate is instantiated
 from app import models 
@@ -34,6 +38,7 @@ def create_app(config_class=Config):
     
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    csrf.init_app(app)  # Initialize CSRF protection
 
     # Import and register blueprints
     from app.routes.main import main
@@ -54,6 +59,10 @@ def create_app(config_class=Config):
         return Markup(markdown.markdown(text))
 
     app.jinja_env.filters['markdown'] = markdown_filter
+
+    # Make csrf_token available in templates
+    from flask_wtf.csrf import generate_csrf
+    app.jinja_env.globals['csrf_token'] = generate_csrf
 
     # Register CLI commands
     from app.cli import register_commands

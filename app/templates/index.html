@@ -73,50 +73,45 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Patient</th>
-                                    <th>Date & Time</th>
-                                    <th>Description</th>
-                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
                                     <th class="text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for appointment in upcoming_appointments %}
+                                {% for appt in upcoming_appointments %}
                                 <tr>
                                     <td>
-                                        <a href="{{ url_for('main.patient_detail', id=appointment.patient.id) }}" 
+                                        {# Check if treatment object exists before accessing patient #}
+                                        {% if appt.treatment and appt.treatment.patient %}
+                                        <a href="{{ url_for('main.patient_detail', id=appt.treatment.patient.id) }}" 
                                            class="text-decoration-none text-dark fw-medium">
-                                           {{ appointment.patient.name }}
+                                           {{ appt.patient_name }}
                                         </a>
-                                    </td>
-                                    <td>
-                                        {% if appointment.created_at %}
-                                            {% if appointment.created_at.date() == today %}
-                                                <span class="badge bg-danger">Today</span>
-                                            {% elif appointment.created_at.date() <= week_end %}
-                                                <span class="badge bg-warning text-dark">This Week</span>
-                                            {% endif %}
-                                            <span class="text-dark">
-                                                {{ appointment.created_at.strftime('%Y-%m-%d %H:%M') }}
-                                            </span>
                                         {% else %}
-                                            <span class="text-muted">Not scheduled</span>
+                                        <span class="text-muted">{{ appt.patient_name }}</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ appointment.description|truncate(30) }}</td>
                                     <td>
-                                        <span class="badge bg-{{ 'primary' if appointment.status == 'Scheduled' else 'success' }}">
-                                            {{ appointment.status }}
+                                        {# Use the relative_date calculated in the route #}
+                                        <span class="badge bg-{{ 'danger' if appt.relative_date == 'Today' else 'info' if appt.relative_date == 'Tomorrow' else 'secondary' }}">
+                                            {{ appt.relative_date }}
                                         </span>
                                     </td>
+                                    <td>
+                                        <span class="text-dark">{{ appt.time }}</span>
+                                    </td>
                                     <td class="text-end">
-                                        <a href="{{ url_for('main.view_treatment', id=appointment.id) }}" 
+                                        {% if appt.treatment %}
+                                        <a href="{{ url_for('main.view_treatment', id=appt.treatment.id) }}" 
                                            class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <a href="{{ url_for('main.edit_treatment', id=appointment.id) }}" 
+                                        <a href="{{ url_for('main.edit_treatment', id=appt.treatment.id) }}" 
                                            class="btn btn-sm btn-outline-secondary">
                                             <i class="bi bi-pencil"></i>
                                         </a>
+                                        {% endif %}
                                     </td>
                                 </tr>
                                 {% endfor %}

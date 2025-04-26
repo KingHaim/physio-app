@@ -125,62 +125,6 @@
         </div>
     </div>
 
-    <!-- Upcoming Sessions Section -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Upcoming Sessions</h5>
-                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newTreatmentModal">
-                        <i class="bi bi-plus-circle"></i> Schedule Session
-                    </button>
-                </div>
-                <div class="card-body">
-                    {% set has_upcoming = false %}
-                    {% for treatment in treatments|sort(attribute='created_at') %}
-                        {% if treatment.created_at and treatment.status != 'Cancelled' %}
-                            {% if (today is defined and treatment.created_at >= today) or (treatment.created_at and treatment.created_at.date() >= today.date()) %}
-                                {% set has_upcoming = true %}
-                                <div class="upcoming-session p-3 mb-3 border rounded">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">{{ treatment.treatment_type }}</h6>
-                                            <p class="mb-1">
-                                                <strong>Date:</strong> 
-                                                {% if treatment.created_at %}
-                                                    {% if today is defined and treatment.created_at.date() == today.date() %}
-                                                        <span class="badge bg-success">Today</span> {{ treatment.created_at.strftime('%H:%M') }}
-                                                    {% else %}
-                                                        {{ treatment.created_at.strftime('%Y-%m-%d %H:%M') }}
-                                                    {% endif %}
-                                                {% else %}
-                                                    <span class="text-muted">No date set</span>
-                                                {% endif %}
-                                            </p>
-                                            <p class="mb-0 text-muted small">{{ treatment.notes|truncate(100) if treatment.notes else 'No notes available' }}</p>
-                                        </div>
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-primary view-treatment-btn" data-treatment-id="{{ treatment.id }}">
-                                                <i class="bi bi-eye"></i> View
-                                            </button>
-                                            <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-sm btn-secondary">
-                                                <i class="bi bi-pencil"></i> Edit
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if not has_upcoming %}
-                        <p class="text-muted">No upcoming sessions scheduled.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Treatment History Section -->
     <div class="row">
         <div class="col-md-12">
@@ -291,70 +235,6 @@
                     {% else %}
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i> No treatments found for this patient.
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Upcoming Treatments Section -->
-    <div class="row mt-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Upcoming Treatments</h5>
-                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newTreatmentModal">
-                        <i class="bi bi-plus-circle"></i> Schedule Treatment
-                    </button>
-                </div>
-                <div class="card-body">
-                    {% set future_treatments = [] %}
-                    {% for treatment in treatments %}
-                        {% if treatment.created_at and treatment.created_at > today %}
-                            {% set future_treatments = future_treatments + [treatment] %}
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if future_treatments|length > 0 %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Treatment Type</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for treatment in future_treatments|sort(attribute='created_at') %}
-                                        <tr>
-                                            <td>
-                                                {% if treatment.created_at %}
-                                                    {{ treatment.created_at.strftime('%-d') }}{% if treatment.created_at.day in [1, 21, 31] %}st{% elif treatment.created_at.day in [2, 22] %}nd{% elif treatment.created_at.day in [3, 23] %}rd{% else %}th{% endif %} {{ treatment.created_at.strftime('%B %y') }}
-                                                {% else %}
-                                                    <span class="text-muted">No date</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>{{ treatment.treatment_type or 'Unknown' }}</td>
-                                            <td>
-                                                <div class="btn-group">
-                                                    <a href="{{ url_for('main.view_treatment', id=treatment.id) }}" class="btn btn-sm btn-primary">
-                                                        <i class="bi bi-eye"></i> View
-                                                    </a>
-                                                    <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-sm btn-secondary">
-                                                        <i class="bi bi-pencil"></i> Edit
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i> No upcoming treatments scheduled.
                         </div>
                     {% endif %}
                 </div>

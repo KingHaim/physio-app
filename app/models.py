@@ -18,6 +18,15 @@ class Patient(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     treatments = db.relationship('Treatment', backref='patient', lazy=True)
     user = db.relationship('User', backref=db.backref('patient', uselist=False), lazy=True)
+    
+    # New fields for extended contact and address information
+    email = db.Column(db.String(100))
+    phone = db.Column(db.String(20))
+    address_line1 = db.Column(db.String(100))
+    address_line2 = db.Column(db.String(100))
+    city = db.Column(db.String(50))
+    postcode = db.Column(db.String(20))
+    preferred_location = db.Column(db.String(50), default='Clinic')  # Clinic or Home Visit
 
 class Treatment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -42,6 +51,9 @@ class Treatment(db.Model):
     visit_type = db.Column(db.String(50))
     fee_charged = db.Column(db.Float)
     payment_method = db.Column(db.String(50))
+    
+    # Field for Calendly integration
+    calendly_invitee_uri = db.Column(db.String(255), nullable=True, unique=True, index=True)
     
     trigger_points = db.relationship('TriggerPoint', backref='treatment', lazy=True)
 

@@ -1,7 +1,7 @@
 # app/routes.py
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response, current_app, session, send_file
 from datetime import datetime, timedelta, date, time
-from calendar import monthrange
+from calendar import monthrange, day_name # Import day_name
 from sqlalchemy import func, extract, or_, case, cast, Float
 from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport, RecurringAppointment, User, PracticeReport  # Added PracticeReport
 import json
@@ -16,6 +16,11 @@ from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash
 import functools # Import functools for wraps
 import requests
+import pytz # <<< Import pytz
+
+# Define timezones
+UTC = pytz.utc
+LOCAL_TZ = pytz.timezone('Europe/Madrid') # <<< Replace with your actual local timezone
 
 main = Blueprint('main', __name__)
 
@@ -100,6 +105,22 @@ def find_bracket(net_revenue, brackets):
     # Should not happen if 0 is the lowest bound, but return None as fallback
     return None
 
+def get_relative_date_string(target_date):
+    today = date.today()
+    tomorrow = today + timedelta(days=1)
+    days_diff = (target_date - today).days
+
+    if days_diff == 0:
+        return "Today"
+    elif days_diff == 1:
+        return "Tomorrow"
+    elif 1 < days_diff <= 7:
+        # Return the day name (e.g., "Monday", "Tuesday")
+        return day_name[target_date.weekday()]
+    else:
+        # For dates further out, return the standard date format
+        return target_date.strftime("%Y-%m-%d")
+
 @main.route('/')
 @login_required
 @physio_required # <<< ADD DECORATOR
@@ -132,9 +153,32 @@ def index():
     ).count()
 
     # Get upcoming appointments
-    upcoming_appointments = Treatment.query.filter(
-        Treatment.created_at >= datetime.combine(today, time.min) # Compare with datetime start of today
-    ).order_by(Treatment.created_at).limit(5).all()
+    # Fetch treatments scheduled for today or later, based on UTC created_at
+    now_utc = datetime.now(UTC)
+    upcoming_appointments_query = Treatment.query.filter(
+        Treatment.created_at >= now_utc, 
+        Treatment.status == 'Scheduled' # <<< Ensure we only get scheduled ones
+    ).options(joinedload(Treatment.patient)).order_by(Treatment.created_at).limit(5).all()
+
+    # Process upcoming appointments to add relative date string and LOCAL time
+    upcoming_appointments_processed = []
+    for apt in upcoming_appointments_query:
+        # Make the UTC time timezone-aware
+        utc_time = apt.created_at.replace(tzinfo=UTC)
+        # Convert to local time
+        local_time = utc_time.astimezone(LOCAL_TZ)
+        
+        apt_date = local_time.date() # Use local date for relative string
+        relative_date = get_relative_date_string(apt_date)
+        apt_time_str = local_time.strftime("%H:%M") # Format local time
+        patient_name = apt.patient.name if apt.patient else "Unknown Patient"
+        
+        upcoming_appointments_processed.append({
+            'treatment': apt, 
+            'relative_date': relative_date,
+            'time': apt_time_str, # Use the formatted local time string
+            'patient_name': patient_name
+        })
 
     # Get recent treatments
     recent_treatments = Treatment.query.order_by(
@@ -146,7 +190,7 @@ def index():
                            active_patients=active_patients,
                            pending_review_count=pending_review_count,
                            today_appointments=today_appointments,
-                           upcoming_appointments=upcoming_appointments,
+                           upcoming_appointments=upcoming_appointments_processed, # Use processed list
                            recent_treatments=recent_treatments,
                            today=today, # Pass date object for display
                            week_end=week_end,
@@ -242,7 +286,7 @@ def patient_detail(id):
         print(f"Treatment Created At: {treatment.created_at}")
 
     today = datetime.now()
-
+    
     # Auto-complete logic (consider moving to a scheduled task or background job for performance)
     # For now, keep it here but be mindful of performance on pages with many patients/treatments
     past_treatments = Treatment.query.filter(
@@ -276,9 +320,9 @@ def patient_detail(id):
     print(f"Is first visit for patient {id}? {is_first_visit}")
 
     # Pass treatments loaded earlier
-    return render_template('patient_detail.html',
-                          patient=patient,
-                          today=today,
+    return render_template('patient_detail.html', 
+                           patient=patient, 
+                           today=today, 
                           treatments=treatments, # Pass the pre-loaded treatments
                           is_first_visit=is_first_visit)
 
@@ -2158,37 +2202,33 @@ def new_patient():
 @main.route('/patient/dashboard')
 @login_required
 def patient_dashboard():
+    # Ensure the user is a patient
     if current_user.role != 'patient':
-        # Redirect non-patients away from the patient dashboard
-        flash('Access denied. Redirecting to main dashboard.', 'warning')
+        flash('Access denied.', 'danger')
         return redirect(url_for('main.index'))
-        
-    # Ensure the patient user is linked to a patient record
-    if not current_user.patient_id or not current_user.patient:
-        flash('Error: Your user account is not linked to a patient record.', 'danger')
-        # Log them out or redirect to an error page?
+
+    if not current_user.patient_id:
+        flash('No patient record linked to your account.', 'danger')
         logout_user()
         return redirect(url_for('auth.login'))
-        
-    # Get the linked patient
-    patient = current_user.patient
+
+    patient = Patient.query.get_or_404(current_user.patient_id)
+    today = datetime.now()
     
-    # Find the most recent 'Exercise Homework' report for this patient
-    latest_homework = PatientReport.query.filter_by(
-        patient_id=patient.id,
-        report_type='Exercise Homework'
-    ).order_by(PatientReport.generated_date.desc()).first()
-    
-    # --- Fetch Upcoming Appointments ---
-    today_start = datetime.combine(date.today(), time.min)
+    # Upcoming appointments (only consider SCHEDULED treatments in the future)
     upcoming_appointments = Treatment.query.filter(
         Treatment.patient_id == patient.id,
-        Treatment.created_at >= today_start, # From start of today onwards
-        Treatment.status == 'Scheduled'      # Only show scheduled
-    ).order_by(Treatment.created_at.asc()).limit(5).all() # Limit for display
-    # --- End Fetch ---
+        Treatment.status == 'Scheduled', # Only scheduled ones
+        Treatment.created_at >= today # Only future or today
+    ).order_by(Treatment.created_at.asc()).limit(5).all()
     
-    # --- Fetch Past Homework (excluding the latest) ---
+    # Latest homework report
+    latest_homework = PatientReport.query.filter(
+        PatientReport.patient_id == patient.id,
+        PatientReport.report_type == 'Exercise Homework'
+    ).order_by(PatientReport.generated_date.desc()).first()
+
+    # Past homework reports (exclude the latest one if it exists)
     past_homework_query = PatientReport.query.filter(
         PatientReport.patient_id == patient.id,
         PatientReport.report_type == 'Exercise Homework'
@@ -2196,39 +2236,98 @@ def patient_dashboard():
     if latest_homework:
         past_homework_query = past_homework_query.filter(PatientReport.id != latest_homework.id)
         
-    past_homework_reports = past_homework_query.order_by(PatientReport.generated_date.desc()).all()
-    # --- End Fetch ---
+    past_homework_reports = past_homework_query.order_by(PatientReport.generated_date.desc()).limit(5).all()
 
-    return render_template('patient_dashboard.html', 
-                           latest_homework=latest_homework,
+    return render_template('patient_dashboard.html',
                            upcoming_appointments=upcoming_appointments,
-                           past_homework_reports=past_homework_reports) # Pass past homework
-# --- End Patient Dashboard ---
+                           latest_homework=latest_homework,
+                           past_homework_reports=past_homework_reports,
+                           patient=patient) # Pass patient object for greeting
 
-# --- View Homework Route (Patient Only) ---
+@main.route('/patient/profile')
+@login_required
+def patient_profile():
+    # Ensure the user is a patient
+    if current_user.role != 'patient':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('main.index'))
+    
+    if not current_user.patient_id:
+        flash('No patient record linked to your account.', 'danger')
+        logout_user()
+        return redirect(url_for('auth.login'))
+        
+    # Fetch the patient record again if needed, or just use current_user.patient if relationship is loaded
+    # Assuming current_user.patient is available via relationship backref
+    if not current_user.patient:
+         flash('Could not load patient profile data.', 'danger')
+         return redirect(url_for('main.patient_dashboard'))
+
+    return render_template('patient_profile.html') # Patient data accessed via current_user in template
+
 @main.route('/patient/homework/<int:report_id>')
 @login_required
 def view_homework(report_id):
     # 1. Ensure user is a patient
     if current_user.role != 'patient':
-        flash('Access Denied.', 'danger')
-        return redirect(url_for('main.index')) # Or appropriate redirect for non-patients
-        
-    # 2. Fetch the report
-    report = PatientReport.query.get_or_404(report_id)
+        flash('Access denied.', 'danger')
+        return redirect(url_for('main.index'))
     
-    # 3. Security Checks:
-    #    - Does the report belong to the logged-in patient?
-    #    - Is the report type actually 'Exercise Homework'?
-    if report.patient_id != current_user.patient_id or report.report_type != 'Exercise Homework':
+    # 2. Fetch the report and ensure it belongs to the logged-in patient
+    report = PatientReport.query.get_or_404(report_id)
+    if report.patient_id != current_user.patient_id:
         flash('You do not have permission to view this report.', 'danger')
         return redirect(url_for('main.patient_dashboard'))
         
-    # 4. Render the dedicated homework template
+    # 3. Ensure it's actually a homework report
+    if report.report_type != 'Exercise Homework':
+         flash('This is not an exercise homework report.', 'warning')
+         return redirect(url_for('main.patient_dashboard'))
+         
+    # 4. Render the template
     return render_template('view_homework.html', report=report)
-# --- End View Homework ---
 
-# --- NEW Route to Generate Report --- 
+@main.route('/patient/update-contact', methods=['POST'])
+@login_required
+def update_patient_contact():
+    # Asegurar que el usuario es un paciente
+    if current_user.role != 'patient':
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+    if not current_user.patient_id:
+         return jsonify({'success': False, 'error': 'No patient record linked'}), 400
+         
+    patient = Patient.query.get_or_404(current_user.patient_id)
+    
+    try:
+        # Get data from form
+        patient.email = request.form.get('email')
+        patient.phone = request.form.get('phone')
+        patient.address_line1 = request.form.get('address_line1')
+        patient.address_line2 = request.form.get('address_line2')
+        patient.city = request.form.get('city')
+        patient.postcode = request.form.get('postcode')
+        patient.preferred_location = request.form.get('preferred_location')
+        
+        # Also update the User email if it differs and exists
+        if patient.user and patient.user.email != patient.email:
+             # Optional: Check if the new email is already taken by ANOTHER user
+             existing_user = User.query.filter(User.email == patient.email, User.id != patient.user.id).first()
+             if existing_user:
+                  return jsonify({'success': False, 'error': 'Email address already in use by another account.'}), 409 # Conflict
+             patient.user.email = patient.email
+             # Consider updating username too if it's linked to email
+             # patient.user.username = patient.email 
+             
+        db.session.commit()
+        # flash('Contact information updated successfully!', 'success') # Flash might not show on AJAX redirect
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating patient contact for user {current_user.id}: {e}")
+        return jsonify({'success': False, 'error': 'An internal error occurred.'}), 500
+
 @main.route('/analytics/generate', methods=['POST']) # Use POST for action
 @login_required
 @physio_required
@@ -2334,121 +2433,3 @@ def generate_new_analytics_report():
         print(f"Error in /analytics/generate: {e}") # Log the exception
         
     return redirect(url_for('main.analytics')) # Redirect back to analytics page
-
-# --- NEW: API Endpoints for Chart Data ---
-
-@main.route('/api/analytics/treatments-by-month')
-@login_required
-@physio_required
-def api_treatments_by_month():
-    try:
-        data = db.session.query(
-            func.strftime('%Y-%m', Treatment.created_at).label('month'),
-            func.count(Treatment.id).label('count')
-        ).group_by('month').order_by('month').all()
-        # Convert Row objects to list of dicts for JSON
-        result = [{'month': row.month, 'count': row.count} for row in data]
-        return jsonify(result)
-    except Exception as e:
-        print(f"Error in /api/analytics/treatments-by-month: {e}")
-        return jsonify({"error": "Failed to fetch treatments by month data"}), 500
-
-@main.route('/api/analytics/patients-by-month')
-@login_required
-@physio_required
-def api_patients_by_month():
-    try:
-        data = db.session.query(
-            func.strftime('%Y-%m', Patient.created_at).label('month'),
-            func.count(Patient.id).label('count')
-        ).group_by('month').order_by('month').all()
-        result = [{'month': row.month, 'count': row.count} for row in data]
-        return jsonify(result)
-    except Exception as e:
-        print(f"Error in /api/analytics/patients-by-month: {e}")
-        return jsonify({"error": "Failed to fetch patients by month data"}), 500
-
-@main.route('/api/analytics/revenue-by-visit-type')
-@login_required
-@physio_required
-def api_revenue_by_visit_type():
-    try:
-        data = db.session.query(
-            Treatment.treatment_type,
-            func.sum(Treatment.fee_charged).label('total_fee')
-        ).filter(Treatment.fee_charged.isnot(None)).group_by(Treatment.treatment_type).order_by(func.sum(Treatment.fee_charged).desc()).all()
-        # Handle potential None values during conversion
-        result = [{'treatment_type': row.treatment_type if row.treatment_type else 'Unspecified', 
-                   'total_fee': float(row.total_fee) if row.total_fee else 0} 
-                  for row in data]
-        return jsonify(result)
-    except Exception as e:
-        print(f"Error in /api/analytics/revenue-by-visit-type: {e}")
-        return jsonify({"error": "Failed to fetch revenue by visit type data"}), 500
-
-@main.route('/api/analytics/revenue-by-location')
-@login_required
-@physio_required
-def api_revenue_by_location():
-    try:
-        data = db.session.query(
-            Treatment.location,
-            func.sum(Treatment.fee_charged).label('total_fee')
-        ).filter(Treatment.fee_charged.isnot(None)).group_by(Treatment.location).order_by(func.sum(Treatment.fee_charged).desc()).limit(10).all()
-        result = [{'location': row.location if row.location else 'Unspecified', 
-                   'total_fee': float(row.total_fee) if row.total_fee else 0} 
-                  for row in data]
-        return jsonify(result)
-    except Exception as e:
-        print(f"Error in /api/analytics/revenue-by-location: {e}")
-        return jsonify({"error": "Failed to fetch revenue by location data"}), 500
-
-@main.route('/api/analytics/common-diagnoses')
-@login_required
-@physio_required
-def api_common_diagnoses():
-    try:
-        data = db.session.query(
-            Patient.diagnosis, 
-            func.count(Patient.id).label('count')
-        ).filter(Patient.diagnosis.isnot(None), Patient.diagnosis != '').group_by(Patient.diagnosis).order_by(func.count(Patient.id).desc()).limit(10).all()
-        result = [{'diagnosis': row.diagnosis if row.diagnosis else 'Unspecified', 
-                   'count': row.count} 
-                  for row in data]
-        return jsonify(result)
-    except Exception as e:
-        print(f"Error in /api/analytics/common-diagnoses: {e}")
-        return jsonify({"error": "Failed to fetch common diagnoses data"}), 500
-
-@main.route('/api/analytics/patient-status')
-@login_required
-@physio_required
-def api_patient_status():
-    try:
-        total_patients = Patient.query.count()
-        active_patients = Patient.query.filter(Patient.status == 'Active').count()
-        inactive_patients = total_patients - active_patients
-        result = {'active': active_patients, 'inactive': inactive_patients} # Simpler structure for this chart
-        return jsonify(result)
-    except Exception as e:
-        print(f"Error in /api/analytics/patient-status: {e}")
-        return jsonify({"error": "Failed to fetch patient status data"}), 500
-
-@main.route('/api/analytics/payment-methods')
-@login_required
-@physio_required
-def api_payment_methods():
-    try:
-        data = db.session.query(
-            Treatment.payment_method,
-            func.count(Treatment.id).label('count')
-        ).filter(Treatment.payment_method.isnot(None)).group_by(Treatment.payment_method).all()
-        result = [{'payment_method': row.payment_method if row.payment_method else 'Unspecified', 
-                   'count': row.count} 
-                  for row in data]
-        return jsonify(result)
-    except Exception as e:
-        print(f"Error in /api/analytics/payment-methods: {e}")
-        return jsonify({"error": "Failed to fetch payment method data"}), 500
-
-# --- End API Endpoints for Chart Data ---

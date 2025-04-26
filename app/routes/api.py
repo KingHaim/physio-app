@@ -225,12 +225,17 @@ def match_calendly_booking():
         
         if not existing_treatment:
             # Create a new treatment record
+            # Get the invitee URI from the booking (assuming it's stored)
+            # Note: Ensure 'calendly_invitee_id' actually holds the full URI. If not, adjust where it's fetched from.
+            invitee_uri = booking.calendly_invitee_id  # <<< Assuming this holds the URI
+
             treatment = Treatment(
                 patient_id=patient_id,
                 created_at=booking.start_time,
                 treatment_type=booking.event_type,
                 status="Scheduled",
-                notes=f"Linked to Calendly booking. Matched by admin user."
+                notes=f"Linked to Calendly booking. Matched by admin user.",
+                calendly_invitee_uri=invitee_uri # <<< Add the URI here
             )
             db.session.add(treatment)
         
@@ -810,73 +815,167 @@ def mark_past_as_completed(id):
 
 @api.route('/api/calendly/webhook', methods=['POST'])
 def calendly_webhook():
+    # It's crucial to verify the webhook signature in a production environment!
+    # See Calendly docs: https://developer.calendly.com/docs/webhook-signatures
+    # For now, we skip signature verification for simplicity.
+    
     try:
         data = request.json
-        
-        # Verify this is a booking.created event
-        if data.get('event') != 'invitee.created':
-            return jsonify({'status': 'ignored', 'reason': 'Not a booking creation event'})
-        
-        # Extract booking details
+        event_type = data.get('event')
         payload = data.get('payload', {})
-        invitee = payload.get('invitee', {})
-        event = payload.get('event', {})
-        
-        # Check if this booking already exists
-        existing_booking = UnmatchedCalendlyBooking.query.filter_by(
-            calendly_uuid=invitee.get('uuid')
-        ).first()
-        
-        if existing_booking:
-            return jsonify({'status': 'ignored', 'reason': 'Booking already processed'})
-        
-        # Create a new unmatched booking
-        booking = UnmatchedCalendlyBooking(
-            calendly_uuid=invitee.get('uuid'),
-            name=invitee.get('name', ''),
-            email=invitee.get('email', ''),
-            event_type=event.get('name', ''),
-            start_time=datetime.fromisoformat(invitee.get('start_time').replace('Z', '+00:00')),
-            end_time=datetime.fromisoformat(invitee.get('end_time').replace('Z', '+00:00')),
-            status='Pending',
-            raw_data=json.dumps(data)
-        )
-        
-        db.session.add(booking)
-        db.session.commit()
-        
-        # Try to automatically match to an existing patient
-        patient = find_matching_patient(booking.name, booking.email)
-        
-        if patient:
-            # Automatically match and create treatment
-            booking.status = 'Matched'
-            booking.matched_patient_id = patient.id
+
+        print(f"Received Calendly Webhook - Event: {event_type}") # Add logging
+
+        # --- Handle Invitee Creation --- 
+        if event_type == 'invitee.created':
+            invitee = payload.get('invitee', {})
+            event = payload.get('event', {})
+            invitee_uri = invitee.get('uri') # Get URI for potential future use
+            invitee_uuid = invitee.get('uuid') # Use UUID for checking existing bookings
+
+            if not invitee_uuid:
+                print("Webhook Error: invitee.created payload missing invitee.uuid")
+                return jsonify({'status': 'error', 'message': 'Missing invitee UUID'}), 400
+
+            # Check if this booking already exists based on UUID
+            existing_booking = UnmatchedCalendlyBooking.query.filter_by(
+                calendly_invitee_id=invitee_uuid # Assuming this field stores the UUID
+            ).first()
             
-            # Create a treatment record
-            treatment = Treatment(
-                patient_id=patient.id,
-                created_at=booking.start_time,
-                treatment_type=booking.event_type,
-                status="Scheduled",
-                notes=f"Linked to Calendly booking. Matched by admin user."
+            if existing_booking:
+                print(f"Webhook Info: Booking with UUID {invitee_uuid} already processed.")
+                return jsonify({'status': 'ignored', 'reason': 'Booking already processed'})
+            
+            # Create a new unmatched booking
+            start_time_str = invitee.get('start_time')
+            end_time_str = invitee.get('end_time')
+            
+            # Basic validation for required fields
+            if not all([invitee.get('name'), invitee.get('email'), event.get('name'), start_time_str, end_time_str]):
+                print("Webhook Error: invitee.created payload missing required fields")
+                return jsonify({'status': 'error', 'message': 'Missing required booking fields'}), 400
+            
+            booking = UnmatchedCalendlyBooking(
+                calendly_invitee_id=invitee_uuid, # Store UUID here
+                name=invitee.get('name'),
+                email=invitee.get('email'),
+                event_type=event.get('name'),
+                start_time=datetime.fromisoformat(start_time_str.replace('Z', '+00:00')),
+                # We might not need end_time in the model, but it's in the payload
+                # end_time=datetime.fromisoformat(end_time_str.replace('Z', '+00:00')),
+                status='Pending',
+                # raw_data=json.dumps(data) # Optional: store raw payload for debugging
             )
             
-            db.session.add(treatment)
-            db.session.commit()
+            db.session.add(booking)
+            db.session.flush() # Flush to get booking ID if needed, though we might not
             
+            # Try to automatically match to an existing patient
+            patient = find_matching_patient(booking.name, booking.email)
+            
+            if patient:
+                # Automatically match and create treatment
+                booking.status = 'Matched'
+                booking.matched_patient_id = patient.id
+                
+                # Check if treatment already exists (redundancy check)
+                existing_treatment = Treatment.query.filter_by(
+                    created_at=booking.start_time,
+                    patient_id=patient.id
+                ).first()
+
+                if not existing_treatment:
+                    # Create a treatment record, storing the INVITE URI
+                    treatment = Treatment(
+                        patient_id=patient.id,
+                        created_at=booking.start_time, 
+                        treatment_type=booking.event_type, 
+                        status="Scheduled",
+                        notes=f"Linked to Calendly booking. Auto-matched via webhook.",
+                        calendly_invitee_uri=invitee_uri # Store the full Invitee URI here
+                    )
+                    db.session.add(treatment)
+                    print(f"Webhook Info: Created and matched Treatment for patient {patient.id} from invitee {invitee_uri}")
+                else:
+                     print(f"Webhook Info: Treatment already exists for patient {patient.id} at {booking.start_time}. Skipping creation.")
+            else:
+                print(f"Webhook Info: Created UnmatchedCalendlyBooking for {invitee_uuid}. Needs manual matching.")
+            
+            db.session.commit()
             return jsonify({
                 'status': 'success', 
-                'message': 'Booking created and automatically matched to patient',
-                'patient_id': patient.id
+                'message': 'Booking created and processed',
+                'matched': bool(patient)
             })
         
-        return jsonify({'status': 'success', 'message': 'Unmatched booking created'})
+        # --- Handle Invitee Cancellation --- 
+        elif event_type == 'invitee.canceled':
+            invitee = payload.get('invitee', {})
+            invitee_uri = invitee.get('uri')
+            cancellation_reason = invitee.get('cancellation', {}).get('reason', 'N/A')
+            canceler_name = invitee.get('cancellation', {}).get('canceled_by', 'Unknown')
+            
+            if not invitee_uri:
+                print("Webhook Error: invitee.canceled payload missing invitee.uri")
+                return jsonify({'status': 'error', 'message': 'Missing invitee URI in cancellation payload'}), 400
+            
+            print(f"Webhook Info: Processing cancellation for invitee URI: {invitee_uri}")
+            
+            # Find the corresponding treatment using the invitee URI
+            treatment_to_cancel = Treatment.query.filter_by(calendly_invitee_uri=invitee_uri).first()
+            
+            if treatment_to_cancel:
+                if treatment_to_cancel.status != 'Cancelled': # Avoid redundant updates
+                    old_status = treatment_to_cancel.status
+                    treatment_to_cancel.status = 'Cancelled'
+                    
+                    # Optionally, add a note about the cancellation
+                    cancellation_note = f"\n--- CANCELLATION (via Webhook) ---\
+Canceled by: {canceler_name}\
+Reason: {cancellation_reason}"
+                    treatment_to_cancel.notes = (treatment_to_cancel.notes or "") + cancellation_note
+                    
+                    db.session.commit()
+                    print(f"Webhook Success: Updated Treatment ID {treatment_to_cancel.id} status from '{old_status}' to Cancelled for invitee {invitee_uri}.")
+                    return jsonify({'status': 'success', 'message': 'Treatment status updated to Cancelled'})
+                else:
+                    print(f"Webhook Info: Treatment ID {treatment_to_cancel.id} already Cancelled for invitee {invitee_uri}. No action needed.")
+                    return jsonify({'status': 'ignored', 'reason': 'Treatment already cancelled'})
+            else:
+                # Treatment not found - maybe it was never matched or already deleted?
+                # Check if an UnmatchedCalendlyBooking exists for this URI (or UUID if URI not stored there)
+                # Assuming UnmatchedCalendlyBooking stores UUID in calendly_invitee_id
+                invitee_uuid = invitee_uri.split('/')[-1] # Extract UUID from URI
+                unmatched_booking = UnmatchedCalendlyBooking.query.filter_by(calendly_invitee_id=invitee_uuid).first()
+                
+                if unmatched_booking and unmatched_booking.status == 'Pending':
+                    # If the booking was pending and now cancelled, we can ignore or delete it
+                    unmatched_booking.status = 'Ignored' # Or db.session.delete(unmatched_booking)
+                    db.session.commit()
+                    print(f"Webhook Info: Marked Pending UnmatchedCalendlyBooking {unmatched_booking.id} (UUID: {invitee_uuid}) as Ignored due to cancellation.")
+                    return jsonify({'status': 'success', 'message': 'Pending unmatched booking marked as Ignored'})
+                else:
+                    print(f"Webhook Warning: No matching Treatment or Pending UnmatchedBooking found for cancelled invitee URI: {invitee_uri}")
+                    return jsonify({'status': 'ignored', 'reason': 'No active treatment or pending booking found for this invitee URI'})
+        
+        # --- Handle Other Event Types (Optional) --- 
+        else:
+            print(f"Webhook Info: Ignoring event type: {event_type}")
+            return jsonify({'status': 'ignored', 'reason': f'Event type {event_type} not handled'})
         
     except Exception as e:
         db.session.rollback()
-        print(f"Error in calendly_webhook: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        # Log the error thoroughly
+        import traceback
+        print(f"!!! Webhook Error: {str(e)}")
+        print(traceback.format_exc())
+        # Also log the raw request data if possible (be mindful of sensitive info)
+        try:
+            print(f"Webhook Raw Data: {request.data}")
+        except: # noqa
+            print("Webhook Raw Data: Could not read request data.")
+            
+        return jsonify({'status': 'error', 'message': 'Internal server error processing webhook'}), 500
 
 @api.route('/api/calendly/sync', methods=['POST'])
 def sync_calendly_appointments():
@@ -904,12 +1003,17 @@ def sync_calendly_appointments():
                 
                 if not existing_treatment:
                     # Create a new treatment record
+                    # Get the invitee URI from the Calendly event data fetched during the sync process.
+                    # Placeholder: Assume 'invitee_uri' is available from the synced event data.
+                    # Example: invitee_uri = synced_event_data.get('invitee_uri')
+
                     treatment = Treatment(
                         patient_id=patient.id,
-                        created_at=booking.start_time,
-                        treatment_type=booking.event_type,
+                        created_at=booking.start_time, # Or use synced_event_data['start_time']
+                        treatment_type=booking.event_type, # Or use synced_event_data['event_type']
                         status="Scheduled",
-                        notes=f"Linked to Calendly booking. Matched by admin user."
+                        notes=f"Linked to Calendly booking via sync.",
+                        # calendly_invitee_uri=invitee_uri # Uncomment and assign when invitee_uri is available
                     )
                     
                     db.session.add(treatment)
