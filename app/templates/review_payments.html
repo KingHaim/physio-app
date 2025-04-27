@@ -81,6 +81,12 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const tableBody = document.querySelector('#reviewPaymentsTable tbody');
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name=\"csrf-token\"]')?.content;
+
+    if (!csrfToken) {
+        console.error("CSRF token meta tag not found! Requests will likely fail.");
+    }
 
     if (tableBody) {
         tableBody.addEventListener('click', async function(event) {
@@ -117,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // Add CSRF token header if needed
+                    'X-CSRFToken': csrfToken // Include CSRF token header
                 },
                 body: JSON.stringify({ fee: feeValue })
             });
@@ -159,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                     // Add CSRF token header if needed
+                     'X-CSRFToken': csrfToken // Include CSRF token header
                 },
                 body: JSON.stringify({ payment_method: paymentMethod })
             });
