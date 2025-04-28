@@ -20,6 +20,7 @@
                                 <th>Patient Name</th>
                                 <th>Treatment Date</th>
                                 <th class="text-end">Fee Charged</th>
+                                <th class="text-center">Location</th>
                                 <th class="text-center">Payment Method</th>
                                 <th class="text-center">Actions</th>
                             </tr>
@@ -30,7 +31,7 @@
                                 <td>
                                     <a href="{{ url_for('main.patient_detail', id=treatment.patient.id) }}">{{ treatment.patient.name }}</a>
                                 </td>
-                                <td>{{ treatment.created_at.strftime('%Y-%m-%d') if treatment.created_at else 'N/A' }}</td>
+                                <td>{{ treatment.created_at.strftime('%d %b %y') if treatment.created_at else 'N/A' }}</td>
                                 <td class="text-end fee-cell">
                                     {% if treatment.fee_charged is not none and treatment.fee_charged > 0 %}
                                         £{{ "{:,.2f}".format(treatment.fee_charged) }}
@@ -40,6 +41,20 @@
                                             <input type="text" inputmode="decimal" class="form-control fee-input" placeholder="Amount" aria-label="Fee Amount">
                                             <button class="btn btn-outline-success save-fee-btn" type="button" data-treatment-id="{{ treatment.id }}"><i class="bi bi-check-lg"></i></button>
                                         </div>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center location-cell">
+                                    {% if treatment.location %}
+                                        {{ treatment.location }}
+                                    {% else %}
+                                         <div class="btn-group btn-group-sm" role="group">
+                                             <button class="btn btn-outline-info set-location-btn" data-treatment-id="{{ treatment.id }}" data-location-value="CostaSpine Clinic">
+                                                 <i class="bi bi-hospital"></i> CostaSpine
+                                             </button>
+                                             <button class="btn btn-outline-secondary set-location-btn" data-treatment-id="{{ treatment.id }}" data-location-value="Home Visit">
+                                                 <i class="bi bi-house-door"></i> Home Visit
+                                             </button>
+                                         </div>
                                     {% endif %}
                                 </td>
                                 <td class="text-center payment-cell">
@@ -81,7 +96,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const tableBody = document.querySelector('#reviewPaymentsTable tbody');
-    // Get CSRF token from meta tag
     const csrfToken = document.querySelector('meta[name=\"csrf-token\"]')?.content;
 
     if (!csrfToken) {
@@ -92,11 +106,14 @@ document.addEventListener('DOMContentLoaded', function() {
         tableBody.addEventListener('click', async function(event) {
             const saveFeeButton = event.target.closest('.save-fee-btn');
             const setPaymentButton = event.target.closest('.set-payment-btn');
+            const setLocationButton = event.target.closest('.set-location-btn');
 
             if (saveFeeButton) {
                 await handleSaveFee(saveFeeButton);
             } else if (setPaymentButton) {
                 await handleSetPayment(setPaymentButton);
+            } else if (setLocationButton) {
+                await handleSetLocation(setLocationButton);
             }
         });
     }
@@ -114,7 +131,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Disable button and show spinner
         button.disabled = true;
         button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
 
@@ -123,17 +139,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken // Include CSRF token header
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({ fee: feeValue })
             });
-
             const data = await response.json();
-
             if (response.ok && data.success) {
-                // Update cell content
                 feeCell.innerHTML = `£${data.new_fee.toFixed(2)}`;
-                // Check if row can be removed
                 checkAndRemoveRow(row);
             } else {
                 throw new Error(data.message || `HTTP error ${response.status}`);
@@ -141,7 +153,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error setting fee:', error);
             alert(`Failed to set fee: ${error.message}`);
-            // Restore button state
             button.disabled = false;
             button.innerHTML = `<i class="bi bi-check-lg"></i>`;
         }
@@ -154,72 +165,108 @@ document.addEventListener('DOMContentLoaded', function() {
         const paymentCell = row.querySelector('.payment-cell');
         const buttonGroup = button.closest('.btn-group');
 
-        // Disable buttons in the group
         buttonGroup.querySelectorAll('.set-payment-btn').forEach(btn => btn.disabled = true);
-        const originalButtonHtml = button.innerHTML; // Store original HTML of the clicked button
+        const originalButtonHtml = button.innerHTML;
         button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Setting...`;
-
 
         try {
             const response = await fetch(`/api/treatment/${treatmentId}/set-payment`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                     'X-CSRFToken': csrfToken // Include CSRF token header
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({ payment_method: paymentMethod })
+            });
+            const data = await response.json();
+            if (response.ok && data.success) {
+                paymentCell.innerHTML = paymentMethod;
+                checkAndRemoveRow(row);
+            } else {
+                throw new Error(data.message || `HTTP error ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Error setting payment method:', error);
+            alert(`Failed to set payment method: ${error.message}`);
+            buttonGroup.querySelectorAll('.set-payment-btn').forEach(btn => btn.disabled = false);
+            button.innerHTML = originalButtonHtml;
+        }
+    }
+
+    async function handleSetLocation(button) {
+        const treatmentId = button.dataset.treatmentId;
+        const locationValue = button.dataset.locationValue;
+        const row = document.getElementById(`treatment-row-${treatmentId}`);
+        const locationCell = row.querySelector('.location-cell');
+        const feeCell = row.querySelector('.fee-cell');
+        const buttonGroup = button.closest('.btn-group');
+
+        buttonGroup.querySelectorAll('.set-location-btn').forEach(btn => btn.disabled = true);
+        const originalButtonHtml = button.innerHTML;
+        button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Setting...`;
+
+        try {
+            const response = await fetch(`/api/treatment/${treatmentId}/set-location`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ location: locationValue })
             });
 
             const data = await response.json();
 
              if (response.ok && data.success) {
-                // Update cell content
-                paymentCell.innerHTML = paymentMethod; // Display the set payment method
-                // Check if row can be removed
+                locationCell.innerHTML = data.location;
+                
+                if (data.auto_set_fee !== undefined && data.auto_set_fee !== null) {
+                    if (feeCell.querySelector('.input-group')) {
+                         feeCell.innerHTML = `£${data.auto_set_fee.toFixed(2)}`;
+                    }
+                }
+
                 checkAndRemoveRow(row);
             } else {
                  throw new Error(data.message || `HTTP error ${response.status}`);
             }
         } catch (error) {
-            console.error('Error setting payment method:', error);
-            alert(`Failed to set payment method: ${error.message}`);
-            // Restore button state only for the clicked button
-            buttonGroup.querySelectorAll('.set-payment-btn').forEach(btn => btn.disabled = false);
-            button.innerHTML = originalButtonHtml; // Restore original HTML
+            console.error('Error setting location:', error);
+            alert(`Failed to set location: ${error.message}`);
+            buttonGroup.querySelectorAll('.set-location-btn').forEach(btn => btn.disabled = false);
+            button.innerHTML = originalButtonHtml;
         }
     }
 
     function checkAndRemoveRow(row) {
         const feeCell = row.querySelector('.fee-cell');
         const paymentCell = row.querySelector('.payment-cell');
+        const locationCell = row.querySelector('.location-cell');
 
-        // Check if fee is present (not an input group) and positive
         const hasFee = !feeCell.querySelector('.input-group') && feeCell.textContent.includes('£') && parseFloat(feeCell.textContent.replace('£','').replace(',','')) > 0;
-        // Check if payment method is present (not a button group)
         const hasPayment = !paymentCell.querySelector('.btn-group');
+        const hasLocation = !locationCell.querySelector('.btn-group');
 
-        console.log(`Checking row ${row.id}: hasFee=${hasFee}, hasPayment=${hasPayment}`); // Debug
+        console.log(`Checking row ${row.id}: hasFee=${hasFee}, hasLocation=${hasLocation}, hasPayment=${hasPayment}`);
 
-        if (hasFee && hasPayment) {
-            console.log(`Removing row ${row.id}`); // Debug
+        if (hasFee && hasPayment && hasLocation) {
+            console.log(`Removing row ${row.id}`);
             row.style.transition = 'opacity 0.5s ease-out';
             row.style.opacity = '0';
             setTimeout(() => {
                 row.remove();
-                // Check if table is empty
-                 if (tableBody.rows.length === 0) {
+                if (tableBody.rows.length === 0) {
                     const table = document.getElementById('reviewPaymentsTable');
                     const cardBody = table.closest('.card-body');
                     if(table && cardBody) {
-                        table.remove(); // Remove the table itself
-                        // Display success message within the card body
+                        table.remove(); 
                         cardBody.innerHTML = `
                             <div class="alert alert-success" role="alert">
                                 <i class="bi bi-check-circle-fill"></i> All incomplete financial details have been reviewed!
                             </div>`;
                     }
                  }
-            }, 500); // Match transition duration
+            }, 500);
         }
     }
 });
