@@ -17,6 +17,7 @@ from werkzeug.security import generate_password_hash
 import functools # Import functools for wraps
 import requests
 import pytz # <<< Import pytz
+import traceback # Add traceback import
 
 # Define timezones
 UTC = pytz.utc
@@ -330,15 +331,22 @@ def patient_detail(id):
 @login_required
 @physio_required # <<< ADD DECORATOR
 def add_treatment(patient_id):
+    print("--- add_treatment route START ---")
     # Get form data
     treatment_type = request.form.get('treatment_type')
+    print(f"DEBUG: treatment_type = {treatment_type}")
     assessment = request.form.get('assessment')
+    print(f"DEBUG: assessment = {assessment}")
     notes = request.form.get('notes')
+    print(f"DEBUG: notes = {notes}")
     status = request.form.get('status')
+    print(f"DEBUG: status = {status}")
     provider = request.form.get('provider')
+    print(f"DEBUG: provider = {provider}")
     
     # --- Location Logic ---
     location = request.form.get('location')
+    print(f"DEBUG: location from form = {location}")
     sync_with_calendly = request.form.get('sync_with_calendly') == 'true' # Check if Calendly sync enabled
     
     if not location or location.strip() == "": # If no location explicitly provided
@@ -353,53 +361,75 @@ def add_treatment(patient_id):
     # --- End Location Logic ---
     
     # Get optional fields
-    pain_level = request.form.get('pain_level')
-    if pain_level:  # Only convert to int if a value was provided
-        pain_level = int(pain_level)
+    pain_level_str = request.form.get('pain_level')
+    print(f"DEBUG: pain_level from form = {pain_level_str}")
+    if pain_level_str and pain_level_str.strip() != '':  # Only convert to int if a value was provided
+        try:
+            pain_level = int(pain_level_str)
+        except ValueError:
+            print(f"WARNING: Could not convert pain_level '{pain_level_str}' to int. Setting to None.")
+            pain_level = None
     else:
         pain_level = None  # Set to None if not provided
+    print(f"DEBUG: Parsed pain_level = {pain_level}")
     
     movement_restriction = request.form.get('movement_restriction')
+    print(f"DEBUG: movement_restriction = {movement_restriction}")
     body_chart_url = request.form.get('body_chart_url')
+    print(f"DEBUG: body_chart_url = {body_chart_url}")
     
     # Get new financial fields (these might be set by the location logic or form)
     visit_type = request.form.get('visit_type') 
+    print(f"DEBUG: visit_type from form = {visit_type}")
     fee_str = request.form.get('fee_charged')
-    fee_charged = float(fee_str) if fee_str else None
+    print(f"DEBUG: fee_charged from form = {fee_str}")
+    try:
+        fee_charged = float(fee_str) if fee_str and fee_str.strip() != '' else None
+    except ValueError:
+        print(f"WARNING: Could not convert fee_charged '{fee_str}' to float. Setting to None.")
+        fee_charged = None
+    print(f"DEBUG: Parsed fee_charged = {fee_charged}")
     payment_method = request.form.get('payment_method')
+    print(f"DEBUG: payment_method from form = {payment_method}")
     
     # Get trigger points / evaluation data
     evaluation_data = None
     trigger_data_str = request.form.get('trigger_points_data') or request.form.get('evaluation_data')
+    print(f"DEBUG: trigger_points_data/evaluation_data from form = {trigger_data_str}")
     if trigger_data_str:
         try:
             evaluation_data = json.loads(trigger_data_str)
-        except json.JSONDecodeError:
+            print(f"DEBUG: Parsed evaluation_data: {evaluation_data}")
+        except json.JSONDecodeError as json_err:
+            print(f"ERROR: Invalid JSON for trigger points data for patient {patient_id}: {json_err}")
             flash('Error decoding trigger points data.', 'danger')
-            # Decide how to handle this - maybe redirect back with error?
-            # For now, just log and continue without trigger points
-            print(f"ERROR: Invalid JSON for trigger points data for patient {patient_id}")
-            evaluation_data = None # Ensure it's reset
+            evaluation_data = None 
     
     # Get date field if provided
     date_str = request.form.get('date')
+    print(f"DEBUG: Raw date from form: '{date_str}'")
     created_at = None
     if date_str:
         try:
-            # Try parsing Date first, then DateTime
-            try:
-                 created_at = datetime.strptime(date_str, '%Y-%m-%d')
-            except ValueError:
-                 # --- Fix Indentation --- Removed extra comment line
-                 created_at = datetime.strptime(date_str, '%Y-%m-%dT%H:%M')
-        except ValueError:
-            # If date parsing fails, use current datetime
-            flash('Invalid date format provided. Using current date/time.', 'warning')
+             created_at = datetime.strptime(date_str, '%Y-%m-%dT%H:%M')
+             print(f"DEBUG: Parsed date as datetime: {created_at}")
+        except ValueError as date_err:
+            print(f"ERROR: Could not parse date string '{date_str}': {date_err}")
+            # Correctly format the f-string for the flash message
+            flash(f"Invalid date format ('{date_str}'). Using current date/time.", 'warning') 
             created_at = datetime.now()
     else:
+        print("DEBUG: No date string provided, using current datetime.")
         created_at = datetime.now()
     
-    # Create new treatment
+    # --- Validation --- 
+    if not treatment_type:
+        print("ERROR: treatment_type is missing or empty!")
+        flash('Treatment Type is required.', 'danger')
+        return redirect(url_for('main.patient_detail', id=patient_id))
+        
+    # Create new treatment object (before adding to session)
+    print("DEBUG: Creating Treatment object...")
     treatment = Treatment(
         patient_id=patient_id,
         treatment_type=treatment_type,
@@ -407,55 +437,86 @@ def add_treatment(patient_id):
         notes=notes,
         status=status,
         provider=provider,
-        pain_level=pain_level,  # This can be None
+        pain_level=pain_level,  
         movement_restriction=movement_restriction,
         body_chart_url=body_chart_url,
         created_at=created_at,
-        evaluation_data=evaluation_data,  # Add the evaluation_data
-        location=location,                # Add determined location
-        visit_type=visit_type,            # Add visit type
-        fee_charged=fee_charged,          # Add fee
-        payment_method=payment_method     # Add payment method
+        evaluation_data=evaluation_data,  
+        location=location,               
+        visit_type=visit_type,            
+        fee_charged=fee_charged,          
+        payment_method=payment_method     
     )
+    print(f"DEBUG: Treatment object created: {treatment.__dict__}") # Log object state
     
-    db.session.add(treatment)
-    # Commit here to get treatment.id for trigger points
+    # --- Add and commit treatment and trigger points within a try/except block ---
     try:
-        # --- Fix Indentation --- Removed extra comment line
-        db.session.commit()
-    except Exception as e: # Added except block
-        db.session.rollback()
-        flash(f'Error adding treatment: {e}', 'danger')
-        return redirect(url_for('main.patient_detail', id=patient_id)) # Redirect back on error
-    
-    # If we have trigger points data, create those records too
-    if evaluation_data and isinstance(evaluation_data, list): # Ensure it's a list
-        try:
-            # --- Fix Indentation Start --- Removed extra comment line
+        print("DEBUG: Adding treatment to session...")
+        db.session.add(treatment)
+        print("DEBUG: Committing treatment...")
+        db.session.commit() # First commit for the treatment itself
+        print(f"DEBUG: Treatment committed successfully. ID: {treatment.id}")
+        
+        # If we have trigger points data, create those records too after the treatment is saved
+        if evaluation_data and isinstance(evaluation_data, list):
+            print(f"DEBUG: Processing {len(evaluation_data)} trigger points...")
             for point_data in evaluation_data:
-                if isinstance(point_data, dict): # Check if item is a dictionary
+                if isinstance(point_data, dict):
+                    # Add more robust default handling and type checking
+                    intensity_val = None
+                    intensity_str = point_data.get('intensity')
+                    if intensity_str and str(intensity_str).strip() != '':
+                        try: 
+                           intensity_val = int(intensity_str)
+                        except (ValueError, TypeError):
+                           print(f"WARNING: Could not convert intensity '{intensity_str}' to int for point {point_data.get('id')}")
+                    
+                    location_x_val = 0.0
+                    location_x_str = point_data.get('x')
+                    if location_x_str is not None:
+                       try:
+                           location_x_val = float(location_x_str)
+                       except (ValueError, TypeError):
+                           print(f"WARNING: Could not convert location_x '{location_x_str}' to float for point {point_data.get('id')}")
+                    
+                    location_y_val = 0.0
+                    location_y_str = point_data.get('y')
+                    if location_y_str is not None:
+                        try:
+                            location_y_val = float(location_y_str)
+                        except (ValueError, TypeError):
+                            print(f"WARNING: Could not convert location_y '{location_y_str}' to float for point {point_data.get('id')}")
+
                     trigger_point = TriggerPoint(
                         treatment_id=treatment.id,
-                        location_x=float(point_data.get('x', 0)), # Use .get with default
-                        location_y=float(point_data.get('y', 0)), # Use .get with default
-                        type=point_data.get('type', 'unknown'),   # Use .get with default
+                        location_x=location_x_val,
+                        location_y=location_y_val,
+                        type=point_data.get('type', 'unknown'),
                         muscle=point_data.get('muscle', ''),
-                        intensity=int(point_data['intensity']) if point_data.get('intensity') else None,
+                        intensity=intensity_val,
                         symptoms=point_data.get('symptoms', ''),
                         referral_pattern=point_data.get('referral', '')
                     )
+                    print(f"DEBUG: Adding TriggerPoint object: {trigger_point.__dict__}")
                     db.session.add(trigger_point)
-            db.session.commit() # Commit trigger points
-            # --- Fix Indentation End --- Removed extra comment line
-        except Exception as e: # Added except block
-            db.session.rollback() # Rollback trigger points if error
-            # Optionally delete the treatment itself or leave it without points?
-            # Let's leave the treatment but flash an error about points
-            flash(f'Treatment added, but failed to save trigger points: {e}', 'warning')
-            print(f"ERROR: Failed adding trigger points for treatment {treatment.id}: {e}")
-    
-    flash('Treatment added successfully', 'success')
-    return redirect(url_for('main.patient_detail', id=patient_id))
+            print("DEBUG: Committing trigger points...")
+            db.session.commit() # Second commit for trigger points
+            print("DEBUG: Trigger points committed.")
+        
+        flash('Treatment added successfully', 'success')
+        print("--- add_treatment route END (Success) ---")
+        return redirect(url_for('main.patient_detail', id=patient_id))
+
+    except Exception as e:
+        db.session.rollback() # Rollback any potential partial changes
+        # Log the exception with traceback
+        tb_str = traceback.format_exc()
+        current_app.logger.error(f"!!! ERROR in add_treatment for patient {patient_id} !!!\n{tb_str}")
+        flash('An internal error occurred while adding the treatment. Please try again later.', 'danger') # Generic message
+        print("--- add_treatment route END (Error) ---") # Keep print here for server log clarity on error path
+        # Return a specific error response instead of redirect might be better for AJAX?
+        # But since the JS expects a reload on success, redirect on error might be okay for now.
+        return redirect(url_for('main.patient_detail', id=patient_id))
 
 @main.route('/patient/<int:patient_id>/recurring/new', methods=['GET', 'POST'])
 @login_required
