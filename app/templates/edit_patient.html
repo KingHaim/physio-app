@@ -18,6 +18,7 @@
                 </div>
                 <div class="card-body">
                     <form action="{{ url_for('main.edit_patient', id=patient.id) }}" method="POST">
+                        {{ csrf_token() }}
                         <div class="row">
                             <!-- Personal Information Section -->
                             <div class="col-md-6">

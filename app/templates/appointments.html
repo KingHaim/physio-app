@@ -165,6 +165,7 @@
             </div>
             <div class="modal-body">
                 <form id="appointmentForm" method="POST">
+                    {{ csrf_token() }}
                     <div class="mb-3">
                         <label class="form-label">Patient</label>
                         <select class="form-select" name="patient_id" required>
