@@ -23,7 +23,9 @@
                     </div>
                     
                     <form action="{{ url_for('main.edit_treatment', id=treatment.id) }}" method="POST" id="editTreatmentForm">
-                        {{ csrf_token() }}
+                        {# Correctly place the token in a hidden input #}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
                         {# Hidden inputs remain part of the form #}
                         <input type="hidden" id="location" name="location" value="{{ treatment.location or '' }}">
                         <input type="hidden" id="visit_type" name="visit_type" value="{{ treatment.visit_type or '' }}">
