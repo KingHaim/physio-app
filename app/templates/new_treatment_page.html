@@ -19,11 +19,14 @@
                 <div class="card-body">
                     
                     <form action="{{ url_for('main.add_treatment', patient_id=patient.id) }}" method="POST" id="newTreatmentForm">
-                        {# Hidden inputs remain part of the form #}
+                        {# Use the explicitly passed token value #}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+                        
+                        {# Other hidden inputs remain #}
                         <input type="hidden" id="location" name="location" value="">
                         <input type="hidden" id="visit_type" name="visit_type" value="">
                         <input type="hidden" id="payment_method" name="payment_method" value="">
-                        <input type="hidden" id="triggerPointsData" name="trigger_points_data" value="[]"> {# Ensure TP data input is here #}
+                        <input type="hidden" id="triggerPointsData" name="trigger_points_data" value="[]"> 
 
                         {# Tab Navigation #}
                         <ul class="nav nav-tabs mb-3" id="treatmentTab" role="tablist">

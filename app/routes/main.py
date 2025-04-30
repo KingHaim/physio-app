@@ -2,7 +2,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response, current_app, session, send_file
 from datetime import datetime, timedelta, date, time
 from calendar import monthrange, day_name # Import day_name
-from sqlalchemy import func, extract, or_, case, cast, Float
+from sqlalchemy import func, extract, or_, case, cast, Float, exc # Add exc import
 from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport, RecurringAppointment, User, PracticeReport  # Added PracticeReport
 import json
 from app.utils import mark_past_treatments_as_completed, mark_inactive_patients
@@ -18,6 +18,8 @@ import functools # Import functools for wraps
 import requests
 import pytz # <<< Import pytz
 import traceback # Add traceback import
+from flask_wtf import FlaskForm # Import FlaskForm
+from flask_wtf.csrf import generate_csrf # Import generate_csrf
 
 # Define timezones
 UTC = pytz.utc
@@ -1279,11 +1281,16 @@ def new_treatment_page(patient_id):
     ).first() is not None
     print(f"DEBUG: Patient {patient_id} has past treatments (for new page): {has_past_treatments}")
     
-    # Pass patient, now, and the flag to the template
+    # --- Explicitly generate CSRF token ---
+    csrf_token_value = generate_csrf()
+    # -------------------------------------
+    
+    # Pass patient, now, the flag, AND THE EXPLICIT TOKEN to the template
     return render_template('new_treatment_page.html', 
                           patient=patient, 
                           now=now,
-                          has_past_treatments=has_past_treatments)
+                          has_past_treatments=has_past_treatments,
+                          csrf_token_value=csrf_token_value) # Pass explicit token
 
 @main.route('/admin/fix-calendly-dates')
 @login_required # Assuming only logged-in users (likely physio/admin) should access
