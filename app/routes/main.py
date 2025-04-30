@@ -1010,10 +1010,12 @@ def review_calendly_bookings():
 def edit_treatment(id):
     treatment = Treatment.query.get_or_404(id)
     patient = treatment.patient
+    # REMOVED form instantiation
     
     print(f"DEBUG: Raw treatment.evaluation_data for ID {id}: {treatment.evaluation_data!r}") 
     
     if request.method == 'POST':
+        # --- POST request logic starts here ---
         # Update date field
         if request.form.get('date'):
             treatment.created_at = datetime.strptime(request.form['date'], '%Y-%m-%d')
@@ -1034,18 +1036,15 @@ def edit_treatment(id):
             
         treatment.status = request.form['status']
         
-        # Handle created_at
-        if request.form.get('created_at'):
-            treatment.created_at = datetime.strptime(
-                request.form['created_at'], '%Y-%m-%d'
-            )
-        else:
-            # Don't set to None if not provided, keep existing value
-            pass
+        # Handle created_at (Seems redundant if date is handled above? Check logic if needed)
+        # if request.form.get('created_at'):
+        #     treatment.created_at = datetime.strptime(
+        #         request.form['created_at'], '%Y-%m-%d'
+        #     )
             
         # Handle pain level if provided
         if request.form.get('pain_level'):
-            treatment.pain_level = int(request.form['pain_level'])
+            treatment.pain_level = int(request.form['pain_level']) # Consider adding try-except for int conversion
             
         # Handle movement restriction if provided
         if request.form.get('movement_restriction'):
@@ -1055,82 +1054,73 @@ def edit_treatment(id):
         treatment.location = request.form.get('location')
         treatment.visit_type = request.form.get('visit_type')
         fee_str = request.form.get('fee_charged')
-        treatment.fee_charged = float(fee_str) if fee_str else None
+        try:
+             treatment.fee_charged = float(fee_str) if fee_str else None
+        except (ValueError, TypeError):
+             flash(f'Invalid fee format: {fee_str}', 'warning')
+             treatment.fee_charged = None # Or keep old value?
         treatment.payment_method = request.form.get('payment_method')
         
         # Handle trigger points data
         if request.form.get('trigger_points_data'):
             trigger_data_string = request.form.get('trigger_points_data')
-            print(f"DEBUG: Received trigger_points_data: {trigger_data_string}") # Keep for server log
+            print(f"DEBUG: Received trigger_points_data: {trigger_data_string}") 
             try:
-                treatment.evaluation_data = json.loads(trigger_data_string)
+                new_evaluation_data = json.loads(trigger_data_string)
+                if not isinstance(new_evaluation_data, list):
+                     raise ValueError("Evaluation data must be a list.")
+                
+                treatment.evaluation_data = new_evaluation_data
                 
                 # Update or create trigger points in the database
                 TriggerPoint.query.filter_by(treatment_id=treatment.id).delete()
                 for point_data in treatment.evaluation_data:
+                    # Add more robust validation/conversion here if needed
                     trigger_point = TriggerPoint(
                         treatment_id=treatment.id,
-                        location_x=float(point_data['x']),
-                        location_y=float(point_data['y']),
-                        type=point_data['type'],
+                        location_x=float(point_data['x']), # Add try-except
+                        location_y=float(point_data['y']), # Add try-except
+                        type=point_data.get('type', 'unknown'),
                         muscle=point_data.get('muscle', ''),
-                        intensity=int(point_data['intensity']) if point_data.get('intensity') else None,
+                        intensity=int(point_data['intensity']) if point_data.get('intensity') else None, # Add try-except
                         symptoms=point_data.get('symptoms', ''),
                         referral_pattern=point_data.get('referral', '')
                     )
                     db.session.add(trigger_point)
-                # Note: Trigger points are committed in the final try block below
-            except json.JSONDecodeError as e:
-                # Log the error and the problematic string to the error log
-                print(f"ERROR: JSONDecodeError processing trigger points for treatment {id}")
+                
+            except (json.JSONDecodeError, ValueError, TypeError) as e: # Catch potential errors
+                print(f"ERROR: Processing trigger points for treatment {id}: {e}")
                 print(f"ERROR_STRING: {trigger_data_string}")
-                print(f"ERROR_DETAILS: {e}")
-                flash('Error processing trigger point data. Please check the format or report this issue.', 'danger')
-                db.session.rollback()
-                original_treatment_data = Treatment.query.get(id) # Get original data again after rollback
+                flash('Error processing trigger point data. Please check format.', 'danger')
+                db.session.rollback() # Rollback changes made so far in the POST
+                # --- Explicitly generate CSRF token for re-render ---
+                csrf_token_value_on_post_error = generate_csrf()
+                # ---------------------------------------------------
+                # Re-render form with original data (or potentially partially updated data before rollback)
+                original_treatment_data = Treatment.query.get(id) # Re-fetch original state
+                has_past_treatments_on_error = db.session.query(Treatment.id).filter(Treatment.patient_id == patient.id, Treatment.id != id).first() is not None
+                # REMOVE passing form or csrf_token_value
                 return render_template('edit_treatment.html',
-                                      treatment={ # Rebuild the context for the template
-                                          'id': treatment.id,
-                                          'created_at': treatment.created_at,
-                                          'description': treatment.treatment_type,
-                                          'progress_notes': treatment.notes,
-                                          'status': treatment.status,
-                                          'pain_level': treatment.pain_level,
-                                          'movement_restriction': treatment.movement_restriction,
-                                          'location': treatment.location,
-                                          'visit_type': treatment.visit_type,
-                                          'fee_charged': treatment.fee_charged,
-                                          'payment_method': treatment.payment_method,
-                                          'evaluation_data': original_treatment_data.evaluation_data if original_treatment_data else [], # Use original data
-                                          'trigger_points': treatment.trigger_points,
-                                          'body_chart_url': treatment.body_chart_url
+                                      treatment={ # Use original data if possible
+                                          'id': original_treatment_data.id,
+                                          'created_at': original_treatment_data.created_at,
+                                          'description': original_treatment_data.treatment_type,
+                                          'progress_notes': original_treatment_data.notes,
+                                          'status': original_treatment_data.status,
+                                          'pain_level': original_treatment_data.pain_level,
+                                          'movement_restriction': original_treatment_data.movement_restriction,
+                                          'location': original_treatment_data.location,
+                                          'visit_type': original_treatment_data.visit_type,
+                                          'fee_charged': original_treatment_data.fee_charged,
+                                          'payment_method': original_treatment_data.payment_method,
+                                          'evaluation_data': original_treatment_data.evaluation_data,
+                                          'trigger_points': original_treatment_data.trigger_points,
+                                          'body_chart_url': original_treatment_data.body_chart_url
                                       },
-                                      patient=patient)
-            except Exception as e: # Catch other potential errors during trigger point processing
-                print(f"ERROR: Unexpected error processing trigger points for treatment {id}: {e}")
-                flash('An unexpected error occurred while processing trigger points.', 'danger')
-                db.session.rollback()
-                original_treatment_data = Treatment.query.get(id)
-                return render_template('edit_treatment.html',
-                                      treatment={
-                                          'id': treatment.id,
-                                          'created_at': treatment.created_at,
-                                          'description': treatment.treatment_type,
-                                          'progress_notes': treatment.notes,
-                                          'status': treatment.status,
-                                          'pain_level': treatment.pain_level,
-                                          'movement_restriction': treatment.movement_restriction,
-                                          'location': treatment.location,
-                                          'visit_type': treatment.visit_type,
-                                          'fee_charged': treatment.fee_charged,
-                                          'payment_method': treatment.payment_method,
-                                          'evaluation_data': original_treatment_data.evaluation_data if original_treatment_data else [],
-                                          'trigger_points': treatment.trigger_points,
-                                          'body_chart_url': treatment.body_chart_url
-                                      },
-                                      patient=patient)
-        
-        # Final commit for all changes (basic info + trigger points if processed)
+                                      patient=patient,
+                                      has_past_treatments=has_past_treatments_on_error)
+
+        # Final commit for all changes (if no trigger point errors occurred)
         try:
             db.session.commit()
             flash(f'Treatment session on {treatment.created_at.strftime("%Y-%m-%d")} updated successfully!', 'success')
@@ -1138,9 +1128,14 @@ def edit_treatment(id):
             db.session.rollback()
             flash('Error saving treatment changes. Please try again.', 'danger')
             print(f"Error committing changes for treatment {id}: {e}")
-            # Re-render the edit form if commit fails
+            # --- Explicitly generate CSRF token for re-render ---
+            csrf_token_value_on_commit_error = generate_csrf()
+            # ---------------------------------------------------
+            # Re-render the edit form if commit fails - pass current (potentially unsaved) data
+            has_past_treatments_on_error_commit = db.session.query(Treatment.id).filter(Treatment.patient_id == patient.id, Treatment.id != id).first() is not None
+            # REMOVE passing form or csrf_token_value
             return render_template('edit_treatment.html',
-                                  treatment={ # Rebuild context
+                                  treatment={ 
                                       'id': treatment.id,
                                       'created_at': treatment.created_at,
                                       'description': treatment.treatment_type,
@@ -1152,15 +1147,16 @@ def edit_treatment(id):
                                       'visit_type': treatment.visit_type,
                                       'fee_charged': treatment.fee_charged,
                                       'payment_method': treatment.payment_method,
-                                      'evaluation_data': treatment.evaluation_data,
+                                      'evaluation_data': treatment.evaluation_data, # Show potentially invalid data that failed save
                                       'trigger_points': treatment.trigger_points,
                                       'body_chart_url': treatment.body_chart_url
                                   },
-                                  patient=patient)
+                                  patient=patient,
+                                  has_past_treatments=has_past_treatments_on_error_commit)
 
         return redirect(url_for('main.patient_detail', id=patient.id))
     
-    # --- GET Request Logic ---
+    # --- GET Request Logic --- (This runs when the page is first loaded)
     # Check if patient has other treatments besides this one
     has_past_treatments = db.session.query(Treatment.id).filter(
         Treatment.patient_id == patient.id, 
@@ -1201,10 +1197,14 @@ def edit_treatment(id):
         'body_chart_url': treatment.body_chart_url
     }
 
+    # --- Explicitly generate CSRF token for GET request ---
+    csrf_token_value_on_get = generate_csrf()
+    # -----------------------------------------------------
+
     return render_template('edit_treatment.html', 
                           treatment=template_context, 
                           patient=patient,
-                          has_past_treatments=has_past_treatments) # Pass the flag
+                          has_past_treatments=has_past_treatments)
 
 @main.route('/treatment/<int:id>/view')
 @login_required

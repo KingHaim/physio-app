@@ -1348,23 +1348,108 @@ def set_treatment_payment_method(id):
 @login_required
 def set_treatment_fee(id):
     """Sets the fee for a specific treatment."""
+    print(f"--- set_treatment_fee START for ID: {id} ---") # Log start
     treatment = Treatment.query.get_or_404(id)
-    data = request.get_json()
-    
+    data = None # Initialize data
+    try:
+        # Log raw data if possible (might be empty if not JSON)
+        raw_data = request.get_data(as_text=True)
+        print(f"Raw request data: {raw_data}")
+        # Try getting JSON
+        data = request.get_json()
+        print(f"Parsed JSON data: {data}")
+    except Exception as json_err:
+        print(f"!!! Error parsing JSON: {json_err} !!!")
+        # Return a specific error if JSON parsing fails
+        return jsonify({'success': False, 'message': f'Invalid request format: {json_err}'}), 400
+
     if not data or 'fee' not in data:
+        print("Missing 'fee' key in JSON data.")
         return jsonify({'success': False, 'message': 'Missing fee amount in request.'}), 400
         
+    fee_input = data['fee']
+    print(f"Fee value received: {fee_input} (Type: {type(fee_input)})")
+
     try:
-        fee_value = float(data['fee'])
+        fee_value = float(fee_input)
+        print(f"Fee value successfully converted to float: {fee_value}")
         if fee_value < 0:
+             print("Fee value is negative.")
              return jsonify({'success': False, 'message': 'Fee cannot be negative.'}), 400
              
         treatment.fee_charged = fee_value
         db.session.commit()
+        print(f"Fee successfully updated in DB for treatment {id}")
         return jsonify({'success': True, 'message': 'Fee updated successfully.', 'new_fee': fee_value})
     except ValueError:
+         print(f"ValueError converting fee '{fee_input}' to float.")
          return jsonify({'success': False, 'message': 'Invalid fee amount provided.'}), 400
     except Exception as e:
         db.session.rollback()
-        print(f"Error setting fee for treatment {id}: {e}")
+        print(f"!!! UNEXPECTED Error setting fee for treatment {id}: {e} !!!")
+        return jsonify({'success': False, 'message': 'An internal error occurred.'}), 500
+
+# --- API Endpoint to Set Location (and potentially auto-set fee) ---
+@api.route('/api/treatment/<int:id>/set-location', methods=['POST'])
+@login_required
+def set_treatment_location(id):
+    """Sets the location for a specific treatment. 
+       If location is 'CostaSpine Clinic', automatically sets the fee based on patient history.
+    """
+    print(f"--- set_treatment_location START for ID: {id} ---")
+    treatment = Treatment.query.options(db.joinedload(Treatment.patient)).get_or_404(id)
+    patient_id = treatment.patient_id
+    data = None
+    auto_set_fee = None # To return the fee if auto-set
+
+    try:
+        data = request.get_json()
+        print(f"Parsed JSON data: {data}")
+        location_value = data.get('location')
+
+        if not location_value or location_value not in ['CostaSpine Clinic', 'Home Visit']:
+            print("Invalid or missing location value.")
+            return jsonify({'success': False, 'message': 'Invalid or missing location.'}), 400
+
+        # Set the location
+        treatment.location = location_value
+        print(f"Location set to: {location_value}")
+
+        # --- Auto-Fee Logic for CostaSpine Clinic ---
+        if location_value == 'CostaSpine Clinic':
+            # Find the earliest treatment for this specific patient
+            earliest_patient_treatment = Treatment.query.filter_by(patient_id=patient_id).order_by(Treatment.created_at.asc(), Treatment.id.asc()).first()
+            earliest_treatment_id = earliest_patient_treatment.id if earliest_patient_treatment else None
+
+            # Set fee based on whether it's the patient's absolute earliest treatment
+            if earliest_treatment_id is not None and treatment.id == earliest_treatment_id:
+                treatment.fee_charged = 80.00
+                auto_set_fee = 80.00
+                print(f"Auto-setting fee to 80 for treatment {treatment.id} (earliest)")
+            else:
+                treatment.fee_charged = 70.00
+                auto_set_fee = 70.00
+                print(f"Auto-setting fee to 70 for treatment {treatment.id}")
+        # --- End Auto-Fee Logic ---
+
+        db.session.commit()
+        print(f"Location and potentially fee updated in DB for treatment {id}")
+        
+        response_data = {
+            'success': True, 
+            'message': 'Location updated successfully.',
+            'location': treatment.location # Return the set location
+        }
+        # Include the auto-set fee in the response if it was set
+        if auto_set_fee is not None:
+            response_data['auto_set_fee'] = auto_set_fee
+            response_data['message'] += f' Fee automatically set to £{auto_set_fee:.2f}.'
+        
+        return jsonify(response_data)
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"!!! UNEXPECTED Error setting location for treatment {id}: {e} !!!")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': 'An internal error occurred.'}), 500

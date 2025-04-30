@@ -410,12 +410,18 @@
                     </div>
                     <div class="mb-3">
                         <label for="treatment_type" class="form-label">Treatment Type</label>
-                        <input type="text" class="form-control" id="treatment_type" name="treatment_type">
+                        <input type="text" class="form-control" id="treatment_type" name="treatment_type" required>
                     </div>
                     <div class="mb-3">
                         <label for="provider" class="form-label">Provider</label>
                         <input type="text" class="form-control" id="provider" name="provider">
                     </div>
+
+                    {# ADDED Hidden fields for pre-filled data #}
+                    <input type="hidden" id="location" name="location">
+                    <input type="hidden" id="visit_type" name="visit_type">
+                    <input type="hidden" id="fee_charged" name="fee_charged">
+                    {# Payment method is generally set after, so no hidden field needed here #}
                     
                     <!-- Calendly Integration Section -->
                     <div class="mb-3">
@@ -813,6 +819,9 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
                 // Submit form via AJAX
                 fetch(`/patient/${patientId}/treatment`, {
                     method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    },
                     body: formData
                 })
                 .then(response => {
@@ -957,27 +966,37 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
                 // Always set the current date and time when the modal is opened
                 const dateField = document.getElementById('date');
                 if (dateField) {
-                    dateField.value = new Date().toISOString().slice(0, 16);
+                    // Format for datetime-local input: YYYY-MM-DDTHH:MM
+                    const now = new Date();
+                    // Adjust for local timezone offset
+                    const timezoneOffset = now.getTimezoneOffset() * 60000; // offset in milliseconds
+                    const localISOTime = (new Date(now - timezoneOffset)).toISOString().slice(0, 16);
+                    dateField.value = localISOTime;
                 }
 
-                // Pre-fill financial fields based on visit history
-                const visitTypeSelect = newTreatmentModal.querySelector('#visit_type');
-                const feeChargedInput = newTreatmentModal.querySelector('#fee_charged');
-                const locationInput = newTreatmentModal.querySelector('#location');
+                // Pre-fill financial fields based on visit history by setting HIDDEN fields
+                const visitTypeHidden = newTreatmentModal.querySelector('#visit_type');
+                const feeChargedHidden = newTreatmentModal.querySelector('#fee_charged');
+                const locationHidden = newTreatmentModal.querySelector('#location');
                 
-                if (visitTypeSelect && feeChargedInput && locationInput) {
+                // Ensure the hidden fields exist before setting values
+                if (visitTypeHidden && feeChargedHidden && locationHidden) {
                     if (isFirstVisit === true) { // Explicit boolean check
-                        visitTypeSelect.value = 'Initial';
-                        feeChargedInput.value = '80.00';
-                        locationInput.value = 'CostaSpine Clinic'; // Default location
+                        visitTypeHidden.value = 'Initial';
+                        feeChargedHidden.value = '80.00';
+                        locationHidden.value = 'CostaSpine Clinic'; // Default location
+                        console.log("Setting hidden fields for First Visit: location=CostaSpine Clinic, visit_type=Initial, fee=80.00");
                     } else {
-                        visitTypeSelect.value = 'Follow-up';
-                        feeChargedInput.value = '70.00';
-                        locationInput.value = 'CostaSpine Clinic'; // Default location
+                        visitTypeHidden.value = 'Follow-up';
+                        feeChargedHidden.value = '70.00';
+                        locationHidden.value = 'CostaSpine Clinic'; // Default location
+                        console.log("Setting hidden fields for Follow-up Visit: location=CostaSpine Clinic, visit_type=Follow-up, fee=70.00");
                     }
+                } else {
+                    console.error("Could not find hidden input fields for location, visit_type, or fee_charged!");
                 }
                 
-                // Reset other fields 
+                // Reset other VISIBLE fields 
                 newTreatmentModal.querySelector('#treatment_type').value = '';
                 newTreatmentModal.querySelector('#pain_level').value = '';
                 newTreatmentModal.querySelector('#movement_restriction').value = '';
@@ -985,7 +1004,7 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
                 newTreatmentModal.querySelector('#notes').value = '';
                 newTreatmentModal.querySelector('#status').value = 'Scheduled'; // Default status
                 newTreatmentModal.querySelector('#provider').value = ''; 
-                newTreatmentModal.querySelector('#payment_method').value = ''; 
+                // newTreatmentModal.querySelector('#payment_method').value = ''; // No payment method input in modal
                 
                 // Reset trigger points
                 addTriggerPoints = []; // Assuming addTriggerPoints is accessible here
