@@ -226,8 +226,8 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-between">
                 <button class="btn btn-danger" onclick="confirmDelete({{ treatment.id|tojson }})">
-                            <i class="bi bi-trash"></i> Delete Treatment
-                        </button>
+                    <i class="bi bi-trash"></i> Delete Treatment
+                </button>
                 <div>
                     <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-secondary me-2">
                         <i class="bi bi-arrow-left"></i> Back to Patient
