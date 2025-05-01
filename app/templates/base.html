@@ -348,7 +348,26 @@
                  z-index: 1030; /* Below sidebar, above content */
             }
         }
+
+        @media (max-width: 575.98px) { /* Changed from 768px to apply only on xs screens */
+            .stats-card .card-body p.card-text { /* Updated selector specificity */
+                display: flex;
+                align-items: center;
+            }
+            .stats-card .card-body p.card-text i { /* Updated selector specificity */
+                /* Make icon a small square */
+                display: inline-flex; /* Treat as a block for sizing/alignment */
+                justify-content: center; /* Center icon horizontally */
+                align-items: center;   /* Center icon vertically */
+                width: 1.5em;        /* Square width (relative to p font-size) */
+                height: 1.5em;       /* Square height */
+                font-size: 0.9em;      /* Icon glyph size *within* the square */
+                margin-right: 0.5em; /* Space between icon and text */
+                flex-shrink: 0;      /* Prevent shrinking */
+            }
+        }
     </style>
+    {% block head_extra %}{% endblock %}
 </head>
 <body>
     {# Add the toggle button - hidden on large screens via CSS #}
