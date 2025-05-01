@@ -868,6 +868,7 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
                     }
                 })
                 .then(response => response.json())
@@ -918,6 +919,7 @@ ${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date pre
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
                         }
                     })
                     .then(response => response.json())
