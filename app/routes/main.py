@@ -2501,3 +2501,68 @@ def generate_new_analytics_report():
         print(f"Error in /analytics/generate: {e}") # Log the exception
         
     return redirect(url_for('main.analytics')) # Redirect back to analytics page
+
+def generate_scheduled_treatments(days_ahead=7):
+    """Generates Treatment records from active RecurringAppointment rules."""
+    today = date.today()
+    end_window = today + timedelta(days=days_ahead)
+    generated_count = 0
+    
+    active_rules = RecurringAppointment.query.filter_by(is_active=True).all()
+    
+    # Get existing scheduled treatments in the window to avoid duplicates
+    existing_treatments = db.session.query(Treatment.patient_id, Treatment.created_at).filter(
+        Treatment.created_at >= datetime.combine(today, time.min),
+        Treatment.created_at < datetime.combine(end_window, time.min),
+        Treatment.status == 'Scheduled' # Only check against scheduled ones
+    ).all()
+    existing_set = set(existing_treatments)
+
+    for rule in active_rules:
+        current_check_date = max(today, rule.start_date)
+        effective_rule_end = rule.end_date or end_window 
+
+        while current_check_date < end_window and current_check_date <= effective_rule_end:
+            is_valid_occurrence = False
+            # Check recurrence type
+            if rule.recurrence_type == 'weekly' and current_check_date.weekday() == rule.start_date.weekday():
+                is_valid_occurrence = True
+            elif rule.recurrence_type == 'daily-mon-fri' and current_check_date.weekday() < 5: # Monday=0, Friday=4
+                is_valid_occurrence = True
+            # Add more recurrence types here if needed
+
+            if is_valid_occurrence and rule.time_of_day:
+                occurrence_datetime = datetime.combine(current_check_date, rule.time_of_day)
+                
+                # Check if it already exists
+                if (rule.patient_id, occurrence_datetime) not in existing_set:
+                    new_treatment = Treatment(
+                        patient_id=rule.patient_id,
+                        treatment_type=rule.treatment_type,
+                        notes=f"(Recurring from rule {rule.id}) {rule.notes or ''}".strip(),
+                        status='Scheduled',
+                        created_at=occurrence_datetime, # Set creation date to the scheduled time
+                        location=rule.location,
+                        provider=rule.provider,
+                        fee_charged=rule.fee_charged,
+                        payment_method=rule.payment_method,
+                        # Copy other relevant fields if necessary
+                    )
+                    db.session.add(new_treatment)
+                    generated_count += 1
+                    # Add to set to prevent duplicate generation in the same run if logic allows
+                    existing_set.add((rule.patient_id, occurrence_datetime)) 
+            
+            # Move to the next day
+            current_check_date += timedelta(days=1)
+
+    try:
+        db.session.commit()
+        print(f"Successfully generated {generated_count} new scheduled treatments.")
+        return generated_count
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error generating treatments: {e}")
+        return -1 # Indicate error
+
+# --- REMOVED Flask CLI Command ---
