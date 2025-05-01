@@ -24,18 +24,12 @@
         } */
 
         .sidebar {
-            position: fixed; /* Fix the sidebar */
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: var(--sidebar-width);
+            /* Keep background, padding-top, box-shadow, overflow-y */
+            /* No position, width, min-height, z-index needed for default column layout */
             background: linear-gradient(135deg, var(--primary-color), #2c3e50);
-            /* min-height: 100vh; /* No longer needed with fixed positioning */
             padding-top: 20px;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            overflow-y: auto; /* Allow sidebar to scroll if content overflows */
-            /* Removed flexbox for simplicity with fixed positioning */
-            /* flex-direction: column; */ /* Removed flexbox for simplicity */
+            overflow-y: auto; 
         }
         
         .sidebar .nav-link {
@@ -65,11 +59,8 @@
         }
         
         .content {
-            margin-left: var(--sidebar-width); /* Adjust margin for fixed sidebar */ 
-            padding: 20px; /* Restore general padding */
-            background-color: #f8f9fa; /* Restore background */
-            min-height: 100vh; /* Restore min-height */
-            /* Removed padding overrides, restored general padding above */
+            /* No default margin, padding, min-height needed */
+            background-color: #f8f9fa; 
         }
         
         .card {
@@ -329,32 +320,37 @@
             border-radius: 5px;
         }
 
-        /* Responsive adjustments */
+        /* Responsive adjustments for small screens */
         @media (max-width: 991.98px) { /* Bootstrap lg breakpoint */
             .sidebar {
-                position: fixed; /* Keep fixed for sliding */
-                left: calc(-1 * var(--sidebar-width)) !important; /* Start off-screen - Use calc() and !important */
-                z-index: 1040; /* Below toggle button */
-                transition: left 0.3s ease-in-out;
-                height: 100vh; /* Ensure full height */
+                position: fixed !important; /* Override column display */
+                left: calc(-1 * var(--sidebar-width)) !important; /* Start off-screen */
+                width: var(--sidebar-width) !important; /* Set fixed width */
+                z-index: 1040 !important; /* Below toggle */
+                transition: left 0.3s ease-in-out !important;
+                height: 100vh !important; /* Full height */
+                /* Ensure Bootstrap columns don't interfere */
+                top: 0 !important;
+                bottom: 0 !important;
             }
 
             .sidebar.show {
-                left: 0 !important; /* Slide in - Add !important */
-                box-shadow: 4px 0 15px rgba(0,0,0,0.2); /* Stronger shadow when overlaying */
-                z-index: 1051 !important; /* Increase z-index to be above toggle button */
+                left: 0 !important; /* Slide in */
+                box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important; 
+                z-index: 1051 !important; /* Above toggle */
             }
 
             .content {
-                margin-left: 0 !important; /* Full width content - Add !important */
-                padding-top: 60px; /* Add padding to account for potential fixed top toggle */
+                margin-left: 0 !important; /* Full width content */
+                padding: 20px !important; /* Add padding */
+                padding-top: 60px !important; /* Account for toggle */
+                min-height: 100vh; /* Ensure content area fills height */
             }
 
             .sidebar-toggle {
-                display: block; /* Show toggle button on small screens */
+                display: block !important; /* Show toggle button */
             }
             
-            /* Optional: Add an overlay for the content when sidebar is open */
             body.sidebar-open::after {
                  content: '';
                  position: fixed;
@@ -363,26 +359,33 @@
                  right: 0;
                  bottom: 0;
                  background-color: rgba(0, 0, 0, 0.5);
-                 z-index: 1030; /* Below sidebar, above content */
+                 z-index: 1030; /* Below sidebar */
+            }
+        }
+        
+        /* Styles for large screens to ensure padding */
+        @media (min-width: 992px) {
+             .content {
+                 padding: 20px !important;
+                 min-height: 100vh; /* Ensure content area fills height */
             }
         }
 
-        /* Removed styles moved outside media query */
-        @media (max-width: 575.98px) { /* Changed from 768px to apply only on xs screens */
+        @media (max-width: 575.98px) { 
             /* Specific styles for xs screens can go here if needed in the future */
         }
     </style>
     {% block head_extra %}{% endblock %}
 </head>
 <body>
-    {# Add the toggle button - hidden on large screens via CSS #}
+    {# Re-add the toggle button #}
     <button class="btn sidebar-toggle" type="button" id="sidebarToggle">
         <i class="bi bi-list"></i>
     </button>
 
     <div class="container-fluid p-0"> {# Remove default padding for full control #}
         <div class="row g-0"> {# Remove gutters for seamless edge #}
-            <div class="sidebar" id="sidebar"> {# Removed Bootstrap column classes #}
+            <div class="sidebar col-12 col-lg-2" id="sidebar"> {# Added Bootstrap columns #}
                 <div class="sidebar-header">
                     <h3>PhysioTracker</h3>
                 </div>
@@ -472,7 +475,7 @@
                 </div>
             </div>
 
-            <main class="content" id="mainContent">
+            <main class="content col-12 col-lg-10" id="mainContent"> {# Added Bootstrap columns #}
                 <div class="alert-container position-fixed top-0 end-0 p-3" style="z-index: 1050">
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
@@ -607,26 +610,29 @@
                 initCalendlyWidget('https://calendly.com/haimphysio', window.calendlyPrefillData);
             }
 
-            // Sidebar Toggle Logic
+            // Re-add Sidebar Toggle Logic
             const sidebar = document.getElementById('sidebar');
             const sidebarToggle = document.getElementById('sidebarToggle');
-            const mainContent = document.getElementById('mainContent');
+            // const mainContent = document.getElementById('mainContent'); // Not needed for this logic
 
             if (sidebar && sidebarToggle) {
                 sidebarToggle.addEventListener('click', function() {
                     sidebar.classList.toggle('show');
-                    document.body.classList.toggle('sidebar-open');
+                    document.body.classList.toggle('sidebar-open'); // Toggle class for overlay
                 });
 
+                // Click outside to close sidebar
                 document.body.addEventListener('click', function(event) {
+                    // Check if sidebar is open, click is outside sidebar AND outside toggle button
                     if (document.body.classList.contains('sidebar-open') &&
-                        !sidebar.contains(event.target) &&
-                        event.target !== sidebarToggle &&
-                        !sidebarToggle.contains(event.target)) {
+                        !sidebar.contains(event.target) && 
+                        event.target !== sidebarToggle && 
+                        !sidebarToggle.contains(event.target)) { // Make sure click isn't on toggle itself
+                        
                         sidebar.classList.remove('show');
                         document.body.classList.remove('sidebar-open');
                     }
-                }, true);
+                }, true); // Use capture phase to catch clicks anywhere
             }
         });
     </script>
