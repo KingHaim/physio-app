@@ -87,6 +87,23 @@
             color: white;
         }
         
+        /* Apply flex layout and icon styling to stats card text universally */
+        div.stats-card div.card-body p.card-text { /* Increased specificity */
+            display: flex; 
+            align-items: center;
+        }
+        div.stats-card div.card-body p.card-text i { /* Increased specificity */
+            /* Make icon a small square */
+            display: inline-flex; 
+            justify-content: center; /* Center icon horizontally */
+            align-items: center;   /* Center icon vertically */
+            width: 20px;        /* Use fixed px width */
+            height: 20px;       /* Use fixed px height */
+            font-size: 16px;      /* Use fixed px font-size */
+            margin-right: 8px; /* Use fixed px margin */
+            flex-shrink: 0;      /* Prevent shrinking */
+        }
+        
         .btn-primary {
             background-color: var(--primary-color);
             border: none;
@@ -325,6 +342,7 @@
             .sidebar.show {
                 left: 0 !important; /* Slide in - Add !important */
                 box-shadow: 4px 0 15px rgba(0,0,0,0.2); /* Stronger shadow when overlaying */
+                z-index: 1051 !important; /* Increase z-index to be above toggle button */
             }
 
             .content {
@@ -349,22 +367,9 @@
             }
         }
 
+        /* Removed styles moved outside media query */
         @media (max-width: 575.98px) { /* Changed from 768px to apply only on xs screens */
-            .stats-card .card-body p.card-text { /* Updated selector specificity */
-                display: flex;
-                align-items: center;
-            }
-            .stats-card .card-body p.card-text i { /* Updated selector specificity */
-                /* Make icon a small square */
-                display: inline-flex; /* Treat as a block for sizing/alignment */
-                justify-content: center; /* Center icon horizontally */
-                align-items: center;   /* Center icon vertically */
-                width: 1.5em;        /* Square width (relative to p font-size) */
-                height: 1.5em;       /* Square height */
-                font-size: 0.9em;      /* Icon glyph size *within* the square */
-                margin-right: 0.5em; /* Space between icon and text */
-                flex-shrink: 0;      /* Prevent shrinking */
-            }
+            /* Specific styles for xs screens can go here if needed in the future */
         }
     </style>
     {% block head_extra %}{% endblock %}
@@ -377,7 +382,7 @@
 
     <div class="container-fluid p-0"> {# Remove default padding for full control #}
         <div class="row g-0"> {# Remove gutters for seamless edge #}
-            <div class="sidebar col-lg-2 col-xl-2" id="sidebar"> {# Adjust col sizes if needed #}
+            <div class="sidebar" id="sidebar"> {# Removed Bootstrap column classes #}
                 <div class="sidebar-header">
                     <h3>PhysioTracker</h3>
                 </div>
@@ -467,7 +472,7 @@
                 </div>
             </div>
 
-            <main class="col-lg-10 col-xl-10 ms-sm-auto content" id="mainContent">
+            <main class="content" id="mainContent">
                 <div class="alert-container position-fixed top-0 end-0 p-3" style="z-index: 1050">
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
