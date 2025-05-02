@@ -517,7 +517,7 @@ def generate_patient_report(id):
             try:
                 with open('.env', 'r') as file:
                     for line in file:
-                        if line.startswith('DEEPSEEK_API_KEY='):
+                        if line.startswith('DEEPSEE_API_KEY='):
                             api_key = line.strip().split('=', 1)[1].strip('"\'')
                             break
             except FileNotFoundError:
@@ -1453,3 +1453,184 @@ def set_treatment_location(id):
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'message': 'An internal error occurred.'}), 500
+
+# --- Analytics API Endpoints ---
+
+# Helper to get start of month
+def start_of_month(dt):
+    return dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+@api.route('/api/analytics/treatments-by-month')
+@login_required
+def treatments_by_month():
+    try:
+        # Get counts grouped by month
+        data = db.session.query(
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.count(Treatment.id).label('count')
+        ).group_by('month').order_by('month').all()
+        
+        # Convert to list of dicts
+        result = [{'month': item.month, 'count': item.count} for item in data]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching treatments-by-month: {e}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+
+@api.route('/api/analytics/patients-by-month')
+@login_required
+def patients_by_month():
+    try:
+        # Get counts grouped by month
+        data = db.session.query(
+            func.strftime('%Y-%m', Patient.created_at).label('month'),
+            func.count(Patient.id).label('count')
+        ).group_by('month').order_by('month').all()
+        
+        result = [{'month': item.month, 'count': item.count} for item in data]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching patients-by-month: {e}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+
+@api.route('/api/analytics/revenue-by-visit-type')
+@login_required
+def revenue_by_visit_type():
+    try:
+        data = db.session.query(
+            Treatment.visit_type.label('treatment_type'), # Use visit_type
+            func.sum(Treatment.fee_charged).label('total_fee')
+        ).filter(Treatment.fee_charged.isnot(None))\
+         .group_by(Treatment.visit_type)\
+         .order_by(func.sum(Treatment.fee_charged).desc())\
+         .all()
+        
+        result = [{'treatment_type': item.treatment_type or 'Uncategorized', 'total_fee': float(item.total_fee or 0)} for item in data]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching revenue-by-visit-type: {e}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+
+@api.route('/api/analytics/revenue-by-location')
+@login_required
+def revenue_by_location():
+    try:
+        data = db.session.query(
+            Treatment.location.label('location'),
+            func.sum(Treatment.fee_charged).label('total_fee')
+        ).filter(Treatment.fee_charged.isnot(None))\
+        .group_by(Treatment.location)\
+        .order_by(func.sum(Treatment.fee_charged).desc())\
+        .limit(10)\
+        .all()
+        
+        result = [{'location': item.location or 'Unknown', 'total_fee': float(item.total_fee or 0)} for item in data]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching revenue-by-location: {e}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+
+@api.route('/api/analytics/common-diagnoses')
+@login_required
+def common_diagnoses():
+    try:
+        data = db.session.query(
+            Patient.diagnosis.label('diagnosis'),
+            func.count(Patient.id).label('count')
+        ).filter(Patient.diagnosis.isnot(None), Patient.diagnosis != '')\
+        .group_by(Patient.diagnosis)\
+        .order_by(func.count(Patient.id).desc())\
+        .limit(7)\
+        .all()
+        
+        result = [{'diagnosis': item.diagnosis, 'count': item.count} for item in data]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching common-diagnoses: {e}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+
+@api.route('/api/analytics/patient-status')
+@login_required
+def patient_status_distribution():
+    try:
+        active_count = Patient.query.filter_by(status='Active').count()
+        inactive_count = Patient.query.filter_by(status='Inactive').count()
+        # Add other statuses if needed
+        
+        return jsonify({'active': active_count, 'inactive': inactive_count})
+    except Exception as e:
+        print(f"Error fetching patient-status: {e}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+
+@api.route('/api/analytics/payment-methods')
+@login_required
+def payment_method_distribution():
+    try:
+        data = db.session.query(
+            Treatment.payment_method.label('payment_method'),
+            func.count(Treatment.id).label('count')
+        ).filter(Treatment.payment_method.isnot(None), Treatment.payment_method != '')\
+         .group_by(Treatment.payment_method)\
+         .order_by(func.count(Treatment.id).desc())\
+         .all()
+         
+        result = [{'payment_method': item.payment_method, 'count': item.count} for item in data]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching payment-methods: {e}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+
+@api.route('/api/analytics/costaspine-fee-data')
+@login_required
+def get_costaspine_fee_data():
+    """Returns the total fee charged per month for CostaSpine Clinic treatments."""
+    try:
+        # Group fees by month for CostaSpine Clinic
+        monthly_fee_data = db.session.query(
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.sum(Treatment.fee_charged).label('total_fee')
+        ).filter(
+            Treatment.location == 'CostaSpine Clinic',
+            Treatment.fee_charged.isnot(None)
+        ).group_by(func.strftime('%Y-%m', Treatment.created_at))\
+         .order_by(func.strftime('%Y-%m', Treatment.created_at)).all()
+        
+        # Convert to a list of dictionaries
+        results = [
+            {'month': record.month, 'total_fee': float(record.total_fee)}
+            for record in monthly_fee_data
+        ]
+        
+        return jsonify(results)
+    except Exception as e:
+        print(f"Error fetching CostaSpine monthly fee data: {e}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+
+@api.route('/api/analytics/recently-inactive-patients')
+@login_required
+def recently_inactive_patients():
+    """Returns the count and list of patients made inactive in the last 7 days."""
+    try:
+        # Calculate the date 7 days ago
+        one_week_ago = datetime.utcnow() - timedelta(days=7)
+
+        # Query for patients who became inactive recently
+        inactive_patients = Patient.query.filter(
+            Patient.status == 'Inactive',
+            Patient.updated_at >= one_week_ago
+        ).order_by(Patient.updated_at.desc()).all()
+
+        count = len(inactive_patients)
+        patient_list = [
+            {'id': p.id, 'name': p.name, 'inactive_since': p.updated_at.isoformat()} 
+            for p in inactive_patients
+        ]
+
+        return jsonify({
+            'count': count,
+            'patients': patient_list
+        })
+
+    except Exception as e:
+        print(f"Error fetching recently inactive patients: {e}")
+        return jsonify({"error": "Failed to fetch data"}), 500

@@ -16,6 +16,7 @@ class Patient(db.Model):
     notes = db.Column(db.Text)
     status = db.Column(db.String(20), default='Active')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     treatments = db.relationship('Treatment', backref='patient', lazy=True)
     user = db.relationship('User', backref=db.backref('patient', uselist=False), lazy=True)
     
