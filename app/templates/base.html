@@ -19,17 +19,25 @@
             --sidebar-width: 250px; /* Define sidebar width */
         }
         
-        /* body {
-            Removed padding-left: var(--sidebar-width);
-        } */
+        body {
+            /* Add padding to the left to prevent content overlap with fixed sidebar */
+            padding-left: var(--sidebar-width);
+        }
 
         .sidebar {
-            /* Keep background, padding-top, box-shadow, overflow-y */
-            /* No position, width, min-height, z-index needed for default column layout */
+            /* Fixed sidebar styles */
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh; /* Full viewport height */
+            width: var(--sidebar-width); /* Use variable for width */
+            z-index: 1030; /* Ensure sidebar is above most content, below modals */
+            
+            /* Keep existing styles */
             background: linear-gradient(135deg, var(--primary-color), #2c3e50);
             padding-top: 20px;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            overflow-y: auto; 
+            overflow-y: auto; /* Allow sidebar itself to scroll if needed */
         }
         
         .sidebar .nav-link {
@@ -59,8 +67,14 @@
         }
         
         .content {
-            /* No default margin, padding, min-height needed */
+            /* Content area needs no specific positioning, 
+               but padding-left on body ensures it doesn't start under the sidebar */
             background-color: #f8f9fa; 
+            /* Optional: Add padding for better spacing */
+             padding: 20px; 
+             /* Ensure it can grow */
+             flex-grow: 1;
+             min-height: 100vh; /* Ensure it takes at least full screen height */
         }
         
         .card {
