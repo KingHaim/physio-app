@@ -20,8 +20,9 @@
         }
         
         body {
-            /* Add padding to the left to prevent content overlap with fixed sidebar */
-            padding-left: var(--sidebar-width);
+            /* REMOVED global padding-left: var(--sidebar-width); */
+            /* Ensure body takes full height if needed, though flex layout often handles this */
+            /* min-height: 100vh; */ 
         }
 
         .sidebar {
@@ -377,11 +378,17 @@
             }
         }
         
-        /* Styles for large screens to ensure padding */
+        /* Styles for large screens to ensure padding and margin */
         @media (min-width: 992px) {
              .content {
-                 padding: 20px !important;
+                 /* Add margin matching sidebar width ONLY on large screens */
+                 margin-left: var(--sidebar-width);
+                 padding: 20px !important; /* Keep padding */
                  min-height: 100vh; /* Ensure content area fills height */
+            }
+            /* Ensure body doesn't have the padding on large screens either */
+            body {
+                padding-left: 0; 
             }
         }
 
