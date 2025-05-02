@@ -316,9 +316,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    window.cancelAppointment = function(id) {
+    window.cancelAppointment = function(appointmentId) {
         if (confirm('Are you sure you want to cancel this appointment?')) {
-            // Implement cancellation logic
+            const csrfToken = document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content');
+            showLoading(`Cancelling appointment ${appointmentId}...`);
+            fetch(`/api/appointment/${appointmentId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken // Add CSRF token header
+                },
+                body: JSON.stringify({ status: 'Cancelled' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page to show the updated status
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the appointment.');
+            });
         }
     };
 
@@ -391,9 +413,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.cancel-appointment-btn').forEach(button => {
         button.addEventListener('click', function() {
             const appointmentId = this.getAttribute('data-appointment-id');
-            if (confirm('Are you sure you want to cancel this appointment?')) {
-                updateAppointmentStatus(appointmentId, 'Cancelled');
-            }
+            cancelAppointment(appointmentId);
         });
     });
     
