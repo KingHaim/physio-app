@@ -1634,3 +1634,31 @@ def recently_inactive_patients():
     except Exception as e:
         print(f"Error fetching recently inactive patients: {e}")
         return jsonify({"error": "Failed to fetch data"}), 500
+
+@api.route('/api/analytics/top-patients-by-revenue')
+@login_required
+def top_patients_by_revenue():
+    """Returns the top N patients ranked by total revenue generated."""
+    try:
+        top_n = 10 # Define how many top patients to show
+
+        patient_revenue = db.session.query(
+            Patient.name.label('patient_name'),
+            func.sum(Treatment.fee_charged).label('total_revenue')
+        ).join(Treatment, Patient.id == Treatment.patient_id)\
+         .filter(Treatment.fee_charged.isnot(None), Treatment.fee_charged > 0)\
+         .group_by(Patient.id, Patient.name)\
+         .order_by(func.sum(Treatment.fee_charged).desc())\
+         .limit(top_n)\
+         .all()
+
+        result = [
+            {'patient_name': item.patient_name, 'total_revenue': float(item.total_revenue)}
+            for item in patient_revenue
+        ]
+
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Error fetching top patients by revenue: {e}")
+        return jsonify({"error": "Failed to fetch data"}), 500

@@ -162,6 +162,22 @@
         </div>
     </div>
 
+    <!-- Top Patients by Revenue -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-trophy"></i> Top Patients by Revenue</h5>
+                </div>
+                <div class="card-body">
+                    <ol id="topPatientsList" class="list-group list-group-numbered list-group-flush">
+                        <li class="list-group-item">Loading...</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- AI Generated Report -->
     <div class="row mb-4">
         <div class="col-lg-12">
@@ -283,6 +299,40 @@
         } catch (error) {
             console.error(`Error fetching chart data from ${url}:`, error);
             return null; // Return null or an empty structure on error
+        }
+    }
+
+    // Function to load top patients by revenue
+    async function loadTopPatientsRevenue() {
+        const listElement = document.getElementById('topPatientsList');
+        listElement.innerHTML = '<li class="list-group-item">Loading...</li>'; // Show loading state
+
+        try {
+            const data = await fetchChartData('/api/analytics/top-patients-by-revenue');
+            if (!data) {
+                throw new Error('No data received');
+            }
+
+            listElement.innerHTML = ''; // Clear loading state
+
+            if (data.length === 0) {
+                listElement.innerHTML = '<li class="list-group-item text-muted">No patient revenue data available.</li>';
+            } else {
+                data.forEach(patient => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item d-flex justify-content-between align-items-start';
+                    listItem.innerHTML = `
+                        <div class="ms-2 me-auto">
+                            <div class="fw-bold">${patient.patient_name}</div>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">£${patient.total_revenue.toFixed(2)}</span>
+                    `;
+                    listElement.appendChild(listItem);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading top patients by revenue:', error);
+            listElement.innerHTML = '<li class="list-group-item text-danger">Error loading data.</li>';
         }
     }
 
@@ -643,18 +693,10 @@
         }
         // --- End CostaSpine Fee Modal Logic ---
 
-        // --- Load all charts and data on page load ---
-        document.addEventListener('DOMContentLoaded', () => {
-            loadTreatmentsChart();
-            loadPatientsChart();
-            loadRevenueByVisitTypeChart();
-            loadRevenueByLocationChart();
-            loadDiagnosesChart();
-            loadStatusChart();
-            loadPaymentMethodChart();
-            loadCostaspineFeeDetails(); // For the CostaSpine modal
-            loadRecentlyInactivePatients(); // Load the new inactive patient data
-        });
+        // Load the additional data sections
+        // The chart data is loaded directly above within this listener
+        loadRecentlyInactivePatients(); // Load the inactive patient data
+        loadTopPatientsRevenue(); // Load top patients revenue data
 
     });
 </script>
