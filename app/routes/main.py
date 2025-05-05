@@ -1493,7 +1493,7 @@ def analytics():
     num_months = len(monthly_revenue)
     avg_monthly_revenue = total_revenue / num_months if num_months else 0
     
-    # CostaSpine Calcs...
+    # CostaSpine Calcs (Total)
     costaspine_revenue_query = db.session.query(
         func.sum(Treatment.fee_charged).label('total_costaspine_revenue')
     ).filter(
@@ -1501,8 +1501,27 @@ def analytics():
         Treatment.fee_charged.isnot(None)
     ).scalar()
     costaspine_revenue_data = costaspine_revenue_query or 0
-    costaspine_service_fee = costaspine_revenue_data * 0.30
-
+    costaspine_service_fee_total = costaspine_revenue_data * 0.30 # Renamed variable
+    
+    # CostaSpine Calcs (This Week)
+    today = date.today()
+    start_of_week = today - timedelta(days=today.weekday()) # Monday
+    end_of_week = start_of_week + timedelta(days=6) # Sunday
+    # Convert to datetime for comparison with Treatment.created_at (which is DateTime)
+    start_of_week_dt = datetime.combine(start_of_week, datetime.min.time())
+    end_of_week_dt = datetime.combine(end_of_week, datetime.max.time())
+    
+    costaspine_revenue_weekly_query = db.session.query(
+        func.sum(Treatment.fee_charged).label('weekly_costaspine_revenue')
+    ).filter(
+        Treatment.location == 'CostaSpine Clinic',
+        Treatment.fee_charged.isnot(None),
+        Treatment.created_at >= start_of_week_dt,
+        Treatment.created_at <= end_of_week_dt
+    ).scalar()
+    costaspine_revenue_weekly_data = costaspine_revenue_weekly_query or 0
+    costaspine_service_fee_weekly = costaspine_revenue_weekly_data * 0.30
+    
     # Autonomo Calcs...
     total_autonomo_contribution = 0
     monthly_data_autonomo = db.session.query(
@@ -1540,8 +1559,8 @@ def analytics():
                           total_treatments=total_treatments,
                           avg_treatments=avg_treatments,
                           avg_monthly_revenue=avg_monthly_revenue,
-                          costaspine_revenue=costaspine_revenue_data,
-                          costaspine_service_fee=costaspine_service_fee,
+                          costaspine_revenue=costaspine_revenue_data, # Keep total revenue for modal/other use
+                          costaspine_service_fee_weekly=costaspine_service_fee_weekly, # Pass weekly fee for the card
                           total_autonomo_contribution=total_autonomo_contribution,
                           # Chart data is no longer passed here
                           ai_report_html=ai_report_html, 
