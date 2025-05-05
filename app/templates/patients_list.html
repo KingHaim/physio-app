@@ -144,6 +144,7 @@
             </div>
             <div class="modal-body">
                 <form id="quickTreatmentForm" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
                         <label for="treatment_type" class="form-label">Treatment Description</label>
                         <textarea class="form-control" name="treatment_type" required></textarea>
