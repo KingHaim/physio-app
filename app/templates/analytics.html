@@ -433,7 +433,13 @@
             new Chart(treatmentsCtx, {
                 type: 'line',
                 data: {
-                    labels: treatmentsData.map(item => item.month),
+                    labels: treatmentsData.map(item => {
+                        const [year, monthNum] = item.month.split('-');
+                        const date = new Date(parseInt(year), parseInt(monthNum) - 1);
+                        const monthName = date.toLocaleString('default', { month: 'short' });
+                        const yearShort = year.substring(2);
+                        return `${monthName} '${yearShort}`;
+                    }),
                     datasets: [{
                         label: 'Treatments',
                         data: treatmentsData.map(item => item.count),
@@ -454,7 +460,13 @@
             new Chart(patientsCtx, {
                 type: 'bar',
                 data: {
-                    labels: patientsData.map(item => item.month),
+                    labels: patientsData.map(item => {
+                        const [year, monthNum] = item.month.split('-');
+                        const date = new Date(parseInt(year), parseInt(monthNum) - 1);
+                        const monthName = date.toLocaleString('default', { month: 'short' });
+                        const yearShort = year.substring(2);
+                        return `${monthName} '${yearShort}`;
+                    }),
                     datasets: [{
                         label: 'New Patients',
                         data: patientsData.map(item => item.count),
