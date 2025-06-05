@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Calendar - PhysioApp{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<!-- FullCalendar CSS (using a common general link, should resolve to a working version) -->
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6/main.min.css' rel='stylesheet' />
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+
+<style>
+    #calendar {
+        display: block; /* Ensure it behaves as a block element */
+        max-width: 1100px;
+        width: 100%; /* Re-adding this to ensure it tries to fill its flex parent */
+        margin: 40px auto; /* Margin auto might still be useful for vertical spacing or if flex is removed */
+        padding: 0 10px;
+    }
+    .calendar-card-body {
+        overflow-x: auto; /* Add scrollbar if calendar overflows horizontally */
+        padding: 1rem; /* Ensure card body has some padding */
+        display: flex; /* Re-adding flex */
+        justify-content: center; /* Center content horizontally */
+        align-items: flex-start; /* Align items to the start of the cross axis (top) */
+    }
+    /* Add more custom calendar styles if needed */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1 class="h2">Calendar</h1>
+    </div>
+
+    <div class="card">
+        <div class="card-body calendar-card-body">
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- New Appointment Modal -->
+<div class="modal fade" id="newAppointmentModal" tabindex="-1" aria-labelledby="newAppointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newAppointmentModalLabel">New Appointment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newAppointmentForm">
+                    <input type="hidden" id="csrf_token" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="appointmentPatient" class="form-label">Patient</label>
+                        <select class="form-select" id="appointmentPatient" name="patient_id" required>
+                            <option value="" selected disabled>Select Patient...</option>
+                            {% for patient in patients %}
+                                <option value="{{ patient.id }}">{{ patient.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="appointmentDate" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="appointmentDate" name="date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="appointmentTime" class="form-label">Time</label>
+                            <input type="time" class="form-control" id="appointmentTime" name="time" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="appointmentTreatmentType" class="form-label">Treatment Type</label>
+                        <input type="text" class="form-control" id="appointmentTreatmentType" name="treatment_type" placeholder="e.g., Initial Assessment, Follow-up" required>
+                    </div>
+                     <div class="mb-3">
+                        <label for="appointmentLocation" class="form-label">Location</label>
+                        <select class="form-select" id="appointmentLocation" name="location">
+                            <option value="CostaSpine Clinic" selected>CostaSpine Clinic</option>
+                            <option value="Home Visit">Home Visit</option>
+                            <option value="Online">Online</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="appointmentNotes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="appointmentNotes" name="notes" rows="3"></textarea>
+                    </div>
+                    <!-- Hidden field for status, default to Scheduled -->
+                    <input type="hidden" id="appointmentStatus" name="status" value="Scheduled">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary" form="newAppointmentForm">Create Appointment</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End New Appointment Modal -->
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- FullCalendar JS (using a common general link)-->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6/index.global.min.js'></script>
+
+<!-- jQuery (must be before Select2.js) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Select2 on the patient dropdown
+        // Ensure this is done before the modal is shown or interacted with much
+        if (document.getElementById('appointmentPatient')) {
+            $('#appointmentPatient').select2({
+                theme: "bootstrap-5", // Use Bootstrap 5 theme
+                dropdownParent: $('#newAppointmentModal'), // Important for modals
+                placeholder: $(this).data('placeholder'), // Optional: Use placeholder from data-placeholder attribute
+                allowClear: true
+            });
+        }
+
+        var calendarEl = document.getElementById('calendar');
+        if (calendarEl) { // Ensure the element exists
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth', // Start with month view
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' // View options
+                },
+                events: '{{ url_for("main.get_calendar_appointments") }}', // Use the `events` shorthand
+                loading: function(isLoading) {
+                    if (isLoading) {
+                        // You can show a loading indicator here
+                        console.log('Fetching events...');
+                    } else {
+                        // Hide loading indicator
+                        console.log('Events fetched.');
+                    }
+                },
+                eventTimeFormat: { // Optional: format time display on events
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    meridiem: 'short' // e.g., 2:30 PM
+                },
+                selectable: true, // Allow date/time selection
+                dateClick: function(info) {
+                    // Pre-fill form fields
+                    const clickedDate = info.dateStr.split('T')[0]; // Get YYYY-MM-DD part
+                    document.getElementById('appointmentDate').value = clickedDate;
+                    
+                    // Check if the click was on an all-day slot or a timed slot
+                    if (info.allDay) {
+                        document.getElementById('appointmentTime').value = '09:00'; // Default to 9 AM for all-day clicks
+                    } else if (info.dateStr.includes('T')) {
+                        // If it's a timed click (e.g., in timeGridWeek/Day view)
+                        const clickedTime = info.dateStr.split('T')[1].substring(0, 5); // Get HH:MM part
+                        document.getElementById('appointmentTime').value = clickedTime;
+                    } else {
+                        document.getElementById('appointmentTime').value = '09:00'; // Default if no time info
+                    }
+                    
+                    // Reset other fields
+                    document.getElementById('appointmentPatient').value = '';
+                    document.getElementById('appointmentTreatmentType').value = '';
+                    document.getElementById('appointmentLocation').value = 'CostaSpine Clinic';
+                    document.getElementById('appointmentNotes').value = '';
+
+                    var newAppointmentModal = new bootstrap.Modal(document.getElementById('newAppointmentModal'));
+                    newAppointmentModal.show();
+                },
+                eventClick: function(info) {
+                    // Redirect to the treatment view page
+                    if (info.event.id) {
+                        // Ensure the ID is a number, as our route expects an integer
+                        const treatmentId = parseInt(info.event.id, 10);
+                        if (!isNaN(treatmentId)) {
+                            // Construct the URL. Assuming your view_treatment route is something like /treatment/<id>/view
+                            // We need to generate this URL dynamically or ensure it's passed correctly.
+                            // For now, constructing it manually. If you have a Flask url_for available in JS, that's better.
+                            // However, url_for is not directly available in static JS. We will construct it based on typical pattern.
+                            // A better way would be to pass the base URL for treatments via a JS variable if routes are complex.
+                            window.location.href = `/treatment/${treatmentId}/view`;
+                        } else {
+                            console.error('Clicked event has an invalid ID:', info.event.id);
+                            alert('Could not navigate to event: Invalid event ID.');
+                        }
+                    } else {
+                        console.error('Clicked event has no ID:', info.event);
+                        alert('Could not navigate to event: Event ID missing.');
+                    }
+                }
+            });
+            calendar.render();
+            console.log('FullCalendar initialized.');
+
+            // Handle New Appointment Form Submission
+            const newAppointmentForm = document.getElementById('newAppointmentForm');
+            if (newAppointmentForm) {
+                newAppointmentForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(newAppointmentForm);
+                    const patientId = formData.get('patient_id');
+                    
+                    // Combine date and time for the 'date' field expected by add_treatment
+                    const dateValue = formData.get('date');
+                    const timeValue = formData.get('time');
+                    formData.set('date', `${dateValue}T${timeValue}`); // Format as YYYY-MM-DDTHH:MM
+                    formData.delete('time'); // Remove original time field as it's combined
+
+                    // Ensure CSRF token is included in FormData if not already part of the form itself directly picked up by FormData
+                    // It is included as a hidden field, so FormData should pick it up.
+
+                    fetch(`/patient/${patientId}/treatment`, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            // 'X-CSRFToken': formData.get('csrf_token') // FormData handles this with hidden field
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success || (data.redirect_url && data.message && data.message.includes('success'))) { // Looser check for success based on add_treatment response
+                            var modalInstance = bootstrap.Modal.getInstance(document.getElementById('newAppointmentModal'));
+                            if (modalInstance) {
+                                modalInstance.hide();
+                            }
+                            calendar.refetchEvents(); // Refresh calendar events
+                            // Optionally show a success toast/alert here
+                            alert(data.message || 'Appointment created successfully!'); 
+                        } else {
+                            // Display errors more gracefully if possible
+                            alert('Error: ' + (data.message || 'Could not create appointment.'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error submitting new appointment:', error);
+                        alert('An error occurred while creating the appointment.');
+                    });
+                });
+            }
+
+        } else {
+            console.error('Calendar element #calendar not found.');
+        }
+    });
+</script>
+{% endblock %} 

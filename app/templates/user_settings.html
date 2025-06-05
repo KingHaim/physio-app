@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% block title %}User Settings{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="page-header">
+        <h2>User Settings</h2>
+    </div>
+
+    <!-- Nav tabs -->
+    {# Determine active tab #}
+    {% set active_tab = request.args.get('tab', 'info') %}
+    <ul class="nav nav-tabs mb-3" id="userSettingsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {{ 'active' if active_tab == 'info' else '' }}" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-tab-pane" type="button" role="tab" aria-controls="info-tab-pane" aria-selected="{{ 'true' if active_tab == 'info' else 'false' }}">User & Clinic Information</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {{ 'active' if active_tab == 'api' else '' }}" id="api-tab" data-bs-toggle="tab" data-bs-target="#api-tab-pane" type="button" role="tab" aria-controls="api-tab-pane" aria-selected="{{ 'true' if active_tab == 'api' else 'false' }}">API Integrations</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {{ 'active' if active_tab == 'financial' else '' }}" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial-tab-pane" type="button" role="tab" aria-controls="financial-tab-pane" aria-selected="{{ 'true' if active_tab == 'financial' else 'false' }}">Financial Settings</button>
+        </li>
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content" id="userSettingsTabsContent">
+        {# --- Info Tab --- #}
+        <div class="tab-pane fade {{ 'show active' if active_tab == 'info' else '' }}" id="info-tab-pane" role="tabpanel" aria-labelledby="info-tab" tabindex="0">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Your Profile</h4>
+                    <form method="POST" action="{{ url_for('main.user_settings') }}">
+                        {{ profile_form.hidden_tag() }} {# CSRF token for profile form #}
+                        <div class="mb-3">
+                            {{ profile_form.username.label(class="form-label") }}
+                            {{ profile_form.username(class="form-control" + (" is-invalid" if profile_form.username.errors else "")) }}
+                            {% if profile_form.username.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in profile_form.username.errors %}<span>{{ error }}</span>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ profile_form.email.label(class="form-label") }}
+                            {{ profile_form.email(class="form-control" + (" is-invalid" if profile_form.email.errors else "")) }}
+                            {% if profile_form.email.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in profile_form.email.errors %}<span>{{ error }}</span>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <hr class="my-3">
+                        <p class="text-muted small">Fill in the fields below only if you want to change your password.</p>
+                        <div class="mb-3">
+                            {{ profile_form.current_password.label(class="form-label") }}
+                            {{ profile_form.current_password(class="form-control" + (" is-invalid" if profile_form.current_password.errors else "")) }}
+                            {% if profile_form.current_password.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in profile_form.current_password.errors %}<span>{{ error }}</span>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ profile_form.new_password.label(class="form-label") }}
+                                {{ profile_form.new_password(class="form-control" + (" is-invalid" if profile_form.new_password.errors else "")) }}
+                                {% if profile_form.new_password.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in profile_form.new_password.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ profile_form.confirm_new_password.label(class="form-label") }}
+                                {{ profile_form.confirm_new_password(class="form-control" + (" is-invalid" if profile_form.confirm_new_password.errors else "")) }}
+                                {% if profile_form.confirm_new_password.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in profile_form.confirm_new_password.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {{ profile_form.submit(class="btn btn-primary") }}
+                    </form>
+
+                    <hr class="my-4">
+                    
+                    <h4 class="card-title mb-3">Clinic Information</h4>
+                    <form method="POST" action="{{ url_for('main.user_settings') }}">
+                        {{ clinic_form.hidden_tag() }} {# CSRF token for clinic form #}
+                        
+                        <div class="mb-3">
+                            {{ clinic_form.name.label(class="form-label") }}
+                            {{ clinic_form.name(class="form-control" + (" is-invalid" if clinic_form.name.errors else "")) }}
+                            {% if clinic_form.name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in clinic_form.name.errors %}<span>{{ error }}</span>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ clinic_form.address_line1.label(class="form-label") }}
+                                {{ clinic_form.address_line1(class="form-control" + (" is-invalid" if clinic_form.address_line1.errors else "")) }}
+                                {% if clinic_form.address_line1.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in clinic_form.address_line1.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ clinic_form.address_line2.label(class="form-label") }}
+                                {{ clinic_form.address_line2(class="form-control" + (" is-invalid" if clinic_form.address_line2.errors else "")) }}
+                                {% if clinic_form.address_line2.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in clinic_form.address_line2.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ clinic_form.city.label(class="form-label") }}
+                                {{ clinic_form.city(class="form-control" + (" is-invalid" if clinic_form.city.errors else "")) }}
+                                {% if clinic_form.city.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in clinic_form.city.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ clinic_form.postcode.label(class="form-label") }}
+                                {{ clinic_form.postcode(class="form-control" + (" is-invalid" if clinic_form.postcode.errors else "")) }}
+                                {% if clinic_form.postcode.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in clinic_form.postcode.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ clinic_form.phone.label(class="form-label") }}
+                                {{ clinic_form.phone(class="form-control" + (" is-invalid" if clinic_form.phone.errors else "")) }}
+                                {% if clinic_form.phone.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in clinic_form.phone.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ clinic_form.email.label(class="form-label") }}
+                                {{ clinic_form.email(class="form-control" + (" is-invalid" if clinic_form.email.errors else "")) }}
+                                {% if clinic_form.email.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in clinic_form.email.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ clinic_form.website.label(class="form-label") }}
+                            {{ clinic_form.website(class="form-control" + (" is-invalid" if clinic_form.website.errors else "")) }}
+                            {% if clinic_form.website.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in clinic_form.website.errors %}<span>{{ error }}</span>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {{ clinic_form.submit(class="btn btn-primary") }}
+                    </form>
+                </div>
+            </div>
+        </div>
+        {# --- API Tab --- #}
+        <div class="tab-pane fade {{ 'show active' if active_tab == 'api' else '' }}" id="api-tab-pane" role="tabpanel" aria-labelledby="api-tab" tabindex="0">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">API Key Management</h4>
+                    <p class="text-muted">Store API keys for integrations like Calendly here. These keys are sensitive; keep them secure.</p>
+                    
+                    <form method="POST" action="{{ url_for('main.user_settings') }}">
+                        {{ api_form.hidden_tag() }} {# CSRF token for API form #}
+
+                        <div class="mb-3">
+                            {{ api_form.calendly_api_key.label(class="form-label") }}
+                            {{ api_form.calendly_api_key(class="form-control" + (" is-invalid" if api_form.calendly_api_key.errors else "")) }}
+                            {% if api_form.calendly_api_key.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in api_form.calendly_api_key.errors %}<span>{{ error }}</span>{% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Find your Personal Access Token in your <a href="https://calendly.com/integrations/api_webhooks" target="_blank">Calendly API & Webhooks page</a>.
+                            </div>
+                        </div>
+                        
+                        {# Add fields for other API keys here if needed in the future #}
+
+                        {{ api_form.submit(class="btn btn-primary") }}
+                    </form>
+                </div>
+            </div>
+        </div>
+        {# --- Financial Settings Tab --- #}
+        <div class="tab-pane fade {{ 'show active' if active_tab == 'financial' else '' }}" id="financial-tab-pane" role="tabpanel" aria-labelledby="financial-tab" tabindex="0">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Autónomo Contribution Base</h4>
+                     {% if not current_user.clinic %}
+                        <div class="alert alert-warning" role="alert">
+                            Please set up your clinic information in the 'User & Clinic Information' tab before managing financial settings.
+                        </div>
+                    {% else %}
+                        <form method="POST" action="{{ url_for('main.user_settings') }}">
+                            {{ financial_form.hidden_tag() }} 
+                            <div class="row align-items-end">
+                                <div class="col-md-6 mb-3">
+                                    {{ financial_form.autonomo_contribution_base.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">€</span>
+                                        {{ financial_form.autonomo_contribution_base(class="form-control" + (" is-invalid" if financial_form.autonomo_contribution_base.errors else "")) }}
+                                        {% if financial_form.autonomo_contribution_base.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in financial_form.autonomo_contribution_base.errors %}<span>{{ error }}</span>{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="form-text">{{ financial_form.autonomo_contribution_base.description }}</div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ financial_form.submit_base(class="btn btn-secondary w-100") }} {# Using secondary color for distinction #}
+                                </div>
+                            </div>
+                        </form>
+                         <hr class="my-4">
+                        <h4 class="card-title mb-3">Manage Fixed Costs</h4>
+                        {# List existing fixed costs #}
+                        <h5>Existing Costs</h5>
+                         {% if fixed_costs %}
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th class="text-end">Monthly Amount (£)</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cost in fixed_costs %}
+                                    <tr>
+                                        <td>{{ cost.description }}</td>
+                                        <td class="text-end">{{ "%.2f"|format(cost.monthly_amount) }}</td>
+                                        <td class="text-end">
+                                            <form action="{{ url_for('main.delete_fixed_cost', cost_id=cost.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this cost?');">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <button type="submit" class="btn btn-danger btn-sm" title="Delete Cost">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p class="text-center">No fixed costs added yet.</p>
+                        {% endif %}
+                        <hr class="my-4">
+                        {# Form to add new fixed cost #}
+                        <h5>Add New Fixed Cost</h5>
+                        <form method="POST" action="{{ url_for('main.user_settings') }}">
+                            {{ financial_form.hidden_tag() }}
+                            <div class="row align-items-end">
+                                <div class="col-md-6 mb-3">
+                                    {{ financial_form.description.label(class="form-label") }}
+                                    {{ financial_form.description(class="form-control" + (" is-invalid" if financial_form.description.errors else "")) }}
+                                    {% if financial_form.description.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in financial_form.description.errors %}<span>{{ error }}</span>{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ financial_form.monthly_amount.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">£</span>
+                                        {{ financial_form.monthly_amount(class="form-control" + (" is-invalid" if financial_form.monthly_amount.errors else "")) }}
+                                        {% if financial_form.monthly_amount.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in financial_form.monthly_amount.errors %}<span>{{ error }}</span>{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    {{ financial_form.submit_add_cost(class="btn btn-primary w-100") }}
+                                </div>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

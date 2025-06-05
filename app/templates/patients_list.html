@@ -5,15 +5,15 @@
 
 {% block content %}
 <div class="container-fluid py-3">
-    <!-- Simple header with search -->
+    <!-- Header with title, search, filter, and add button -->
     <div class="row mb-4 align-items-center">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <h1 class="h3 mb-0"><i class="bi bi-people"></i> Patient List</h1>
         </div>
-        <div class="col-md-5">
+        <div class="col-md-4">
             <input type="text" id="patientSearch" class="form-control" placeholder="Search patients...">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <select id="filterStatus" class="form-select">
                 <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
                 <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
@@ -21,6 +21,40 @@
                 <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>Completed</option>
                 <option value="Pending Review" {% if status_filter == 'Pending Review' %}selected{% endif %}>Pending Review</option>
             </select>
+        </div>
+        <div class="col-md-3 text-md-end mt-2 mt-md-0">
+            <a href="{{ url_for('main.new_patient') }}" class="btn btn-primary">
+                <i class="bi bi-person-plus-fill"></i> Register New Patient
+            </a>
+        </div>
+    </div>
+
+    <!-- Patient Usage Display -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-info p-2 d-flex align-items-center" role="alert">
+                <i class="bi bi-info-circle-fill fs-5 me-2"></i>
+                <div>
+                    <strong>Patient Capacity:</strong>
+                    <span class="fw-semibold">{{ current_patients_count }} /</span>
+                    {% if patient_plan_limit is not none %}
+                        <span class="fw-semibold">{{ patient_plan_limit }}</span> patients.
+                        {% if current_patients_count >= patient_plan_limit %}
+                            <span class="badge bg-danger ms-1">Limit Reached!</span>
+                            <a href="{{ url_for('main.pricing_page') }}" class="btn btn-warning btn-sm ms-1 py-0">Upgrade</a>
+                        {% elif (patient_plan_limit - current_patients_count) <= 5 %}
+                            <span class="badge bg-warning text-dark ms-1">Nearing Limit ({{ patient_plan_limit - current_patients_count }} remaining)</span>
+                        {% else %}
+                            <span class="text-muted ms-1">({{ patient_plan_limit - current_patients_count }} remaining)</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="fw-semibold">Unlimited</span> patients.
+                    {% endif %}
+                    <small class="d-block text-muted mt-1">
+                        If you need to add more patients beyond your current limit, please consider upgrading your plan.
+                    </small>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -38,6 +72,10 @@
                     </a></li>
                     <li><a class="dropdown-item" href="#" onclick="bulkUpdateStatus('Inactive')">
                         Mark Selected as Inactive
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="bulkDeletePatients()">
+                        <i class="bi bi-trash"></i> Delete Selected Patients
                     </a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="#" onclick="selectAllPendingReview()">
@@ -61,9 +99,7 @@
                             <th>Name</th>
                             <th>Diagnosis</th>
                             <th>Last Visit</th>
-                            <th>Next Appointment</th>
                             <th>Status</th>
-                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -81,17 +117,10 @@
                             </td>
                             <td>{{ patient.diagnosis|truncate(40) if patient.diagnosis else "No diagnosis" }}</td>
                             <td>
-                                {% if patient.treatments %}
-                                    {{ patient.treatments|sort(attribute='date', reverse=True)|first|attr('date')|string|truncate(10, True, '') }}
-                                {% else %}
-                                    <span class="text-muted">No visits yet</span>
-                                {% endif %}
-                            </td>
-                            <td>
                                 {% if patient.treatments and patient.treatments[-1].created_at %}
                                     {{ patient.treatments[-1].created_at.strftime('%Y-%m-%d') }}
                                 {% else %}
-                                    <span class="text-muted">Not scheduled</span>
+                                    <span class="text-muted">No visits yet</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -101,22 +130,6 @@
                                     {% else %}status-completed{% endif %}">
                                     {{ patient.status }}
                                 </span>
-                            </td>
-                            <td class="text-end">
-                                <div class="action-buttons">
-                                    <a href="{{ url_for('main.patient_detail', id=patient.id) }}" 
-                                       class="btn btn-sm btn-outline-primary action-btn">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="{{ url_for('main.edit_patient', id=patient.id) }}" 
-                                       class="btn btn-sm btn-outline-secondary action-btn">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <button class="btn btn-sm btn-outline-primary action-btn" 
-                                            onclick="quickTreatment('{{ patient.id }}')">
-                                        <i class="bi bi-plus"></i>
-                                    </button>
-                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -166,6 +179,7 @@
 {% endblock %}
 
 {% block styles %}
+{{ super() }}
 <style>
     /* Header Row Styling */
     .list-header-row {
@@ -335,11 +349,13 @@
         }
         
         const patientIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.patientId);
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
         fetch('/api/patients/bulk-update-status', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             },
             body: JSON.stringify({
                 patient_ids: patientIds,
@@ -353,6 +369,45 @@
             } else {
                 alert('Error: ' + data.error);
             }
+        });
+    }
+
+    function bulkDeletePatients() {
+        const selectedCheckboxes = document.querySelectorAll('.patient-checkbox:checked');
+        if (selectedCheckboxes.length === 0) {
+            alert('Please select at least one patient to delete.');
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to delete ${selectedCheckboxes.length} selected patient(s)? This action cannot be undone.`)) {
+            return;
+        }
+        
+        const patientIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.patientId);
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
+        fetch('/api/patients/bulk-delete', { // New endpoint
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                patient_ids: patientIds
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'Selected patients deleted successfully.');
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Could not delete selected patients.'));
+            }
+        })
+        .catch(error => {
+            console.error('Error during bulk delete:', error);
+            alert('An unexpected error occurred while deleting patients.');
         });
     }
 </script>

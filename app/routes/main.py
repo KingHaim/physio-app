@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from datetime import datetime, timedelta, date, time
 from calendar import monthrange, day_name # Import day_name
 from sqlalchemy import func, extract, or_, case, cast, Float, exc # Add exc import
-from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport, RecurringAppointment, User, PracticeReport  # Added PracticeReport
+from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport, RecurringAppointment, User, PracticeReport, Plan  # Added Plan
 import json
 from app.utils import mark_past_treatments_as_completed, mark_inactive_patients
 from flask_login import login_required, current_user, logout_user # Import current_user and logout_user
@@ -20,6 +20,9 @@ import pytz # <<< Import pytz
 import traceback # Add traceback import
 from flask_wtf import FlaskForm # Import FlaskForm
 from flask_wtf.csrf import generate_csrf # Import generate_csrf
+import stripe # Ensure stripe is imported if not already
+from app.models import User, Plan, UserSubscription, Patient, Treatment, PatientReport # Make sure User, db are imported
+from app.forms import UpdateEmailForm, ChangePasswordForm # Import the new forms
 
 # Define timezones
 UTC = pytz.utc
@@ -128,40 +131,65 @@ def get_relative_date_string(target_date):
 @login_required
 @physio_required # <<< ADD DECORATOR
 def index():
-    # Automatically mark past treatments as completed
-    count_treatments = mark_past_treatments_as_completed()
+    user_id_for_utils = None
+    if current_user.is_authenticated and current_user.role != 'patient':
+        user_id_for_utils = current_user.id
 
-    # Automatically mark inactive patients
-    count_patients = mark_inactive_patients()
+    # Run utility functions only if user is physio/admin and ID is available
+    if user_id_for_utils:
+        mark_past_treatments_as_completed(user_id=user_id_for_utils)
+        mark_inactive_patients(user_id=user_id_for_utils)
 
-    if count_treatments > 0:
-        flash(f"{count_treatments} past treatment(s) automatically marked as completed.", "info")
+    total_patients = Patient.query.filter_by(user_id=current_user.id).count() if current_user.is_authenticated and current_user.role != 'patient' else 0
+    active_patients = Patient.query.filter_by(user_id=current_user.id, status='Active').count() if current_user.is_authenticated and current_user.role != 'patient' else 0
+    today = datetime.utcnow().date() 
+    week_end = today + timedelta(days=6 - today.weekday()) 
+    month_end = today.replace(day=monthrange(today.year, today.month)[1])
 
-    if count_patients > 0:
-        flash(f"{count_patients} patient(s) automatically marked as inactive due to inactivity.", "info")
+    # Initialize subscription variables to avoid UnboundLocalError if user is not authenticated or has no sub
+    current_plan_name = "N/A"
+    current_subscription_status = "N/A"
+    current_subscription_ends_at = None
+    
+    # Patient usage details
+    current_patients_count = 0
+    patient_plan_limit = None
+    if current_user.is_authenticated:
+        current_patients_count, patient_plan_limit = current_user.patient_usage_details
 
-    # Get key metrics
-    total_patients = Patient.query.count()
-    active_patients = Patient.query.filter_by(status='Active').count()
-    pending_review_count = Patient.query.filter_by(status='Pending Review').count()
+    # --- Correctly calculate Today's Appointments --- 
+    # Convert today to a datetime object for the start of the day in UTC
+    today_start_utc = datetime.combine(today, datetime.min.time()).replace(tzinfo=UTC)
+    # Convert today to a datetime object for the end of the day in UTC
+    today_end_utc = datetime.combine(today, datetime.max.time()).replace(tzinfo=UTC)
 
-    # Calculate date ranges for dashboard
-    today = datetime.now().date()
-    week_end = today + timedelta(days=7)
-    month_end = today + timedelta(days=30)
+    todays_appointments_query = Treatment.query.join(Patient).filter(
+        Patient.user_id == current_user.id,
+        Treatment.status == 'Scheduled',
+        Treatment.created_at >= today_start_utc,
+        Treatment.created_at <= today_end_utc
+    )
+    today_appointments_count = todays_appointments_query.count()
 
-    # Get today's appointments count
-    today_appointments = Treatment.query.filter(
-        func.date(Treatment.created_at) == today
-    ).count()
+    # --- Calculate Pending Review Count (e.g., Unmatched Calendly Bookings) ---
+    pending_review_count = 0
+    if current_user.is_admin:
+        pending_review_count = UnmatchedCalendlyBooking.query.filter_by(status='Pending').count()
+    elif current_user.role == 'physio':
+        if current_user.calendly_api_token and current_user.calendly_user_uri:
+            pending_review_count = UnmatchedCalendlyBooking.query.filter_by(
+                status='Pending',
+                user_id=current_user.id
+            ).count()
+    # Add other conditions for pending review if necessary, e.g. Patient status
 
-    # Get upcoming appointments
-    # Fetch treatments scheduled for today or later, based on UTC created_at
-    now_utc = datetime.now(UTC)
-    upcoming_appointments_query = Treatment.query.filter(
-        Treatment.created_at >= now_utc, 
-        Treatment.status == 'Scheduled' # <<< Ensure we only get scheduled ones
-    ).options(joinedload(Treatment.patient)).order_by(Treatment.created_at).limit(5).all()
+    # --- Upcoming Appointments (Next 7 days, for current user only) --- 
+    upcoming_appointments_query = Treatment.query.join(Patient).filter(
+        Patient.user_id == current_user.id,
+        Treatment.status == 'Scheduled',
+        Treatment.created_at >= today,
+        Treatment.created_at < week_end
+    ).order_by(Treatment.created_at).limit(5).all()
 
     # Process upcoming appointments to add relative date string and LOCAL time
     upcoming_appointments_processed = []
@@ -184,20 +212,46 @@ def index():
         })
 
     # Get recent treatments
-    recent_treatments = Treatment.query.order_by(
-        Treatment.created_at.desc()
-    ).limit(5).all()
+    recent_treatments = Treatment.query.filter(
+        Treatment.patient_id == current_user.id,
+        Treatment.created_at < today,
+        Treatment.status == 'Scheduled'
+    ).order_by(Treatment.created_at.desc()).limit(5).all()
+
+    # --- Subscription Status --- 
+    if current_user.is_authenticated:
+        sub = current_user.current_subscription
+        if sub:
+            if sub.plan:
+                current_plan_name = sub.plan.name
+            current_subscription_status = sub.status.replace('_', ' ').title() # e.g., 'Past Due'
+            
+            if sub.status == 'trialing' and sub.trial_ends_at:
+                current_subscription_ends_at = sub.trial_ends_at
+            elif sub.current_period_ends_at:
+                current_subscription_ends_at = sub.current_period_ends_at
+    # --- End Subscription Status ---
 
     return render_template('index.html',
                            total_patients=total_patients,
                            active_patients=active_patients,
-                           pending_review_count=pending_review_count,
-                           today_appointments=today_appointments,
-                           upcoming_appointments=upcoming_appointments_processed, # Use processed list
+                           today_appointments=today_appointments_count, # Use the calculated count
+                           upcoming_appointments=upcoming_appointments_processed, 
                            recent_treatments=recent_treatments,
-                           today=today, # Pass date object for display
+                           today=today, 
                            week_end=week_end,
-                           month_end=month_end)
+                           month_end=month_end,
+                           # Subscription info
+                           current_plan_name=current_plan_name,
+                           current_subscription_status=current_subscription_status,
+                           current_subscription_ends_at=current_subscription_ends_at,
+                           current_patients_count=current_patients_count, 
+                           patient_plan_limit=patient_plan_limit,
+                           pending_review_count=pending_review_count, # Pass pending review count
+                           # Data for weekly appointments chart
+                           # weekly_appointment_labels=weekly_appointment_labels, # Removed
+                           # weekly_appointment_counts=weekly_appointment_counts, # Removed
+                           )
 
 @main.route('/api/treatment/<int:id>')
 @login_required # Assuming API endpoints also need login
@@ -273,25 +327,38 @@ def delete_treatment(id):
 
 @main.route('/patient/<int:id>')
 @login_required
-# @physio_required # <<< DO NOT ADD YET - Needs granular check
 def patient_detail(id):
     patient = Patient.query.get_or_404(id)
-    # --- Add Access Control ---
-    if current_user.role == 'patient' and current_user.patient_id != id:
-        flash('You do not have permission to view this patient\'s details.', 'danger')
-        return redirect(url_for('main.patient_dashboard')) # Redirect to their own dashboard
+    
+    # --- Access Control ---
+    if not current_user.is_admin:  # Admins have full access
+        if current_user.role == 'physio':
+            # Physios can only access patients linked to their user_id
+            if patient.user_id != current_user.id:
+                flash('You do not have permission to view this patient\'s details.', 'danger') # Indented
+                return redirect(url_for('main.patients_list')) # Indented
+        elif current_user.role == 'patient':
+            # Patients should view their details via their own dashboard.
+            if not current_user.patient_record or current_user.patient_record.id != patient.id:
+                flash('Please access your details via the patient dashboard.', 'info')
+                return redirect(url_for('main.patient_dashboard'))
+            # If it IS their record, and they somehow land here, it's okay or redirect.
+            # For consistency, you might redirect them to their dashboard anyway.
+            # else:
+            #    return redirect(url_for('main.patient_dashboard'))
+
+        else: # Other non-admin, non-physio roles
+            flash('Access Denied.', 'danger')
+            return redirect(url_for('main.index'))
     # --- End Access Control ---
 
     print(f"Treatments for patient {patient.name}:")
-    # Eager load patient relationship when querying treatments
     treatments = Treatment.query.filter_by(patient_id=id).options(joinedload(Treatment.patient)).all()
     for treatment in treatments:
         print(f"Treatment Created At: {treatment.created_at}")
 
     today = datetime.now()
     
-    # Auto-complete logic (consider moving to a scheduled task or background job for performance)
-    # For now, keep it here but be mindful of performance on pages with many patients/treatments
     past_treatments = Treatment.query.filter(
         Treatment.patient_id == id,
         Treatment.created_at < today,
@@ -300,33 +367,26 @@ def patient_detail(id):
 
     if past_treatments:
         count = 0
-        for treatment in past_treatments:
-            treatment.status = 'Completed'
+        for treatment_item in past_treatments: # Renamed to avoid conflict
+            treatment_item.status = 'Completed'
             count += 1
-
-        # Fix indentation here and add check before commit/flash
         if count > 0:
             try:
-                # --- Fix Indentation --- Removed extra comment line
                 db.session.commit()
                 flash(f"{count} past treatment(s) automatically marked as completed.", "info")
-            except Exception as e: # Added except block
+            except Exception as e:
                 db.session.rollback()
                 print(f"Error auto-completing treatments for patient {id}: {e}")
                 flash("Error updating past treatment statuses.", "danger")
 
-    # Determine if this is the patient's first visit (based on existing treatments)
-    # Fetch count instead of all treatments for efficiency
-    # --- Fix Indentation --- Removed extra comment line
     treatment_count = db.session.query(Treatment.id).filter(Treatment.patient_id == id).count()
     is_first_visit = treatment_count == 0
     print(f"Is first visit for patient {id}? {is_first_visit}")
 
-    # Pass treatments loaded earlier
     return render_template('patient_detail.html', 
                            patient=patient, 
                            today=today, 
-                          treatments=treatments, # Pass the pre-loaded treatments
+                           treatments=treatments,
                           is_first_visit=is_first_visit)
 
 @main.route('/patient/<int:patient_id>/treatment', methods=['POST'])
@@ -334,6 +394,8 @@ def patient_detail(id):
 @physio_required # <<< ADD DECORATOR
 def add_treatment(patient_id):
     print("--- add_treatment route START ---")
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     # Get form data
     treatment_type = request.form.get('treatment_type')
     print(f"DEBUG: treatment_type = {treatment_type}")
@@ -427,6 +489,8 @@ def add_treatment(patient_id):
     # --- Validation --- 
     if not treatment_type:
         print("ERROR: treatment_type is missing or empty!")
+        if is_ajax:
+            return jsonify({'success': False, 'message': 'Treatment Type is required.'}), 400
         flash('Treatment Type is required.', 'danger')
         return redirect(url_for('main.patient_detail', id=patient_id))
         
@@ -505,19 +569,30 @@ def add_treatment(patient_id):
             db.session.commit() # Second commit for trigger points
             print("DEBUG: Trigger points committed.")
         
-        flash('Treatment added successfully', 'success')
+        success_message = 'Treatment added successfully'
+        if is_ajax:
+            # For AJAX, also return some event data if possible, or just success
+            new_event_data = {
+                'id': treatment.id,
+                'title': f"{treatment.patient.name} - {treatment.treatment_type if treatment.treatment_type else 'Appointment'}",
+                'start': treatment.created_at.isoformat(),
+                'end': (treatment.created_at + timedelta(hours=1)).isoformat(), # Match calendar logic
+                 # Add color logic similar to get_calendar_appointments if desired
+            }
+            return jsonify({'success': True, 'message': success_message, 'event': new_event_data})
+        flash(success_message, 'success')
         print("--- add_treatment route END (Success) ---")
         return redirect(url_for('main.patient_detail', id=patient_id))
 
     except Exception as e:
         db.session.rollback() # Rollback any potential partial changes
-        # Log the exception with traceback
         tb_str = traceback.format_exc()
         current_app.logger.error(f"!!! ERROR in add_treatment for patient {patient_id} !!!\n{tb_str}")
-        flash('An internal error occurred while adding the treatment. Please try again later.', 'danger') # Generic message
+        error_message = 'An internal error occurred while adding the treatment. Please try again later.'
+        if is_ajax:
+            return jsonify({'success': False, 'message': error_message, 'details': str(e)}), 500
+        flash(error_message, 'danger') # Generic message
         print("--- add_treatment route END (Error) ---") # Keep print here for server log clarity on error path
-        # Return a specific error response instead of redirect might be better for AJAX?
-        # But since the JS expects a reload on success, redirect on error might be okay for now.
         return redirect(url_for('main.patient_detail', id=patient_id))
 
 @main.route('/patient/<int:patient_id>/recurring/new', methods=['GET', 'POST'])
@@ -583,45 +658,43 @@ def new_recurring_appointment(patient_id):
 @physio_required # <<< ADD DECORATOR
 def edit_recurring_appointment(id):
     rule = RecurringAppointment.query.get_or_404(id)
-    patient = rule.patient
-    
+    patient = Patient.query.get_or_404(rule.patient_id)
+
+    # Ensure the current user owns this patient/rule
+    if patient.user_id != current_user.id:
+        flash('You are not authorized to edit this recurring appointment.', 'danger')
+        return redirect(url_for('main.patients_list'))
+
     if request.method == 'POST':
+        # ... (POST logic remains the same)
+        rule.start_date = datetime.strptime(request.form['start_date'], '%Y-%m-%d').date()
+        end_date_str = request.form.get('end_date')
+        rule.end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else None
+        rule.recurrence_type = request.form['recurrence_type']
+        rule.time_of_day = datetime.strptime(request.form['time_of_day'], '%H:%M').time()
+        rule.treatment_type = request.form['treatment_type']
+        rule.notes = request.form.get('notes')
+        rule.location = request.form.get('location')
+        rule.payment_method = request.form.get('payment_method')
+        rule.provider = request.form.get('provider')
+        fee_charged_str = request.form.get('fee_charged')
+        rule.fee_charged = float(fee_charged_str) if fee_charged_str else None
+        rule.is_active = 'is_active' in request.form
+
         try:
-            start_date_str = request.form.get('start_date')
-            end_date_str = request.form.get('end_date')
-            time_str = request.form.get('time_of_day')
-            
-            rule.start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else rule.start_date
-            rule.end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else None
-            rule.time_of_day = datetime.strptime(time_str, '%H:%M').time() if time_str else rule.time_of_day
-            
-            rule.recurrence_type = request.form.get('recurrence_type', rule.recurrence_type)
-            rule.treatment_type = request.form.get('treatment_type', rule.treatment_type)
-            rule.notes = request.form.get('notes')
-            rule.location = request.form.get('location') # Update to read from hidden input later if needed
-            rule.provider = request.form.get('provider')
-            fee_str = request.form.get('fee_charged')
-            rule.fee_charged = float(fee_str) if fee_str else None
-            rule.payment_method = request.form.get('payment_method')
-            rule.is_active = request.form.get('is_active') == 'on'
-
-            # Basic validation
-            if not all([rule.start_date, rule.time_of_day, rule.recurrence_type, rule.treatment_type]):
-                flash('Start Date, Time, Recurrence Type, and Treatment Type are required.', 'danger')
-            else:
-                db.session.commit()
-                flash('Recurring appointment rule updated successfully!', 'success')
-                return redirect(url_for('main.patient_detail', id=patient.id))
-
-        except ValueError:
-             flash('Invalid date or time format. Please use YYYY-MM-DD and HH:MM.', 'danger')
+            db.session.commit()
+            flash('Recurring appointment rule updated successfully!', 'success')
+            return redirect(url_for('main.patient_detail', id=patient.id))
         except Exception as e:
             db.session.rollback()
-            flash(f'Error updating recurring rule: {e}', 'danger')
-            print(f"Error updating recurring rule {id}: {e}")
-            
-    # GET request - Pass the existing rule to the template
-    return render_template('edit_recurring_appointment.html', rule=rule, patient=patient)
+            flash(f'Error updating rule: {str(e)}', 'danger')
+    
+    # For GET request, generate CSRF token and pass it to the template
+    csrf_token_value = generate_csrf()
+    return render_template('edit_recurring_appointment.html', 
+                           rule=rule, 
+                           patient=patient, 
+                           csrf_token_value=csrf_token_value)
 
 @main.route('/recurring/<int:id>/delete', methods=['POST'])
 @login_required
@@ -649,17 +722,37 @@ def appointments():
     end_date = request.args.get('end_date',
                              (datetime.now() + timedelta(days=30)).date().isoformat())
 
-    appointments = Treatment.query.filter(
+    # Filter appointments based on user role
+    appointments_query = Treatment.query.filter(
         Treatment.created_at.between(start_date, end_date)
-    ).order_by(Treatment.created_at).all()
+    )
+    if not current_user.is_admin and current_user.role == 'physio':
+        appointments_query = appointments_query.join(Patient).filter(Patient.user_id == current_user.id)
+    
+    appointments = appointments_query.order_by(Treatment.created_at).all()
 
-    patients = Patient.query.filter_by(status='Active').all()
+    # Filter patients based on user role for the modal
+    if current_user.is_admin:
+        patients = Patient.query.filter_by(status='Active').order_by(Patient.name).all()
+    elif current_user.role == 'physio':
+        patients = Patient.query.filter_by(user_id=current_user.id, status='Active').order_by(Patient.name).all()
+    else: # Should not happen due to @physio_required, but as a fallback
+        patients = []
+
+    # Use the same logic as in review_calendly_bookings route
+    calendly_configured_for_user = False # Default for non-admins
+    if current_user.is_admin:
+        calendly_configured_for_user = True # Admins are implicitly configured to see all
+    elif current_user.role == 'physio':
+        if current_user.calendly_api_token and current_user.calendly_user_uri:
+            calendly_configured_for_user = True
 
     return render_template('appointments.html',
                            appointments=appointments,
                            patients=patients,
                            start_date=start_date,
-                           end_date=end_date)
+                           end_date=end_date,
+                           calendly_sync_enabled=calendly_configured_for_user)
 
 @main.route('/api/appointments')
 @login_required
@@ -881,14 +974,26 @@ def treatments_by_month():
 
 @main.route('/patient/<int:id>/treatments')
 @login_required
-# @physio_required # <<< DO NOT ADD YET - Needs granular check
 def patient_treatments(id):
     patient = Patient.query.get_or_404(id)
-    # --- Add Access Control --- 
-    if current_user.role == 'patient' and current_user.patient_id != id:
-        flash('Access denied.', 'danger')
-        return redirect(url_for('main.patient_dashboard'))
+    
+    # --- Access Control ---
+    if not current_user.is_admin: # Admins have full access
+        if current_user.role == 'physio':
+            if patient.user_id != current_user.id:
+                flash('You do not have permission to view these treatments.', 'danger')
+                return redirect(url_for('main.patients_list'))
+        elif current_user.role == 'patient':
+            if not current_user.patient_record or current_user.patient_record.id != patient.id:
+                flash('You do not have permission to view these treatments.', 'danger')
+                return redirect(url_for('main.patient_dashboard')) # Indent this line
+            # If it IS their record, they are allowed through to see treatments.
+            # No 'else' needed here for this specific condition if access is granted.
+        else: # Other roles (this 'else' correctly pairs with 'if current_user.role == 'physio':')
+            flash('Access Denied.', 'danger')
+            return redirect(url_for('main.index'))
     # --- End Access Control ---
+    
     treatments = Treatment.query.filter_by(patient_id=id).order_by(Treatment.created_at.desc()).all()
     return render_template('treatments.html', patient=patient, treatments=treatments)
 
@@ -922,7 +1027,15 @@ def patients_list():
     search = request.args.get('search', '')
     status_filter = request.args.get('status', 'all')
 
-    query = Patient.query
+    # Get patient usage details
+    current_patients_count = 0
+    patient_plan_limit = None
+    if current_user.is_authenticated: # Should always be true due to @login_required
+        current_patients_count, patient_plan_limit = current_user.patient_usage_details
+
+    # query = Patient.query # Old query
+    # Query only patients belonging to the current user
+    query = Patient.query.filter_by(user_id=current_user.id)
 
     if search:
         query = query.filter(
@@ -941,68 +1054,194 @@ def patients_list():
     return render_template('patients_list.html',
                            patients=patients,
                            search=search,
-                           status_filter=status_filter)
+                           status_filter=status_filter,
+                           current_patients_count=current_patients_count,
+                           patient_plan_limit=patient_plan_limit
+                           )
 
-@main.route('/patient/<int:id>/report')
+@main.route('/patient/<int:patient_id>/reports_list', methods=['GET'])
 @login_required
-# @physio_required # <<< DO NOT ADD YET - Needs granular check
-def patient_report(id):
-    patient = Patient.query.get_or_404(id)
-    # --- Add Access Control --- 
-    if current_user.role == 'patient' and current_user.patient_id != id:
-        flash('You do not have permission to view this report.', 'danger')
+def patient_reports_list(patient_id):
+    patient = Patient.query.get_or_404(patient_id)
+    # Basic access control (similar to patient_detail)
+    if not current_user.is_admin and current_user.role == 'physio' and patient.user_id != current_user.id:
+        flash('You do not have permission to view these reports.', 'danger')
+        return redirect(url_for('main.patients_list'))
+    elif current_user.role == 'patient' and (not current_user.patient_record or current_user.patient_record.id != patient_id):
+        flash('You do not have permission to view these reports.', 'danger')
         return redirect(url_for('main.patient_dashboard'))
-    # --- End Access Control ---
+
+    report_id = request.args.get('report_id', type=int)
+    selected_report = None
     
-    # Check if a specific report ID was requested
-    report_id = request.args.get('report_id')
-    
+    all_patient_reports = PatientReport.query.filter_by(patient_id=patient_id)\
+                                       .order_by(PatientReport.generated_date.desc()).all()
+
     if report_id:
-        report = PatientReport.query.get_or_404(report_id)
-        if report.patient_id != patient.id:
-            flash('Report does not belong to this patient.', 'danger')
-            return redirect(url_for('main.patient_detail', id=id))
-    else:
-        # Get the most recent *non-homework* report if no ID specified
-        report = PatientReport.query.filter(
-            PatientReport.patient_id == id,
-            PatientReport.report_type != 'Exercise Homework' # Exclude homework from default view
-        ).order_by(PatientReport.generated_date.desc()).first()
+        selected_report = PatientReport.query.filter_by(id=report_id, patient_id=patient_id).first()
+        if not selected_report:
+            flash('Specified report not found for this patient.', 'warning')
+            # Fallback to latest or just show list without a pre-selected one
+            selected_report = all_patient_reports[0] if all_patient_reports else None 
+    elif all_patient_reports:
+        selected_report = all_patient_reports[0] # Default to the latest report
     
-    # If still no main report found (maybe only homework exists?), get the absolute latest one
-    if not report:
-        report = PatientReport.query.filter_by(
-            patient_id=id
-        ).order_by(PatientReport.generated_date.desc()).first()
-    
-    # If *still* no report, redirect
-    if not report:
-        flash('No reports found for this patient.', 'warning')
-        return redirect(url_for('main.patient_detail', id=id))
-    
-    # Get all reports for the dropdown (including homework)
-    all_reports = PatientReport.query.filter_by(
-        patient_id=id
-    ).order_by(PatientReport.generated_date.desc()).all()
-    
-    # Get specifically the Exercise Homework reports
-    exercise_homework_reports = PatientReport.query.filter_by(
-        patient_id=id,
-        report_type='Exercise Homework'
-    ).order_by(PatientReport.generated_date.desc()).all()
-    
-    return render_template('patient_report.html', 
-                          patient=patient, 
-                          report=report, # The currently viewed report
-                          all_reports=all_reports, # For dropdown
-                          exercise_homework_reports=exercise_homework_reports) # For bottom section
+    return render_template('patient_report.html',
+                           patient=patient,
+                           report=selected_report, # The specific report to display (or latest)
+                           all_reports=all_patient_reports) # All reports for the dropdown
 
 @main.route('/calendly/review')
 @login_required
 @physio_required # <<< ADD DECORATOR
 def review_calendly_bookings():
-    unmatched_bookings = UnmatchedCalendlyBooking.query.filter_by(status='Pending').all()
-    return render_template('calendly_review.html', unmatched_bookings=unmatched_bookings)
+    unmatched_bookings_list = []
+    calendly_configured_for_user = False # Default for non-admins
+
+    if current_user.is_admin:
+        unmatched_bookings_list = UnmatchedCalendlyBooking.query.filter_by(status='Pending').all()
+        calendly_configured_for_user = True # Admins are implicitly configured to see all
+    elif current_user.role == 'physio':
+        if current_user.calendly_api_token and current_user.calendly_user_uri:
+            calendly_configured_for_user = True
+            unmatched_bookings_list = UnmatchedCalendlyBooking.query.filter_by(
+                status='Pending',
+                user_id=current_user.id
+            ).all()
+        # Else, unmatched_bookings_list remains empty and calendly_configured_for_user is False
+    
+    # --- DEBUGGING PRINT --- 
+    print(f"--- DEBUG: /calendly/review route ---")
+    print(f"User: {current_user.email}, Is Admin: {current_user.is_admin}, Role: {current_user.role}")
+    print(f"Calendly Configured for this user context: {calendly_configured_for_user}")
+    print(f"Count of UnmatchedBookings being passed to template: {len(unmatched_bookings_list)}")
+    if unmatched_bookings_list:
+        print(f"First item details (if any): ID: {unmatched_bookings_list[0].id}, Name: {unmatched_bookings_list[0].name}, UserID: {unmatched_bookings_list[0].user_id}")
+    # --- END DEBUGGING PRINT ---
+    
+    return render_template('review_calendly_bookings.html', 
+                           unmatched_bookings=unmatched_bookings_list,
+                           calendly_configured_for_user=calendly_configured_for_user)
+
+@main.route('/calendly/match_booking/<int:booking_id>', methods=['GET', 'POST'])
+@login_required
+@physio_required
+def match_booking_to_patient(booking_id):
+    booking = UnmatchedCalendlyBooking.query.get_or_404(booking_id)
+
+    # Ensure the booking belongs to the current user if not admin
+    if not current_user.is_admin and booking.user_id != current_user.id:
+        flash('You are not authorized to access this booking.', 'danger')
+        return redirect(url_for('main.review_calendly_bookings'))
+
+    if request.method == 'POST':
+        patient_id = request.form.get('patient_id')
+        if not patient_id:
+            flash('No patient selected.', 'warning')
+            return redirect(url_for('main.match_booking_to_patient', booking_id=booking_id))
+
+        patient = Patient.query.get_or_404(patient_id)
+        # Ensure selected patient belongs to the current user if not admin
+        if not current_user.is_admin and patient.user_id != current_user.id:
+            flash('Invalid patient selection.', 'danger')
+            return redirect(url_for('main.match_booking_to_patient', booking_id=booking_id))
+
+        try:
+            booking.matched_patient_id = patient.id
+            booking.status = 'Matched'
+            
+            # Create a corresponding treatment
+            new_treatment = Treatment(
+                patient_id=patient.id,
+                treatment_type=booking.event_type or "Calendly Booking", 
+                notes=f"Booked via Calendly. Invitee: {booking.name} ({booking.email}). Matched by {current_user.username}.",
+                status='Scheduled', # Or determine based on booking.start_time
+                provider=current_user.username, # Or map from booking if available
+                created_at=booking.start_time or datetime.utcnow(), # Use booking start_time
+                calendly_invitee_uri=booking.calendly_invitee_id # Assuming you store the URI or a unique ID from Calendly
+            )
+            db.session.add(new_treatment)
+            db.session.commit()
+            flash(f'Booking for {booking.name} successfully matched to patient {patient.name}. A new treatment has been scheduled.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error matching booking: {str(e)}', 'danger')
+        return redirect(url_for('main.review_calendly_bookings'))
+
+    # GET request:
+    if current_user.is_admin:
+        patients = Patient.query.order_by(Patient.name).all()
+    else:
+        patients = Patient.query.filter_by(user_id=current_user.id).order_by(Patient.name).all()
+    
+    return render_template('match_calendly_booking.html',
+                           booking=booking,
+                           patients=patients,
+                           title="Match Calendly Booking")
+
+@main.route('/calendly/create_patient_from_booking/<int:booking_id>', methods=['POST']) # Should be POST only
+@login_required
+@physio_required
+def create_patient_from_booking(booking_id):
+    booking = UnmatchedCalendlyBooking.query.get_or_404(booking_id)
+
+    # Ensure the booking belongs to the current user if not admin
+    if not current_user.is_admin and booking.user_id != current_user.id:
+        flash('You are not authorized to process this booking.', 'danger')
+        return redirect(url_for('main.review_calendly_bookings'))
+
+    try:
+        # Check if a patient with this email already exists for this physio (or globally for admin)
+        existing_patient_query = Patient.query.filter_by(email=booking.email)
+        if not current_user.is_admin:
+            existing_patient_query = existing_patient_query.filter_by(user_id=current_user.id)
+        existing_patient = existing_patient_query.first()
+
+        if existing_patient:
+            # If patient exists, match to this patient instead of creating a new one
+            booking.matched_patient_id = existing_patient.id
+            booking.status = 'Matched'
+            patient_to_link = existing_patient
+            action_message = f'Booking for {booking.name} matched to existing patient {patient_to_link.name}.'
+        else:
+            # Create new patient
+            new_patient = Patient(
+                name=booking.name,
+                email=booking.email,
+                user_id=current_user.id, # Associate with the current physio
+                # Add other fields as necessary, e.g., phone from booking if available
+                # phone=booking.phone (if you add a phone field to UnmatchedCalendlyBooking)
+                status='Active' 
+            )
+            db.session.add(new_patient)
+            db.session.flush() # To get new_patient.id for the treatment and booking update
+
+            booking.matched_patient_id = new_patient.id
+            booking.status = 'Matched'
+            patient_to_link = new_patient
+            action_message = f'New patient {patient_to_link.name} created from booking and booking matched.'
+
+        # Create a corresponding treatment for the linked patient
+        new_treatment = Treatment(
+            patient_id=patient_to_link.id,
+            treatment_type=booking.event_type or "Calendly Booking",
+            notes=f"Booked via Calendly. Invitee: {booking.name} ({booking.email}). Auto-created/matched by {current_user.username}.",
+            status='Scheduled', # Or determine based on booking.start_time
+            provider=current_user.username, # Or map from booking if available
+            created_at=booking.start_time or datetime.utcnow(), # Use booking start_time
+            calendly_invitee_uri=booking.calendly_invitee_id # Store unique calendly ID
+        )
+        db.session.add(new_treatment)
+        db.session.commit()
+        flash(f'{action_message} A new treatment has been scheduled.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error creating patient from booking: {str(e)}', 'danger')
+        current_app.logger.error(f"Error in create_patient_from_booking for booking_id {booking_id}: {e}")
+        current_app.logger.error(traceback.format_exc())
+
+
+    return redirect(url_for('main.review_calendly_bookings'))
 
 @main.route('/treatment/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -1208,26 +1447,35 @@ def edit_treatment(id):
 
 @main.route('/treatment/<int:id>/view')
 @login_required
-# @physio_required # <<< DO NOT ADD YET - Needs granular check
 def view_treatment(id):
     treatment = Treatment.query.get_or_404(id)
     patient = treatment.patient
-    # --- Add Access Control --- 
-    if current_user.role == 'patient' and current_user.patient_id != patient.id:
-        flash('You do not have permission to view this treatment.', 'danger')
-        return redirect(url_for('main.patient_dashboard'))
+    
+    # --- Access Control --- 
+    if not current_user.is_admin: # Admins have full access
+        if current_user.role == 'physio':
+            if patient.user_id != current_user.id:
+                flash('You do not have permission to view this treatment.', 'danger')
+                return redirect(url_for('main.patients_list'))
+        elif current_user.role == 'patient':
+            if not current_user.patient_record or current_user.patient_record.id != patient.id:
+                # VVVVV THESE LINES MUST BE INDENTED LIKE THIS VVVVV
+                flash('You do not have permission to view this treatment.', 'danger')
+                return redirect(url_for('main.patient_dashboard'))
+            # If it IS their record, they are allowed through.
+        else: # Other roles
+            # VVVVV THESE LINES MUST BE INDENTED LIKE THIS VVVVV
+            flash('Access Denied.', 'danger')
+            return redirect(url_for('main.index')) # This was also mis-indented in the snippet
     # --- End Access Control ---
     
-    # Add a debug statement to check what treatment data is available
     print(f"Viewing treatment {id}: Type={treatment.treatment_type}, Notes={treatment.notes}, Status={treatment.status}")
     
-    # Create a mapped treatment object that includes both original and mapped fields
-    # This ensures backward compatibility with templates that might use either naming convention
     mapped_treatment = {
         'id': treatment.id,
         'created_at': treatment.created_at,
-        'description': treatment.treatment_type,  # Map treatment_type to description
-        'progress_notes': treatment.notes,        # Map notes to progress_notes
+        'description': treatment.treatment_type,
+        'progress_notes': treatment.notes,
         'treatment_type': treatment.treatment_type,
         'notes': treatment.notes,
         'status': treatment.status,
@@ -1464,7 +1712,13 @@ def calculate_age(born):
 @physio_required
 def analytics():
     # Fetch latest AI report from the database
-    latest_report = PracticeReport.query.order_by(PracticeReport.generated_at.desc()).first()
+    if current_user.is_admin:
+        latest_report = PracticeReport.query.filter_by(user_id=None).order_by(PracticeReport.generated_at.desc()).first()
+        # Optional: If you also want admins to see their own user-specific reports as a fallback or primary view, adjust logic here.
+        # For now, admin sees global (user_id=None) reports.
+    else:
+        latest_report = PracticeReport.query.filter_by(user_id=current_user.id).order_by(PracticeReport.generated_at.desc()).first()
+
     ai_report_html = "" # Initialize as empty string
     ai_report_generated_at = None
     if latest_report:
@@ -1477,65 +1731,86 @@ def analytics():
     else:
         ai_report_html = "<p class=\"text-info\">No practice report generated yet. Click 'Generate New Report' to create one.</p>"
 
-    # --- Data JUST for Summary Cards ---
-    total_patients = Patient.query.count()
-    active_patients = Patient.query.filter(Patient.status == 'Active').count()
+    # --- Data JUST for Summary Cards (Filtered for non-admins) ---
+    if current_user.is_admin:
+        total_patients = Patient.query.count()
+        active_patients = Patient.query.filter(Patient.status == 'Active').count()
+        total_treatments = Treatment.query.count()
+        monthly_revenue_query = db.session.query(
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.sum(Treatment.fee_charged).label('monthly_total')
+        ).filter(Treatment.fee_charged.isnot(None)).group_by('month')
+        costaspine_revenue_base_query = db.session.query(
+            func.sum(Treatment.fee_charged).label('total_costaspine_revenue')
+        ).filter(
+            Treatment.location == 'CostaSpine Clinic',
+            Treatment.fee_charged.isnot(None)
+        )
+        autonomo_base_query = db.session.query(
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.strftime('%Y', Treatment.created_at).label('year'),
+            func.sum(Treatment.fee_charged).label('monthly_total_revenue'),
+            func.sum(
+                case((Treatment.location == 'CostaSpine Clinic', Treatment.fee_charged), else_=0)
+            ).label('monthly_costaspine_revenue')
+        ).filter(
+            Treatment.fee_charged.isnot(None),
+            Treatment.created_at.isnot(None)
+        ).group_by('year', 'month').order_by('year', 'month')
+    else:
+        total_patients = Patient.query.filter_by(user_id=current_user.id).count()
+        active_patients = Patient.query.filter_by(user_id=current_user.id, status='Active').count()
+        total_treatments = Treatment.query.join(Patient).filter(Patient.user_id == current_user.id).count()
+        monthly_revenue_query = db.session.query(
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.sum(Treatment.fee_charged).label('monthly_total')
+        ).join(Patient).filter(Patient.user_id == current_user.id, Treatment.fee_charged.isnot(None)).group_by('month')
+        costaspine_revenue_base_query = db.session.query(
+            func.sum(Treatment.fee_charged).label('total_costaspine_revenue')
+        ).join(Patient).filter(
+            Patient.user_id == current_user.id,
+            Treatment.location == 'CostaSpine Clinic',
+            Treatment.fee_charged.isnot(None)
+        )
+        autonomo_base_query = db.session.query(
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.strftime('%Y', Treatment.created_at).label('year'),
+            func.sum(Treatment.fee_charged).label('monthly_total_revenue'),
+            func.sum(
+                case((Treatment.location == 'CostaSpine Clinic', Treatment.fee_charged), else_=0)
+            ).label('monthly_costaspine_revenue')
+        ).join(Patient).filter(
+            Patient.user_id == current_user.id,
+            Treatment.fee_charged.isnot(None),
+            Treatment.created_at.isnot(None)
+        ).group_by('year', 'month').order_by('year', 'month')
+
     inactive_patients = total_patients - active_patients
-    total_treatments = Treatment.query.count()
     avg_treatments = round(total_treatments / total_patients, 1) if total_patients else 0
     
-    # Monthly Revenue Calc...
-    monthly_revenue = db.session.query(
-        func.strftime('%Y-%m', Treatment.created_at).label('month'),
-        func.sum(Treatment.fee_charged).label('monthly_total')
-    ).filter(Treatment.fee_charged.isnot(None)).group_by('month').all()
+    monthly_revenue = monthly_revenue_query.all()
     total_revenue = sum(m.monthly_total for m in monthly_revenue if m.monthly_total)
     num_months = len(monthly_revenue)
     avg_monthly_revenue = total_revenue / num_months if num_months else 0
     
-    # CostaSpine Calcs (Total)
-    costaspine_revenue_query = db.session.query(
-        func.sum(Treatment.fee_charged).label('total_costaspine_revenue')
-    ).filter(
-        Treatment.location == 'CostaSpine Clinic',
-        Treatment.fee_charged.isnot(None)
-    ).scalar()
-    costaspine_revenue_data = costaspine_revenue_query or 0
-    costaspine_service_fee_total = costaspine_revenue_data * 0.30 # Renamed variable
+    costaspine_revenue_data = costaspine_revenue_base_query.scalar() or 0
+    # costaspine_service_fee_total = costaspine_revenue_data * 0.30 # This variable is not used in template
     
-    # CostaSpine Calcs (This Week)
     today = date.today()
-    start_of_week = today - timedelta(days=today.weekday()) # Monday
-    end_of_week = start_of_week + timedelta(days=6) # Sunday
-    # Convert to datetime for comparison with Treatment.created_at (which is DateTime)
+    start_of_week = today - timedelta(days=today.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
     start_of_week_dt = datetime.combine(start_of_week, datetime.min.time())
     end_of_week_dt = datetime.combine(end_of_week, datetime.max.time())
     
-    costaspine_revenue_weekly_query = db.session.query(
-        func.sum(Treatment.fee_charged).label('weekly_costaspine_revenue')
-    ).filter(
-        Treatment.location == 'CostaSpine Clinic',
-        Treatment.fee_charged.isnot(None),
+    costaspine_revenue_weekly_query = costaspine_revenue_base_query.filter(
         Treatment.created_at >= start_of_week_dt,
         Treatment.created_at <= end_of_week_dt
-    ).scalar()
-    costaspine_revenue_weekly_data = costaspine_revenue_weekly_query or 0
+    )
+    costaspine_revenue_weekly_data = costaspine_revenue_weekly_query.scalar() or 0
     costaspine_service_fee_weekly = costaspine_revenue_weekly_data * 0.30
     
-    # Autonomo Calcs...
     total_autonomo_contribution = 0
-    monthly_data_autonomo = db.session.query(
-        # ... autonomo query ...
-        func.strftime('%Y-%m', Treatment.created_at).label('month'),
-        func.strftime('%Y', Treatment.created_at).label('year'),
-        func.sum(Treatment.fee_charged).label('monthly_total_revenue'),
-        func.sum(
-            case((Treatment.location == 'CostaSpine Clinic', Treatment.fee_charged), else_=0)
-        ).label('monthly_costaspine_revenue')
-    ).filter(
-        Treatment.fee_charged.isnot(None),
-        Treatment.created_at.isnot(None)
-    ).group_by('year', 'month').order_by('year', 'month').all()
+    monthly_data_autonomo = autonomo_base_query.all()
 
     for month_data in monthly_data_autonomo:
         # ... autonomo calculation loop ...
@@ -1708,30 +1983,36 @@ def update_treatments_demo():
     """
 
 @main.route('/report/<int:report_id>/pdf')
-@login_required # Ensure user is logged in
-# @physio_required # <<< DO NOT ADD YET - Needs granular check
+@login_required
 def download_report_pdf(report_id):
-    """Generates and serves a PDF version of a specific report."""
     report = PatientReport.query.get_or_404(report_id)
-    patient = report.patient # Assuming relationship is set up
-    # --- Add Access Control --- 
-    if current_user.role == 'patient' and current_user.patient_id != patient.id:
-        flash('You do not have permission to download this report.', 'danger')
-        return redirect(url_for('main.patient_dashboard'))
+    patient = report.patient
+    
+    # --- Access Control ---
+    if not current_user.is_admin: # Admins have full access
+        if current_user.role == 'physio':
+            if patient.user_id != current_user.id:
+                flash('You do not have permission to download this report.', 'danger')
+                return redirect(url_for('main.patients_list'))
+        elif current_user.role == 'patient':
+            if not current_user.patient_record or current_user.patient_record.id != patient.id:
+                flash('You do not have permission to download this report.', 'danger')
+                return redirect(url_for('main.patient_dashboard'))
+        else: # Other roles
+            flash('Access Denied.', 'danger')
+            return redirect(url_for('main.index'))
     # --- End Access Control ---
 
-    # Convert report content from Markdown to HTML
+    report_html_content = ""
     try:
-        report_html = markdown.markdown(report.content)
+        report_html_content = markdown.markdown(report.content)
     except Exception as e:
         print(f"Error converting markdown for report {report_id}: {e}")
         flash('Error generating PDF: Could not parse report content.', 'danger')
         return redirect(url_for('main.patient_report', id=patient.id, report_id=report.id))
 
-    # Read the CSS content
     css_content = ""
     try:
-        # Construct the absolute path to the CSS file
         css_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'css', 'report.css')
         with open(css_path, 'r') as f:
             css_content = f.read()
@@ -1740,29 +2021,27 @@ def download_report_pdf(report_id):
     except Exception as e:
         print(f"Error reading report.css: {e}")
 
-    # Basic HTML structure for the PDF
-    html_content = f"""
+    full_html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="UTF-8">
         <title>Report: {patient.name}</title>
         <style>
-            {css_content} /* Inject the CSS content here */
+            {css_content}
         </style>
     </head>
     <body>
         <div class="report-content">
-            {report_html}
+            {report_html_content}
         </div>
     </body>
     </html>
     """
 
-    # Generate PDF
     pdf_file = BytesIO()
     try:
-        pisa_status = pisa.CreatePDF(html_content, dest=pdf_file)
+        pisa_status = pisa.CreatePDF(full_html_content, dest=pdf_file)
         if pisa_status.err:
             raise Exception(f"pisa error: {pisa_status.err}")
     except Exception as e:
@@ -1771,15 +2050,41 @@ def download_report_pdf(report_id):
         return redirect(url_for('main.patient_report', id=patient.id, report_id=report.id))
 
     pdf_file.seek(0)
-
-    # Create response
     response = make_response(pdf_file.read())
     response.headers['Content-Type'] = 'application/pdf'
-    # Suggest filename for download
     filename = f"Report_{patient.name.replace(' ', '_')}_{report.generated_date.strftime('%Y%m%d')}.pdf"
     response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
-
     return response
+
+@main.route('/homework/<int:report_id>')
+@login_required
+def view_homework(report_id):
+    report = PatientReport.query.get_or_404(report_id)
+    # Permission check: Ensure the logged-in user (or patient) is allowed to see this report.
+    # If current_user is the patient themselves (and report belongs to them):
+    is_patient_self = False
+    if current_user.role == 'patient' and current_user.patient_record and current_user.patient_record.id == report.patient_id:
+        is_patient_self = True
+    
+    # If current_user is the clinician for this patient:
+    is_clinician_of_patient = False
+    if current_user.role == 'physio' and report.patient.user_id == current_user.id: # Assuming Patient.user_id links to clinician
+        is_clinician_of_patient = True
+
+    if not is_patient_self and not is_clinician_of_patient and not current_user.is_admin:
+        flash('You do not have permission to view this report.', 'danger')
+        # Redirect to a safe page, e.g., patient dashboard if patient, or main index if physio
+        if current_user.role == 'patient':
+            return redirect(url_for('main.patient_dashboard'))
+        else:
+            return redirect(url_for('main.index'))
+            
+    if report.report_type != 'Exercise Homework':
+        flash('This report is not a homework assignment.', 'warning')
+        # Decide where to redirect, perhaps back to patient detail or a report list
+        return redirect(url_for('main.patient_detail', id=report.patient_id))
+
+    return render_template('view_homework.html', report=report)
 
 # --- Bulk Update Endpoint --- 
 @main.route('/api/treatments/bulk-update', methods=['POST'])
@@ -1812,7 +2117,7 @@ def bulk_update_treatments():
         earliest_treatment_id = None
         patient_id_for_check = None
 
-        # --- Determine if auto-fee logic applies --- 
+        # --- Determine if auto-fee logic applies ---
         is_costaspine_auto_fee = (field_to_update == 'location' and new_value == 'CostaSpine Clinic')
 
         # --- Get patient ID and earliest treatment if auto-fee applies --- 
@@ -1949,12 +2254,17 @@ def financials():
         q_key = quarters_map[month]
 
         # Query treatments for the specific month
-        monthly_treatments = Treatment.query.filter(
+        monthly_treatments_query = Treatment.query.filter(
             Treatment.created_at >= month_start_date,
             Treatment.created_at <= month_end_date,
             Treatment.status == 'Completed',
             Treatment.fee_charged > 0
-        ).all()
+        )
+
+        if not current_user.is_admin:
+            monthly_treatments_query = monthly_treatments_query.join(Patient).filter(Patient.user_id == current_user.id)
+        
+        monthly_treatments = monthly_treatments_query.all()
 
         # Calculate monthly figures
         m_revenue = 0
@@ -1993,9 +2303,7 @@ def financials():
         if current_bracket:
             bracket_desc = current_bracket['desc']
             min_base_value = current_bracket['base']
-            # Format min_base for display
             min_base_display = f"€{min_base_value:,.2f}"
-            # Calculate the estimated monthly contribution (31.4%)
             monthly_contribution = min_base_value * 0.314
             
             upper_bound = current_bracket['upper']
@@ -2003,50 +2311,44 @@ def financials():
                 diff_to_upper = "Top Bracket"
             else:
                 diff = upper_bound - m_net
-                # Format diff_to_upper as currency
                 diff_to_upper = f"€{diff:,.2f}"
-        elif m_net > 0: # Handle case where net is positive but doesn't match a bracket
+        elif m_net > 0: 
              bracket_desc = "Error: No bracket found"
 
-        # Final Net Revenue for the month (After all expenses and contributions)
         m_net_final = m_net - monthly_contribution
 
-        # Store monthly breakdown (Updated)
         monthly_data[month] = {
             'month_name': month_start_date.strftime('%B'),
-            'net_revenue': m_net, # Revenue used for bracket calc
+            'net_revenue': m_net, 
             'bracket': bracket_desc,
             'min_base': min_base_display,
             'monthly_contribution': monthly_contribution,
-            'fixed_expenses': TOTAL_FIXED_MONTHLY_EXPENSES, # Store monthly fixed expenses
-            'net_revenue_final': m_net_final, # Store the final net after contribution
+            'fixed_expenses': TOTAL_FIXED_MONTHLY_EXPENSES, 
+            'net_revenue_final': m_net_final, 
             'diff_to_upper': diff_to_upper
         }
 
-        # --- Aggregate into quarterly and annual data (Updated) ---
         quarterly_data[q_key]['revenue'] += m_revenue
         quarterly_data[q_key]['costaspine_revenue'] += m_costaspine_revenue
         quarterly_data[q_key]['costaspine_fee'] += m_costaspine_fee
-        quarterly_data[q_key]['tax'] += monthly_contribution # Sum autonomo contributions
-        quarterly_data[q_key]['fixed_expenses'] += TOTAL_FIXED_MONTHLY_EXPENSES # Sum fixed expenses
-        # Recalculate Net for the quarter
+        quarterly_data[q_key]['tax'] += monthly_contribution 
+        quarterly_data[q_key]['fixed_expenses'] += TOTAL_FIXED_MONTHLY_EXPENSES 
         quarterly_data[q_key]['net'] = quarterly_data[q_key]['revenue'] - quarterly_data[q_key]['costaspine_fee'] - quarterly_data[q_key]['tax'] - quarterly_data[q_key]['fixed_expenses']
 
         quarterly_data['annual']['revenue'] += m_revenue
         quarterly_data['annual']['costaspine_revenue'] += m_costaspine_revenue
         quarterly_data['annual']['costaspine_fee'] += m_costaspine_fee
-        quarterly_data['annual']['tax'] += monthly_contribution # Sum autonomo contributions
-        quarterly_data['annual']['fixed_expenses'] += TOTAL_FIXED_MONTHLY_EXPENSES # Sum fixed expenses
-        # Recalculate Net for the year
+        quarterly_data['annual']['tax'] += monthly_contribution 
+        quarterly_data['annual']['fixed_expenses'] += TOTAL_FIXED_MONTHLY_EXPENSES 
         quarterly_data['annual']['net'] = quarterly_data['annual']['revenue'] - quarterly_data['annual']['costaspine_fee'] - quarterly_data['annual']['tax'] - quarterly_data['annual']['fixed_expenses']
 
     return render_template(
         'financials.html',
-        data=quarterly_data, # Pass quarterly/annual data
-        monthly_breakdown=monthly_data, # Pass new monthly data
+        data=quarterly_data, 
+        monthly_breakdown=monthly_data, 
         selected_year=selected_year,
-        available_years=sorted(list(set(available_years)), reverse=True), # Ensure unique and sorted
-        tax_year=2025 # Pass the year the brackets apply to
+        available_years=sorted(list(set(available_years)), reverse=True), 
+        tax_year=2025 
     )
 
 # --- Review Missing Payments Route ---
@@ -2065,7 +2367,7 @@ def review_payments():
         # --- End added call ---
 
         # Fetch treatments that are Completed and are missing a fee OR payment method
-        treatments_to_review = Treatment.query.join(Patient).filter(
+        base_query = Treatment.query.join(Patient).filter(
             Treatment.status == 'Completed', # Must be completed
             or_(
                 Treatment.fee_charged.is_(None),
@@ -2073,7 +2375,12 @@ def review_payments():
                 Treatment.payment_method.is_(None),
                 Treatment.payment_method == ''
             )
-        ).options(
+        )
+
+        if not current_user.is_admin:
+            base_query = base_query.filter(Patient.user_id == current_user.id)
+
+        treatments_to_review = base_query.options(
             db.joinedload(Treatment.patient) # Eager load patient data
         ).order_by(
             Treatment.created_at.asc() # Show oldest first
@@ -2086,122 +2393,40 @@ def review_payments():
         flash('Could not load payment review page. Please try again.', 'danger')
         return redirect(url_for('main.index'))
 
-@main.route('/patient/<int:id>/edit', methods=['GET', 'POST'])
-@login_required # Asegurar que solo usuarios logueados puedan editar
-# @physio_required # <<< DO NOT ADD YET - Needs granular check
-def edit_patient(id):
-    # Cargar paciente y su usuario asociado (si existe) para evitar queries extra
-    patient = Patient.query.options(joinedload(Patient.user)).get_or_404(id) 
-    # --- Add Access Control --- 
-    if current_user.role == 'patient' and current_user.patient_id != id:
-        flash('You do not have permission to edit this patient\'s details.', 'danger')
-        return redirect(url_for('main.patient_dashboard'))
-    # --- End Access Control ---
-    
-    if request.method == 'POST':
-        # --- Actualizar Información Básica del Paciente --- 
-        try:
-            patient.name = request.form['name']
-            dob_str = request.form.get('date_of_birth')
-            # Manejar fecha de nacimiento vacía o inválida
-            patient.date_of_birth = datetime.strptime(dob_str, '%Y-%m-%d').date() if dob_str else None
-            patient.contact = request.form['contact']
-            patient.diagnosis = request.form['diagnosis']
-            patient.treatment_plan = request.form['treatment_plan']
-            patient.notes = request.form['notes']
-            patient.status = request.form['status']
-        except ValueError:
-             db.session.rollback()
-             flash('Invalid date format for Date of Birth. Please use YYYY-MM-DD.', 'danger')
-             return render_template('edit_patient.html', patient=patient)
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error parsing basic patient information: {e}', 'danger')
-            print(f"Error parsing patient info {id}: {e}") # Log para debug
-            return render_template('edit_patient.html', patient=patient)
-            
-        # --- Actualizar Acceso al Portal del Paciente --- 
-        patient_email = request.form.get('patient_email', '').strip().lower()
-        patient_password = request.form.get('patient_password', '') # Obtener contraseña (puede estar vacía)
-        
-        user_changed = False # Flag para saber si mostrar mensaje de portal actualizado
-        try:
-            if patient_email: # Si se proporciona un email
-                # Comprobar si el email está siendo cambiado a uno que ya existe para *otro* usuario
-                existing_user_check = User.query.filter(
-                    User.email == patient_email, 
-                    User.id != (patient.user.id if patient.user else -1) # Excluir al usuario actual del paciente (si existe)
-                ).first()
-                
-                if existing_user_check:
-                    flash('That email address is already in use by another user.', 'danger')
-                    # No hacer rollback aquí, los cambios básicos del paciente pueden ser válidos
-                    return render_template('edit_patient.html', patient=patient) 
-                
-                if patient.user: 
-                    # El paciente YA tiene una cuenta de usuario
-                    # Actualizar email si ha cambiado
-                    if patient.user.email != patient_email:
-                        patient.user.email = patient_email
-                        patient.user.username = patient_email # Mantener username sincronizado con email
-                        user_changed = True
-                    # Actualizar contraseña si se proporcionó una nueva
-                    if patient_password:
-                        patient.user.set_password(patient_password)
-                        user_changed = True
-                        
-                else: 
-                    # El paciente NO tiene cuenta de usuario, hay que crearla
-                    # Se requiere contraseña para crear una nueva cuenta
-                    if not patient_password:
-                        flash('A password is required to create a new patient login.', 'danger')
-                        # No hacer rollback, cambios básicos pueden ser válidos
-                        return render_template('edit_patient.html', patient=patient)
-                    
-                    # Crear nuevo usuario
-                    new_user = User(
-                        username=patient_email, # Usar email como username
-                        email=patient_email,
-                        role='patient', # Asignar rol paciente
-                        patient_id=patient.id # Vincular al paciente
-                    )
-                    new_user.set_password(patient_password)
-                    db.session.add(new_user)
-                    user_changed = True # Indicar que se creó/modificó usuario
-                    # No es necesario asignar patient.user = new_user aquí, 
-                    # SQLAlchemy maneja la relación al hacer commit si patient_id está puesto
-                    
-            elif patient.user and patient_password: 
-                # Si el campo email está vacío, pero el paciente tiene usuario y se proporcionó contraseña nueva
-                # Actualizar solo la contraseña del usuario existente
-                patient.user.set_password(patient_password)
-                user_changed = True
-                
-            # elif not patient_email and patient.user:
-                # Opcional: Lógica si se borra el email. Podríamos desactivar/borrar el usuario.
-                # Por ahora, no hacemos nada, mantenemos la cuenta existente aunque se borre el email del form.
-                # pass 
-
-            # --- Hacer Commit de Todos los Cambios (Paciente y/o Usuario) --- 
-            db.session.commit() 
-            flash('Patient information updated successfully!' + (' Portal access updated.' if user_changed else ''), 'success')
-            return redirect(url_for('main.patient_detail', id=patient.id))
-            
-        except Exception as e:
-            db.session.rollback() # Hacer rollback si hay error al manejar el usuario
-            flash(f'Error updating patient portal access: {str(e)}', 'danger')
-            print(f"Error updating user access for patient {id}: {e}") # Log para debug
-            return render_template('edit_patient.html', patient=patient) # Re-renderizar en caso de error
-            
-    # --- Petición GET --- 
-    # Renderizar la plantilla pasando el objeto paciente (que ya tiene el usuario cargado si existe)
-    return render_template('edit_patient.html', patient=patient)
-
 @main.route('/patient/new', methods=['GET', 'POST'])
 @login_required
-@physio_required # <<< ADD DECORATOR
+@physio_required # Or your equivalent decorator for physio access
 def new_patient():
+    current_patients, patient_limit = current_user.patient_usage_details
+
+    if patient_limit is not None and current_patients >= patient_limit:
+        flash(f"You have reached your current patient limit of {patient_limit}. Please upgrade your plan to add more patients.", 'warning')
+        return redirect(url_for('main.pricing_page'))
+
     if request.method == 'POST':
+        # Re-check just before creating, as a safeguard
+        current_patients_post, patient_limit_post = current_user.patient_usage_details
+        if patient_limit_post is not None and current_patients_post >= patient_limit_post:
+            flash(f"You have reached your current patient limit of {patient_limit_post} while trying to save. Please upgrade your plan.", 'warning')
+            # Repopulate form fields for clarity, though redirecting is simpler
+            name = request.form['name']
+            date_of_birth_str = request.form.get('date_of_birth')
+            contact = request.form['contact']
+            diagnosis = request.form['diagnosis']
+            treatment_plan = request.form.get('treatment_plan')
+            notes = request.form.get('notes')
+            patient_contact_email_on_patient_record = request.form.get('patient_contact_email_on_patient_record')
+            patient_contact_phone_on_patient_record = request.form.get('patient_contact_phone_on_patient_record')
+            address_line1 = request.form.get('address_line1')
+            address_line2 = request.form.get('address_line2')
+            city = request.form.get('city')
+            postcode = request.form.get('postcode')
+            preferred_location = request.form.get('preferred_location')
+            portal_login_email = request.form.get('patient_email', '').strip().lower()
+
+            # It's better to redirect to pricing page for consistency
+            return redirect(url_for('main.pricing_page'))
+
         # --- Basic Patient Info ---
         name = request.form['name']
         date_of_birth_str = request.form.get('date_of_birth')
@@ -2209,12 +2434,19 @@ def new_patient():
         diagnosis = request.form['diagnosis']
         treatment_plan = request.form.get('treatment_plan')
         notes = request.form.get('notes')
+        patient_contact_email_on_patient_record = request.form.get('patient_contact_email_on_patient_record')
+        patient_contact_phone_on_patient_record = request.form.get('patient_contact_phone_on_patient_record')
+        address_line1 = request.form.get('address_line1')
+        address_line2 = request.form.get('address_line2')
+        city = request.form.get('city')
+        postcode = request.form.get('postcode')
+        preferred_location = request.form.get('preferred_location')
         
         try:
             date_of_birth = datetime.strptime(date_of_birth_str, '%Y-%m-%d').date() if date_of_birth_str else None
         except ValueError:
             flash('Invalid date format for Date of Birth. Please use YYYY-MM-DD.', 'danger')
-            return render_template('new_patient.html')
+            return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location)
 
         new_patient_obj = Patient(
             name=name,
@@ -2223,67 +2455,196 @@ def new_patient():
             diagnosis=diagnosis,
             treatment_plan=treatment_plan,
             notes=notes,
-            status='Active' # Default status for new patients
+            email=patient_contact_email_on_patient_record,
+            phone=patient_contact_phone_on_patient_record,
+            address_line1=address_line1,
+            address_line2=address_line2,
+            city=city,
+            postcode=postcode,
+            preferred_location=preferred_location,
+            user_id=current_user.id, 
+            status='Active'
         )
         
-        # --- Optional Patient Portal User ---
-        patient_email = request.form.get('patient_email', '').strip().lower()
-        patient_password = request.form.get('patient_password', '')
+        portal_login_email = request.form.get('patient_email', '').strip().lower()
+        portal_login_password = request.form.get('patient_password', '')
+        newly_created_portal_user = None
 
-        new_user = None
-        if patient_email:
-            # Check if email already exists
-            existing_user = User.query.filter_by(email=patient_email).first()
-            if existing_user:
-                flash('Email address already in use. Cannot create patient portal account with this email.', 'danger')
-                # Don't proceed with saving patient if user creation failed due to email clash
-                return render_template('new_patient.html', 
-                                       # Pass back form data to avoid re-entry (optional but good UX)
-                                       name=name, date_of_birth=date_of_birth_str, contact=contact, 
-                                       diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes,
-                                       patient_email=patient_email) 
+        if portal_login_email:
+            existing_user_check = User.query.filter_by(email=portal_login_email).first()
+            if existing_user_check:
+                flash('That portal login email address is already in use. Cannot create patient portal account with this email.', 'danger')
+                return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location, portal_login_email=portal_login_email)
             
-            if not patient_password:
+            if not portal_login_password:
                 flash('Password is required when providing an email for patient portal access.', 'danger')
-                # Don't proceed if password missing for user creation
-                return render_template('new_patient.html', 
-                                       name=name, date_of_birth=date_of_birth_str, contact=contact, 
-                                       diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes,
-                                       patient_email=patient_email)
+                return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location, portal_login_email=portal_login_email)
 
-            new_user = User(
-                username=patient_email, # Use email as username for simplicity
-                email=patient_email,
+            newly_created_portal_user = User(
+                username=portal_login_email, 
+                email=portal_login_email,
                 role='patient'
             )
-            new_user.set_password(patient_password)
+            newly_created_portal_user.set_password(portal_login_password)
         
-        # --- Save Patient (and User if created) ---
         try:
-            db.session.add(new_patient_obj)
-            # Flush to get the new_patient_obj.id before adding user (if needed)
-            # Not strictly necessary if using backref, but good practice
+            db.session.add(new_patient_obj) 
+            
+            if newly_created_portal_user:
+                db.session.add(newly_created_portal_user) 
+            
             db.session.flush() 
             
-            if new_user:
-                new_user.patient_id = new_patient_obj.id # Link user to the patient
-                db.session.add(new_user)
+            if newly_created_portal_user: 
+                new_patient_obj.portal_user_id = newly_created_portal_user.id 
                 
             db.session.commit()
-            flash(f'Patient {name} created successfully!' + (' Portal access enabled.' if new_user else ''), 'success')
+            flash_message = f'Patient {name} created successfully!'
+            if newly_created_portal_user:
+                flash_message += ' Portal access enabled.'
+            flash(flash_message, 'success')
             return redirect(url_for('main.patient_detail', id=new_patient_obj.id))
         
-        except Exception as e:
+        except Exception as e: 
             db.session.rollback()
             flash(f'Error creating patient: {str(e)}', 'danger')
-            print(f"Error creating patient: {e}") # Log for debugging
+            print(f"Error creating patient: {e}") 
             return render_template('new_patient.html',
                                    name=name, date_of_birth=date_of_birth_str, contact=contact, 
                                    diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes,
-                                   patient_email=patient_email) 
+                                   patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, 
+                                   patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record,
+                                   address_line1=address_line1, address_line2=address_line2, city=city,
+                                   postcode=postcode, preferred_location=preferred_location,
+                                   portal_login_email=portal_login_email)
 
     # GET request
     return render_template('new_patient.html')
+
+@main.route('/patient/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_patient(id):
+    patient = Patient.query.options(
+        joinedload(Patient.portal_user_account)
+    ).get_or_404(id)
+
+    # --- Access Control ---
+    if not current_user.is_admin:
+        if current_user.role == 'physio':
+            if patient.user_id != current_user.id:
+                flash('You do not have permission to edit this patient\'s details.', 'danger')
+                return redirect(url_for('main.patients_list'))
+        elif current_user.role == 'patient':
+            if not patient.portal_user_account or patient.portal_user_account.id != current_user.id:
+                flash('You do not have permission to edit these patient details.', 'danger')
+                return redirect(url_for('main.patient_dashboard'))
+            # If it IS their record, they are allowed through to edit.
+        else: # This 'else' belongs to 'if current_user.role == 'physio':'
+            flash('Access Denied.', 'danger')
+            return redirect(url_for('main.index'))
+    # --- End Access Control ---
+    
+    if request.method == 'POST':
+        print(f"--- edit_patient POST for patient ID: {id} ---")
+        print(f"Form data received: {request.form}")
+
+        # --- 1. Update Basic Patient Info ---
+        try:
+            patient.name = request.form['name']
+            dob_str = request.form.get('date_of_birth')
+            patient.date_of_birth = datetime.strptime(dob_str, '%Y-%m-%d').date() if dob_str else None
+            patient.contact = request.form['contact']
+            patient.diagnosis = request.form['diagnosis']
+            patient.treatment_plan = request.form['treatment_plan']
+            patient.notes = request.form['notes']
+            patient.status = request.form['status']
+            patient.email = request.form.get('patient_contact_email')
+            patient.phone = request.form.get('patient_contact_phone')
+            patient.address_line1 = request.form.get('address_line1')
+            patient.address_line2 = request.form.get('address_line2')
+            patient.city = request.form.get('city')
+            patient.postcode = request.form.get('postcode')
+            patient.preferred_location = request.form.get('preferred_location')
+        except ValueError:
+            flash('Invalid date format for Date of Birth. Please use YYYY-MM-DD.', 'danger')
+            return render_template('edit_patient.html', patient=patient)
+        except Exception as e_basic:
+            flash(f'Error parsing basic patient information: {str(e_basic)}', 'danger')
+            print(f"Error parsing patient info {id}: {e_basic}")
+            return render_template('edit_patient.html', patient=patient)
+            
+        # --- 2. Handle Portal User Account ---
+        portal_login_email = request.form.get('patient_email', '').strip().lower()
+        portal_login_password = request.form.get('patient_password', '')
+        user_action_message_suffix = ''
+        newly_created_portal_user_to_link = None
+
+        if portal_login_email:
+            user_to_exclude_id = patient.portal_user_account.id if patient.portal_user_account else -1 # Get ID if portal user exists
+            conflicting_user = User.query.filter(User.email == portal_login_email, User.id != user_to_exclude_id).first()
+
+            if conflicting_user:
+                flash('That portal login email address is already in use by another account.', 'danger')
+                return render_template('edit_patient.html', patient=patient) 
+                
+            if patient.portal_user_account: 
+                portal_user = patient.portal_user_account
+                if portal_user.email != portal_login_email:
+                    portal_user.email = portal_login_email
+                    portal_user.username = portal_login_email # Keep username synced with email
+                    user_action_message_suffix = ' Portal access updated.'
+                if portal_login_password: # If new password provided, update it
+                    print(f"DEBUG: Updating password for user {portal_user.email} with raw password: '{portal_login_password}'") # TEMPORARY
+                    portal_user.set_password(portal_login_password)
+                    print(f"DEBUG: New password hash for {portal_user.email}: {portal_user.password_hash}") # TEMPORARY
+                    user_action_message_suffix = ' Portal access updated.'
+            else: # No existing portal user, create a new one
+                if not portal_login_password: # Password is required for new portal user
+                    flash('A password is required to create a new patient portal login.', 'danger')
+                    return render_template('edit_patient.html', patient=patient)
+                    
+                newly_created_portal_user_to_link = User(
+                    username=portal_login_email, # Set username to email
+                    email=portal_login_email,
+                    role='patient'
+                )
+                print(f"DEBUG: Creating new portal user {portal_login_email} with raw password: '{portal_login_password}'") # TEMPORARY
+                newly_created_portal_user_to_link.set_password(portal_login_password)
+                print(f"DEBUG: Password hash for new user {portal_login_email}: {newly_created_portal_user_to_link.password_hash}") # TEMPORARY
+                db.session.add(newly_created_portal_user_to_link) # Add to session
+                user_action_message_suffix = ' Portal access enabled.'
+        
+        elif portal_login_password and patient.portal_user_account: # Email not changed, but password provided for existing portal user
+            print(f"DEBUG: Updating password (email unchanged) for user {patient.portal_user_account.email} with raw password: '{portal_login_password}'") # TEMPORARY
+            patient.portal_user_account.set_password(portal_login_password)
+            print(f"DEBUG: New password hash for {patient.portal_user_account.email}: {patient.portal_user_account.password_hash}") # TEMPORARY
+            user_action_message_suffix = ' Portal access updated.'
+        
+        # If only portal_login_email is blanked out, and there was an existing portal user,
+        # current logic doesn't remove/disable the portal user. This might be desired or not.
+        # For now, we assume blanking email field means no change to portal status if password not also changed.
+
+        # --- 3. Commit all changes ---
+        try:
+            if newly_created_portal_user_to_link:
+                # Need to flush to get the ID of the newly_created_portal_user_to_link
+                db.session.flush() 
+                patient.portal_user_id = newly_created_portal_user_to_link.id
+            
+            patient.updated_at = datetime.utcnow() # Ensure patient updated_at is set
+            db.session.commit() # Commit all changes (patient, existing user, new user)
+            flash('Patient information updated successfully!' + user_action_message_suffix, 'success')
+            return redirect(url_for('main.patient_detail', id=patient.id))
+            
+        except Exception as e_commit:
+            db.session.rollback()
+            flash(f'An error occurred while saving changes: {str(e_commit)}', 'danger')
+            print(f"Error committing changes for patient {id}: {e_commit}")
+            return render_template('edit_patient.html', patient=patient)
+            
+    # --- GET Request ---
+    # For GET, ensure patient data (including portal_user_account details if any) is passed
+    return render_template('edit_patient.html', patient=patient)
 
 # --- Patient Dashboard Route ---
 @main.route('/patient/dashboard')
@@ -2291,33 +2652,34 @@ def new_patient():
 def patient_dashboard():
     # Ensure the user is a patient
     if current_user.role != 'patient':
-        flash('Access denied.', 'danger')
+        flash('Access denied. This dashboard is for patient accounts.', 'danger')
         return redirect(url_for('main.index'))
 
-    if not current_user.patient_id:
-        flash('No patient record linked to your account.', 'danger')
-        logout_user()
+    patient_record = current_user.patient_record 
+
+    if not patient_record:
+        flash('No patient data linked to your portal account. Please contact support.', 'danger')
+        logout_user() 
         return redirect(url_for('auth.login'))
 
-    patient = Patient.query.get_or_404(current_user.patient_id)
+    print(f"DEBUG: patient_record type: {type(patient_record)}") # TEMPORARY DEBUG
+    print(f"DEBUG: patient_record content: {patient_record}") # TEMPORARY DEBUG
+
     today = datetime.now()
     
-    # Upcoming appointments (only consider SCHEDULED treatments in the future)
     upcoming_appointments = Treatment.query.filter(
-        Treatment.patient_id == patient.id,
-        Treatment.status == 'Scheduled', # Only scheduled ones
-        Treatment.created_at >= today # Only future or today
+        Treatment.patient_id == patient_record.id,
+        Treatment.status == 'Scheduled',
+        Treatment.created_at >= today 
     ).order_by(Treatment.created_at.asc()).limit(5).all()
     
-    # Latest homework report
     latest_homework = PatientReport.query.filter(
-        PatientReport.patient_id == patient.id,
+        PatientReport.patient_id == patient_record.id,
         PatientReport.report_type == 'Exercise Homework'
     ).order_by(PatientReport.generated_date.desc()).first()
 
-    # Past homework reports (exclude the latest one if it exists)
     past_homework_query = PatientReport.query.filter(
-        PatientReport.patient_id == patient.id,
+        PatientReport.patient_id == patient_record.id,
         PatientReport.report_type == 'Exercise Homework'
     )
     if latest_homework:
@@ -2329,50 +2691,23 @@ def patient_dashboard():
                            upcoming_appointments=upcoming_appointments,
                            latest_homework=latest_homework,
                            past_homework_reports=past_homework_reports,
-                           patient=patient) # Pass patient object for greeting
+                           patient=patient_record)
 
 @main.route('/patient/profile')
 @login_required
 def patient_profile():
-    # Ensure the user is a patient
     if current_user.role != 'patient':
-        flash('Access denied.', 'danger')
+        flash('Access denied. This profile page is for patient accounts.', 'danger')
         return redirect(url_for('main.index'))
+        
+    patient_record = current_user.patient_record
     
-    if not current_user.patient_id:
-        flash('No patient record linked to your account.', 'danger')
+    if not patient_record:
+        flash('No patient data linked to your portal account. Please contact support.', 'danger')
         logout_user()
         return redirect(url_for('auth.login'))
         
-    # Fetch the patient record again if needed, or just use current_user.patient if relationship is loaded
-    # Assuming current_user.patient is available via relationship backref
-    if not current_user.patient:
-         flash('Could not load patient profile data.', 'danger')
-         return redirect(url_for('main.patient_dashboard'))
-
-    return render_template('patient_profile.html') # Patient data accessed via current_user in template
-
-@main.route('/patient/homework/<int:report_id>')
-@login_required
-def view_homework(report_id):
-    # 1. Ensure user is a patient
-    if current_user.role != 'patient':
-        flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
-    
-    # 2. Fetch the report and ensure it belongs to the logged-in patient
-    report = PatientReport.query.get_or_404(report_id)
-    if report.patient_id != current_user.patient_id:
-        flash('You do not have permission to view this report.', 'danger')
-        return redirect(url_for('main.patient_dashboard'))
-        
-    # 3. Ensure it's actually a homework report
-    if report.report_type != 'Exercise Homework':
-         flash('This is not an exercise homework report.', 'warning')
-         return redirect(url_for('main.patient_dashboard'))
-         
-    # 4. Render the template
-    return render_template('view_homework.html', report=report)
+    return render_template('patient_profile.html', patient=patient_record)
 
 @main.route('/patient/update-contact', methods=['POST'])
 @login_required
@@ -2381,207 +2716,682 @@ def update_patient_contact():
     if current_user.role != 'patient':
         return jsonify({'success': False, 'error': 'Access denied'}), 403
         
-    if not current_user.patient_id:
-         return jsonify({'success': False, 'error': 'No patient record linked'}), 400
+    patient_record = current_user.patient_record # Use the new relationship
+    if not patient_record:
+         return jsonify({'success': False, 'error': 'No patient record linked to your portal account'}), 400
          
-    patient = Patient.query.get_or_404(current_user.patient_id)
-    
+    # Now patient_record is the Patient object whose details are being updated
     try:
-        # Get data from form
-        patient.email = request.form.get('email')
-        patient.phone = request.form.get('phone')
-        patient.address_line1 = request.form.get('address_line1')
-        patient.address_line2 = request.form.get('address_line2')
-        patient.city = request.form.get('city')
-        patient.postcode = request.form.get('postcode')
-        patient.preferred_location = request.form.get('preferred_location')
+        # Get data from form - these update the Patient model fields
+        patient_record.email = request.form.get('email') # Patient's contact email
+        patient_record.phone = request.form.get('phone')
+        patient_record.address_line1 = request.form.get('address_line1')
+        patient_record.address_line2 = request.form.get('address_line2')
+        patient_record.city = request.form.get('city')
+        patient_record.postcode = request.form.get('postcode')
+        patient_record.preferred_location = request.form.get('preferred_location')
         
-        # Also update the User email if it differs and exists
-        if patient.user and patient.user.email != patient.email:
-             # Optional: Check if the new email is already taken by ANOTHER user
-             existing_user = User.query.filter(User.email == patient.email, User.id != patient.user.id).first()
-             if existing_user:
-                  return jsonify({'success': False, 'error': 'Email address already in use by another account.'}), 409 # Conflict
-             patient.user.email = patient.email
-             # Consider updating username too if it's linked to email
-             # patient.user.username = patient.email 
-             
+        # If the patient's contact email is also their portal login email, update the User model too.
+        # This assumes the form field for 'email' is intended for both.
+        if patient_record.portal_user_account and patient_record.portal_user_account.email != patient_record.email:
+            new_email = patient_record.email
+            if new_email:
+                conflicting_user = User.query.filter(User.email == new_email, User.id != patient_record.portal_user_account.id).first()
+                if conflicting_user:
+                    return jsonify({'success': False, 'error': 'That email address is already in use by another portal account.'}), 409 # Conflict
+                patient_record.portal_user_account.email = new_email
+                patient_record.portal_user_account.username = new_email # Keep username synced
+            # else: # If email is cleared, what to do with portal_user_account.email? For now, leave as is or handle explicitly.
+
+        patient_record.updated_at = datetime.utcnow()
         db.session.commit()
-        # flash('Contact information updated successfully!', 'success') # Flash might not show on AJAX redirect
-        return jsonify({'success': True})
+        return jsonify({'success': True, 'message': 'Contact information updated successfully!'})
         
     except Exception as e:
         db.session.rollback()
-        print(f"Error updating patient contact for user {current_user.id}: {e}")
-        return jsonify({'success': False, 'error': 'An internal error occurred.'}), 500
+        print(f"Error updating patient contact for user {current_user.id}, patient record {patient_record.id if patient_record else 'N/A'}: {e}")
+        return jsonify({'success': False, 'error': 'An internal error occurred while updating contact information.'}), 500
 
-@main.route('/analytics/generate', methods=['POST']) # Use POST for action
+@main.route('/analytics/generate_new_report', methods=['POST'])
 @login_required
 @physio_required
 def generate_new_analytics_report():
-    print("Generating new analytics report...") # Log start
     try:
-        # --- Gather Data (Replicate the data gathering needed for the AI function) ---
-        total_patients = Patient.query.count()
-        active_patients = Patient.query.filter(Patient.status == 'Active').count()
-        total_treatments = Treatment.query.count()
-        avg_treatments = round(total_treatments / total_patients, 1) if total_patients else 0
+        user_generating_report = current_user # For clarity
+        is_admin_generating = user_generating_report.is_admin
+
+        # --- Comprehensive Data Gathering for AI Report ---
+        # Basic Practice Stats
+        if is_admin_generating:
+            total_patients = Patient.query.count()
+            active_patients = Patient.query.filter(Patient.status == 'Active').count()
+            # For treatments, we need to sum up all treatments if admin, or user-specific if not
+            total_treatments = Treatment.query.count()
+        else:
+            total_patients = Patient.query.filter_by(user_id=user_generating_report.id).count()
+            active_patients = Patient.query.filter_by(user_id=user_generating_report.id, status='Active').count()
+            total_treatments = Treatment.query.join(Patient).filter(Patient.user_id == user_generating_report.id).count()
         
-        monthly_revenue_query = db.session.query(
+        avg_treatments_per_patient = round(total_treatments / total_patients, 1) if total_patients else 0
+
+        # Average Monthly Revenue
+        monthly_revenue_base_query = db.session.query(
             func.strftime('%Y-%m', Treatment.created_at).label('month'),
             func.sum(Treatment.fee_charged).label('monthly_total')
-        ).filter(Treatment.fee_charged.isnot(None)).group_by('month').all()
-        total_revenue = sum(m.monthly_total for m in monthly_revenue_query if m.monthly_total)
-        num_months = len(monthly_revenue_query)
-        avg_monthly_revenue = total_revenue / num_months if num_months else 0
+        ).filter(Treatment.fee_charged.isnot(None))
+
+        if not is_admin_generating:
+            monthly_revenue_base_query = monthly_revenue_base_query.join(Patient).filter(Patient.user_id == user_generating_report.id)
         
-        common_diagnoses_query = db.session.query(
-            Patient.diagnosis, 
+        monthly_revenue_data = monthly_revenue_base_query.group_by('month').all()
+        total_revenue_all_time = sum(m.monthly_total for m in monthly_revenue_data if m.monthly_total)
+        num_months_with_revenue = len(monthly_revenue_data)
+        avg_monthly_revenue = total_revenue_all_time / num_months_with_revenue if num_months_with_revenue else 0
+
+        # Common Diagnoses (Top 10)
+        common_diagnoses_base_query = (db.session.query(
+            Patient.diagnosis,
             func.count(Patient.id).label('count')
-        ).filter(Patient.diagnosis.isnot(None), Patient.diagnosis != '').group_by(Patient.diagnosis).order_by(func.count(Patient.id).desc()).limit(10).all()
-        common_diagnoses = [{'diagnosis': d.diagnosis, 'count': d.count} for d in common_diagnoses_query]
+            ).filter(Patient.diagnosis.isnot(None), Patient.diagnosis != ''))
+
+        if not is_admin_generating:
+            common_diagnoses_base_query = common_diagnoses_base_query.filter(Patient.user_id == user_generating_report.id)
         
-        revenue_by_visit_type_query = db.session.query(
+        common_diagnoses_query_result = (common_diagnoses_base_query
+            .group_by(Patient.diagnosis)
+            .order_by(func.count(Patient.id).desc())
+            .limit(10).all())
+        common_diagnoses = [{'diagnosis': d.diagnosis, 'count': d.count} for d in common_diagnoses_query_result]
+
+        # Revenue by Visit Type
+        revenue_by_visit_type_base_query = (db.session.query(
             Treatment.treatment_type,
-            func.sum(Treatment.fee_charged).label('total_fee')
-        ).filter(Treatment.fee_charged.isnot(None)).group_by(Treatment.treatment_type).order_by(func.sum(Treatment.fee_charged).desc()).all()
-        revenue_by_visit_type = [{'type': r.treatment_type, 'revenue': r.total_fee} for r in revenue_by_visit_type_query]
+            func.sum(Treatment.fee_charged).label('total_revenue')
+            ).filter(Treatment.fee_charged.isnot(None), Treatment.treatment_type.isnot(None)))
+
+        if not is_admin_generating:
+            revenue_by_visit_type_base_query = revenue_by_visit_type_base_query.join(Patient).filter(Patient.user_id == user_generating_report.id)
+
+        revenue_by_visit_type_query_result = (revenue_by_visit_type_base_query
+            .group_by(Treatment.treatment_type)
+            .order_by(func.sum(Treatment.fee_charged).desc()).all())
+        revenue_by_visit_type = [{'type': r.treatment_type, 'revenue': float(r.total_revenue)} for r in revenue_by_visit_type_query_result]
         
-        treatments_by_month_query = db.session.query(
+        # Patient Age Distribution
+        patients_for_age_query = Patient.query.filter(Patient.date_of_birth.isnot(None))
+        if not is_admin_generating:
+            patients_for_age_query = patients_for_age_query.filter(Patient.user_id == user_generating_report.id)
+        patients_with_dob = patients_for_age_query.all()
+        
+        age_distribution = {'0-17': 0, '18-30': 0, '31-45': 0, '46-60': 0, '61+': 0, 'Unknown': 0}
+        for p in patients_with_dob:
+            age = calculate_age(p.date_of_birth) # Assuming calculate_age is defined elsewhere
+            if age is None:
+                age_distribution['Unknown'] += 1
+            elif age <= 17:
+                age_distribution['0-17'] += 1
+            elif age <= 30:
+                age_distribution['18-30'] += 1
+            elif age <= 45:
+                age_distribution['31-45'] += 1
+            elif age <= 60:
+                age_distribution['46-60'] += 1
+            else:
+                age_distribution['61+'] += 1
+
+        twelve_months_ago = datetime.utcnow() - timedelta(days=365)
+        
+        # Treatments by Month
+        treatments_by_month_base_query = (db.session.query(
             func.strftime('%Y-%m', Treatment.created_at).label('month'),
             func.count(Treatment.id).label('count')
-        ).group_by('month').order_by('month').all()
-        treatments_by_month = [{'month': t.month, 'count': t.count} for t in treatments_by_month_query]
+            ).filter(Treatment.created_at >= twelve_months_ago))
         
-        patients_by_month_query = db.session.query(
-            func.strftime('%Y-%m', Patient.created_at).label('month'),
+        if not is_admin_generating:
+            treatments_by_month_base_query = treatments_by_month_base_query.join(Patient).filter(Patient.user_id == user_generating_report.id)
+
+        treatments_by_month_query_result = (treatments_by_month_base_query
+            .group_by(func.strftime('%Y-%m', Treatment.created_at))
+            .order_by(func.strftime('%Y-%m', Treatment.created_at).asc()).all())
+        treatments_by_month = [{'month': t.month, 'count': t.count} for t in treatments_by_month_query_result]
+
+        # New Patients by Month
+        new_patients_by_month_base_query = (db.session.query(
+            func.strftime('%Y-%m', Patient.created_at).label('month'), # Corrected to Patient.created_at
             func.count(Patient.id).label('count')
-        ).group_by('month').order_by('month').all()
-        patients_by_month = [{'month': p.month, 'count': p.count} for p in patients_by_month_query]
-        
-        patients_with_dob = Patient.query.filter(Patient.date_of_birth.isnot(None)).all()
-        age_brackets = {
-            "0-17": 0,
-            "18-30": 0,
-            "31-45": 0,
-            "46-60": 0,
-            "61+": 0,
-            "Unknown": 0
-        }
-        for p in patients_with_dob:
-            age = calculate_age(p.date_of_birth)
-            if age is None:
-                age_brackets["Unknown"] += 1
-            elif age <= 17:
-                age_brackets["0-17"] += 1
-            elif age <= 30:
-                age_brackets["18-30"] += 1
-            elif age <= 45:
-                age_brackets["31-45"] += 1
-            elif age <= 60:
-                age_brackets["46-60"] += 1
-            else:
-                age_brackets["61+"] += 1
-        unknown_dob_count = Patient.query.filter(Patient.date_of_birth.is_(None)).count()
-        age_brackets["Unknown"] += unknown_dob_count
-        age_distribution_data = age_brackets
-        
-        ai_analytics_data = {
+            ).filter(Patient.created_at >= twelve_months_ago)) # Corrected to Patient.created_at
+
+        if not is_admin_generating:
+            new_patients_by_month_base_query = new_patients_by_month_base_query.filter(Patient.user_id == user_generating_report.id)
+
+        new_patients_by_month_query_result = (new_patients_by_month_base_query
+            .group_by(func.strftime('%Y-%m', Patient.created_at)) # Corrected to Patient.created_at
+            .order_by(func.strftime('%Y-%m', Patient.created_at).asc()).all()) # Corrected to Patient.created_at
+        new_patients_by_month = [{'month': p.month, 'count': p.count} for p in new_patients_by_month_query_result]
+
+        analytics_data = {
             'total_patients': total_patients,
             'active_patients': active_patients,
             'total_treatments': total_treatments,
-            'avg_treatments': avg_treatments,
+            'avg_treatments': avg_treatments_per_patient,
             'avg_monthly_revenue': avg_monthly_revenue,
-            'common_diagnoses': common_diagnoses, 
-            'revenue_by_visit_type': revenue_by_visit_type, 
-            'treatments_by_month': treatments_by_month, 
-            'patients_by_month': patients_by_month, 
-            'age_distribution': age_distribution_data, 
+            'common_diagnoses': common_diagnoses,
+            'revenue_by_visit_type': revenue_by_visit_type,
+            'age_distribution': age_distribution,
+            'treatments_by_month': treatments_by_month,
+            'patients_by_month': new_patients_by_month
         }
 
-        # --- Generate the report using the existing helper ---
-        report_content = generate_deepseek_report(ai_analytics_data)
-        
-        # --- Save the new report to the database ---
-        if not report_content.startswith("Error:"):
-            new_report = PracticeReport(content=report_content, generated_at=datetime.utcnow())
+        report_content = generate_deepseek_report(analytics_data) # Assuming this function is defined elsewhere
+
+        if "Error:" in report_content or "API key not configured" in report_content:
+            flash(f"Failed to generate AI report: {report_content}", "danger")
+        else:
+            report_user_id = None
+            if not is_admin_generating:
+                report_user_id = user_generating_report.id
+            
+            new_report = PracticeReport(
+                content=report_content, 
+                generated_at=datetime.utcnow(),
+                user_id=report_user_id # Set user_id here
+            )
             db.session.add(new_report)
             db.session.commit()
-            flash('New AI practice insights generated successfully!', 'success')
-            print("New report saved successfully.")
-        else:
-            # Don't save if there was an error generating
-            flash(f'Failed to generate new insights: {report_content}', 'danger')
-            print(f"Failed to generate/save report: {report_content}")
-
+            flash("Successfully generated new AI practice insights report!", "success")
+            
     except Exception as e:
         db.session.rollback()
-        flash(f'An unexpected error occurred while generating the report: {str(e)}', 'danger')
-        print(f"Error in /analytics/generate: {e}") # Log the exception
+        current_app.logger.error(f"Error generating new analytics report for user {current_user.id if current_user else 'Unknown'}: {e}")
+        current_app.logger.error(traceback.format_exc())
+        flash(f"An unexpected error occurred while generating the report: {str(e)}", "danger")
+
+    return redirect(url_for('main.analytics'))
+
+@main.route('/profile/calendly-settings', methods=['GET', 'POST'])
+@login_required
+def manage_calendly_settings():
+    if current_user.role == 'patient':
+        flash('This page is not available for patient accounts.', 'warning')
+        return redirect(url_for('main.index'))
+
+    if request.method == 'POST':
+        token = request.form.get('calendly_api_token', '').strip()
+        uri = request.form.get('calendly_user_uri', '').strip()
+
+        # Basic validation: Check if URI looks like a Calendly user URI
+        if uri and not uri.startswith('https://api.calendly.com/users/'):
+            flash('Invalid Calendly User URI format. It should start with "https://api.calendly.com/users/".', 'danger')
+            # Re-render form with submitted values
+            # generate_csrf() is called implicitly by Flask-WTF for POST requests if the form has a csrf_token field.
+            # However, to be absolutely sure the template has it for re-rendering on error:
+            csrf_token_value_on_post_error = generate_csrf()
+            return render_template('calendly_settings.html', 
+                                   calendly_api_token=token, 
+                                   calendly_user_uri=uri,
+                                   csrf_token_value=csrf_token_value_on_post_error)
+
+        current_user.calendly_api_token = token if token else None
+        current_user.calendly_user_uri = uri if uri else None
         
-    return redirect(url_for('main.analytics')) # Redirect back to analytics page
+        try:
+            db.session.commit()
+            flash('Calendly settings updated successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating Calendly settings for user {current_user.id}: {e}")
+            flash('An error occurred while saving your settings. Please try again.', 'danger')
+        
+        return redirect(url_for('main.manage_calendly_settings'))
 
-def generate_scheduled_treatments(days_ahead=7):
-    """Generates Treatment records from active RecurringAppointment rules."""
-    today = date.today()
-    end_window = today + timedelta(days=days_ahead)
-    generated_count = 0
+    # GET request
+    csrf_token_value = generate_csrf()
+    return render_template('calendly_settings.html', 
+                           calendly_api_token=current_user.calendly_api_token, 
+                           calendly_user_uri=current_user.calendly_user_uri,
+                           csrf_token_value=csrf_token_value)
+
+# Route for the pricing page
+@main.route('/pricing')
+@login_required
+def pricing_page():
+    all_plans = Plan.query.filter_by(is_active=True).order_by(Plan.display_order).all()
     
-    active_rules = RecurringAppointment.query.filter_by(is_active=True).all()
-    
-    # Get existing scheduled treatments in the window to avoid duplicates
-    existing_treatments = db.session.query(Treatment.patient_id, Treatment.created_at).filter(
-        Treatment.created_at >= datetime.combine(today, time.min),
-        Treatment.created_at < datetime.combine(end_window, time.min),
-        Treatment.status == 'Scheduled' # Only check against scheduled ones
-    ).all()
-    existing_set = set(existing_treatments)
+    active_plan_id = None
+    user_subscription = None # Will hold the UserSubscription object
 
-    for rule in active_rules:
-        current_check_date = max(today, rule.start_date)
-        effective_rule_end = rule.end_date or end_window 
-
-        while current_check_date < end_window and current_check_date <= effective_rule_end:
-            is_valid_occurrence = False
-            # Check recurrence type
-            if rule.recurrence_type == 'weekly' and current_check_date.weekday() == rule.start_date.weekday():
-                is_valid_occurrence = True
-            elif rule.recurrence_type == 'daily-mon-fri' and current_check_date.weekday() < 5: # Monday=0, Friday=4
-                is_valid_occurrence = True
-            # Add more recurrence types here if needed
-
-            if is_valid_occurrence and rule.time_of_day:
-                occurrence_datetime = datetime.combine(current_check_date, rule.time_of_day)
-                
-                # Check if it already exists
-                if (rule.patient_id, occurrence_datetime) not in existing_set:
-                    new_treatment = Treatment(
-                        patient_id=rule.patient_id,
-                        treatment_type=rule.treatment_type,
-                        notes=f"(Recurring from rule {rule.id}) {rule.notes or ''}".strip(),
-                        status='Scheduled',
-                        created_at=occurrence_datetime, # Set creation date to the scheduled time
-                        location=rule.location,
-                        provider=rule.provider,
-                        fee_charged=rule.fee_charged,
-                        payment_method=rule.payment_method,
-                        # Copy other relevant fields if necessary
-                    )
-                    db.session.add(new_treatment)
-                    generated_count += 1
-                    # Add to set to prevent duplicate generation in the same run if logic allows
-                    existing_set.add((rule.patient_id, occurrence_datetime)) 
+    if current_user.is_authenticated:
+        user_subscription = current_user.current_subscription # Get the full subscription object
+        if user_subscription and user_subscription.plan:
+            active_plan_id = user_subscription.plan.id
             
-            # Move to the next day
-            current_check_date += timedelta(days=1)
+    stripe_publishable_key = current_app.config.get('STRIPE_PUBLISHABLE_KEY')
+    
+    return render_template('pricing.html', 
+                           plans=all_plans, 
+                           stripe_publishable_key=stripe_publishable_key,
+                           active_plan_id=active_plan_id,
+                           user_subscription=user_subscription) # Pass the subscription object
+
+@main.route('/subscription-success')
+@login_required
+def subscription_success():
+    session_id = request.args.get('session_id')
+    plan_name = None
+    error_message = None
+
+    if not session_id:
+        error_message = "Checkout session ID is missing. Cannot confirm subscription details."
+        flash(error_message, 'warning')
+    else:
+        try:
+            # Retrieve the session from Stripe to get details about the purchase
+            checkout_session = stripe.checkout.Session.retrieve(session_id, expand=['line_items'])
+            
+            if checkout_session and checkout_session.line_items and checkout_session.line_items.data:
+                # Assuming the first line item is the plan they subscribed to
+                stripe_price_id = checkout_session.line_items.data[0].price.id
+                if stripe_price_id:
+                    # Find the plan in your database using the Stripe Price ID
+                    plan = Plan.query.filter_by(stripe_price_id=stripe_price_id).first()
+                    if plan:
+                        plan_name = plan.name
+                        flash(f'Thank you for subscribing to the {plan_name} plan!', 'success')
+                    else:
+                        error_message = f"Could not find a plan in our system matching the Stripe Price ID: {stripe_price_id}. Your payment was successful, please contact support."
+                        flash(error_message, 'warning')
+                else:
+                    error_message = "Could not determine the subscribed plan from Stripe session. Your payment was successful, please contact support."
+                    flash(error_message, 'warning')
+            else:
+                error_message = "Could not retrieve line items from Stripe session. Your payment was successful, please contact support."
+                flash(error_message, 'warning')
+
+        except stripe.error.StripeError as e:
+            current_app.logger.error(f"Stripe API error retrieving session {session_id} for success page: {str(e)}")
+            error_message = "There was an error retrieving your subscription details from Stripe. Your payment was likely successful. Please contact support if you have questions."
+            flash(error_message, 'danger')
+        except Exception as e:
+            current_app.logger.error(f"Unexpected error on subscription success page for session {session_id}: {str(e)}", exc_info=True)
+            error_message = "An unexpected error occurred while confirming your subscription details. Please contact support."
+            flash(error_message, 'danger')
+
+    if not plan_name and not error_message: # Generic fallback if no specific message was flashed
+        flash('Your subscription has been activated successfully!', 'success')
+
+    return render_template('subscription_success.html', plan_name=plan_name, error_message=error_message)
+
+@main.route('/manage-subscription')
+@login_required
+def manage_subscription():
+    # Ensure the user has a Stripe Customer ID
+    if not current_user.stripe_customer_id:
+        flash('Unable to manage subscription: No Stripe customer ID found.', 'warning')
+        return redirect(url_for('main.pricing_page'))
 
     try:
+        # Create a new Stripe Billing Portal session
+        # The return_url is where the user will be redirected after they are done in the portal
+        session = stripe.billing_portal.Session.create(
+            customer=current_user.stripe_customer_id,
+            return_url=url_for('main.pricing_page', _external=True)
+        )
+        return redirect(session.url)
+    except stripe.error.StripeError as e:
+        flash(f'Could not open Stripe billing portal: {str(e)}', 'danger')
+        current_app.logger.error(f"Stripe Billing Portal error for user {current_user.id}: {str(e)}")
+        return redirect(url_for('main.pricing_page'))
+    except Exception as e:
+        flash('An unexpected error occurred while trying to access the billing portal.', 'danger')
+        current_app.logger.error(f"Unexpected error accessing billing portal for user {current_user.id}: {str(e)}")
+        return redirect(url_for('main.pricing_page'))
+
+@main.route('/cancel-subscription', methods=['POST'])
+@login_required
+def cancel_subscription():
+    """Handles the request to cancel a user's active subscription at the end of the current billing period."""
+    current_sub = current_user.current_subscription
+    active_plan_name = current_user.active_plan.name if current_user.active_plan else "your plan"
+
+    if not current_sub or current_sub.status not in ['active', 'trialing']:
+        flash('You do not have an active subscription to cancel.', 'warning')
+        return redirect(url_for('main.pricing_page'))
+
+    if current_sub.cancel_at_period_end:
+        flash(f'Your subscription for {active_plan_name} is already set to cancel at the end of the current period.', 'info')
+        return redirect(url_for('main.pricing_page'))
+
+    if not current_sub.stripe_subscription_id:
+        flash('Cannot cancel via Stripe: Local subscription record is missing Stripe Subscription ID.', 'danger')
+        current_app.logger.error(f"User {current_user.id} tried to cancel subscription {current_sub.id} but no stripe_subscription_id found.")
+        # Potentially handle this by manually deactivating locally if it's a non-Stripe plan or an error state.
+        # For now, we assume Stripe-managed subscriptions.
+        return redirect(url_for('main.pricing_page'))
+
+    try:
+        # Update the subscription on Stripe to cancel at period end
+        stripe.Subscription.modify(
+            current_sub.stripe_subscription_id,
+            cancel_at_period_end=True
+        )
+
+        # Update the local subscription record
+        current_sub.cancel_at_period_end = True
+        current_sub.canceled_at = datetime.utcnow() # Record when the cancellation request was made
+        # Optionally, change status to 'pending_cancellation' or keep as 'active' 
+        # until webhook confirms `invoice.payment_failed` or `customer.subscription.deleted`.
+        # For simplicity, keeping status 'active' but `cancel_at_period_end` is True is common.
+        # Stripe webhook for `customer.subscription.updated` should reflect `cancel_at_period_end`.
+        # And `customer.subscription.deleted` when it's truly gone.
+        
         db.session.commit()
-        print(f"Successfully generated {generated_count} new scheduled treatments.")
-        return generated_count
+        ends_at_readable = current_sub.current_period_ends_at.strftime('%B %d, %Y') if current_sub.current_period_ends_at else "the end of the current billing period"
+        flash(f'Your subscription for {active_plan_name} has been set to cancel at {ends_at_readable}. You will retain access until then.', 'success')
+        current_app.logger.info(f"User {current_user.id} successfully set subscription {current_sub.stripe_subscription_id} to cancel at period end.")
+
+    except stripe.error.StripeError as e:
+        flash(f'Could not update your subscription with Stripe: {str(e)}', 'danger')
+        current_app.logger.error(f"Stripe API error while trying to set cancel_at_period_end for user {current_user.id}, sub {current_sub.stripe_subscription_id}: {str(e)}")
     except Exception as e:
         db.session.rollback()
-        print(f"Error generating treatments: {e}")
-        return -1 # Indicate error
+        flash('An unexpected error occurred while canceling your subscription. Please try again or contact support.', 'danger')
+        current_app.logger.error(f"Unexpected error canceling subscription for user {current_user.id}, sub {current_sub.stripe_subscription_id}: {str(e)}", exc_info=True)
 
-# --- REMOVED Flask CLI Command ---
+    return redirect(url_for('main.pricing_page'))
+
+@main.route('/my-account', methods=['GET', 'POST']) # Add POST method
+@login_required
+def my_account():
+    """Renders the My Account page with tabs for subscription, profile, and billing.
+    Handles email and password updates from the Profile tab.
+    """
+    email_form = UpdateEmailForm(prefix='email_form')
+    password_form = ChangePasswordForm(prefix='password_form')
+    
+    user_subscription = current_user.current_subscription
+    active_plan = None
+    if user_subscription and hasattr(user_subscription, 'plan'):
+        active_plan = user_subscription.plan
+
+    if request.method == 'POST':
+        if email_form.submit_email.data and email_form.validate():
+            # Check if new email is different and not already taken
+            if email_form.email.data.lower() != current_user.email.lower():
+                existing_user = User.query.filter(func.lower(User.email) == func.lower(email_form.email.data), User.id != current_user.id).first()
+                if existing_user:
+                    flash('That email address is already in use. Please choose a different one.', 'danger')
+                else:
+                    current_user.email = email_form.email.data
+                    db.session.commit()
+                    flash('Your email address has been updated successfully.', 'success')
+                    return redirect(url_for('main.my_account', _anchor='profile-tab-pane')) 
+            else:
+                flash('The new email is the same as your current one.', 'info')
+        
+        elif password_form.submit_password.data and password_form.validate():
+            if current_user.check_password(password_form.current_password.data):
+                current_user.set_password(password_form.new_password.data)
+                db.session.commit()
+                flash('Your password has been updated successfully.', 'success')
+                return redirect(url_for('main.my_account', _anchor='profile-tab-pane'))
+            else:
+                flash('Incorrect current password.', 'danger')
+        
+        # If we reached here and it was a POST, it means a form was submitted
+        # but either not by the specific submit buttons we checked, or it failed validation.
+        # WTForms will automatically add errors to the form objects if validate() failed.
+        # We just need to fall through to re-render the template with these forms.
+
+    return render_template('my_account.html', 
+                           user_subscription=user_subscription, 
+                           active_plan=active_plan,
+                           email_form=email_form,
+                           password_form=password_form)
+
+# Route to handle password change
+@main.route('/my-account/change-password', methods=['POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        user = current_user
+        if user.check_password(form.current_password.data):
+            user.set_password(form.new_password.data)
+            db.session.commit()
+            flash('Password updated successfully!', 'success')
+        else:
+            flash('Incorrect current password.', 'danger')
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{getattr(form, field).label.text}: {error}", 'danger')
+    return redirect(url_for('main.my_account'))
+
+@main.route('/calendar')
+@login_required
+@physio_required # Assuming only physios/admins should access the main calendar view
+def calendar_page():
+    """Renders the main calendar page."""
+    # Fetch ALL patients for the new appointment modal
+    if current_user.is_admin:
+        patients = Patient.query.order_by(Patient.name).all() # Removed status filter
+    else: # Physio role (guaranteed by @physio_required)
+        patients = Patient.query.filter_by(user_id=current_user.id).order_by(Patient.name).all() # Removed status filter
+    
+    return render_template('calendar.html', title="Calendar", patients=patients)
+
+@main.route('/api/calendar-appointments')
+@login_required
+@physio_required
+def get_calendar_appointments():
+    """Fetch appointments for FullCalendar, including recurring ones."""
+    start_str = request.args.get('start')
+    end_str = request.args.get('end')
+
+    events = []
+    
+    if not start_str or not end_str:
+        return jsonify({"error": "Start and end dates are required for fetching calendar events."}), 400
+
+    try:
+        start_date_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
+        end_date_dt = datetime.fromisoformat(end_str.replace('Z', '+00:00'))
+
+        if start_date_dt.tzinfo is None:
+            start_date_dt = UTC.localize(start_date_dt)
+        if end_date_dt.tzinfo is None:
+            end_date_dt = UTC.localize(end_date_dt)
+        
+        calendar_view_start_date = start_date_dt.date()
+        calendar_view_end_date = end_date_dt.date()
+
+    except ValueError:
+        return jsonify({"error": "Invalid date format for start or end parameters"}), 400
+
+    # 1. Fetch standard (non-recurring) treatments
+    treatments_query = Treatment.query.join(Patient).filter(
+        Patient.user_id == current_user.id,
+        Treatment.status == 'Scheduled',
+        Treatment.created_at >= start_date_dt,
+        Treatment.created_at < end_date_dt
+    )
+    scheduled_treatments = treatments_query.all()
+
+    for treatment in scheduled_treatments:
+        event_start = treatment.created_at.isoformat()
+        event_end = (treatment.created_at + timedelta(hours=1)).isoformat()
+
+        title = f"{treatment.patient.name} - {treatment.treatment_type if treatment.treatment_type else 'Appointment'}"
+        color = '#007bff' # Default blue
+        if treatment.treatment_type:
+            if "Initial Assessment" in treatment.treatment_type: color = '#28a745'
+            elif "Follow-up" in treatment.treatment_type: color = '#17a2b8'
+        
+        events.append({
+            'id': str(treatment.id), # Ensure ID is string for FullCalendar
+            'title': title,
+            'start': event_start,
+            'end': event_end,
+            'allDay': False,
+            'color': color,
+            'extendedProps': {
+                'type': 'treatment',
+                'patient_id': treatment.patient_id,
+                'patient_name': treatment.patient.name,
+                'treatment_type': treatment.treatment_type,
+                'status': treatment.status,
+                'notes': treatment.notes
+            }
+        })
+
+    # 2. Fetch and process recurring appointments
+    recurring_appointments = RecurringAppointment.query.join(Patient).filter(
+        Patient.user_id == current_user.id
+    ).options(joinedload(RecurringAppointment.patient)).all()
+
+    # day_mapping removed as RecurringAppointment model uses recurrence_type
+
+    for ra in recurring_appointments:
+        if not ra.patient:
+            current_app.logger.warn(f"Recurring appointment ID {ra.id} is missing patient data.")
+            continue
+        
+        # Check for recurrence_type
+        if not ra.recurrence_type:
+            current_app.logger.warn(f"Recurring appointment ID {ra.id} for patient {ra.patient.name} has no recurrence_type set. Skipping.")
+            continue
+
+        if ra.time_of_day is None: # Changed from ra.time
+            current_app.logger.warn(f"Recurring appointment ID {ra.id} for patient {ra.patient.name} has no time_of_day set. Skipping.")
+            continue
+        
+        if ra.start_date is None:
+            current_app.logger.warn(f"Recurring appointment ID {ra.id} for patient {ra.patient.name} has no start_date set. Skipping.")
+            continue
+
+        series_start_date = ra.start_date
+        # series_end_date will be None if ra.end_date is None, otherwise it's ra.end_date
+        # This allows for indefinitely recurring appointments if ra.end_date is null
+        series_end_date_from_db = ra.end_date 
+
+        iter_start_date = max(calendar_view_start_date, series_start_date)
+        # If series_end_date_from_db is None, iterate up to the calendar_view_end_date
+        # Otherwise, iterate up to the earlier of calendar_view_end_date or series_end_date_from_db
+        iter_end_date = min(calendar_view_end_date, series_end_date_from_db) if series_end_date_from_db else calendar_view_end_date
+        
+        # Ensure iter_start_date is not after iter_end_date (can happen if series is entirely outside view window)
+        if iter_start_date > iter_end_date:
+            continue
+
+        current_iter_date = iter_start_date
+        while current_iter_date <= iter_end_date:
+            is_occurrence_day = False
+            if ra.recurrence_type == 'weekly':
+                # For weekly, the day is determined by the weekday of the series start_date
+                if ra.start_date.weekday() == current_iter_date.weekday():
+                    is_occurrence_day = True
+            elif ra.recurrence_type == 'daily-mon-fri':
+                if current_iter_date.weekday() < 5: # Monday (0) to Friday (4)
+                    is_occurrence_day = True
+            # Add other recurrence_type checks here if needed (e.g., 'daily', 'monthly')
+            else:
+                current_app.logger.warn(f"Recurring appointment ID {ra.id} for patient {ra.patient.name} has unknown recurrence_type: {ra.recurrence_type}. Skipping.")
+                # Break from while loop for this ra if recurrence_type is unknown to avoid infinite loop on misconfiguration
+                break 
+
+            if is_occurrence_day:
+                # Assume ra.time_of_day is entered in the system's local timezone (e.g., Europe/Madrid)
+                occurrence_datetime_naive = datetime.combine(current_iter_date, ra.time_of_day)
+                # Localize the naive datetime to the application's local timezone
+                occurrence_datetime_local = LOCAL_TZ.localize(occurrence_datetime_naive)
+                # Convert the local time to UTC for consistent storage/FullCalendar representation
+                occurrence_datetime_utc = occurrence_datetime_local.astimezone(UTC)
+                
+                event_start_iso = occurrence_datetime_utc.isoformat()
+                event_end_iso = (occurrence_datetime_utc + timedelta(hours=1)).isoformat() 
+                
+                title = f"{ra.patient.name} - {ra.treatment_type} (Recurring)"
+
+                events.append({
+                    'id': f"recurring_{ra.id}_{current_iter_date.strftime('%Y%m%d')}",
+                    'title': title,
+                    'start': event_start_iso,
+                    'end': event_end_iso,
+                    'allDay': False,
+                    'color': '#fd7e14',
+                    'extendedProps': {
+                        'type': 'recurring_instance',
+                        'recurring_appointment_id': ra.id,
+                        'patient_id': ra.patient_id,
+                        'patient_name': ra.patient.name,
+                        'treatment_type': ra.treatment_type,
+                        'recurrence_type': ra.recurrence_type,
+                        'series_start': ra.start_date.isoformat(),
+                        # Handle if ra.end_date (series_end_date_from_db) is None for the extendedProps
+                        'series_end': series_end_date_from_db.isoformat() if series_end_date_from_db else None 
+                    }
+                })
+            current_iter_date += timedelta(days=1)
+    
+    return jsonify(events)
+
+# If using Flask-Mail for password resets
+# @main.route('/reset_password_request', methods=['GET', 'POST'])
+
+@main.route('/api/patients/bulk-delete', methods=['DELETE'])
+@login_required
+@physio_required
+def bulk_delete_patients():
+    data = request.get_json()
+    patient_ids = data.get('patient_ids', [])
+
+    if not patient_ids:
+        return jsonify({'status': 'error', 'message': 'No patient IDs provided'}), 400
+
+    deleted_count = 0
+    errors = []
+
+    for patient_id in patient_ids:
+        try:
+            patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
+            if patient:
+                # Before deleting the patient, ensure related records are handled.
+                # Option 1: If cascade delete is set up in models, db.session.delete(patient) is enough.
+                # Option 2: Manually delete related records if cascade is not set.
+                # Example: Treatment.query.filter_by(patient_id=patient.id).delete()
+                #          PatientReport.query.filter_by(patient_id=patient.id).delete()
+                # For now, assuming cascade or manual deletion of related records is handled elsewhere or not needed.
+                
+                db.session.delete(patient)
+                deleted_count += 1
+            else:
+                errors.append(f"Patient with ID {patient_id} not found or not accessible.")
+        except Exception as e:
+            errors.append(f"Error deleting patient ID {patient_id}: {str(e)}")
+            db.session.rollback() # Rollback on error for this specific patient
+
+    if not errors:
+        try:
+            db.session.commit()
+            return jsonify({'status': 'success', 'message': f'{deleted_count} patients deleted successfully.'}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'status': 'error', 'message': f'Failed to commit deletions: {str(e)}'}), 500
+    else:
+        # If there were errors, no changes are committed overall unless partial success is desired.
+        # For now, let's assume all-or-nothing for the commit of successful deletions if errors occurred for others.
+        # If some deletions were successful before an error, and you still want to commit them,
+        # you'd need to adjust the logic (e.g., commit after each successful deletion or after the loop if some were successful).
+        # However, a rollback was already called for individual errors.
+        # This part might need refinement based on desired transactional behavior.
+        # For simplicity, if any error occurred, we assume we don't commit the ones that might have been staged.
+        # A more robust approach would be to collect all patients to delete, then attempt deletion in one transaction.
+        db.session.rollback() # Ensure rollback if there were any errors during the loop
+        return jsonify({
+            'status': 'error',
+            'message': 'Some patients could not be deleted.',
+            'deleted_count': deleted_count,
+            'errors': errors
+        }), 400
+
+

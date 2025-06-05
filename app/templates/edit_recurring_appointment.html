@@ -15,8 +15,9 @@
                 </div>
                 <div class="card-body">
                     <h6 class="card-subtitle mb-3 text-muted">For patient: {{ patient.name }}</h6>
-                    
+                    <!-- TEST COMMENT -->
                     <form action="{{ url_for('main.edit_recurring_appointment', id=rule.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>

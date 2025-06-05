@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Match Calendly Booking</h1>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            Booking Details
+        </div>
+        <div class="card-body">
+            <p><strong>Name:</strong> {{ booking.name }}</p>
+            <p><strong>Email:</strong> {{ booking.email }}</p>
+            {% if booking.start_time %}
+            <p><strong>Appointment Time:</strong> {{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}</p>
+            {% endif %}
+            {% if booking.event_type %}
+            <p><strong>Event Type:</strong> {{ booking.event_type }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            Select Patient to Match
+        </div>
+        <div class="card-body">
+            {% if patients %}
+                <form method="POST" action="{{ url_for('main.match_booking_to_patient', booking_id=booking.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="patient_id" class="form-label">Choose an existing patient:</label>
+                        <select name="patient_id" id="patient_id" class="form-select" required>
+                            <option value="" disabled selected>-- Select a Patient --</option>
+                            {% for patient in patients %}
+                                <option value="{{ patient.id }}">{{ patient.name }} ({{ patient.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-link"></i> Match to Selected Patient
+                    </button>
+                    <a href="{{ url_for('main.review_calendly_bookings') }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                </form>
+            {% else %}
+                <p class="text-muted">No patients found to match. You might need to create patients first.</p>
+                <a href="{{ url_for('main.review_calendly_bookings') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left-circle"></i> Back to Review
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

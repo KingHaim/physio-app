@@ -82,23 +82,25 @@
     
     <!-- Treatment & Patient Charts -->
     <div class="row mb-4">
-        <div class="col-lg-6 mb-4">
+        <div class="col-lg-6 mb-4" id="treatmentsChartCard">
             <div class="card shadow-sm h-100">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Treatments by Month</h5>
                 </div>
                 <div class="card-body d-flex flex-column">
                     <canvas id="treatmentsChart"></canvas>
+                    <p class="text-center text-muted d-none no-data-message">No data available to display.</p>
                 </div>
             </div>
         </div>
-        <div class="col-lg-6 mb-4">
+        <div class="col-lg-6 mb-4" id="patientsChartCard">
             <div class="card shadow-sm h-100">
                 <div class="card-header">
                     <h5 class="card-title mb-0">New Patients by Month</h5>
                 </div>
                 <div class="card-body d-flex flex-column">
                     <canvas id="patientsChart"></canvas>
+                    <p class="text-center text-muted d-none no-data-message">No data available to display.</p>
                 </div>
             </div>
         </div>
@@ -106,23 +108,25 @@
 
     <!-- Revenue Charts -->
     <div class="row mb-4">
-        <div class="col-lg-6 mb-4">
+        <div class="col-lg-6 mb-4" id="revenueByVisitTypeChartCard">
             <div class="card shadow-sm h-100">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Revenue by Visit Type</h5>
                 </div>
                 <div class="card-body d-flex flex-column">
                     <canvas id="revenueByVisitTypeChart"></canvas>
+                    <p class="text-center text-muted d-none no-data-message">No data available to display.</p>
                 </div>
             </div>
         </div>
-        <div class="col-lg-6 mb-4">
+        <div class="col-lg-6 mb-4" id="revenueByLocationChartCard">
             <div class="card shadow-sm h-100">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Revenue by Location (Top 10)</h5>
                 </div>
                 <div class="card-body d-flex flex-column">
                     <canvas id="revenueByLocationChart"></canvas>
+                    <p class="text-center text-muted d-none no-data-message">No data available to display.</p>
                 </div>
             </div>
         </div>
@@ -130,33 +134,36 @@
 
     <!-- Other Analytics Charts -->
     <div class="row mb-4">
-        <div class="col-lg-4 mb-4"> 
+        <div class="col-lg-4 mb-4" id="diagnosesChartCard"> 
             <div class="card shadow-sm h-100">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Common Diagnoses</h5>
                 </div>
                 <div class="card-body d-flex flex-column">
                     <canvas id="diagnosesChart"></canvas>
+                    <p class="text-center text-muted d-none no-data-message">No data available to display.</p>
                 </div>
             </div>
         </div>
-        <div class="col-lg-4 mb-4">
+        <div class="col-lg-4 mb-4" id="statusChartCard">
             <div class="card shadow-sm h-100">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Patient Status Distribution</h5>
                 </div>
                 <div class="card-body d-flex flex-column">
                     <canvas id="statusChart"></canvas>
+                    <p class="text-center text-muted d-none no-data-message">No data available to display.</p>
                 </div>
             </div>
         </div>
-        <div class="col-lg-4 mb-4"> 
+        <div class="col-lg-4 mb-4" id="paymentMethodChartCard"> 
             <div class="card shadow-sm h-100">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Payment Method Distribution</h5>
                 </div>
                 <div class="card-body d-flex flex-column">
                     <canvas id="paymentMethodChart"></canvas>
+                    <p class="text-center text-muted d-none no-data-message">No data available to display.</p>
                 </div>
             </div>
         </div>
@@ -287,6 +294,9 @@
     const chartBorderColors = chartColors.map(color => color.replace('0.7', '1'));
     const chartBackgroundColors = chartColors.map(color => color.replace('0.7', '0.2'));
 
+    // Store chart instances
+    let chartInstances = {};
+
     // Helper function to fetch chart data
     async function fetchChartData(url) {
         try {
@@ -299,6 +309,65 @@
         } catch (error) {
             console.error(`Error fetching chart data from ${url}:`, error);
             return null; // Return null or an empty structure on error
+        }
+    }
+
+    // New helper function to render chart or show message / hide card
+    function renderOrUpdateChart(canvasId, cardId, apiData, chartConfigBuilderFn) {
+        const canvas = document.getElementById(canvasId);
+        const card = document.getElementById(cardId);
+        const noDataMessageEl = card ? card.querySelector('.no-data-message') : null;
+
+        if (!canvas || !card || !noDataMessageEl) {
+            console.error(`Elements not found for chart: ${canvasId}, card: ${cardId}`);
+            if (card) card.style.display = 'none'; // Hide card if elements are missing
+            return;
+        }
+
+        if (apiData === null) { // Fetch error
+            console.error(`No API data for ${canvasId}. Hiding card.`);
+            card.style.display = 'none';
+            return;
+        }
+
+        const chartConfig = chartConfigBuilderFn(apiData);
+
+        let isDataEffectivelyEmpty = true;
+        if (chartConfig && chartConfig.data && chartConfig.data.datasets && chartConfig.data.datasets.length > 0) {
+            isDataEffectivelyEmpty = chartConfig.data.datasets.every(dataset => {
+                if (!dataset.data || dataset.data.length === 0) return true;
+                // Check if all data points are zero or null/undefined
+                return dataset.data.every(point => point === 0 || point === null || typeof point === 'undefined');
+            });
+        }
+        
+        // Special check for status chart which might have a different structure for "empty"
+        if (canvasId === 'statusChart' && apiData && apiData.hasOwnProperty('active') && apiData.hasOwnProperty('inactive')) {
+            if (apiData.active === 0 && apiData.inactive === 0) {
+                isDataEffectivelyEmpty = true;
+            } else if (chartConfig){ // if config was built, let the general check decide
+                 isDataEffectivelyEmpty = chartConfig.data.datasets.every(dataset => dataset.data.every(point => point === 0));
+            }
+        }
+
+
+        if (isDataEffectivelyEmpty) {
+            console.log(`No data for ${canvasId}. Hiding card ${cardId}.`);
+            card.style.display = 'none';
+            if (chartInstances[canvasId]) {
+                chartInstances[canvasId].destroy();
+                delete chartInstances[canvasId];
+            }
+        } else {
+            card.style.display = ''; // Ensure card is visible
+            canvas.style.display = '';
+            noDataMessageEl.classList.add('d-none');
+            
+            const ctx = canvas.getContext('2d');
+            if (chartInstances[canvasId]) {
+                chartInstances[canvasId].destroy();
+            }
+            chartInstances[canvasId] = new Chart(ctx, chartConfig);
         }
     }
 
@@ -427,13 +496,13 @@
         // --- Fetch and Render Charts --- 
 
         // Treatments by Month Chart (Line)
-        const treatmentsData = await fetchChartData('/api/analytics/treatments-by-month');
-        const treatmentsCtx = document.getElementById('treatmentsChart')?.getContext('2d');
-        if (treatmentsCtx && treatmentsData) {
-            new Chart(treatmentsCtx, {
+        const treatmentsApiData = await fetchChartData('/api/analytics/treatments-by-month');
+        renderOrUpdateChart('treatmentsChart', 'treatmentsChartCard', treatmentsApiData, (apiData) => {
+            if (!apiData || apiData.length === 0) return null;
+            return {
                 type: 'line',
                 data: {
-                    labels: treatmentsData.map(item => {
+                    labels: apiData.map(item => {
                         const [year, monthNum] = item.month.split('-');
                         const date = new Date(parseInt(year), parseInt(monthNum) - 1);
                         const monthName = date.toLocaleString('default', { month: 'short' });
@@ -442,7 +511,7 @@
                     }),
                     datasets: [{
                         label: 'Treatments',
-                        data: treatmentsData.map(item => item.count),
+                        data: apiData.map(item => item.count),
                         backgroundColor: chartBackgroundColors[0],
                         borderColor: chartBorderColors[0],
                         borderWidth: 2,
@@ -450,17 +519,17 @@
                     }]
                 },
                 options: defaultChartOptions
-            });
-        }
+            };
+        });
 
         // Patients by Month Chart (Bar)
-        const patientsData = await fetchChartData('/api/analytics/patients-by-month');
-        const patientsCtx = document.getElementById('patientsChart')?.getContext('2d');
-        if (patientsCtx && patientsData) {
-            new Chart(patientsCtx, {
+        const patientsApiData = await fetchChartData('/api/analytics/patients-by-month');
+        renderOrUpdateChart('patientsChart', 'patientsChartCard', patientsApiData, (apiData) => {
+            if (!apiData || apiData.length === 0) return null;
+            return {
                 type: 'bar',
                 data: {
-                    labels: patientsData.map(item => {
+                    labels: apiData.map(item => {
                         const [year, monthNum] = item.month.split('-');
                         const date = new Date(parseInt(year), parseInt(monthNum) - 1);
                         const monthName = date.toLocaleString('default', { month: 'short' });
@@ -469,111 +538,109 @@
                     }),
                     datasets: [{
                         label: 'New Patients',
-                        data: patientsData.map(item => item.count),
+                        data: apiData.map(item => item.count),
                         backgroundColor: chartBackgroundColors[1],
                         borderColor: chartBorderColors[1],
                         borderWidth: 1
                     }]
                 },
                 options: defaultChartOptions
-            });
-        }
-
+            };
+        });
+        
         // Revenue by Visit Type Chart (Bar)
-        const revenueVisitData = await fetchChartData('/api/analytics/revenue-by-visit-type');
-        const revenueVisitTypeCtx = document.getElementById('revenueByVisitTypeChart')?.getContext('2d');
-        if (revenueVisitTypeCtx && revenueVisitData) {
-            new Chart(revenueVisitTypeCtx, {
-                type: 'bar',
+        const revenueVisitApiData = await fetchChartData('/api/analytics/revenue-by-visit-type');
+        renderOrUpdateChart('revenueByVisitTypeChart', 'revenueByVisitTypeChartCard', revenueVisitApiData, (apiData) => {
+            if (!apiData || apiData.length === 0) return null;
+            return {
+                type: 'bar', // Changed to bar as per original example, can be pie/doughnut too
                 data: {
-                    labels: revenueVisitData.map(item => item.treatment_type),
+                    labels: apiData.map(item => item.treatment_type),
                     datasets: [{
                         label: 'Revenue (£)',
-                        data: revenueVisitData.map(item => item.total_fee),
-                        backgroundColor: chartBackgroundColors[2],
-                        borderColor: chartBorderColors[2],
+                        data: apiData.map(item => item.total_fee),
+                        backgroundColor: chartColors.slice(0, apiData.length).map(color => color.replace('0.7', '0.5')), // Use mapped colors
+                        borderColor: chartColors.slice(0, apiData.length).map(color => color.replace('0.7', '1')),
                         borderWidth: 1
                     }]
                 },
-                options: Object.assign({}, defaultChartOptions, revenueChartOptions)
-            });
-        }
+                options: {...defaultChartOptions, ...revenueChartOptions, plugins: {legend: {display: true}}} // Show legend for this
+            };
+        });
 
         // Revenue by Location Chart (Bar)
-        const revenueLocData = await fetchChartData('/api/analytics/revenue-by-location');
-        const revenueLocationCtx = document.getElementById('revenueByLocationChart')?.getContext('2d');
-        if (revenueLocationCtx && revenueLocData) {
-            new Chart(revenueLocationCtx, {
-                type: 'bar',
+        const revenueLocApiData = await fetchChartData('/api/analytics/revenue-by-location');
+        renderOrUpdateChart('revenueByLocationChart', 'revenueByLocationChartCard', revenueLocApiData, (apiData) => {
+            if (!apiData || apiData.length === 0) return null;
+            return {
+                type: 'bar', // Changed to bar
                 data: {
-                    labels: revenueLocData.map(item => item.location),
+                    labels: apiData.map(item => item.location),
                     datasets: [{
                         label: 'Revenue (£)',
-                        data: revenueLocData.map(item => item.total_fee),
-                        backgroundColor: chartBackgroundColors[3],
-                        borderColor: chartBorderColors[3],
+                        data: apiData.map(item => item.total_fee),
+                        backgroundColor: chartColors.slice(0, apiData.length).map(color => color.replace('0.7', '0.5')),
+                        borderColor: chartColors.slice(0, apiData.length).map(color => color.replace('0.7', '1')),
                         borderWidth: 1
                     }]
                 },
-                options: Object.assign({}, defaultChartOptions, revenueChartOptions)
-            });
-        }
+                options: {...defaultChartOptions, ...revenueChartOptions, plugins: {legend: {display: true}}} // Show legend
+            };
+        });
 
         // Common Diagnoses Chart (Pie)
-        const diagnosesData = await fetchChartData('/api/analytics/common-diagnoses');
-        const diagnosesCtx = document.getElementById('diagnosesChart')?.getContext('2d');
-        if (diagnosesCtx && diagnosesData) {
-            const numDiagnoses = diagnosesData.length;
-            new Chart(diagnosesCtx, {
+        const diagnosesApiData = await fetchChartData('/api/analytics/common-diagnoses');
+        renderOrUpdateChart('diagnosesChart', 'diagnosesChartCard', diagnosesApiData, (apiData) => {
+            if (!apiData || apiData.length === 0) return null;
+            return {
                 type: 'pie',
                 data: {
-                    labels: diagnosesData.map(item => item.diagnosis),
+                    labels: apiData.map(item => item.diagnosis),
                     datasets: [{
-                        data: diagnosesData.map(item => item.count),
-                        backgroundColor: chartColors.slice(0, numDiagnoses),
+                        data: apiData.map(item => item.count),
+                        backgroundColor: chartColors.slice(0, apiData.length),
                         borderWidth: 1
                     }]
                 },
                 options: defaultPieChartOptions
-            });
-        }
+            };
+        });
 
         // Patient Status Chart (Doughnut)
-        const statusData = await fetchChartData('/api/analytics/patient-status');
-        const statusCtx = document.getElementById('statusChart')?.getContext('2d');
-        if (statusCtx && statusData) {
-            new Chart(statusCtx, {
+        const statusApiData = await fetchChartData('/api/analytics/patient-status');
+        renderOrUpdateChart('statusChart', 'statusChartCard', statusApiData, (apiData) => {
+            if (!apiData || (apiData.active === 0 && apiData.inactive === 0)) return null;
+            return {
                 type: 'doughnut',
                 data: {
                     labels: ['Active', 'Inactive'],
                     datasets: [{
-                        data: [statusData.active, statusData.inactive],
-                        backgroundColor: [chartColors[0], chartColors[8]],
+                        data: [apiData.active || 0, apiData.inactive || 0],
+                        backgroundColor: [chartColors[0], chartColors[8]], // Specific colors for active/inactive
                         borderWidth: 1
                     }]
                 },
                 options: defaultPieChartOptions
-            });
-        }
+            };
+        });
 
         // Payment Method Chart (Pie)
-        const paymentData = await fetchChartData('/api/analytics/payment-methods');
-        const paymentMethodCtx = document.getElementById('paymentMethodChart')?.getContext('2d');
-        if (paymentMethodCtx && paymentData) {
-            const numPaymentMethods = paymentData.length;
-            new Chart(paymentMethodCtx, {
+        const paymentApiData = await fetchChartData('/api/analytics/payment-methods');
+        renderOrUpdateChart('paymentMethodChart', 'paymentMethodChartCard', paymentApiData, (apiData) => {
+            if (!apiData || apiData.length === 0) return null;
+            return {
                 type: 'pie',
                 data: {
-                    labels: paymentData.map(item => item.payment_method),
+                    labels: apiData.map(item => item.payment_method),
                     datasets: [{
-                        data: paymentData.map(item => item.count),
-                        backgroundColor: chartColors.slice(0, numPaymentMethods),
+                        data: apiData.map(item => item.count),
+                        backgroundColor: chartColors.slice(0, apiData.length), // Dynamic colors
                         borderWidth: 1
                     }]
                 },
                 options: defaultPieChartOptions
-            });
-        }
+            };
+        });
 
         // --- CostaSpine Fee Modal Logic --- 
         const costaspineFeeCard = document.getElementById('costaspineFeeCard');

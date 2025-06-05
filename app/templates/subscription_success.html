@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Subscription Successful - PhysioApp{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="card">
+                <div class="card-body">
+                    {% if error_message %}
+                        <h2 class="card-title text-warning">Subscription Confirmation Pending</h2>
+                        <p class="card-text">Your payment was likely successful, but we encountered an issue confirming the specifics of your subscription.</p>
+                        <p class="card-text"><small>Details: {{ error_message }}</small></p>
+                        <p class="card-text">Please check your dashboard or contact support if your plan details are not updated shortly.</p>
+                    {% elif plan_name %}
+                        <h2 class="card-title text-success">Subscription to {{ plan_name }} Activated!</h2>
+                        <p class="card-text">Thank you for subscribing to the <strong>{{ plan_name }}</strong> plan. It is now active.</p>
+                        <p class="card-text">You can now access all the features included in your plan.</p>
+                    {% else %}
+                        <!-- This case should ideally be covered by flash messages from the route if no plan_name and no error_message -->
+                        <h2 class="card-title text-success">Subscription Activated!</h2>
+                        <p class="card-text">Thank you for subscribing! Your plan is now active.</p>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('main.index') }}" class="btn btn-primary mt-3">Go to Dashboard</a>
+                    <a href="{{ url_for('main.pricing_page') }}" class="btn btn-outline-secondary mt-3">View Other Plans</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

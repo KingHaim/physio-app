@@ -1,157 +1,187 @@
 from flask import Blueprint, jsonify, current_app, request
 import requests
 from datetime import datetime, timedelta
-from app.models import Treatment, Treatment as Appointment, Patient, UnmatchedCalendlyBooking, PatientReport
+from app.models import Treatment, Treatment as Appointment, Patient, UnmatchedCalendlyBooking, PatientReport, Plan, User, UserSubscription
 from app import db
 from sqlalchemy.sql import func, or_
 import os
 import json
 from flask_login import login_required, current_user
+import traceback
+import stripe
+from flask import url_for
 
 api = Blueprint('api', __name__)
 
 @api.route('/api/sync-calendly-events', methods=['GET'])
+@login_required
 def sync_calendly_events():
-    # Your Calendly API token (store this securely in environment variables)
-    api_token = current_app.config.get('CALENDLY_API_TOKEN')
-    
+    # Use the current user's Calendly API token and URI
+    api_token = current_user.calendly_api_token
+    user_calendly_uri_for_events = current_user.calendly_user_uri
+
     if not api_token:
-        return jsonify({'success': False, 'error': 'Calendly API token not configured'})
+        return jsonify({'success': False, 'error': 'Your Calendly API token is not configured. Please set it in your profile settings.'}), 400
+    if not user_calendly_uri_for_events:
+        return jsonify({'success': False, 'error': 'Your Calendly User URI is not configured. This is needed to fetch your specific events. Please set it in your profile settings.'}), 400
     
     try:
-        # Get your Calendly user URI
         headers = {
             'Authorization': f'Bearer {api_token}',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36'
         }
         
-        # First, get your user info
-        user_response = requests.get('https://api.calendly.com/users/me', headers=headers)
-        
-        if user_response.status_code != 200:
-            return jsonify({'success': False, 'error': f'Failed to get Calendly user: {user_response.text}'})
-        
-        user_uri = user_response.json()['resource']['uri']
-        
-        # Get scheduled events (appointments)
-        # Set time range (e.g., from 30 days ago to 60 days in the future)
+        # Get scheduled events for the current_user
         min_time = (datetime.utcnow() - timedelta(days=30)).isoformat() + 'Z'
         max_time = (datetime.utcnow() + timedelta(days=60)).isoformat() + 'Z'
         
         events_url = 'https://api.calendly.com/scheduled_events'
         params = {
-            'user': user_uri,
+            'user': user_calendly_uri_for_events, # Use the user's specific URI
             'min_start_time': min_time,
             'max_start_time': max_time,
-            'status': 'active'
+            'status': 'active',
+            'sort': 'start_time:asc' # Good practice to sort
         }
         
         events_response = requests.get(events_url, headers=headers, params=params)
         
         if events_response.status_code != 200:
-            return jsonify({'success': False, 'error': f'Failed to get Calendly events: {events_response.text}'})
+            error_message = f'Failed to get Calendly events for your account: {events_response.text}'
+            try:
+                error_details = events_response.json()
+                if 'message' in error_details: error_message = f"Calendly API Error: {error_details['message']}"
+                if 'details' in error_details and isinstance(error_details['details'], list) and error_details['details']:
+                     error_message += f" Details: {error_details['details'][0].get('message', '')}"
+                elif 'details' in error_details: error_message += f" Details: {error_details['details']}"
+
+            except ValueError: pass # Keep original text if not JSON
+            current_app.logger.error(f"Calendly event fetch error for user {current_user.id}: {error_message}")
+            return jsonify({'success': False, 'error': error_message}), events_response.status_code
         
         events = events_response.json()['collection']
         
-        # Process each event and get invitee (patient) details
-        synced_count = 0
-        unmatched_patients = []
+        synced_treatments_count = 0
+        newly_created_unmatched_bookings_count = 0
         
         for event in events:
             event_uri = event['uri']
+            event_uuid = event_uri.split('/')[-1] # Calendly event UUID
             
-            # Get invitee details
-            event_uuid = event_uri.split('/')[-1]
             invitees_url = f'https://api.calendly.com/scheduled_events/{event_uuid}/invitees'
             invitees_response = requests.get(invitees_url, headers=headers)
             
             if invitees_response.status_code != 200:
-                continue
+                current_app.logger.warning(f"Failed to get invitees for event {event_uuid} for user {current_user.id}: {invitees_response.text}")
+                continue # Skip this event
             
             invitees = invitees_response.json()['collection']
             
             for invitee in invitees:
-                # Extract appointment details
+                invitee_uri = invitee['uri'] # Calendly invitee URI
+                
+                # --- MODIFICATION START ---
+                # Reliably get invitee_uuid from the invitee_uri
+                try:
+                    invitee_uuid_for_booking = invitee_uri.split('/')[-1]
+                    if not invitee_uuid_for_booking: # Should not happen if URI is valid
+                        raise ValueError("Extracted invitee_uuid is empty")
+                except (IndexError, ValueError) as e:
+                    current_app.logger.error(f"Could not extract invitee_uuid from URI '{invitee_uri}': {e}. Skipping invitee: {invitee}")
+                    continue 
+                # --- MODIFICATION END ---
+
                 name = invitee['name']
                 email = invitee['email']
                 start_time = datetime.fromisoformat(event['start_time'].replace('Z', '+00:00'))
                 end_time = datetime.fromisoformat(event['end_time'].replace('Z', '+00:00'))
-                event_type = event['name']
+                event_type_name = event['name']
                 
-                # Enhanced patient matching
-                patient = find_matching_patient(name, email)
-                
-                if not patient:
-                    # Store unmatched patient for later review
-                    unmatched_patients.append({
-                        'name': name,
-                        'email': email,
-                        'event_type': event_type,
-                        'start_time': start_time.isoformat(),
-                        'calendly_invitee_id': invitee['uri'].split('/')[-1]
-                    })
-                    
-                    # Create temporary patient
-                    patient = Patient(
-                        name=name,
-                        contact=email,
-                        date_of_birth=None,
-                        diagnosis="To be updated (Calendly booking)",
-                        treatment_plan="To be determined",
-                        notes=f"Patient booked via Calendly on {datetime.now().strftime('%Y-%m-%d')}. NEEDS REVIEW: Partial information.",
-                        status="Pending Review"  # Special status for review
-                    )
-                    db.session.add(patient)
-                    db.session.flush()
-                
-                # Check if appointment already exists based on created_at date/time
-                existing_appointment = Treatment.query.filter_by(
-                    patient_id=patient.id,
-                    created_at=start_time
+                # Check if an UnmatchedCalendlyBooking already exists for this invitee_uuid and user
+                existing_unmatched_booking = UnmatchedCalendlyBooking.query.filter_by(
+                    calendly_invitee_id=invitee_uuid_for_booking, # Storing invitee UUID here
+                    user_id=current_user.id
                 ).first()
+
+                if existing_unmatched_booking and existing_unmatched_booking.status != 'Pending':
+                    current_app.logger.info(f"Skipping already processed (status: {existing_unmatched_booking.status}) unmatched booking for invitee {invitee_uuid_for_booking}, user {current_user.id}")
+                    continue
+
+                # Try to find a matching patient (globally for now, or refine later)
+                # If your patients are strictly per-physio, this matching needs to be user-scoped.
+                patient = find_matching_patient(name, email) 
                 
-                if not existing_appointment:
-                    # Create new appointment (Treatment)
-                    appointment = Treatment(
+                created_new_treatment = False
+                if patient:
+                    # Patient exists, check if treatment already exists for this patient and start_time
+                    existing_treatment = Treatment.query.filter_by(
                         patient_id=patient.id,
-                        created_at=start_time,
-                        treatment_type=event_type,
-                        status="Scheduled",
-                        notes=f"Booked via Calendly. Duration: {int((end_time - start_time).total_seconds() / 60)} minutes.",
-                    )
-                    db.session.add(appointment)
-                    synced_count += 1
+                        created_at=start_time
+                        # Consider adding calendly_invitee_uri if it was reliably unique before
+                    ).first()
+                    
+                    if not existing_treatment:
+                        new_treatment = Treatment(
+                            patient_id=patient.id,
+                            created_at=start_time,
+                            treatment_type=event_type_name,
+                            status="Scheduled",
+                            notes=f"Booked via Calendly. Synced by {current_user.username}. Duration: {int((end_time - start_time).total_seconds() / 60)} min.",
+                            calendly_invitee_uri=invitee_uri # Store the invitee URI
+                        )
+                        db.session.add(new_treatment)
+                        synced_treatments_count += 1
+                        created_new_treatment = True
+                        current_app.logger.info(f"Created new Treatment for existing patient {patient.id} by user {current_user.id} from Calendly event {event_uuid}, invitee {invitee_uri}")
+                        if existing_unmatched_booking: # If it was pending and now we created a treatment
+                            existing_unmatched_booking.status = 'Matched'
+                            existing_unmatched_booking.matched_patient_id = patient.id
+                    else:
+                        current_app.logger.info(f"Treatment already exists for patient {patient.id} at {start_time}. User {current_user.id}, Calendly event {event_uuid}")
+                        # If treatment exists, ensure any PENDING unmatched booking is marked Matched
+                        if existing_unmatched_booking and existing_unmatched_booking.status == 'Pending':
+                             existing_unmatched_booking.status = 'Matched'
+                             existing_unmatched_booking.matched_patient_id = patient.id
+
+                else: # No matching patient found, create/update UnmatchedCalendlyBooking
+                    if not existing_unmatched_booking:
+                        unmatched_booking_record = UnmatchedCalendlyBooking(
+                            user_id=current_user.id, # Associate with the current physio
+                            name=name,
+                            email=email,
+                            event_type=event_type_name,
+                            start_time=start_time,
+                            calendly_invitee_id=invitee_uuid_for_booking, # Store invitee UUID
+                            status='Pending'
+                        )
+                        db.session.add(unmatched_booking_record)
+                        newly_created_unmatched_bookings_count += 1
+                        current_app.logger.info(f"Created new UnmatchedCalendlyBooking for user {current_user.id}, Calendly invitee {invitee_uuid_for_booking}")
+                    # If existing_unmatched_booking is PENDING, we just leave it as is.
             
-        # Store unmatched patients in session for review
-        if unmatched_patients:
-            # Store in database for persistence
-            for patient_data in unmatched_patients:
-                unmatched = UnmatchedCalendlyBooking(
-                    name=patient_data['name'],
-                    email=patient_data['email'],
-                    event_type=patient_data['event_type'],
-                    start_time=datetime.fromisoformat(patient_data['start_time']),
-                    calendly_invitee_id=patient_data['calendly_invitee_id'],
-                    status='Pending'
-                )
-                db.session.add(unmatched)
-        
         db.session.commit()
+        
+        message = f'Successfully synced Calendly for your account. Created {synced_treatments_count} new treatments/appointments. '
+        if newly_created_unmatched_bookings_count > 0:
+            message += f'Created {newly_created_unmatched_bookings_count} new items for review.'
+        elif synced_treatments_count == 0 and newly_created_unmatched_bookings_count == 0:
+             message = 'Your Calendly appointments appear to be up to date. No new items created.'
         
         return jsonify({
             'success': True,
-            'count': synced_count,
-            'unmatched': len(unmatched_patients),
-            'message': f'Successfully synced {synced_count} appointments from Calendly. {len(unmatched_patients)} patients need review.'
+            'message': message,
+            'new_treatments': synced_treatments_count,
+            'new_unmatched_bookings': newly_created_unmatched_bookings_count
         })
     
     except Exception as e:
-        # Log the error
-        print(f"Error in sync_calendly_events: {str(e)}")
-        # Return a friendly error message
+        db.session.rollback()
+        error_message_for_log = f"Error details: {str(e)}\nTraceback:\n{traceback.format_exc()}"
+        current_app.logger.error(f"Error in sync_calendly_events for user {current_user.id if current_user.is_authenticated else 'anonymous'}. {error_message_for_log}")
         return jsonify({
             'success': False,
-            'error': f"An error occurred: {str(e)}"
+            'error': f"An unexpected error occurred during Calendly sync: {str(e)}"
         }), 500
 
 def find_matching_patient(name, email):
@@ -230,7 +260,7 @@ def match_calendly_booking():
             invitee_uri = booking.calendly_invitee_id  # <<< Assuming this holds the URI
 
             treatment = Treatment(
-                patient_id=patient_id,
+                patient_id=patient.id,
                 created_at=booking.start_time,
                 treatment_type=booking.event_type,
                 status="Scheduled",
@@ -966,7 +996,6 @@ Reason: {cancellation_reason}"
     except Exception as e:
         db.session.rollback()
         # Log the error thoroughly
-        import traceback
         print(f"!!! Webhook Error: {str(e)}")
         print(traceback.format_exc())
         # Also log the raw request data if possible (be mindful of sensitive info)
@@ -1306,7 +1335,6 @@ def generate_exercise_prescription(id):
     except Exception as e:
         db.session.rollback() # Just in case, though unlikely needed here
         print(f"Exception in generate_exercise_prescription: {str(e)}")
-        import traceback
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -1450,7 +1478,6 @@ def set_treatment_location(id):
     except Exception as e:
         db.session.rollback()
         print(f"!!! UNEXPECTED Error setting location for treatment {id}: {e} !!!")
-        import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'message': 'An internal error occurred.'}), 500
 
@@ -1464,120 +1491,151 @@ def start_of_month(dt):
 @login_required
 def treatments_by_month():
     try:
-        # Get counts grouped by month
-        data = db.session.query(
+        query = db.session.query(
             func.strftime('%Y-%m', Treatment.created_at).label('month'),
             func.count(Treatment.id).label('count')
-        ).group_by('month').order_by('month').all()
+        )
         
-        # Convert to list of dicts
+        if not current_user.is_admin:
+            query = query.join(Patient, Patient.id == Treatment.patient_id).filter(Patient.user_id == current_user.id)
+            
+        data = query.group_by(func.strftime('%Y-%m', Treatment.created_at)).order_by(func.strftime('%Y-%m', Treatment.created_at)).all() # Ensure group_by and order_by are on the correct column expression
+        
         result = [{'month': item.month, 'count': item.count} for item in data]
         return jsonify(result)
     except Exception as e:
-        print(f"Error fetching treatments-by-month: {e}")
+        current_app.logger.error(f"Error fetching treatments-by-month for user {current_user.id}: {e}\n{traceback.format_exc()}")
         return jsonify({"error": "Failed to fetch data"}), 500
 
 @api.route('/api/analytics/patients-by-month')
 @login_required
 def patients_by_month():
-    try:
-        # Get counts grouped by month
-        data = db.session.query(
-            func.strftime('%Y-%m', Patient.created_at).label('month'),
-            func.count(Patient.id).label('count')
-        ).group_by('month').order_by('month').all()
-        
-        result = [{'month': item.month, 'count': item.count} for item in data]
-        return jsonify(result)
-    except Exception as e:
-        print(f"Error fetching patients-by-month: {e}")
-        return jsonify({"error": "Failed to fetch data"}), 500
+    twelve_months_ago = datetime.utcnow() - timedelta(days=365)
+    
+    query = db.session.query(
+        func.strftime('%Y-%m', Patient.created_at).label('month'), # Corrected to Patient.created_at
+        func.count(Patient.id).label('count')
+    ).filter(Patient.created_at >= twelve_months_ago) # Corrected to Patient.created_at
+
+    # If the user is not an admin, filter by their user_id
+    if not current_user.is_admin:
+        query = query.filter(Patient.user_id == current_user.id)
+    
+    result = query.group_by(func.strftime('%Y-%m', Patient.created_at)).order_by(func.strftime('%Y-%m', Patient.created_at).asc()).all() # Corrected to Patient.created_at
+    
+    # Convert the result to the desired format
+    data = [{'month': r.month, 'count': r.count} for r in result]
+    
+    return jsonify(data)
 
 @api.route('/api/analytics/revenue-by-visit-type')
 @login_required
 def revenue_by_visit_type():
     try:
-        data = db.session.query(
-            Treatment.visit_type.label('treatment_type'), # Use visit_type
+        query = db.session.query(
+            Treatment.visit_type.label('treatment_type'),
             func.sum(Treatment.fee_charged).label('total_fee')
-        ).filter(Treatment.fee_charged.isnot(None))\
-         .group_by(Treatment.visit_type)\
-         .order_by(func.sum(Treatment.fee_charged).desc())\
-         .all()
+        ).filter(Treatment.fee_charged.isnot(None))
+
+        if not current_user.is_admin:
+            query = query.join(Patient, Patient.id == Treatment.patient_id).filter(Patient.user_id == current_user.id)
+
+        data = query.group_by(Treatment.visit_type)\
+            .order_by(func.sum(Treatment.fee_charged).desc())\
+            .all()
         
         result = [{'treatment_type': item.treatment_type or 'Uncategorized', 'total_fee': float(item.total_fee or 0)} for item in data]
         return jsonify(result)
     except Exception as e:
-        print(f"Error fetching revenue-by-visit-type: {e}")
+        current_app.logger.error(f"Error fetching revenue-by-visit-type for user {current_user.id}: {e}\n{traceback.format_exc()}")
         return jsonify({"error": "Failed to fetch data"}), 500
 
 @api.route('/api/analytics/revenue-by-location')
 @login_required
 def revenue_by_location():
     try:
-        data = db.session.query(
+        query = db.session.query(
             Treatment.location.label('location'),
             func.sum(Treatment.fee_charged).label('total_fee')
-        ).filter(Treatment.fee_charged.isnot(None))\
-        .group_by(Treatment.location)\
-        .order_by(func.sum(Treatment.fee_charged).desc())\
-        .limit(10)\
-        .all()
+        ).filter(Treatment.fee_charged.isnot(None))
+
+        if not current_user.is_admin:
+            query = query.join(Patient, Patient.id == Treatment.patient_id).filter(Patient.user_id == current_user.id)
+
+        data = query.group_by(Treatment.location)\
+            .order_by(func.sum(Treatment.fee_charged).desc())\
+            .limit(10)\
+            .all()
         
         result = [{'location': item.location or 'Unknown', 'total_fee': float(item.total_fee or 0)} for item in data]
         return jsonify(result)
     except Exception as e:
-        print(f"Error fetching revenue-by-location: {e}")
+        current_app.logger.error(f"Error fetching revenue-by-location for user {current_user.id}: {e}\n{traceback.format_exc()}")
         return jsonify({"error": "Failed to fetch data"}), 500
 
 @api.route('/api/analytics/common-diagnoses')
 @login_required
 def common_diagnoses():
     try:
-        data = db.session.query(
+        query = db.session.query(
             Patient.diagnosis.label('diagnosis'),
             func.count(Patient.id).label('count')
-        ).filter(Patient.diagnosis.isnot(None), Patient.diagnosis != '')\
-        .group_by(Patient.diagnosis)\
-        .order_by(func.count(Patient.id).desc())\
-        .limit(7)\
-        .all()
+        ).filter(Patient.diagnosis.isnot(None), Patient.diagnosis != '')
+
+        if not current_user.is_admin:
+            query = query.filter(Patient.user_id == current_user.id)
+
+        data = query.group_by(Patient.diagnosis)\
+            .order_by(func.count(Patient.id).desc())\
+            .limit(7)\
+            .all()
         
         result = [{'diagnosis': item.diagnosis, 'count': item.count} for item in data]
         return jsonify(result)
     except Exception as e:
-        print(f"Error fetching common-diagnoses: {e}")
+        current_app.logger.error(f"Error fetching common-diagnoses for user {current_user.id}: {e}\n{traceback.format_exc()}")
         return jsonify({"error": "Failed to fetch data"}), 500
 
 @api.route('/api/analytics/patient-status')
 @login_required
 def patient_status_distribution():
     try:
-        active_count = Patient.query.filter_by(status='Active').count()
-        inactive_count = Patient.query.filter_by(status='Inactive').count()
-        # Add other statuses if needed
+        active_query = Patient.query.filter_by(status='Active')
+        inactive_query = Patient.query.filter_by(status='Inactive')
+
+        if not current_user.is_admin:
+            active_query = active_query.filter_by(user_id=current_user.id)
+            inactive_query = inactive_query.filter_by(user_id=current_user.id)
+        
+        active_count = active_query.count()
+        inactive_count = inactive_query.count()
+        # Add other statuses if needed, applying the same filtering logic
         
         return jsonify({'active': active_count, 'inactive': inactive_count})
     except Exception as e:
-        print(f"Error fetching patient-status: {e}")
+        current_app.logger.error(f"Error fetching patient-status for user {current_user.id}: {e}\n{traceback.format_exc()}")
         return jsonify({"error": "Failed to fetch data"}), 500
 
 @api.route('/api/analytics/payment-methods')
 @login_required
 def payment_method_distribution():
     try:
-        data = db.session.query(
+        query = db.session.query(
             Treatment.payment_method.label('payment_method'),
             func.count(Treatment.id).label('count')
-        ).filter(Treatment.payment_method.isnot(None), Treatment.payment_method != '')\
-         .group_by(Treatment.payment_method)\
-         .order_by(func.count(Treatment.id).desc())\
-         .all()
+        ).filter(Treatment.payment_method.isnot(None), Treatment.payment_method != '')
+
+        if not current_user.is_admin:
+            query = query.join(Patient, Patient.id == Treatment.patient_id).filter(Patient.user_id == current_user.id)
+
+        data = query.group_by(Treatment.payment_method)\
+            .order_by(func.count(Treatment.id).desc())\
+            .all()
          
         result = [{'payment_method': item.payment_method, 'count': item.count} for item in data]
         return jsonify(result)
     except Exception as e:
-        print(f"Error fetching payment-methods: {e}")
+        current_app.logger.error(f"Error fetching payment-methods for user {current_user.id}: {e}\n{traceback.format_exc()}")
         return jsonify({"error": "Failed to fetch data"}), 500
 
 @api.route('/api/analytics/costaspine-fee-data')
@@ -1585,17 +1643,20 @@ def payment_method_distribution():
 def get_costaspine_fee_data():
     """Returns the total fee charged per month for CostaSpine Clinic treatments."""
     try:
-        # Group fees by month for CostaSpine Clinic
-        monthly_fee_data = db.session.query(
+        query = db.session.query(
             func.strftime('%Y-%m', Treatment.created_at).label('month'),
             func.sum(Treatment.fee_charged).label('total_fee')
         ).filter(
             Treatment.location == 'CostaSpine Clinic',
             Treatment.fee_charged.isnot(None)
-        ).group_by(func.strftime('%Y-%m', Treatment.created_at))\
-         .order_by(func.strftime('%Y-%m', Treatment.created_at)).all()
+        )
+
+        if not current_user.is_admin:
+            query = query.join(Patient, Patient.id == Treatment.patient_id).filter(Patient.user_id == current_user.id)
+
+        monthly_fee_data = query.group_by(func.strftime('%Y-%m', Treatment.created_at))\
+            .order_by(func.strftime('%Y-%m', Treatment.created_at)).all()
         
-        # Convert to a list of dictionaries
         results = [
             {'month': record.month, 'total_fee': float(record.total_fee)}
             for record in monthly_fee_data
@@ -1603,36 +1664,40 @@ def get_costaspine_fee_data():
         
         return jsonify(results)
     except Exception as e:
-        print(f"Error fetching CostaSpine monthly fee data: {e}")
+        current_app.logger.error(f"Error fetching CostaSpine monthly fee data for user {current_user.id}: {e}\n{traceback.format_exc()}")
         return jsonify({"error": "Failed to fetch data"}), 500
 
 @api.route('/api/analytics/recently-inactive-patients')
 @login_required
 def recently_inactive_patients():
-    """Returns the count and list of patients made inactive in the last 7 days."""
+    """Returns a list of patients who became inactive in the last 7 days and their count."""
     try:
-        # Calculate the date 7 days ago
         one_week_ago = datetime.utcnow() - timedelta(days=7)
-
-        # Query for patients who became inactive recently
-        inactive_patients = Patient.query.filter(
+        
+        inactive_patients_query = Patient.query.filter(
             Patient.status == 'Inactive',
-            Patient.updated_at >= one_week_ago
-        ).order_by(Patient.updated_at.desc()).all()
+            Patient.updated_at >= one_week_ago 
+        )
 
-        count = len(inactive_patients)
-        patient_list = [
-            {'id': p.id, 'name': p.name, 'inactive_since': p.updated_at.isoformat()} 
-            for p in inactive_patients
-        ]
+        if not current_user.is_admin:
+            inactive_patients_query = inactive_patients_query.filter(Patient.user_id == current_user.id)
+        
+        # This is a placeholder if you don't have a specific 'became_inactive_at' field.
+        # A more robust solution might involve an audit log for status changes.
 
-        return jsonify({
-            'count': count,
-            'patients': patient_list
-        })
+        inactive_patients_list = inactive_patients_query.order_by(Patient.updated_at.desc()).all()
+        count = inactive_patients_query.count() # Re-evaluate count on the potentially filtered query
+
+        patients_data = [{
+            'id': p.id,
+            'name': p.name,
+            'last_updated': p.updated_at.strftime('%Y-%m-%d') if p.updated_at else 'N/A' 
+        } for p in inactive_patients_list]
+
+        return jsonify({'count': count, 'patients': patients_data})
 
     except Exception as e:
-        print(f"Error fetching recently inactive patients: {e}")
+        current_app.logger.error(f"Error fetching recently_inactive_patients for user {current_user.id}: {e}\n{traceback.format_exc()}")
         return jsonify({"error": "Failed to fetch data"}), 500
 
 @api.route('/api/analytics/top-patients-by-revenue')
@@ -1642,15 +1707,19 @@ def top_patients_by_revenue():
     try:
         top_n = 10 # Define how many top patients to show
 
-        patient_revenue = db.session.query(
+        query = db.session.query(
             Patient.name.label('patient_name'),
             func.sum(Treatment.fee_charged).label('total_revenue')
         ).join(Treatment, Patient.id == Treatment.patient_id)\
-         .filter(Treatment.fee_charged.isnot(None), Treatment.fee_charged > 0)\
-         .group_by(Patient.id, Patient.name)\
-         .order_by(func.sum(Treatment.fee_charged).desc())\
-         .limit(top_n)\
-         .all()
+         .filter(Treatment.fee_charged.isnot(None), Treatment.fee_charged > 0)
+
+        if not current_user.is_admin:
+            query = query.filter(Patient.user_id == current_user.id)
+
+        patient_revenue = query.group_by(Patient.id, Patient.name)\
+            .order_by(func.sum(Treatment.fee_charged).desc())\
+            .limit(top_n)\
+            .all()
 
         result = [
             {'patient_name': item.patient_name, 'total_revenue': float(item.total_revenue)}
@@ -1660,5 +1729,223 @@ def top_patients_by_revenue():
         return jsonify(result)
 
     except Exception as e:
-        print(f"Error fetching top patients by revenue: {e}")
+        current_app.logger.error(f"Error fetching top patients by revenue for user {current_user.id}: {e}\n{traceback.format_exc()}")
         return jsonify({"error": "Failed to fetch data"}), 500
+
+# Route to create a Stripe Checkout Session
+@api.route('/create-checkout-session', methods=['POST'])
+@login_required
+def create_checkout_session():
+    try:
+        data = request.get_json()
+        plan_id = data.get('plan_id')
+        billing_cycle = data.get('billing_cycle') # e.g., 'monthly', 'annual'
+
+        if not plan_id or not billing_cycle:
+            return jsonify({'error': 'Missing plan_id or billing_cycle'}), 400
+
+        # Find the plan. 
+        # This logic assumes plan_id from frontend + billing_cycle helps identify the specific Stripe Price ID.
+        # Your Plan model has 'slug' like 'pro-monthly', 'basic-monthly'.
+        # And Plan.stripe_price_id is the one to use.
+        # We need to ensure we get the correct Plan object that corresponds to the selected cycle.
+        
+        # First, get the base plan by ID to get its general slug structure
+        base_plan_for_slug = Plan.query.get(plan_id)
+        if not base_plan_for_slug:
+            return jsonify({'error': f'Plan with ID {plan_id} not found to determine slug structure.'}), 404
+
+        # Construct the expected slug based on the base plan's slug (e.g., 'pro') and the cycle
+        # This is a bit heuristic; ideally, the frontend sends a plan_slug or a more direct identifier if plan_id isn't unique enough per cycle.
+        # Example: if base_plan_for_slug.slug is 'pro', and billing_cycle is 'monthly', target_slug is 'pro-monthly'
+        # For now, let's assume the plan_id from pricing.html *is* specific enough for the chosen plan AND cycle.
+        # So, we look up the plan by the given plan_id, and then use its stripe_price_id.
+        # The `billing_cycle` from the client helps confirm intent but might not be strictly needed if plan_id is already cycle-specific.
+
+        plan = Plan.query.get(plan_id) # Get the specific plan (e.g. "Pro Monthly" if plan_id was for that)
+
+        if not plan:
+            return jsonify({'error': f'Plan with id {plan_id} not found.'}), 404
+        
+        if not plan.stripe_price_id:
+            return jsonify({'error': f'Plan \'{plan.name}\' does not have a Stripe Price ID configured.'}), 400
+
+        stripe_price_id = plan.stripe_price_id
+
+        # Define success and cancel URLs
+        success_url = url_for('main.subscription_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}'
+        cancel_url = url_for('main.index', _external=True) # Or a specific cancellation page/pricing page
+
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price': stripe_price_id,
+                    'quantity': 1,
+                },
+            ],
+            mode='subscription',
+            success_url=success_url,
+            cancel_url=cancel_url,
+            client_reference_id=str(current_user.id),  # Crucial for webhook to identify user
+            # To prefill email, if you have a Stripe customer object you can pass it, 
+            # or pass customer_email. If not, Stripe collects it.
+            # customer_email=current_user.email, # Example
+        )
+        return jsonify({'sessionId': checkout_session.id})
+
+    except stripe.error.StripeError as e:
+        current_app.logger.error(f"Stripe API error in create_checkout_session: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    except Exception as e:
+        current_app.logger.error(f"Error in create_checkout_session: {str(e)}", exc_info=True)
+        return jsonify({'error': 'An unexpected error occurred.'}), 500
+
+@api.route('/stripe-webhooks', methods=['POST'])
+def stripe_webhooks():
+    payload = request.data
+    sig_header = request.headers.get('Stripe-Signature')
+    endpoint_secret = current_app.config.get('STRIPE_WEBHOOK_SECRET')
+
+    if not endpoint_secret:
+        current_app.logger.error("Stripe webhook secret not configured.")
+        return jsonify(error="Webhook secret not configured"), 500
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+    except ValueError as e:
+        current_app.logger.error(f"Stripe webhook ValueError: {e}")
+        return jsonify(error=str(e)), 400
+    except stripe.error.SignatureVerificationError as e:
+        current_app.logger.error(f"Stripe webhook SignatureVerificationError: {e}")
+        return jsonify(error=str(e)), 400
+    except Exception as e:
+        current_app.logger.error(f"Stripe webhook generic error constructing event: {e}")
+        return jsonify(error=str(e)), 500
+
+    # Handle the event
+    current_app.logger.info(f'Received Stripe event: {event.type} (ID: {event.id})')
+
+    if event.type == 'customer.subscription.created':
+        subscription = event.data.object
+        current_app.logger.info(f"Webhook processing: customer.subscription.created for Stripe sub ID {subscription.id}")
+        user = User.query.filter_by(stripe_customer_id=subscription.customer).first()
+        if user:
+            plan = Plan.query.filter_by(stripe_price_id=subscription.items.data[0].price.id).first()
+            if plan:
+                existing_sub = UserSubscription.query.filter_by(stripe_subscription_id=subscription.id).first()
+                if existing_sub:
+                    current_app.logger.info(f"Subscription {subscription.id} already exists locally with ID {existing_sub.id}. Updating it.")
+                    # Potentially update status or dates if it was created manually before webhook
+                    existing_sub.status = subscription.status
+                    existing_sub.plan_id = plan.id # Ensure plan is correct
+                else:
+                    current_app.logger.info(f"Creating new local subscription for Stripe sub ID {subscription.id} for user {user.id}")
+                    existing_sub = UserSubscription(user_id=user.id, plan_id=plan.id, stripe_subscription_id=subscription.id)
+                
+                existing_sub.status = subscription.status
+                if subscription.current_period_start: # Check if not None
+                    existing_sub.current_period_starts_at = datetime.fromtimestamp(subscription.current_period_start)
+                if subscription.current_period_end: # Check if not None
+                    existing_sub.current_period_ends_at = datetime.fromtimestamp(subscription.current_period_end)
+                if hasattr(subscription, 'trial_start') and subscription.trial_start: # Check if attribute exists and not None
+                    existing_sub.trial_starts_at = datetime.fromtimestamp(subscription.trial_start)
+                if hasattr(subscription, 'trial_end') and subscription.trial_end:
+                    existing_sub.trial_ends_at = datetime.fromtimestamp(subscription.trial_end)
+                existing_sub.cancel_at_period_end = subscription.cancel_at_period_end
+                existing_sub.canceled_at = datetime.fromtimestamp(subscription.canceled_at) if subscription.canceled_at else None
+                existing_sub.ended_at = datetime.fromtimestamp(subscription.ended_at) if subscription.ended_at else None
+                db.session.add(existing_sub)
+                try:
+                    db.session.commit()
+                    current_app.logger.info(f"Successfully created/updated local subscription {existing_sub.id} for Stripe sub {subscription.id}")
+                except Exception as e_commit:
+                    db.session.rollback()
+                    current_app.logger.error(f"Error committing subscription {subscription.id} for user {user.id}: {e_commit}")
+            else:
+                current_app.logger.error(f"No plan found with Stripe Price ID: {subscription.items.data[0].price.id} for subscription {subscription.id}")
+        else:
+            current_app.logger.error(f"No user found with Stripe Customer ID: {subscription.customer} for subscription {subscription.id}")
+
+    elif event.type == 'customer.subscription.updated':
+        subscription = event.data.object
+        current_app.logger.info(f"Webhook processing: customer.subscription.updated for Stripe sub ID {subscription.id}")
+        existing_sub = UserSubscription.query.filter_by(stripe_subscription_id=subscription.id).first()
+        if existing_sub:
+            new_stripe_price_id = subscription.items.data[0].price.id
+            if existing_sub.plan.stripe_price_id != new_stripe_price_id:
+                new_plan = Plan.query.filter_by(stripe_price_id=new_stripe_price_id).first()
+                if new_plan:
+                    current_app.logger.info(f"Plan changed for sub {subscription.id} from {existing_sub.plan.name} to {new_plan.name}")
+                    existing_sub.plan_id = new_plan.id
+                else:
+                    current_app.logger.error(f"Could not find new plan with Stripe Price ID {new_stripe_price_id} for sub {subscription.id}")
+            
+            existing_sub.status = subscription.status
+            if subscription.current_period_start:
+                existing_sub.current_period_starts_at = datetime.fromtimestamp(subscription.current_period_start)
+            if subscription.current_period_end:
+                existing_sub.current_period_ends_at = datetime.fromtimestamp(subscription.current_period_end)
+            existing_sub.cancel_at_period_end = subscription.cancel_at_period_end
+            existing_sub.canceled_at = datetime.fromtimestamp(subscription.canceled_at) if subscription.canceled_at else None
+            existing_sub.ended_at = datetime.fromtimestamp(subscription.ended_at) if subscription.ended_at else None
+            try:
+                db.session.commit()
+                current_app.logger.info(f"Successfully updated local subscription {existing_sub.id} for Stripe sub {subscription.id}")
+            except Exception as e_commit:
+                db.session.rollback()
+                current_app.logger.error(f"Error committing update for subscription {subscription.id}: {e_commit}")
+        else:
+            current_app.logger.warning(f"Received update for unknown Stripe subscription ID: {subscription.id}. Might need to handle as a new subscription if created directly in Stripe.")
+            # Optionally, call the creation logic here if it should be treated as new
+
+    elif event.type == 'customer.subscription.deleted':
+        subscription = event.data.object
+        current_app.logger.info(f"Webhook processing: customer.subscription.deleted for Stripe sub ID {subscription.id}")
+        existing_sub = UserSubscription.query.filter_by(stripe_subscription_id=subscription.id).first()
+        if existing_sub:
+            existing_sub.status = 'canceled' # Or 'ended' based on your preference
+            existing_sub.ended_at = datetime.fromtimestamp(subscription.ended_at) if subscription.ended_at else datetime.utcnow()
+            existing_sub.cancel_at_period_end = True # Typically true for deleted subs
+            try:
+                db.session.commit()
+                current_app.logger.info(f"Successfully marked local subscription {existing_sub.id} as deleted for Stripe sub {subscription.id}")
+            except Exception as e_commit:
+                db.session.rollback()
+                current_app.logger.error(f"Error committing deletion for subscription {subscription.id}: {e_commit}")
+        else:
+            current_app.logger.warning(f"Received delete for unknown Stripe subscription ID: {subscription.id}")
+
+    elif event.type == 'invoice.paid':
+        invoice = event.data.object
+        stripe_sub_id = invoice.subscription # Get Stripe Subscription ID from the invoice
+        if stripe_sub_id:
+            current_app.logger.info(f"Webhook processing: invoice.paid for Stripe invoice {invoice.id}, subscription {stripe_sub_id}")
+            existing_sub = UserSubscription.query.filter_by(stripe_subscription_id=stripe_sub_id).first()
+            if existing_sub:
+                # A paid invoice usually means the subscription is active (or continues to be)
+                existing_sub.status = 'active' 
+                if invoice.period_start: # Use invoice period if available
+                    existing_sub.current_period_starts_at = datetime.fromtimestamp(invoice.period_start)
+                if invoice.period_end:
+                    existing_sub.current_period_ends_at = datetime.fromtimestamp(invoice.period_end)
+                existing_sub.cancel_at_period_end = False # A payment usually means it's not ending at period end anymore
+                # If it was a trial and this is the first payment, update trial_ends_at if necessary or clear it
+                # (Stripe object for subscription might be more accurate for trial_ends_at)
+                try:
+                    db.session.commit()
+                    current_app.logger.info(f"Updated local subscription {existing_sub.id} to active due to paid invoice for Stripe sub {stripe_sub_id}")
+                except Exception as e_commit:
+                    db.session.rollback()
+                    current_app.logger.error(f"Error committing update for subscription {stripe_sub_id} from invoice: {e_commit}")
+            else:
+                current_app.logger.warning(f"Received invoice.paid for unknown Stripe subscription ID: {stripe_sub_id}")
+        else:
+            current_app.logger.info(f"Webhook: invoice.paid for invoice {invoice.id} not linked to a subscription (e.g., one-time payment). No action on UserSubscription.")
+
+    else:
+        current_app.logger.info(f'Stripe webhook: Unhandled event type {event.type}')
+
+    return jsonify(received=True), 200

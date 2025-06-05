@@ -3,14 +3,110 @@
 
 {% block title %}Appointments{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+<style>
+    .page-header h1 {
+        font-size: 2.25rem; /* Larger page title */
+        font-weight: 600;
+    }
+
+    .controls-card .card-body {
+        display: flex;
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        gap: 1.5rem; /* Space between control groups */
+        align-items: flex-end; /* Align items to the bottom for a cleaner look */
+    }
+
+    .control-group {
+        flex: 1; /* Allow groups to grow */
+        min-width: 250px; /* Minimum width before wrapping */
+    }
+    
+    .control-group .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .card {
+        border: none; /* Remove default card borders for a cleaner look with shadows */
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1); /* Softer, more modern shadow */
+        border-radius: 0.5rem; /* Slightly more rounded corners */
+    }
+
+    .card-header {
+        background-color: #f8f9fa; /* Light grey background for headers */
+        border-bottom: 1px solid #e9ecef; /* Subtle border for header */
+        font-weight: 600;
+        padding: 0.75rem 1.25rem;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.375rem; /* Ensure buttons in group also get rounded */
+    }
+    .input-group .form-control, .input-group .btn {
+         border-radius: 0.375rem; /* Ensure consistent rounding */
+    }
+    .input-group .input-group-text {
+        border-radius: 0.375rem;
+    }
+
+    #calendly-container iframe {
+        border-radius: 0.25rem; /* Rounded corners for the iframe too */
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid py-4" data-calendly-sync-enabled="{{ calendly_sync_enabled|tojson }}">
     <!-- Page Header -->
     <div class="page-header d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="bi bi-calendar-week"></i> Appointments</h1>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAppointmentModal">
+        <h1><i class="bi bi-calendar-week me-2"></i>Appointments</h1>
+        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#newAppointmentModal">
             <i class="bi bi-plus-circle"></i> New Appointment
         </button>
+    </div>
+
+    <!-- Controls Card: Date Filter and View Toggle -->
+    <div class="card controls-card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>Controls</h5>
+        </div>
+        <div class="card-body">
+            <div class="control-group date-range-group">
+                <label class="form-label" for="startDate">Date Range</label>
+                <div class="input-group">
+                    <input type="date" class="form-control" id="startDate" 
+                           value="{{ start_date }}" name="start_date">
+                    <span class="input-group-text">to</span>
+                    <input type="date" class="form-control" id="endDate" 
+                           value="{{ end_date }}" name="end_date">
+                    <button class="btn btn-primary" id="filterDates">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                </div>
+            </div>
+            <div class="control-group quick-filters-group">
+                <label class="form-label">Quick Filters</label>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary" data-period="today">Today</button>
+                    <button class="btn btn-outline-secondary" data-period="week">This Week</button>
+                    <button class="btn btn-outline-secondary" data-period="month">This Month</button>
+                </div>
+            </div>
+            <div class="control-group view-mode-group">
+                <label class="form-label">View Mode</label>
+                <div class="btn-group w-100">
+                    <button class="btn btn-outline-primary active" data-view="list">
+                        <i class="bi bi-list-ul"></i> List
+                    </button>
+                    <button class="btn btn-outline-primary" data-view="calendar">
+                        <i class="bi bi-calendar3"></i> Calendar
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Calendly Integration -->
@@ -30,54 +126,6 @@
                         <iframe src="https://calendly.com/haimphysio/" width="100%" height="100%" frameborder="0"></iframe>
                     </div>
                     <!-- Calendly inline widget end -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Date Filter and Calendar View Toggle -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex gap-3">
-                        <div class="date-range">
-                            <label class="form-label">Date Range</label>
-                            <div class="input-group">
-                                <input type="date" class="form-control" id="startDate" 
-                                       value="{{ start_date }}" name="start_date">
-                                <span class="input-group-text">to</span>
-                                <input type="date" class="form-control" id="endDate" 
-                                       value="{{ end_date }}" name="end_date">
-                                <button class="btn btn-outline-primary" id="filterDates">
-                                    <i class="bi bi-funnel"></i> Filter
-                                </button>
-                            </div>
-                        </div>
-                        <div class="quick-filters">
-                            <label class="form-label">Quick Filters</label>
-                            <div class="btn-group">
-                                <button class="btn btn-outline-secondary" data-period="today">Today</button>
-                                <button class="btn btn-outline-secondary" data-period="week">This Week</button>
-                                <button class="btn btn-outline-secondary" data-period="month">This Month</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <label class="form-label">View Mode</label>
-                    <div class="btn-group w-100">
-                        <button class="btn btn-outline-primary active" data-view="list">
-                            <i class="bi bi-list-ul"></i> List
-                        </button>
-                        <button class="btn btn-outline-primary" data-view="calendar">
-                            <i class="bi bi-calendar3"></i> Calendar
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -211,9 +259,11 @@
 </div>
 
 <!-- Add this after the Sync button in your appointments.html -->
+{% if current_user.is_admin or calendly_sync_enabled %}
 <a href="{{ url_for('main.review_calendly_bookings') }}" class="btn btn-outline-secondary mt-3 ms-2">
     <i class="bi bi-list-check"></i> Review Calendly Bookings
 </a>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
@@ -222,6 +272,9 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const container = document.querySelector('.container-fluid[data-calendly-sync-enabled]');
+    const calendlySyncEnabled = container ? container.dataset.calendlySyncEnabled === 'true' : false;
+
     // Wait for Calendly script to load completely
     setTimeout(function() {
         // Initialize Calendly widget
@@ -356,49 +409,71 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('filterDates').addEventListener('click', filterAppointments);
 
     // Add a button to fetch Calendly events
-    const fetchCalendlyBtn = document.createElement('button');
-    fetchCalendlyBtn.className = 'btn btn-outline-primary mt-3';
-    fetchCalendlyBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Sync Calendly Appointments';
-    fetchCalendlyBtn.onclick = fetchCalendlyEvents;
-    
-    // Add the button after the Calendly container
     const calendlyCard = document.querySelector('#calendly-container').closest('.card');
-    calendlyCard.querySelector('.card-body').appendChild(fetchCalendlyBtn);
+    if (calendlyCard && calendlyCard.querySelector('.card-body')) {
+        // Get the value from the data attribute we set on the container
+        const calendlySyncEnabled = JSON.parse(document.querySelector('.container-fluid').dataset.calendlySyncEnabled);
+        
+        if (calendlySyncEnabled) {
+            const fetchCalendlyBtn = document.createElement('button');
+            fetchCalendlyBtn.id = 'fetchCalendlyBtn'; // Add an ID for easier selection
+            fetchCalendlyBtn.className = 'btn btn-outline-primary mt-3';
+            fetchCalendlyBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Sync Calendly Appointments';
+            fetchCalendlyBtn.onclick = function() { fetchCalendlyEvents(this); }; // Pass the button itself
+            calendlyCard.querySelector('.card-body').appendChild(fetchCalendlyBtn);
+        } else {
+            const disabledSyncButton = document.createElement('button');
+            disabledSyncButton.className = 'btn btn-outline-secondary mt-3';
+            disabledSyncButton.innerHTML = '<i class="bi bi-arrow-repeat"></i> Sync Calendly Appointments (Configure Settings)';
+            disabledSyncButton.disabled = true;
+            disabledSyncButton.title = 'Please configure your Calendly API token and User URI in settings to enable sync.';
+            calendlyCard.querySelector('.card-body').appendChild(disabledSyncButton);
+        }
+    }
     
     // Function to fetch Calendly events
-    function fetchCalendlyEvents() {
+    function fetchCalendlyEvents(buttonElement) { // Accept buttonElement as argument
+        if (!buttonElement) { // Guard clause if somehow called without a button
+            console.error("fetchCalendlyEvents called without a button element.");
+            return;
+        }
         // Show loading indicator
-        fetchCalendlyBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Syncing...';
-        fetchCalendlyBtn.disabled = true;
-        
-        // Make API request to your backend endpoint
+        buttonElement.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Syncing...';
+        buttonElement.disabled = true;
+
         fetch('/api/sync-calendly-events')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    // Show success message
-                    alert(`Successfully synced ${data.count} appointments from Calendly`);
-                    // Reload the page to show updated appointments
-                    window.location.reload();
-                } else {
-                    // Show error message
-                    alert('Error syncing Calendly appointments: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to sync Calendly appointments: ' + error.message);
-            })
-            .finally(() => {
-                // Reset button state
-                fetchCalendlyBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Sync Calendly Appointments';
-                fetchCalendlyBtn.disabled = false;
-            });
+        .then(response => {
+            if (!response.ok) {
+                // Try to get a more specific error from JSON, then fallback
+                return response.json().then(err => { throw err; }).catch(() => { throw new Error('Network response was not ok: ' + response.statusText); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Sync successful:', data);
+            // Hide loading indicator
+            buttonElement.innerHTML = '<i class="bi bi-arrow-repeat"></i> Sync Calendly Appointments';
+            buttonElement.disabled = false;
+            // Display success message (e.g., using a toast or alert)
+            showToast(data.message || 'Calendly events synced successfully!', 'success');
+            
+            // Optionally, refresh parts of the page or redirect
+            // Example: Reload the calendar view if it's active
+            if (document.getElementById('calendarView').style.display !== 'none' && calendar) {
+                calendar.refetchEvents();
+            }
+             // Reload the page to show new data in lists/tables if necessary
+            // window.location.reload(); // Or a more targeted update
+        })
+        .catch(error => {
+            console.error('Error syncing Calendly events:', error);
+            // Hide loading indicator
+            buttonElement.innerHTML = '<i class="bi bi-arrow-repeat"></i> Sync Calendly Appointments';
+            buttonElement.disabled = false;
+            // Display error message
+            const errorMessage = error.error ? error.error : (error.message || 'Failed to sync Calendly events. Please check console for details.');
+            showToast(errorMessage, 'error');
+        });
     }
 
     // Handle mark as completed buttons

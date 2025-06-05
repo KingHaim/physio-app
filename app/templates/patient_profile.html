@@ -14,21 +14,21 @@
                     <h5 class="mb-0"><i class="bi bi-person-lines-fill"></i> Contact Information</h5>
                 </div>
                 <div class="card-body">
-                    {% if current_user.is_authenticated and current_user.role == 'patient' and current_user.patient %}
+                    {% if current_user.is_authenticated and current_user.role == 'patient' and current_user.patient_record %}
                         <form id="contactInfoForm" action="{{ url_for('main.update_patient_contact') }}" method="POST">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email Address</label>
                                 <input type="email" class="form-control" id="email" name="email" 
-                                       value="{{ current_user.patient.email or current_user.email or '' }}">
+                                       value="{{ current_user.patient_record.email or current_user.email or '' }}">
                                 <div class="form-text text-muted">This email will be used for appointment confirmations.</div>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="phone" class="form-label">Phone Number</label>
                                 <input type="text" class="form-control" id="phone" name="phone" 
-                                       value="{{ current_user.patient.phone or '' }}">
+                                       value="{{ current_user.patient_record.phone or '' }}">
                                 <div class="form-text text-muted">We may use this to contact you about your appointments.</div>
                             </div>
                             
@@ -38,25 +38,25 @@
                             <div class="mb-3">
                                 <label for="address_line1" class="form-label">Address Line 1</label>
                                 <input type="text" class="form-control" id="address_line1" name="address_line1" 
-                                       value="{{ current_user.patient.address_line1 or '' }}">
+                                       value="{{ current_user.patient_record.address_line1 or '' }}">
                             </div>
                             
                             <div class="mb-3">
                                 <label for="address_line2" class="form-label">Address Line 2</label>
                                 <input type="text" class="form-control" id="address_line2" name="address_line2" 
-                                       value="{{ current_user.patient.address_line2 or '' }}">
+                                       value="{{ current_user.patient_record.address_line2 or '' }}">
                             </div>
                             
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="city" class="form-label">City</label>
                                     <input type="text" class="form-control" id="city" name="city" 
-                                           value="{{ current_user.patient.city or '' }}">
+                                           value="{{ current_user.patient_record.city or '' }}">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="postcode" class="form-label">Postcode</label>
                                     <input type="text" class="form-control" id="postcode" name="postcode" 
-                                           value="{{ current_user.patient.postcode or '' }}">
+                                           value="{{ current_user.patient_record.postcode or '' }}">
                                 </div>
                             </div>
                             
@@ -67,14 +67,14 @@
                                 <label class="form-label">Preferred Appointment Location</label>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="preferred_location" id="location_clinic" 
-                                           value="Clinic" {{ 'checked' if current_user.patient.preferred_location == 'Clinic' or not current_user.patient.preferred_location else '' }}>
+                                           value="Clinic" {{ 'checked' if current_user.patient_record.preferred_location == 'Clinic' or not current_user.patient_record.preferred_location else '' }}>
                                     <label class="form-check-label" for="location_clinic">
                                         Clinic Visit
                                     </label>
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="preferred_location" id="location_home" 
-                                           value="Home Visit" {{ 'checked' if current_user.patient.preferred_location == 'Home Visit' else '' }}>
+                                           value="Home Visit" {{ 'checked' if current_user.patient_record.preferred_location == 'Home Visit' else '' }}>
                                     <label class="form-check-label" for="location_home">
                                         Home Visit
                                     </label>

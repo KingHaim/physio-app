@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, date, time
 # Import models needed for the new command
 from app.models import RecurringAppointment, Treatment, Patient
 # Import the helper function from main routes
-from app.routes.main import generate_scheduled_treatments
+# from app.routes.main import generate_scheduled_treatments
 
 def register_commands(app):
     @app.cli.command('update-treatment-statuses')
@@ -157,19 +157,19 @@ def register_commands(app):
             click.echo(f"Error committing changes: {e}")
             click.echo("Database rolled back.")
 
-    @app.cli.command('generate-recurring')
-    @with_appcontext
-    def generate_recurring_command():
-        """Generate scheduled Treatment records from recurring rules."""
-        click.echo("Generating treatments from recurring rules...")
-        count = generate_scheduled_treatments() # Call the helper function
-        if count >= 0:
-            click.echo(f"Finished generating {count} treatments.")
-        else:
-            click.echo("An error occurred during generation.")
+    # @app.cli.command('generate-recurring')
+    # @with_appcontext
+    # def generate_recurring_command():
+    #     """Generate scheduled Treatment records from recurring rules."""
+    #     click.echo("Generating treatments from recurring rules...")
+    #     count = generate_scheduled_treatments() # Call the helper function
+    #     if count >= 0:
+    #         click.echo(f"Finished generating {count} treatments.")
+    #     else:
+    #         click.echo("An error occurred during generation.")
 
     app.cli.add_command(create_admin)
     app.cli.add_command(create_user_command)
     app.cli.add_command(list_users_command)
     app.cli.add_command(generate_past_appointments_command)
-    app.cli.add_command(generate_recurring_command) 
+    # app.cli.add_command(generate_recurring_command) 

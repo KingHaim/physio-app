@@ -17,7 +17,7 @@
                     {% for r in all_reports %}
                     <li>
                         <a class="dropdown-item {% if r.id == report.id %}active{% endif %}" 
-                           href="{{ url_for('main.patient_report', id=patient.id) }}?report_id={{ r.id }}">
+                           href="{{ url_for('main.patient_reports_list', patient_id=patient.id) }}?report_id={{ r.id }}">
                             {{ r.report_type }} - {{ r.generated_date.strftime('%Y-%m-%d %H:%M') }}
                         </a>
                     </li>

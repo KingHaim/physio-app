@@ -7,9 +7,16 @@
     <!-- Header with sync button -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0"><i class="bi bi-calendar-check"></i> Calendly Bookings</h1>
-        <button id="syncCalendlyBtn" class="btn btn-primary">
-            <i class="bi bi-arrow-repeat"></i> Sync Calendly Data
-        </button>
+        {# Conditionally render the sync button based on calendly_configured_for_user #}
+        {% if calendly_configured_for_user %}
+            <button id="syncCalendlyBtn" class="btn btn-primary">
+                <i class="bi bi-arrow-repeat"></i> Sync Calendly Data
+            </button>
+        {% else %}
+            <button class="btn btn-secondary" disabled title="Please configure your Calendly API token and User URI in settings to enable sync.">
+                <i class="bi bi-arrow-repeat"></i> Sync Calendly Data (Configure Settings)
+            </button>
+        {% endif %}
     </div>
     
     <!-- Unmatched bookings section -->
@@ -36,17 +43,19 @@
                             <td>{{ booking.name }}</td>
                             <td>{{ booking.email }}</td>
                             <td>{{ booking.phone }}</td>
-                            <td>{{ booking.appointment_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
                             <td class="text-end">
                                 <div class="btn-group">
                                     <a href="{{ url_for('main.match_booking_to_patient', booking_id=booking.id) }}" 
                                        class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-link"></i> Match to Patient
                                     </a>
-                                    <a href="{{ url_for('main.create_patient_from_booking', booking_id=booking.id) }}" 
-                                       class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-person-plus"></i> Create Patient
-                                    </a>
+                                    <form method="POST" action="{{ url_for('main.create_patient_from_booking', booking_id=booking.id) }}" style="display: inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Create New Patient from this Booking">
+                                            <i class="bi bi-person-plus"></i> Create Patient
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

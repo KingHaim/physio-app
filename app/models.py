@@ -3,11 +3,16 @@ from datetime import datetime
 from . import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import JSON as SQLAlchemyJSON # Using generic SQLAlchemy JSON type
+from sqlalchemy import desc # Required for ordering in current_subscription query
+from typing import Optional, Tuple # Import Optional and Tuple for type hinting
 
 class Patient(db.Model):
     __tablename__ = 'patient'
     
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    portal_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True, unique=True)
     name = db.Column(db.String(100), nullable=False)
     date_of_birth = db.Column(db.Date)
     contact = db.Column(db.String(100))
@@ -18,7 +23,6 @@ class Patient(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     treatments = db.relationship('Treatment', backref='patient', lazy=True)
-    user = db.relationship('User', backref=db.backref('patient', uselist=False), lazy=True)
     
     # New fields for extended contact and address information
     email = db.Column(db.String(100))
@@ -71,6 +75,7 @@ class TriggerPoint(db.Model):
 
 class UnmatchedCalendlyBooking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
     event_type = db.Column(db.String(100))
@@ -122,12 +127,62 @@ class PracticeReport(db.Model):
     __tablename__ = 'practice_reports'
     
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     content = db.Column(db.Text, nullable=False)
     generated_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
+    user = db.relationship('User', backref=db.backref('practice_reports', lazy=True))
+
     def __repr__(self):
         return f'<PracticeReport {self.id} generated at {self.generated_at.strftime("%Y-%m-%d %H:%M")}>'
 # --- End NEW Model ---
+
+# Subscription Models
+class Plan(db.Model):
+    __tablename__ = 'plans'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True) # e.g., "Basic", "Pro - Monthly"
+    slug = db.Column(db.String(100), nullable=False, unique=True) # e.g., "basic", "pro_monthly"
+    price_cents = db.Column(db.Integer, nullable=False) # Price in cents
+    billing_interval = db.Column(db.String(50), nullable=False) # 'month', 'year'
+    currency = db.Column(db.String(3), nullable=False, default='eur') # e.g., 'eur', 'usd'
+    patient_limit = db.Column(db.Integer, nullable=True) # Null for unlimited
+    practitioner_limit = db.Column(db.Integer, nullable=True) # Null for unlimited practitioners
+    features = db.Column(SQLAlchemyJSON, nullable=True) # Store list of features or key-value pairs
+    stripe_price_id = db.Column(db.String(255), nullable=True, unique=True) # Stripe Price ID
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    display_order = db.Column(db.Integer, default=0) # For ordering plans on a pricing page
+
+    subscriptions = db.relationship('UserSubscription', backref='plan', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<Plan {self.name}>'
+
+class UserSubscription(db.Model):
+    __tablename__ = 'user_subscriptions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    plan_id = db.Column(db.Integer, db.ForeignKey('plans.id'), nullable=False)
+    stripe_subscription_id = db.Column(db.String(255), unique=True, nullable=True, index=True) # Nullable if created before Stripe sub
+    status = db.Column(db.String(50), nullable=False, default='pending') # e.g., 'trialing', 'active', 'past_due', 'canceled', 'unpaid', 'pending'
+    
+    trial_starts_at = db.Column(db.DateTime, nullable=True)
+    trial_ends_at = db.Column(db.DateTime, nullable=True)
+    
+    current_period_starts_at = db.Column(db.DateTime, nullable=True)
+    current_period_ends_at = db.Column(db.DateTime, nullable=True) # When the subscription renews or expires
+    
+    cancel_at_period_end = db.Column(db.Boolean, default=False, nullable=False)
+    canceled_at = db.Column(db.DateTime, nullable=True) # When the subscription was actually canceled
+    ended_at = db.Column(db.DateTime, nullable=True) # If the subscription fully ended (e.g. after cancellation period)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f'<UserSubscription {self.id} - User {self.user_id} - Plan {self.plan_id} - Status {self.status}>'
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -137,11 +192,130 @@ class User(db.Model, UserMixin):
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # --- Re-applying fields for Patient Portal ---
-    role = db.Column(db.String(20), nullable=False, default='physio')
-    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=True)
-    # --- End re-applied fields ---
+    # Stripe Customer ID
+    stripe_customer_id = db.Column(db.String(255), nullable=True, unique=True, index=True)
     
+    # Calendly specific fields
+    calendly_api_token = db.Column(db.String(255), nullable=True)
+    calendly_user_uri = db.Column(db.String(255), nullable=True)
+    
+    role = db.Column(db.String(20), nullable=False, default='physio') # e.g., 'physio', 'admin', 'patient'
+    patients = db.relationship('Patient', backref='clinician', lazy='dynamic', foreign_keys='[Patient.user_id]') # Patients associated with this user (clinician)
+    patient_record = db.relationship('Patient', backref=db.backref('portal_user_account', uselist=False), foreign_keys='[Patient.portal_user_id]', uselist=False) # Link to a Patient record if this User is a patient portal user
+    unmatched_calendly_bookings = db.relationship('UnmatchedCalendlyBooking', backref='user', lazy='dynamic') # Added relationship
+    
+    # Subscription relationship
+    # Ensure this doesn't conflict with a 'user' backref from UserSubscription if you were to define it there.
+    # The current UserSubscription does not define a direct 'user' relationship field, relying on the backref from here.
+    subscriptions = db.relationship('UserSubscription', backref='user', lazy='dynamic', order_by=UserSubscription.created_at.desc())
+
+    @property
+    def patient_usage_details(self) -> Tuple[int, Optional[int]]:
+        """Returns (current_patient_count, patient_limit_for_plan)."""
+        # Ensure Patient model is accessible here, it should be as it's defined in the same file.
+        current_patient_count = Patient.query.filter_by(user_id=self.id).count()
+        limit = None
+        plan = self.active_plan
+        if plan:
+            limit = plan.patient_limit
+        return current_patient_count, limit
+
+    @property
+    def current_subscription(self) -> Optional['UserSubscription']: # Forward reference if UserSubscription is defined later
+        """Returns the user's current active or trialing subscription."""
+        return UserSubscription.query.filter(
+            UserSubscription.user_id == self.id,
+            UserSubscription.status.in_(['active', 'trialing']),
+            UserSubscription.ended_at.is_(None),
+        ).order_by(desc(UserSubscription.created_at)).first()
+
+    @property
+    def is_subscribed(self) -> bool:
+        """Checks if the user has an active or trialing subscription."""
+        sub = self.current_subscription
+        if not sub:
+            return False
+        
+        if sub.status == 'trialing':
+            if sub.trial_ends_at and sub.trial_ends_at < datetime.utcnow():
+                return False
+        
+        return sub.status in ['active', 'trialing']
+
+    @property
+    def is_on_trial(self) -> bool:
+        """Checks if the user is on an active trial."""
+        sub = self.current_subscription
+        if sub and sub.status == 'trialing' and sub.trial_ends_at and sub.trial_ends_at >= datetime.utcnow():
+            return True
+        return False
+
+    @property
+    def active_plan(self) -> Optional['Plan']: # Forward reference for Plan
+        """Returns the Plan object for the current active subscription."""
+        sub = self.current_subscription
+        if sub and sub.plan: 
+            return sub.plan
+        return None
+
+    @property
+    def subscription_status(self) -> Optional[str]:
+        """Returns the status of the current active subscription."""
+        sub = self.current_subscription
+        return sub.status if sub else None
+
+    def can_use_feature(self, feature_key: str, default_if_no_sub: bool = False) -> bool:
+        """
+        Checks if the user's current plan allows a specific feature.
+        `feature_key` should correspond to a key in the Plan's `features` JSON.
+        `default_if_no_sub` is the value returned if the user has no active subscription.
+        """
+        if self.is_admin:
+            return True
+
+        plan = self.active_plan
+        if not plan:
+            return default_if_no_sub
+
+        if not plan.features: 
+            return False 
+            
+        if isinstance(plan.features.get(feature_key), bool):
+            return plan.features.get(feature_key, False)
+
+        return feature_key in plan.features
+
+    def has_reached_patient_limit(self) -> bool:
+        """Checks if the user has reached their patient limit based on their plan."""
+        if self.is_admin:
+            return False
+
+        plan = self.active_plan
+        if not plan: 
+            return True 
+        
+        if plan.patient_limit is None: 
+            return False
+        
+        # Ensure Patient model is accessible here
+        current_patient_count = Patient.query.filter_by(user_id=self.id).count()
+        return current_patient_count >= plan.patient_limit
+
+    def get_feature_limit(self, feature_limit_key: str) -> Optional[int]:
+        """
+        Gets a specific numeric limit for a feature from the user's plan.
+        Example: `user.get_feature_limit('ai_reports_limit')`
+        Returns None if no limit is set or no active plan.
+        """
+        plan = self.active_plan
+        if not plan or not plan.features:
+            return None
+        
+        limit = plan.features.get(feature_limit_key)
+        if isinstance(limit, int):
+            return limit
+        return None
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
         

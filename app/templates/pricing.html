@@ -1,0 +1,496 @@
+{% extends "base.html" %}
+
+{% block title %}Subscription Plans - PhysioApp{% endblock %}
+
+{% block styles %}
+{{ super() }} <!-- Include existing styles from base.html -->
+<style>
+    .plan-section {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        background-color: #f8f9fa; /* Light gray background for the whole section */
+    }
+    /* Increased specificity for plan-card to override base.html .card styles */
+    div.plan-card {
+        background-color: #ffffff;
+        border: 1px solid #dee2e6 !important; 
+        border-top: 4px solid var(--secondary-color, #6c757d) !important; 
+        border-radius: 0.5rem;
+        padding: 1.5rem; /* Slightly reduced padding for more compact cards */
+        margin-bottom: 1.5rem; /* Slightly reduced margin */
+        transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        position: relative;
+    }
+    div.plan-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    /* Current Plan Specific Highlighting */
+    div.plan-card.current-plan-highlight {
+        border-color: var(--primary-color, #2980b9) !important; 
+        border-top-width: 4px !important; 
+        background-color: #e9f5ff;
+        box-shadow: 0 8px 25px rgba(41, 128, 185, 0.2);
+    }
+    div.plan-card.current-plan-highlight .plan-header h3 {
+        color: var(--primary-color, #2980b9);
+    }
+    .current-plan-badge {
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--primary-color, #2980b9);
+        color: white;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+
+    div.plan-card .plan-header {
+        margin-bottom: 1rem; /* Reduced margin */
+        text-align: center;
+    }
+    div.plan-card h3 { 
+        color: #343a40;
+        margin-top: 0;
+        font-weight: 600;
+        font-size: 1.4rem; /* Slightly reduced font size for plan name */
+        letter-spacing: -0.5px;
+    }
+    div.plan-card .plan-price {
+        font-size: 2rem; /* Slightly reduced font size for price */
+        font-weight: 700;
+        color: var(--primary-color, #2980b9);
+        margin: 0.5rem 0 0.75rem 0; /* Adjusted margin */
+    }
+    div.plan-card .plan-price .currency {
+        font-size: 1.1rem; /* Slightly reduced */
+        font-weight: 500;
+        vertical-align: super;
+        margin-right: 2px;
+    }
+    div.plan-card .plan-price .interval {
+        font-size: 0.8rem; /* Slightly reduced */
+        color: #6c757d;
+        font-weight: 400;
+        text-transform: uppercase;
+    }
+    div.plan-card .plan-description {
+        color: #5a6268;
+        font-size: 0.85rem; /* Slightly reduced */
+        margin-bottom: 1rem; /* Reduced margin */
+        min-height: 40px; /* Adjusted min-height */
+        line-height: 1.5;
+    }
+    div.plan-card .plan-features {
+        padding-left: 0;
+        list-style: none;
+        margin-bottom: 1.5rem; /* Reduced margin */
+        flex-grow: 1;
+    }
+    div.plan-card .plan-features li {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.6rem; /* Reduced margin */
+        font-size: 0.85rem; /* Slightly reduced */
+        color: #495057;
+    }
+    div.plan-card .plan-features li i {
+        color: var(--primary-color, #2980b9); 
+        margin-right: 0.7rem; /* Reduced margin */
+        font-size: 1.1rem; /* Slightly reduced */
+        width: 18px; /* Adjusted width */
+        text-align: center;
+    }
+    
+    /* Button Styling */
+    div.plan-card .btn {
+        margin-top: auto; 
+        padding: 0.6rem 1.2rem; /* Reduced padding */
+        font-size: 0.9rem; /* Slightly reduced */
+        font-weight: 500;
+        border-radius: 0.3rem;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+    div.plan-card .btn-primary {
+        background-color: var(--primary-color, #2980b9) !important;
+        border-color: var(--primary-color, #2980b9) !important;
+        color: white !important; 
+    }
+    div.plan-card .btn-primary:hover {
+        background-color: #2374a8 !important; 
+        border-color: #216b9a !important; 
+    }
+     div.plan-card .btn-info {
+        background-color: var(--secondary-color, #0dcaf0) !important; 
+        border-color: var(--secondary-color, #0dcaf0) !important;
+        color: white !important;
+    }
+    div.plan-card .btn-info:hover {
+        background-color: #0ca3c8 !important; 
+        border-color: #0b93b3 !important; 
+    }
+    .free-plan-badge {
+        font-size: 0.9rem;
+        font-weight: 500;
+        padding: 0.5rem 1rem !important;
+    }
+
+    /* Styling for the separate Free Plan section */
+    .free-plan-section {
+        background-color: #ffffff;
+        border: 1px solid #dee2e6;
+        border-top: 4px solid var(--success-color, #198754); /* Green top border for free */
+        border-radius: 0.5rem;
+        padding: 2rem;
+        margin-top: 2.5rem; /* Space above this section */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.07);
+    }
+    .free-plan-section .free-plan-header h3 {
+        color: var(--success-color, #198754);
+        font-weight: 600;
+    }
+    .free-plan-section .plan-features li i {
+        color: var(--success-color, #198754);
+    }
+
+    .plan-features li.plus-header {
+        font-weight: 500;
+        color: #343a40; /* Darker color for emphasis */
+        margin-top: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    .plan-features li.plus-header i {
+        color: var(--bs-success); /* Use a success color for the checkmark */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container plan-section">
+    <div class="text-center mb-5">
+        <h2 class="display-5 fw-bold">Choose Your Plan</h2>
+        <p class="lead text-muted">Select a plan that best fits your needs and unlock your potential.</p>
+    </div>
+
+    {% if plans %}
+        {# Separate paid plans from the free plan #}
+        {% set paid_plans = [] %}
+        {% set free_plan_obj = namespace(data=None) %}
+        {% for plan_item in plans %}
+            {% if plan_item.price_cents > 0 %}
+                {% set _ = paid_plans.append(plan_item) %}
+            {% else %}
+                {% set free_plan_obj.data = plan_item %}
+            {% endif %}
+        {% endfor %}
+
+        {# Store references to Basic and Standard plans for feature comparison (though less critical for Option 2) #}
+        {# We still need basic_plan_ref if Standard's "plus" features need to show how they differ from Basic #}
+        {# However, if we are just listing pre-selected Standard features, direct comparison isn't strictly needed for display #}
+        {% set basic_plan_ref = namespace(data=None) %}
+        {% set standard_plan_ref = namespace(data=None) %}
+        {% for p in paid_plans %}
+            {% if p.slug == 'basic-usd' %}{% set basic_plan_ref.data = p %}{% endif %}
+            {% if p.slug == 'standard-usd' %}{% set standard_plan_ref.data = p %}{% endif %}
+        {% endfor %}
+
+        {# Feature map definition #}
+        {% set feature_map = {
+            'patient_management': {'name': 'Patient Management', 'icon': 'bi-person-lines-fill', 'levels': {'core': 'Core', 'standard': 'Standard', 'advanced': 'Advanced'}},
+            'scheduling': {'name': 'Scheduling', 'icon': 'bi-calendar-event-fill', 'levels': {'basic': 'Basic', 'standard': 'Standard', 'advanced': 'Advanced'}},
+            'clinical_notes': {'name': 'Clinical Notes', 'icon': 'bi-journal-richtext', 'levels': {'basic': 'Basic', 'standard': 'Standard', 'advanced': 'Advanced'}},
+            'billing': {'name': 'Billing', 'icon': 'bi-credit-card-2-front-fill', 'levels': {'basic': 'Basic', 'standard': 'Standard', 'advanced': 'Advanced'}},
+            'reporting': {'name': 'Reporting', 'icon': 'bi-file-earmark-bar-graph-fill', 'levels': {'basic': 'Basic', 'standard': 'Standard', 'advanced_ai': 'AI-Powered'}},
+            'calendly_integration': {'name': 'Calendly Integration', 'icon': 'bi-calendar-plus-fill', 'is_boolean': True},
+            'patient_portal': {'name': 'Patient Portal', 'icon': 'bi-box-arrow-in-right', 'is_boolean': True},
+            'telehealth': {'name': 'Telehealth', 'icon': 'bi-camera-video-fill', 'levels': {'basic': 'Basic', 'standard': 'Standard', 'advanced': 'Advanced'}},
+            'analytics': {'name': 'Analytics', 'icon': 'bi-pie-chart-fill', 'levels': {'basic': 'Basic', 'standard': 'Standard', 'advanced': 'Advanced'}},
+            'multi_practitioner_calendars': {'name': 'Multi-Practitioner Calendars', 'icon': 'bi-calendar3-week-fill', 'is_boolean': True},
+            'ai_driven_insights': {'name': 'AI Driven Insights', 'icon': 'bi-lightbulb-fill', 'is_boolean': True},
+            'wearable_integration': {'name': 'Wearable Integration', 'icon': 'bi-smartwatch', 'is_boolean': True},
+            'multi_location_support': {'name': 'Multi-Location Support', 'icon': 'bi-building-fill', 'is_boolean': True},
+            'api_access': {'name': 'API Access', 'icon': 'bi-code-slash', 'is_boolean': True},
+            'custom_branding': {'name': 'Custom Branding', 'icon': 'bi-palette-fill', 'is_boolean': True},
+            'support': {'name': 'Support', 'icon': 'bi-headset', 'levels': {'community': 'Community', 'email': 'Email', 'priority_email': 'Priority Email', 'dedicated': 'Dedicated'}}
+        } %}
+
+        {# Define showcase feature keys for "plus" sections #}
+        {% set standard_plus_feature_keys = ['patient_portal', 'telehealth', 'multi_practitioner_calendars', 'analytics'] %}
+        {% set premium_plus_feature_keys = ['ai_driven_insights', 'telehealth', 'custom_branding', 'api_access'] %}
+
+
+        {# Display Paid Plans in one row #}
+        {% if paid_plans %}
+            <div class="row justify-content-center">
+                {% for plan in paid_plans %}
+                    <div class="col-lg-4 col-md-6 mb-4 d-flex">
+                        <div class="plan-card {% if plan.id == active_plan_id %}current-plan-highlight{% endif %}">
+                            {% if plan.id == active_plan_id %}
+                                <span class="current-plan-badge">Current Plan</span>
+                            {% endif %}
+                            <div class="plan-header">
+                                <h3>{{ plan.name }}</h3>
+                                <div class="plan-price">
+                                    <span class="currency">$</span>{{ "%.0f"|format(plan.price_cents / 100) }}
+                                    <span class="interval">/month</span>
+                                </div>
+                            </div>
+                            
+                            <p class="plan-description">
+                                {% if plan.features and plan.features.description %}{{ plan.features.description }}{% endif %}
+                            </p>
+
+                        <ul class="plan-features">
+                                <li><i class="bi bi-people-fill"></i> {% if plan.patient_limit is not none %}Up to {{ plan.patient_limit }} Patients{% else %}Unlimited Patients{% endif %}</li>
+                                <li><i class="bi bi-person-badge-fill"></i> {% if plan.practitioner_limit is not none %}Up to {{ plan.practitioner_limit }} Practitioner{% if plan.practitioner_limit != 1 %}s{% endif %}{% else %}Unlimited Practitioners{% endif %}</li>
+                                
+                                {% if plan.slug == 'basic-usd' %}
+                                    {# List all features for Basic plan #}
+                                    {% for key, details in feature_map.items() %}
+                                        {% if key in plan.features and plan.features[key] and key != 'description' %}
+                                            <li><i class="bi {{ details.icon }}"></i> 
+                                            {% if details.is_boolean %}{{ details.name }}
+                                            {% elif details.levels and plan.features[key] in details.levels %}{{ details.name }}: {{ details.levels[plan.features[key]] }}
+                                            {% elif not details.is_boolean and not details.levels %}{{ details.name }}: {{ plan.features[key] }}{% endif %}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% elif plan.slug == 'standard-usd' %}
+                                    <li class="plus-header"><i class="bi bi-check-all"></i> Everything in Basic, plus:</li>
+                                    {% for key in standard_plus_feature_keys %}
+                                        {% if key in plan.features and plan.features[key] and key in feature_map %}
+                                            {% set details = feature_map[key] %}
+                                            {% set current_val = plan.features[key] %}
+                                            <li><i class="bi {{ details.icon }}"></i> 
+                                            {% if details.is_boolean %}{{ details.name }}
+                                            {% elif details.levels and current_val in details.levels %}{{ details.name }}: {{ details.levels[current_val] }}
+                                            {% elif not details.is_boolean and not details.levels %}{{ details.name }}: {{ current_val }}{% endif %}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% elif plan.slug == 'premium-usd' %}
+                                    <li class="plus-header"><i class="bi bi-check-all"></i> Everything in Standard, plus:</li>
+                                    {% for key in premium_plus_feature_keys %}
+                                        {% if key in plan.features and plan.features[key] and key in feature_map %}
+                                            {% set details = feature_map[key] %}
+                                            {% set current_val = plan.features[key] %}
+                                            <li><i class="bi {{ details.icon }}"></i> 
+                                            {% if details.is_boolean %}{{ details.name }}
+                                            {% elif details.levels and current_val in details.levels %}{{ details.name }}: {{ details.levels[current_val] }}
+                                            {% elif not details.is_boolean and not details.levels %}{{ details.name }}: {{ current_val }}{% endif %}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </ul>
+                            <div class="card-footer text-center">
+                                {% if current_user.is_authenticated and user_subscription and user_subscription.plan_id == plan.id %}
+                                    {% if user_subscription.status in ['active', 'trialing'] %}
+                                        {% if user_subscription.cancel_at_period_end %}
+                                            <div class="alert alert-warning" role="alert">
+                                                Your subscription for this plan is scheduled to cancel on 
+                                                {{ user_subscription.current_period_ends_at.strftime('%B %d, %Y') if user_subscription.current_period_ends_at else 'the end of the current period' }}.
+                                            </div>
+                                        {% else %}
+                                            <a href="{{ url_for('main.manage_subscription') }}" class="btn btn-info manage-btn w-100 mb-2"><i class="bi bi-gear-fill"></i> Manage Billing on Stripe</a>
+                                            <button type="button" class="btn btn-outline-danger cancel-btn w-100" data-bs-toggle="modal" data-bs-target="#cancelSubscriptionModal-{{ plan.id }}">
+                                                <i class="bi bi-x-octagon"></i> Cancel My Subscription
+                                            </button>
+
+                                            <!-- Cancellation Confirmation Modal -->
+                                            <div class="modal fade" id="cancelSubscriptionModal-{{ plan.id }}" tabindex="-1" aria-labelledby="cancelModalLabel-{{ plan.id }}" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="cancelModalLabel-{{ plan.id }}">Confirm Cancellation</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p>Are you sure you want to cancel your <strong>{{ plan.name }}</strong> subscription?</p>
+                                                            <p>If you cancel, your subscription will remain active until the end of your current billing period ({{ user_subscription.current_period_ends_at.strftime('%B %d, %Y') if user_subscription.current_period_ends_at else 'end of period' }}).</p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Subscription</button>
+                                                            <form action="{{ url_for('main.cancel_subscription') }}" method="POST" style="display: inline;">
+                                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                                <button type="submit" class="btn btn-danger">Yes, Cancel Subscription</button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% elif user_subscription.status == 'canceled' or user_subscription.status == 'ended' %}
+                                        <div class="alert alert-secondary" role="alert">
+                                            Your subscription for this plan has been canceled.
+                                        </div>
+                                        <!-- Optionally, allow re-subscribing -->
+                                        <button class="btn btn-primary subscribe-btn w-100" data-plan-id="{{ plan.id }}" data-billing-cycle="{{ plan.billing_interval }}"><i class="bi bi-arrow-clockwise"></i> Resubscribe to {{ plan.name }}</button>
+                                    {% elif user_subscription.status == 'pending_cancellation' %} 
+                                        <div class="alert alert-warning" role="alert">
+                                            Your subscription for this plan is pending cancellation at the end of the period.
+                                        </div>
+                                    {% else %}
+                                        <!-- Fallback for other statuses like past_due, unpaid -->
+                                         <div class="alert alert-danger" role="alert">
+                                            Your subscription for this plan is <strong>{{ user_subscription.status }}</strong>.
+                                            Please <a href="{{ url_for('main.manage_subscription') }}">update your billing information</a>.
+                                        </div>
+                                        <a href="{{ url_for('main.manage_subscription') }}" class="btn btn-warning manage-btn w-100 mb-2"><i class="bi bi-credit-card"></i> Update Billing</a>
+                                    {% endif %}
+                                {% elif plan.price_cents == 0 and current_user.is_authenticated and not user_subscription %} <!-- Free plan and user has no other subscription -->
+                                     <button class="btn btn-success subscribe-btn w-100" data-plan-id="{{ plan.id }}" data-billing-cycle="{{ plan.billing_interval }}"><i class="bi bi-check-circle"></i> Get Started (Free)</button>
+                                {% elif plan.price_cents == 0 and user_subscription and user_subscription.plan_id != plan.id %} <!-- Free plan, but user is subscribed to a different paid plan -->
+                                     <div class="alert alert-info" role="alert">
+                                        You are currently on the <strong>{{ user_subscription.plan.name }}</strong> plan.
+                                     </div>
+                                {% else %}
+                                    <button class="btn btn-primary subscribe-btn w-100" data-plan-id="{{ plan.id }}" data-billing-cycle="{{ plan.billing_interval }}"><i class="bi bi-box-arrow-in-right"></i> Subscribe Now</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# Display Free Plan Separately #}
+        {% if free_plan_obj.data %}
+            {% set plan = free_plan_obj.data %} 
+            <div class="row justify-content-center">
+                <div class="col-lg-10 col-md-12">
+                    <div class="free-plan-section mt-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="free-plan-header mb-3">
+                                    <h3>Considering our Free Option? The {{ plan.name }} Plan</h3>
+                                </div>
+                                <p class="plan-description">
+                                    {% if plan.features and plan.features.description %}{{ plan.features.description }}{% endif %}
+                                    Perfect if you're just starting out or want to try our core features before committing.
+                                </p>
+                                <ul class="plan-features list-unstyled d-flex flex-wrap">
+                                    <li class="me-3 mb-2"><i class="bi bi-people-fill"></i> {% if plan.patient_limit is not none %}Up to {{ plan.patient_limit }} Patients{% else %}Unlimited Patients{% endif %}</li>
+                                    <li class="me-3 mb-2"><i class="bi bi-person-badge-fill"></i> {% if plan.practitioner_limit is not none %}Up to {{ plan.practitioner_limit }} Practitioner{% if plan.practitioner_limit != 1 %}s{% endif %}{% else %}Unlimited Practitioners{% endif %}</li>
+                                    {% if plan.features.calendly_integration %}<li class="me-3 mb-2"><i class="bi bi-calendar-plus-fill"></i> Calendly Integration</li>{% endif %}
+                                    {% if plan.features.patient_management == 'core' %}<li class="me-3 mb-2"><i class="bi bi-person-lines-fill"></i> Core Patient Management</li>{% endif %}
+                                    {% if plan.features.scheduling == 'basic' %}<li class="me-3 mb-2"><i class="bi bi-calendar-event-fill"></i> Basic Scheduling</li>{% endif %}
+                                    {% if plan.features.clinical_notes == 'basic' %}<li class="me-3 mb-2"><i class="bi bi-journal-richtext"></i> Basic Clinical Notes</li>{% endif %}
+                                    {% if plan.features.support == 'community' %}<li class="me-3 mb-2"><i class="bi bi-headset"></i> Community Support</li>{% endif %}
+                                </ul>
+                            </div>
+                            <div class="col-md-4 text-center text-md-end mt-3 mt-md-0">
+                                {% if plan.id == active_plan_id %}
+                                    <a href="{{ url_for('main.manage_subscription') }}" class="btn btn-info manage-btn w-100"><i class="bi bi-gear-fill"></i> Manage Current Plan</a>
+                                {% else %}
+                                    <span class="badge bg-success p-3 fs-6 free-plan-badge">This is Our Free Plan!</span>
+                                    <p class="mt-2"><small>No credit card required to use the free plan.</small></p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        {% endif %}
+    {% else %}
+        <p>No subscription plans are currently available. Please check back later.</p>
+    {% endif %}
+    <div id="error-message" class="alert alert-danger mt-3" style="display: none;"></div>
+
+    {# Modal for Cancellation Confirmation #}
+    {% if current_user.is_authenticated and current_user.current_subscription and current_user.current_subscription.status == 'active' %}
+    <div class="modal fade" id="confirmCancelModal" tabindex="-1" aria-labelledby="confirmCancelModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmCancelModalLabel">Confirm Subscription Cancellation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel your <strong>{{ current_user.active_plan.name }}</strong> subscription?</p>
+                    <p>Your access will continue until the end of your current billing period: <strong>{{ current_user.current_subscription.current_period_ends_at.strftime('%B %d, %Y') if current_user.current_subscription.current_period_ends_at else 'N/A' }}</strong>.</p>
+                    <p class="text-muted"><small>If you proceed, your subscription will be set to cancel at the period end, and it will not auto-renew.</small></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Subscription</button>
+                    <form action="{{ url_for('main.cancel_subscription') }}" method="POST" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-danger">Yes, Cancel Subscription</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }} <!-- Include existing scripts from base.html -->
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const stripePublishableKey = "{{ stripe_publishable_key }}";
+        if (!stripePublishableKey) {
+            console.error("Stripe Publishable Key is not set. Payments will not work.");
+            const errorMessageDiv = document.getElementById('error-message');
+            errorMessageDiv.textContent = 'Payment system is currently unavailable. Stripe key missing.';
+            errorMessageDiv.style.display = 'block';
+            document.querySelectorAll('.subscribe-btn').forEach(button => button.disabled = true);
+            return;
+        }
+        const stripe = Stripe(stripePublishableKey);
+        const subscribeButtons = document.querySelectorAll('.subscribe-btn');
+        const errorMessageDiv = document.getElementById('error-message');
+
+        subscribeButtons.forEach(button => {
+            button.addEventListener('click', async function () {
+                const planId = this.dataset.planId;
+                const billingCycle = this.dataset.billingCycle;
+                errorMessageDiv.style.display = 'none';
+
+                try {
+                    const response = await fetch("{{ url_for('api.create_checkout_session') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ 
+                            plan_id: parseInt(planId),
+                            billing_cycle: billingCycle
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.sessionId) {
+                        const { error } = await stripe.redirectToCheckout({
+                            sessionId: data.sessionId
+                        });
+                        if (error) {
+                            console.error('Stripe redirectToCheckout error:', error);
+                            errorMessageDiv.textContent = error.message;
+                            errorMessageDiv.style.display = 'block';
+                        }
+                    } else {
+                        console.error('Error creating checkout session:', data.error);
+                        errorMessageDiv.textContent = data.error || 'Could not initiate payment. Please try again.';
+                        errorMessageDiv.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('Request failed:', error);
+                    errorMessageDiv.textContent = 'An unexpected error occurred. Please try again.';
+                    errorMessageDiv.style.display = 'block';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 

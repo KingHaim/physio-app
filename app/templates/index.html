@@ -3,66 +3,257 @@
 
 {% block title %}Dashboard{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<style>
+    .stats-card {
+        border: none;
+        border-radius: 0.75rem; /* Slightly more rounded corners */
+        color: #fff; /* White text for all cards */
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        margin-bottom: 1.5rem; /* Ensure consistent spacing if needed */
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    }
+    .stats-card .card-body {
+        padding: 1.25rem;
+    }
+    .stats-card .card-title {
+        font-weight: 500;
+        font-size: 0.9rem; /* Slightly smaller title */
+        opacity: 0.9;
+    }
+    .stats-card .display-4 {
+        font-weight: 700; /* Bolder number */
+        margin-bottom: 0.25rem;
+    }
+    .stats-card .card-text {
+        font-size: 0.85rem;
+        opacity: 0.8;
+    }
+    .stats-card .card-text i {
+        font-size: 1.1rem; /* Larger icon */
+        margin-right: 0.5rem;
+        vertical-align: middle;
+    }
+    .stats-text {
+        vertical-align: middle;
+    }
+
+    /* Specific card colors - you can customize these to your theme */
+    .stats-card.card-patients-capacity {
+        background-color: #007bff; /* Primary blue */
+    }
+    .stats-card.card-active-patients {
+        background-color: #28a745; /* Success green */
+    }
+    .stats-card.card-today-appts {
+        background-color: #17a2b8; /* Info cyan */
+    }
+    .stats-card.card-pending-review {
+        background-color: #6f42c1; /* Bootstrap purple - NEW STYLE */
+    }
+
+    .dashboard-card {
+        border: 1px solid #e0e0e0; /* Lighter border for subtle separation */
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Softer, slightly larger shadow */
+        border-radius: 0.5rem; /* Consistent rounding */
+    }
+
+    .dashboard-card-header {
+        background-color: #f8f9fa; /* Light background for headers */
+        border-bottom: 1px solid #e0e0e0;
+        padding: 0.75rem 1.25rem;
+    }
+    
+    .dashboard-card-header h5.card-title-icon i {
+        color: var(--primary-color); /* Use primary color for icons in headers */
+    }
+
+    /* Style adjustments for Quick Action buttons if needed */
+    .quick-actions-grid .btn {
+        /* Add any specific styles for quick action buttons, e.g., ensure text isn't too large */
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem; /* Adjust padding if they feel too big */
+    }
+    .quick-actions-grid .btn i {
+        font-size: 1rem; /* Ensure icons in buttons are appropriately sized */
+    }
+
+    .dashboard-header-banner {
+        background-color: #e9ecef; /* A light, neutral background */
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem; /* Space before stats cards */
+        /* border-left: 5px solid var(--primary-color); Optional accent */
+    }
+
+    .dashboard-header-banner h4 {
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .dashboard-header-banner p {
+        margin-bottom: 1rem;
+        color: #495057;
+    }
+
+    .dashboard-header-banner .subscription-status-text {
+        font-size: 0.9rem;
+        /* Match the style of the original discrete subscription display */
+        padding: 0.5rem; 
+        background-color: #f8f9fa; /* Even lighter for the embedded status */
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        display: inline-block; /* Make it fit content */
+        box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    }
+
+    .dashboard-metrics-panel {
+        background-color: #ffffff; /* White background for the panel */
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem; /* Space before next content row */
+        box-shadow: 0 4px 18px rgba(0,0,0,0.07); /* A slightly more distinct shadow for the panel */
+        /* border: 1px solid #dee2e6; Optional border */
+    }
+
+    /* Styles for the new Quick Actions list */
+    .quick-actions-list .list-group-item {
+        padding: 0.85rem 1.25rem; /* Adjust padding */
+        font-size: 0.95rem;
+        border-left: 0;
+        border-right: 0;
+    }
+    .quick-actions-list .list-group-item:first-child {
+        border-top: 0;
+    }
+    .quick-actions-list .list-group-item:last-child {
+        border-bottom: 0;
+    }
+    .quick-actions-list .list-group-item i {
+        font-size: 1.1rem; /* Slightly larger icons in list */
+        color: var(--primary-color); /* Icon color */
+    }
+    .quick-actions-list .badge {
+        font-size: 0.8em;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-3">
-    <h1 class="h3 mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h1>
-    
-    <!-- Stats Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card stats-card">
-                <div class="card-body">
-                    <h5 class="card-title text-white">Total Patients</h5>
-                    <h2 class="display-4 text-white">{{ total_patients }}</h2>
-                    <p class="card-text text-white-50">
-                        <i class="bi bi-people"></i> <span class="stats-text">All registered patients</span>
-                    </p>
-                </div>
-            </div>
+    <h1 class="h3 mb-3"><i class="bi bi-speedometer2"></i> Dashboard</h1> {# Increased mb slightly #}
+
+    <!-- Dashboard Header Banner -->
+    <div class="dashboard-header-banner">
+        <h4>Welcome back, {{ current_user.username }}!</h4>
+        <p>Here's an overview of your clinic's activity.</p>
+        
+        {# Moved Subscription Status Display Here #}
+        {% if current_plan_name %}
+        <div class="subscription-status-text">
+            <i class="bi bi-award-fill text-success me-1"></i> 
+            Current Plan: <strong>{{ current_plan_name }}</strong> 
+            (Status: <span class="fw-semibold">{{ current_subscription_status }}</span>)
+            {% if current_subscription_ends_at %}
+                - {% if current_subscription_status == 'Trialing' %}Ends{% else %}Renews{% endif %}: {{ current_subscription_ends_at.strftime('%d %b %Y') }}
+            {% endif %}
+            <a href="{{ url_for('main.my_account') }}" class="ms-2 badge bg-primary text-decoration-none">Manage Plan</a> {# Changed link to my_account #}
         </div>
-        <div class="col-md-3">
-            <div class="card stats-card">
-                <div class="card-body">
-                    <h5 class="card-title text-white">Active Patients</h5>
-                    <h2 class="display-4 text-white">{{ active_patients }}</h2>
-                    <p class="card-text text-white-50">
-                        <i class="bi bi-person-check"></i> <span class="stats-text">Currently under treatment</span>
-                    </p>
-                </div>
-            </div>
+        {% elif current_user.is_authenticated and not current_user.is_subscribed %}
+        <div class="subscription-status-text">
+            <i class="bi bi-info-circle-fill text-primary me-1"></i> 
+            You are currently not subscribed to a plan. 
+            <a href="{{ url_for('main.pricing_page') }}" class="ms-1 badge bg-success text-decoration-none">View Plans</a>
         </div>
-        <div class="col-md-3">
-            <div class="card stats-card">
-                <div class="card-body">
-                    <h5 class="card-title text-white">Today's Appointments</h5>
-                    <h2 class="display-4 text-white">{{ today_appointments }}</h2>
-                    <p class="card-text text-white-50">
-                        <i class="bi bi-calendar-day"></i> <span class="stats-text">Scheduled for today</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stats-card">
-                <div class="card-body">
-                    <h5 class="card-title text-white">Pending Review</h5>
-                    <h2 class="display-4 text-white">{{ pending_review_count }}</h2>
-                    <p class="card-text text-white-50">
-                        <i class="bi bi-clipboard-check"></i> <span class="stats-text">Patients needing review</span>
-                    </p>
-                </div>
-            </div>
-        </div>
+        {% endif %}
     </div>
     
+    <!-- Key Metrics Panel (Stats Cards & Weekly Chart) -->
+    <div class="dashboard-metrics-panel">
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stats-card card-patients-capacity">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-3">Patient Capacity</h5>
+                        {% if patient_plan_limit is not none %}
+                            <div style="max-width: 150px; max-height: 150px; margin: 0 auto;">
+                                <canvas id="patientCapacityChart" 
+                                        data-current-patients="{{ current_patients_count|int }}"
+                                        data-limit="{{ patient_plan_limit|int }}"></canvas>
+                            </div>
+                            <p class="card-text mt-2">
+                                <i class="bi bi-people"></i> 
+                                <span class="stats-text">
+                                    {{ current_patients_count }} / {{ patient_plan_limit }}
+                                    {% if current_patients_count >= patient_plan_limit %}
+                                        <br><strong class="text-danger">Limit Reached!</strong> 
+                                        <a href="{{ url_for('main.pricing_page') }}" class="badge bg-warning text-dark text-decoration-none ms-1">Upgrade</a>
+                                    {% elif (patient_plan_limit - current_patients_count) <= 5 %}
+                                        <br><strong class="text-warning">Nearing Limit</strong>
+                                    {% endif %}
+                                </span>
+                            </p>
+                        {% else %}
+                            <h2 class="display-4">{{ current_patients_count }}</h2>
+                            <p class="card-text">
+                                <i class="bi bi-infinity"></i> 
+                                <span class="stats-text">Unlimited Patients</span>
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card card-active-patients">
+                    <div class="card-body">
+                        <h5 class="card-title">Active Patients</h5>
+                        <h2 class="display-4">{{ active_patients }}</h2>
+                        <p class="card-text">
+                            <i class="bi bi-person-check"></i> <span class="stats-text">Currently under treatment</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card card-today-appts">
+                    <div class="card-body">
+                        <h5 class="card-title">Today's Appointments</h5>
+                        <h2 class="display-4">{{ today_appointments }}</h2>
+                        <p class="card-text">
+                            <i class="bi bi-calendar-day"></i> <span class="stats-text">Scheduled for today</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card card-pending-review">
+                    <div class="card-body">
+                        <h5 class="card-title">Pending Review</h5>
+                        <h2 class="display-4">{{ pending_review_count }}</h2>
+                        <p class="card-text">
+                            <i class="bi bi-clipboard-check"></i> <span class="stats-text">Patients needing review</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Weekly Appointments Chart - TO BE REMOVED -->
+    </div> <!-- End of dashboard-metrics-panel -->
+    
     <!-- Main Content Area -->
-    <div class="row">
+    <div class="row mt-4"> {# Added mt-4 for spacing from charts/stats #}
         <!-- Upcoming Appointments -->
-        <div class="col-md-8">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0">
+        <div class="col-lg-7 mb-4"> {# Reverted from col-lg-12 back to col-lg-7 for diagnostics #}
+            <div class="card dashboard-card h-100"> {# Added dashboard-card class #}
+                <div class="card-header dashboard-card-header"> {# Added dashboard-card-header class #}
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-calendar-week"></i> Upcoming Appointments</h5>
+                        <h5 class="mb-0 card-title-icon"><i class="bi bi-calendar-week me-2"></i>Upcoming Appointments</h5>
                         <a href="{{ url_for('main.appointments') }}" class="btn btn-sm btn-outline-primary">View All</a>
                     </div>
                 </div>
@@ -131,97 +322,236 @@
             </div>
         </div>
         
-        <!-- Quick Actions -->
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0">
-                    <h5 class="mb-0"><i class="bi bi-lightning-charge"></i> Quick Actions</h5>
+        <!-- Quick Actions - TO BE REMOVED -->
+        <!-- 
+        <div class="col-lg-5 mb-4"> {# Changed to col-lg-5 and added mb-4 for spacing #}
+            <div class="card dashboard-card h-100"> {# Added dashboard-card class #}
+                <div class="card-header dashboard-card-header"> {# Added dashboard-card-header class #}
+                    <h5 class="mb-0 card-title-icon"><i class="bi bi-lightning-charge me-2"></i>Quick Actions</h5>
                 </div>
                 <div class="card-body">
-                    <div class="d-grid gap-3">
-                        <a href="{{ url_for('main.new_patient') }}" class="btn btn-primary">
-                            <i class="bi bi-person-plus"></i> New Patient
+                    <div class="list-group list-group-flush quick-actions-list">
+                        <a href="{{ url_for('main.new_patient') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                            <i class="bi bi-person-plus me-3"></i> New Patient
                         </a>
-                        <button class="btn btn-outline-primary" onclick="openCalendly()">
-                            <i class="bi bi-calendar-plus"></i> Schedule Appointment
+                        <button type="button" class="list-group-item list-group-item-action d-flex align-items-center" onclick="openCalendly()">
+                            <i class="bi bi-calendar-plus me-3"></i> Schedule Appointment
                         </button>
-                        <a href="{{ url_for('main.patients_list', status='Pending Review') }}" class="btn btn-outline-primary">
-                            <i class="bi bi-clipboard-check"></i> Review Pending Patients
+                        <a href="{{ url_for('main.patients_list', status='Pending Review') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-clipboard-check me-3"></i> Review Pending Patients</span>
                             {% if pending_review_count > 0 %}
                             <span class="badge bg-danger rounded-pill">{{ pending_review_count }}</span>
                             {% endif %}
                         </a>
-                        <a href="{{ url_for('main.review_calendly_bookings') }}" class="btn btn-outline-primary">
-                            <i class="bi bi-calendar-check"></i> Review Calendly Bookings
+                        <a href="{{ url_for('main.review_calendly_bookings') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                            <i class="bi bi-calendar-check me-3"></i> Review Calendly Bookings
                         </a>
-                        <a href="{{ url_for('main.analytics') }}" class="btn btn-outline-primary">
-                            <i class="bi bi-graph-up"></i> View Analytics
+                        <a href="{{ url_for('main.analytics') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                            <i class="bi bi-graph-up me-3"></i> View Analytics
                         </a>
                     </div>
                 </div>
             </div>
         </div>
+        -->
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+{{ super() }}
 <script>
-    // Quick search functionality
-    const quickSearch = document.getElementById('quickSearch');
-    const searchResults = document.getElementById('searchResults');
-    
-    quickSearch.addEventListener('input', async (e) => {
-        if (e.target.value.length < 2) {
-            searchResults.innerHTML = '';
-            return;
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+        const patientCapacityChartElement = document.getElementById('patientCapacityChart');
         
-        try {
-            const response = await fetch(`/search?q=${e.target.value}`);
-            const data = await response.json();
+        if (patientCapacityChartElement) {
+            const currentPatientsString = patientCapacityChartElement.dataset.currentPatients;
+            const limitString = patientCapacityChartElement.dataset.limit;
+
+            // Only proceed if both data attributes are present and valid
+            if (typeof currentPatientsString !== 'undefined' && typeof limitString !== 'undefined') {
+                const currentPatients = parseInt(currentPatientsString, 10);
+                const limit = parseInt(limitString, 10);
+                
+                // The main Jinja condition already ensures limit > 0, but a JS check is good practice
+                if (!isNaN(currentPatients) && !isNaN(limit) && limit > 0) {
+                    const patientCapacityCtx = patientCapacityChartElement.getContext('2d');
+                    const remainingCapacity = Math.max(0, limit - currentPatients);
+
+                    let capacityData = {
+                        labels: [
+                            'Current Patients (' + currentPatients + ')',
+                            'Remaining Capacity (' + remainingCapacity + ')'
+                        ],
+                        datasets: [{
+                            data: [currentPatients, remainingCapacity],
+                            backgroundColor: [
+                                'rgba(255, 255, 255, 0.8)', // White with opacity for current
+                                'rgba(255, 255, 255, 0.3)'  // Lighter white for remaining
+                            ],
+                            borderColor: [
+                                'rgba(255, 255, 255, 1)',
+                                'rgba(255, 255, 255, 0.5)'
+                            ],
+                            borderWidth: 1,
+                            hoverOffset: 4
+                        }]
+                    };
+                    
+                    if (currentPatients >= limit) {
+                        capacityData.labels = ['Patients (' + currentPatients + ')', 'Limit (' + limit + ') - Over! '];
+                        capacityData.datasets[0].data = [currentPatients, 0];
+                        capacityData.datasets[0].backgroundColor = ['rgba(220, 53, 69, 0.8)', 'rgba(255, 255, 255, 0.3)'];
+                        capacityData.datasets[0].borderColor = ['rgba(220, 53, 69, 1)', 'rgba(255, 255, 255, 0.5)'];
+                    }
+
+                    new Chart(patientCapacityCtx, {
+                        type: 'doughnut',
+                        data: capacityData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '70%',
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    enabled: true
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        // --- Weekly Appointments Bar Chart - TO BE REMOVED ---
+        /*
+        const weeklyAppointmentsCtx = document.getElementById('weeklyAppointmentsChart').getContext('2d');
+        {# const weeklyLabels = {{ weekly_appointment_labels|tojson }}; #} // Correctly commented out for Jinja
+        {# const weeklyCounts = {{ weekly_appointment_counts|tojson }}; #} // Correctly commented out for Jinja
+
+        new Chart(weeklyAppointmentsCtx, {
+            type: 'bar',
+            data: {
+                labels: weeklyLabels,
+                datasets: [{
+                    label: 'Appointments',
+                    data: weeklyCounts,
+                    backgroundColor: 'rgba(41, 128, 185, 0.6)',
+                    borderColor: 'rgba(41, 128, 185, 1)',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    hoverBackgroundColor: 'rgba(41, 128, 185, 0.8)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        },
+                        grid: {
+                            display: true,
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: true,
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                return tooltipItems[0].label;
+                            },
+                            label: function(tooltipItem) {
+                                return 'Appointments: ' + tooltipItem.raw;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        */
+
+        // Quick search functionality
+        const quickSearch = document.getElementById('quickSearch');
+        const searchResults = document.getElementById('searchResults');
+        
+        if (quickSearch && searchResults) {
+            quickSearch.addEventListener('input', async (e) => {
+                if (e.target.value.length < 2) {
+                    searchResults.innerHTML = '';
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/search?q=${e.target.value}`);
+                    const data = await response.json();
+                    
+                    searchResults.innerHTML = data.map(patient => `
+                        <a href="/patient/${patient.id}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">${patient.name}</h6>
+                                <span class="status-badge status-${patient.status.toLowerCase()}">
+                                    ${patient.status}
+                                </span>
+                            </div>
+                            <small>${patient.diagnosis}</small>
+                        </a>
+                    `).join('');
+                } catch (error) {
+                    console.error('Error searching patients:', error);
+                }
+            });
+        }
+
+        // Patient list search and filter
+        const patientSearch = document.getElementById('patientSearch');
+        const statusFilter = document.getElementById('statusFilter');
+        
+        if (patientSearch && statusFilter) {
+            function updatePatientList() {
+                const searchParams = new URLSearchParams(window.location.search);
+                searchParams.set('search', patientSearch.value);
+                searchParams.set('status', statusFilter.value);
+                window.location.href = `/?${searchParams.toString()}`;
+            }
             
-            searchResults.innerHTML = data.map(patient => `
-                <a href="/patient/${patient.id}" class="list-group-item list-group-item-action">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h6 class="mb-1">${patient.name}</h6>
-                        <span class="status-badge status-${patient.status.toLowerCase()}">
-                            ${patient.status}
-                        </span>
-                    </div>
-                    <small>${patient.diagnosis}</small>
-                </a>
-            `).join('');
-        } catch (error) {
-            console.error('Error searching patients:', error);
+            patientSearch.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    updatePatientList();
+                }
+            });
+            
+            statusFilter.addEventListener('change', updatePatientList);
+        }
+
+        // Quick treatment functionality
+        const quickTreatmentModalElement = document.getElementById('quickTreatmentModal');
+        const quickTreatmentFormElement = document.getElementById('quickTreatmentForm');
+
+        window.quickTreatment = function(patientId) {
+            if (quickTreatmentModalElement && quickTreatmentFormElement) {
+                const modal = new bootstrap.Modal(quickTreatmentModalElement);
+                quickTreatmentFormElement.action = `/treatment/new/${patientId}`;
+                modal.show();
+            } else {
+                console.error('Quick treatment modal elements not found.');
+            }
         }
     });
-
-    // Patient list search and filter
-    const patientSearch = document.getElementById('patientSearch');
-    const statusFilter = document.getElementById('statusFilter');
-    
-    function updatePatientList() {
-        const searchParams = new URLSearchParams(window.location.search);
-        searchParams.set('search', patientSearch.value);
-        searchParams.set('status', statusFilter.value);
-        window.location.href = `/?${searchParams.toString()}`;
-    }
-    
-    patientSearch.addEventListener('keyup', (e) => {
-        if (e.key === 'Enter') {
-            updatePatientList();
-        }
-    });
-    
-    statusFilter.addEventListener('change', updatePatientList);
-
-    // Quick treatment functionality
-    function quickTreatment(patientId) {
-        const modal = new bootstrap.Modal(document.getElementById('quickTreatmentModal'));
-        const form = document.getElementById('quickTreatmentForm');
-        form.action = `/treatment/new/${patientId}`;
-        modal.show();
-    }
 </script>
 {% endblock %}

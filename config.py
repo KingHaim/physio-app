@@ -15,3 +15,12 @@ class Config:
     
     # Calendly API configuration
     CALENDLY_API_TOKEN = os.environ.get('CALENDLY_API_TOKEN', '')
+
+    # Stripe Webhook Signing Secret
+    STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+
+    # Stripe Publishable Key
+    STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
+
+    # Stripe Secret Key
+    STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
