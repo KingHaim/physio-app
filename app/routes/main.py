@@ -3433,3 +3433,9 @@ def bulk_delete_patients():
         }), 400
 
 
+
+@main.route("/landing")
+def landing_page():
+    """Public marketing landing page."""
+    return render_template("landing.html")
+
