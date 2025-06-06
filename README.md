@@ -49,10 +49,13 @@ pip install -r requirements.txt
 touch .env
 # Add your settings to .env
 # Example:
-# SECRET_KEY=your-secret-key
+SECRET_KEY=your-secret-key   # Required for Flask session security
 # CALENDLY_API_TOKEN=your-calendly-token
 # DEEPSEEK_API_KEY=your-deepseek-api-key
 ```
+
+Make sure the `SECRET_KEY` variable is set before running the application. The
+app will exit on startup if this variable is missing.
 
 5. Initialize the database:
 

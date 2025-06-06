@@ -30,4 +30,5 @@ fi
 
 echo "Starting Flask server with API key..."
 export FLASK_APP=run.py
-flask run 
+flask run
+

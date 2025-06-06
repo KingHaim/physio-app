@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, current_user, login_required
 from app.models import User, db
 from app.forms import RegistrationForm
@@ -34,12 +34,14 @@ def login():
         remember = 'remember' in request.form
         
         user = User.query.filter_by(username=username).first()
-        print(f"DEBUG: Login attempt for username: '{username}' with password: '{password}'") # TEMPORARY
+        current_app.logger.debug(
+            "Login attempt for username '%s'", username
+        )
         
         if user:
-            print(f"DEBUG: User found. DB password_hash: {user.password_hash}") # TEMPORARY
+            current_app.logger.debug("User found. DB password_hash: %s", user.password_hash)
             password_check_result = user.check_password(password)
-            print(f"DEBUG: user.check_password(password) result: {password_check_result}") # TEMPORARY
+            current_app.logger.debug("user.check_password result: %s", password_check_result)
             if not password_check_result:
                 flash('Invalid username or password', 'danger')
                 return redirect(url_for('auth.login'))

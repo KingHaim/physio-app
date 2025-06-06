@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from flask import current_app
 from app.models import Treatment, Patient, db
 from sqlalchemy import func
 
@@ -23,8 +24,11 @@ def mark_past_treatments_as_completed(user_id=None):
     
     if count > 0:
         db.session.commit()
-        # Optional: make print user-aware if needed, for now, it's a server log
-        print(f"Automatically marked {count} past treatments as Completed (user_id: {user_id if user_id else 'global'})") 
+        current_app.logger.info(
+            "Automatically marked %s past treatments as Completed (user_id: %s)",
+            count,
+            user_id if user_id else 'global'
+        )
     
     return count
 
@@ -53,6 +57,10 @@ def mark_inactive_patients(user_id=None):
     
     if count > 0:
         db.session.commit()
-        print(f"Automatically marked {count} patients as Inactive (user_id: {user_id if user_id else 'global'})")
+        current_app.logger.info(
+            "Automatically marked %s patients as Inactive (user_id: %s)",
+            count,
+            user_id if user_id else 'global'
+        )
     
     return count

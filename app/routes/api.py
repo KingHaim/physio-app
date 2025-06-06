@@ -279,7 +279,7 @@ def match_calendly_booking():
         
     except Exception as e:
         db.session.rollback()
-        print(f"Error in match_calendly_booking: {str(e)}")
+        current_app.logger.info(f"Error in match_calendly_booking: {str(e)}")
         return jsonify({'success': False, 'error': str(e)})
 
 @api.route('/api/calendly/create-patient-from-booking', methods=['POST'])
@@ -385,10 +385,8 @@ def update_appointment_status(id):
 def generate_patient_report(id):
     try:
         patient = Patient.query.get_or_404(id)
-        
-        # Log the start of report generation
-        print(f"Starting report generation for patient {id}")
-        
+        current_app.logger.info(f"Starting report generation for patient {id}")
+
         # Get all completed treatments AND past treatments
         today = datetime.now().date()
         treatments = Treatment.query.filter(
@@ -398,13 +396,13 @@ def generate_patient_report(id):
         ).order_by(Treatment.created_at).all()
         
         if not treatments:
-            print(f"No completed or past treatments found for patient {id}")
+            current_app.logger.info(f"No completed or past treatments found for patient {id}")
             
             # Check if there are any treatments at all
             all_treatments = Treatment.query.filter_by(patient_id=id).order_by(Treatment.created_at).all()
             
             if all_treatments:
-                print(f"Using fallback report with {len(all_treatments)} treatments")
+                current_app.logger.info(f"Using fallback report with {len(all_treatments)} treatments")
                 # Generate a fallback report
                 report_content = generate_fallback_report(all_treatments)
                 
@@ -418,7 +416,7 @@ def generate_patient_report(id):
                 db.session.add(report)
                 db.session.commit()
                 
-                print(f"Fallback report saved to database with ID {report.id}")
+                current_app.logger.info(f"Fallback report saved to database with ID {report.id}")
                 
                 return jsonify({
                     'success': True,
@@ -431,7 +429,7 @@ def generate_patient_report(id):
                     'message': 'No treatments found for this patient.'
                 })
         
-        print(f"Found {len(treatments)} completed/past treatments for patient {id}")
+        current_app.logger.info(f"Found {len(treatments)} completed/past treatments for patient {id}")
         
         # Extract initial and latest pain levels if available
         initial_pain = None
@@ -541,7 +539,7 @@ def generate_patient_report(id):
         api_key = os.environ.get('DEEPSEEK_API_KEY')
         
         if not api_key:
-            print("No DeepSeek API key found in environment variables")
+            current_app.logger.info("No DeepSeek API key found in environment variables")
             
             # Try to read from .env file
             try:
@@ -551,16 +549,16 @@ def generate_patient_report(id):
                             api_key = line.strip().split('=', 1)[1].strip('"\'')
                             break
             except FileNotFoundError:
-                print(".env file not found")
+                current_app.logger.info(".env file not found")
             
             if not api_key:
-                print("No DeepSeek API key found in .env file")
+                current_app.logger.info("No DeepSeek API key found in .env file")
                 # Generate a fallback report
                 report_content = generate_fallback_report(treatments)
                 report_type = 'Fallback Report (No API Key)'
         else:
             try:
-                print(f"Calling DeepSeek API for patient {id}")
+                current_app.logger.info(f"Calling DeepSeek API for patient {id}")
                 
                 # Get the API endpoint, defaulting to the main endpoint if not specified
                 api_endpoint = os.environ.get('DEEPSEEK_API_ENDPOINT', 'https://api.deepseek.com/v1/chat/completions')
@@ -571,12 +569,12 @@ def generate_patient_report(id):
                         saved_endpoint = file.read().strip()
                         if saved_endpoint:
                             api_endpoint = saved_endpoint
-                            print(f"Using saved endpoint from working_endpoint.txt: {api_endpoint}")
+                            current_app.logger.info(f"Using saved endpoint from working_endpoint.txt: {api_endpoint}")
                 except FileNotFoundError:
-                    print("No working_endpoint.txt file found, using default or environment endpoint")
+                    current_app.logger.info("No working_endpoint.txt file found, using default or environment endpoint")
                 
-                print(f"Using API endpoint: {api_endpoint}")
-                print(f"Using API key (first 4 chars): {api_key[:4]}...")
+                current_app.logger.info(f"Using API endpoint: {api_endpoint}")
+                current_app.logger.info(f"Using API key (first 4 chars): {api_key[:4]}...")
                 
                 # Increase timeout to 60 seconds
                 response = requests.post(
@@ -597,13 +595,13 @@ def generate_patient_report(id):
                     timeout=90  # Increased timeout for longer reports
                 )
                 
-                print(f"DeepSeek API response status: {response.status_code}")
+                current_app.logger.info(f"DeepSeek API response status: {response.status_code}")
                 
                 if response.status_code != 200:
-                    print(f"Error from DeepSeek API: {response.text}")
+                    current_app.logger.info(f"Error from DeepSeek API: {response.text}")
                     # Add more detailed error logging
-                    print(f"Full error details: Status: {response.status_code}, Content: {response.content}")
-                    print(f"API Key (first 4 chars): {api_key[:4]}...")
+                    current_app.logger.info(f"Full error details: Status: {response.status_code}, Content: {response.content}")
+                    current_app.logger.info(f"API Key (first 4 chars): {api_key[:4]}...")
                     
                     # Try alternative endpoints if the main one fails
                     alternative_endpoints = [
@@ -618,7 +616,7 @@ def generate_patient_report(id):
                     
                     success = False
                     for alt_endpoint in alternative_endpoints:
-                        print(f"Trying alternative endpoint: {alt_endpoint}")
+                        current_app.logger.info(f"Trying alternative endpoint: {alt_endpoint}")
                         try:
                             alt_response = requests.post(
                                 alt_endpoint,
@@ -639,7 +637,7 @@ def generate_patient_report(id):
                             )
                             
                             if alt_response.status_code == 200:
-                                print(f"Successfully connected to alternative endpoint: {alt_endpoint}")
+                                current_app.logger.info(f"Successfully connected to alternative endpoint: {alt_endpoint}")
                                 response = alt_response
                                 success = True
                                 
@@ -649,9 +647,9 @@ def generate_patient_report(id):
                                     
                                 break
                             else:
-                                print(f"Alternative endpoint failed: {alt_response.status_code} - {alt_response.text}")
+                                current_app.logger.info(f"Alternative endpoint failed: {alt_response.status_code} - {alt_response.text}")
                         except Exception as alt_e:
-                            print(f"Error with alternative endpoint: {str(alt_e)}")
+                            current_app.logger.info(f"Error with alternative endpoint: {str(alt_e)}")
                     
                     if not success:
                         # Generate a fallback report
@@ -662,20 +660,20 @@ def generate_patient_report(id):
                     try:
                         report_content = response.json()['choices'][0]['message']['content']
                         report_type = 'AI Generated'
-                        print(f"Successfully generated report content of length {len(report_content)}")
+                        current_app.logger.info(f"Successfully generated report content of length {len(report_content)}")
                     except (KeyError, IndexError, ValueError) as e:
-                        print(f"Error parsing API response: {str(e)}")
+                        current_app.logger.info(f"Error parsing API response: {str(e)}")
                         # Generate a fallback report
                         report_content = generate_fallback_report(treatments)
                         report_type = 'Fallback Report (Parse Error)'
                     
             except requests.exceptions.Timeout:
-                print("DeepSeek API request timed out")
+                current_app.logger.info("DeepSeek API request timed out")
                 # Generate a fallback report
                 report_content = generate_fallback_report(treatments)
                 report_type = 'Fallback Report (Timeout)'
             except requests.exceptions.RequestException as e:
-                print(f"Request exception: {str(e)}")
+                current_app.logger.info(f"Request exception: {str(e)}")
                 # Generate a fallback report
                 report_content = generate_fallback_report(treatments)
                 report_type = 'Fallback Report (Request Error)'
@@ -690,7 +688,7 @@ def generate_patient_report(id):
         db.session.add(report)
         db.session.commit()
         
-        print(f"Report saved to database with ID {report.id}")
+        current_app.logger.info(f"Report saved to database with ID {report.id}")
         
         return jsonify({
             'success': True,
@@ -700,7 +698,7 @@ def generate_patient_report(id):
         
     except Exception as e:
         db.session.rollback()
-        print(f"Exception in generate_patient_report: {str(e)}")
+        current_app.logger.info(f"Exception in generate_patient_report: {str(e)}")
         return jsonify({
             'success': False,
             'message': str(e)
@@ -854,7 +852,7 @@ def calendly_webhook():
         event_type = data.get('event')
         payload = data.get('payload', {})
 
-        print(f"Received Calendly Webhook - Event: {event_type}") # Add logging
+        current_app.logger.info(f"Received Calendly Webhook - Event: {event_type}") # Add logging
 
         # --- Handle Invitee Creation --- 
         if event_type == 'invitee.created':
@@ -864,7 +862,7 @@ def calendly_webhook():
             invitee_uuid = invitee.get('uuid') # Use UUID for checking existing bookings
 
             if not invitee_uuid:
-                print("Webhook Error: invitee.created payload missing invitee.uuid")
+                current_app.logger.info("Webhook Error: invitee.created payload missing invitee.uuid")
                 return jsonify({'status': 'error', 'message': 'Missing invitee UUID'}), 400
 
             # Check if this booking already exists based on UUID
@@ -873,7 +871,7 @@ def calendly_webhook():
             ).first()
             
             if existing_booking:
-                print(f"Webhook Info: Booking with UUID {invitee_uuid} already processed.")
+                current_app.logger.info(f"Webhook Info: Booking with UUID {invitee_uuid} already processed.")
                 return jsonify({'status': 'ignored', 'reason': 'Booking already processed'})
             
             # Create a new unmatched booking
@@ -882,7 +880,7 @@ def calendly_webhook():
             
             # Basic validation for required fields
             if not all([invitee.get('name'), invitee.get('email'), event.get('name'), start_time_str, end_time_str]):
-                print("Webhook Error: invitee.created payload missing required fields")
+                current_app.logger.info("Webhook Error: invitee.created payload missing required fields")
                 return jsonify({'status': 'error', 'message': 'Missing required booking fields'}), 400
             
             booking = UnmatchedCalendlyBooking(
@@ -925,11 +923,11 @@ def calendly_webhook():
                         calendly_invitee_uri=invitee_uri # Store the full Invitee URI here
                     )
                     db.session.add(treatment)
-                    print(f"Webhook Info: Created and matched Treatment for patient {patient.id} from invitee {invitee_uri}")
+                    current_app.logger.info(f"Webhook Info: Created and matched Treatment for patient {patient.id} from invitee {invitee_uri}")
                 else:
-                     print(f"Webhook Info: Treatment already exists for patient {patient.id} at {booking.start_time}. Skipping creation.")
+                     current_app.logger.info(f"Webhook Info: Treatment already exists for patient {patient.id} at {booking.start_time}. Skipping creation.")
             else:
-                print(f"Webhook Info: Created UnmatchedCalendlyBooking for {invitee_uuid}. Needs manual matching.")
+                current_app.logger.info(f"Webhook Info: Created UnmatchedCalendlyBooking for {invitee_uuid}. Needs manual matching.")
             
             db.session.commit()
             return jsonify({
@@ -946,10 +944,10 @@ def calendly_webhook():
             canceler_name = invitee.get('cancellation', {}).get('canceled_by', 'Unknown')
             
             if not invitee_uri:
-                print("Webhook Error: invitee.canceled payload missing invitee.uri")
+                current_app.logger.info("Webhook Error: invitee.canceled payload missing invitee.uri")
                 return jsonify({'status': 'error', 'message': 'Missing invitee URI in cancellation payload'}), 400
             
-            print(f"Webhook Info: Processing cancellation for invitee URI: {invitee_uri}")
+            current_app.logger.info(f"Webhook Info: Processing cancellation for invitee URI: {invitee_uri}")
             
             # Find the corresponding treatment using the invitee URI
             treatment_to_cancel = Treatment.query.filter_by(calendly_invitee_uri=invitee_uri).first()
@@ -966,10 +964,10 @@ Reason: {cancellation_reason}"
                     treatment_to_cancel.notes = (treatment_to_cancel.notes or "") + cancellation_note
                     
                     db.session.commit()
-                    print(f"Webhook Success: Updated Treatment ID {treatment_to_cancel.id} status from '{old_status}' to Cancelled for invitee {invitee_uri}.")
+                    current_app.logger.info(f"Webhook Success: Updated Treatment ID {treatment_to_cancel.id} status from '{old_status}' to Cancelled for invitee {invitee_uri}.")
                     return jsonify({'status': 'success', 'message': 'Treatment status updated to Cancelled'})
                 else:
-                    print(f"Webhook Info: Treatment ID {treatment_to_cancel.id} already Cancelled for invitee {invitee_uri}. No action needed.")
+                    current_app.logger.info(f"Webhook Info: Treatment ID {treatment_to_cancel.id} already Cancelled for invitee {invitee_uri}. No action needed.")
                     return jsonify({'status': 'ignored', 'reason': 'Treatment already cancelled'})
             else:
                 # Treatment not found - maybe it was never matched or already deleted?
@@ -982,27 +980,27 @@ Reason: {cancellation_reason}"
                     # If the booking was pending and now cancelled, we can ignore or delete it
                     unmatched_booking.status = 'Ignored' # Or db.session.delete(unmatched_booking)
                     db.session.commit()
-                    print(f"Webhook Info: Marked Pending UnmatchedCalendlyBooking {unmatched_booking.id} (UUID: {invitee_uuid}) as Ignored due to cancellation.")
+                    current_app.logger.info(f"Webhook Info: Marked Pending UnmatchedCalendlyBooking {unmatched_booking.id} (UUID: {invitee_uuid}) as Ignored due to cancellation.")
                     return jsonify({'status': 'success', 'message': 'Pending unmatched booking marked as Ignored'})
                 else:
-                    print(f"Webhook Warning: No matching Treatment or Pending UnmatchedBooking found for cancelled invitee URI: {invitee_uri}")
+                    current_app.logger.info(f"Webhook Warning: No matching Treatment or Pending UnmatchedBooking found for cancelled invitee URI: {invitee_uri}")
                     return jsonify({'status': 'ignored', 'reason': 'No active treatment or pending booking found for this invitee URI'})
         
         # --- Handle Other Event Types (Optional) --- 
         else:
-            print(f"Webhook Info: Ignoring event type: {event_type}")
+            current_app.logger.info(f"Webhook Info: Ignoring event type: {event_type}")
             return jsonify({'status': 'ignored', 'reason': f'Event type {event_type} not handled'})
         
     except Exception as e:
         db.session.rollback()
         # Log the error thoroughly
-        print(f"!!! Webhook Error: {str(e)}")
-        print(traceback.format_exc())
+        current_app.logger.info(f"!!! Webhook Error: {str(e)}")
+        current_app.logger.info(traceback.format_exc())
         # Also log the raw request data if possible (be mindful of sensitive info)
         try:
-            print(f"Webhook Raw Data: {request.data}")
+            current_app.logger.info(f"Webhook Raw Data: {request.data}")
         except: # noqa
-            print("Webhook Raw Data: Could not read request data.")
+            current_app.logger.info("Webhook Raw Data: Could not read request data.")
             
         return jsonify({'status': 'error', 'message': 'Internal server error processing webhook'}), 500
 
@@ -1057,7 +1055,7 @@ def sync_calendly_appointments():
         
     except Exception as e:
         db.session.rollback()
-        print(f"Error in sync_calendly_appointments: {str(e)}")
+        current_app.logger.info(f"Error in sync_calendly_appointments: {str(e)}")
         return jsonify({'success': False, 'error': str(e)})
 
 @api.route('/api/patients/<int:patient_id>/status', methods=['POST'])
@@ -1165,7 +1163,7 @@ def delete_report(id):
     
     except Exception as e:
         db.session.rollback()
-        print(f"Error deleting report: {str(e)}")
+        current_app.logger.info(f"Error deleting report: {str(e)}")
         return jsonify({
             'success': False,
             'message': str(e)
@@ -1175,7 +1173,7 @@ def delete_report(id):
 def generate_exercise_prescription(id):
     try:
         patient = Patient.query.get_or_404(id)
-        print(f"Starting exercise prescription generation for patient {id}")
+        current_app.logger.info(f"Starting exercise prescription generation for patient {id}")
 
         # Get the last 3 completed or past treatments for recent context
         today = datetime.now().date()
@@ -1189,17 +1187,17 @@ def generate_exercise_prescription(id):
         recent_treatments.reverse()
 
         if not recent_treatments:
-            print(f"No recent completed/past treatments found for patient {id} to generate prescription.")
+            current_app.logger.info(f"No recent completed/past treatments found for patient {id} to generate prescription.")
             # Optionally check for diagnosis/plan even without treatments
             if patient.diagnosis or patient.treatment_plan:
-                 print("Proceeding with diagnosis/plan only.")
+                 current_app.logger.info("Proceeding with diagnosis/plan only.")
             else:
                 return jsonify({
                     'success': False,
                     'message': 'No diagnosis, plan, or recent completed treatments found to generate exercise prescription.'
                 })
 
-        print(f"Found {len(recent_treatments)} recent treatments for patient {id}")
+        current_app.logger.info(f"Found {len(recent_treatments)} recent treatments for patient {id}")
 
         # Prepare the prompt for the AI
         prompt = f"""
@@ -1254,7 +1252,7 @@ def generate_exercise_prescription(id):
                 pass # .env not found, api_key remains None
 
             if not api_key:
-                print("ERROR: DeepSeek API key not found.")
+                current_app.logger.info("ERROR: DeepSeek API key not found.")
                 return jsonify({'success': False, 'message': 'AI service API key not configured.'}) 
 
         # Try reading working endpoint
@@ -1263,12 +1261,12 @@ def generate_exercise_prescription(id):
                 saved_endpoint = file.read().strip()
                 if saved_endpoint:
                     api_endpoint = saved_endpoint
-                    print(f"Using saved endpoint: {api_endpoint}")
+                    current_app.logger.info(f"Using saved endpoint: {api_endpoint}")
         except FileNotFoundError:
-            print(f"No {working_endpoint_file}, using default/env endpoint: {api_endpoint}")
+            current_app.logger.info(f"No {working_endpoint_file}, using default/env endpoint: {api_endpoint}")
 
         try:
-            print(f"Calling AI for exercise prescription for patient {id} at {api_endpoint}")
+            current_app.logger.info(f"Calling AI for exercise prescription for patient {id} at {api_endpoint}")
             response = requests.post(
                 api_endpoint,
                 headers={
@@ -1287,17 +1285,17 @@ def generate_exercise_prescription(id):
                 timeout=45 # Adjust timeout as needed
             )
 
-            print(f"AI API response status: {response.status_code}")
+            current_app.logger.info(f"AI API response status: {response.status_code}")
 
             if response.status_code != 200:
-                print(f"AI API Error: {response.text}")
+                current_app.logger.info(f"AI API Error: {response.text}")
                 # TODO: Implement endpoint fallback logic if needed, similar to report generation
                 return jsonify({'success': False, 'message': f'AI service error: {response.status_code}'})
             
             # Extract prescription content
             try:
                 prescription_content = response.json()['choices'][0]['message']['content']
-                print(f"Successfully generated exercise prescription content of length {len(prescription_content)}")
+                current_app.logger.info(f"Successfully generated exercise prescription content of length {len(prescription_content)}")
                 
                 # Save the prescription as a PatientReport
                 try:
@@ -1309,10 +1307,10 @@ def generate_exercise_prescription(id):
                     )
                     db.session.add(homework_report)
                     db.session.commit()
-                    print(f"Exercise homework saved to database with ID {homework_report.id}")
+                    current_app.logger.info(f"Exercise homework saved to database with ID {homework_report.id}")
                 except Exception as db_err:
                     db.session.rollback()
-                    print(f"Database error saving exercise homework: {db_err}")
+                    current_app.logger.info(f"Database error saving exercise homework: {db_err}")
                     # Return success but maybe indicate saving failed?
                     # For now, return success but don't guarantee it saved.
                     # Consider adding a warning message in the response.
@@ -1322,19 +1320,19 @@ def generate_exercise_prescription(id):
                 })
                 
             except (KeyError, IndexError, ValueError) as e:
-                print(f"Error parsing AI API response: {str(e)}")
+                current_app.logger.info(f"Error parsing AI API response: {str(e)}")
                 return jsonify({'success': False, 'message': 'Error parsing AI response.'})
 
         except requests.exceptions.Timeout:
-            print("AI API request timed out for exercise prescription")
+            current_app.logger.info("AI API request timed out for exercise prescription")
             return jsonify({'success': False, 'message': 'AI service request timed out.'})
         except requests.exceptions.RequestException as e:
-            print(f"AI API request exception: {str(e)}")
+            current_app.logger.info(f"AI API request exception: {str(e)}")
             return jsonify({'success': False, 'message': 'Could not connect to AI service.'})
 
     except Exception as e:
         db.session.rollback() # Just in case, though unlikely needed here
-        print(f"Exception in generate_exercise_prescription: {str(e)}")
+        current_app.logger.info(f"Exception in generate_exercise_prescription: {str(e)}")
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -1369,52 +1367,52 @@ def set_treatment_payment_method(id):
 
     except Exception as e:
         db.session.rollback()
-        print(f"Error setting payment method for treatment {id}: {e}")
+        current_app.logger.info(f"Error setting payment method for treatment {id}: {e}")
         return jsonify({'success': False, 'message': 'An internal server error occurred.'}), 500
 
 @api.route('/api/treatment/<int:id>/set-fee', methods=['POST'])
 @login_required
 def set_treatment_fee(id):
     """Sets the fee for a specific treatment."""
-    print(f"--- set_treatment_fee START for ID: {id} ---") # Log start
+    current_app.logger.info(f"--- set_treatment_fee START for ID: {id} ---") # Log start
     treatment = Treatment.query.get_or_404(id)
     data = None # Initialize data
     try:
         # Log raw data if possible (might be empty if not JSON)
         raw_data = request.get_data(as_text=True)
-        print(f"Raw request data: {raw_data}")
+        current_app.logger.info(f"Raw request data: {raw_data}")
         # Try getting JSON
         data = request.get_json()
-        print(f"Parsed JSON data: {data}")
+        current_app.logger.info(f"Parsed JSON data: {data}")
     except Exception as json_err:
-        print(f"!!! Error parsing JSON: {json_err} !!!")
+        current_app.logger.info(f"!!! Error parsing JSON: {json_err} !!!")
         # Return a specific error if JSON parsing fails
         return jsonify({'success': False, 'message': f'Invalid request format: {json_err}'}), 400
 
     if not data or 'fee' not in data:
-        print("Missing 'fee' key in JSON data.")
+        current_app.logger.info("Missing 'fee' key in JSON data.")
         return jsonify({'success': False, 'message': 'Missing fee amount in request.'}), 400
         
     fee_input = data['fee']
-    print(f"Fee value received: {fee_input} (Type: {type(fee_input)})")
+    current_app.logger.info(f"Fee value received: {fee_input} (Type: {type(fee_input)})")
 
     try:
         fee_value = float(fee_input)
-        print(f"Fee value successfully converted to float: {fee_value}")
+        current_app.logger.info(f"Fee value successfully converted to float: {fee_value}")
         if fee_value < 0:
-             print("Fee value is negative.")
+             current_app.logger.info("Fee value is negative.")
              return jsonify({'success': False, 'message': 'Fee cannot be negative.'}), 400
              
         treatment.fee_charged = fee_value
         db.session.commit()
-        print(f"Fee successfully updated in DB for treatment {id}")
+        current_app.logger.info(f"Fee successfully updated in DB for treatment {id}")
         return jsonify({'success': True, 'message': 'Fee updated successfully.', 'new_fee': fee_value})
     except ValueError:
-         print(f"ValueError converting fee '{fee_input}' to float.")
+         current_app.logger.info(f"ValueError converting fee '{fee_input}' to float.")
          return jsonify({'success': False, 'message': 'Invalid fee amount provided.'}), 400
     except Exception as e:
         db.session.rollback()
-        print(f"!!! UNEXPECTED Error setting fee for treatment {id}: {e} !!!")
+        current_app.logger.info(f"!!! UNEXPECTED Error setting fee for treatment {id}: {e} !!!")
         return jsonify({'success': False, 'message': 'An internal error occurred.'}), 500
 
 # --- API Endpoint to Set Location (and potentially auto-set fee) ---
@@ -1424,7 +1422,7 @@ def set_treatment_location(id):
     """Sets the location for a specific treatment. 
        If location is 'CostaSpine Clinic', automatically sets the fee based on patient history.
     """
-    print(f"--- set_treatment_location START for ID: {id} ---")
+    current_app.logger.info(f"--- set_treatment_location START for ID: {id} ---")
     treatment = Treatment.query.options(db.joinedload(Treatment.patient)).get_or_404(id)
     patient_id = treatment.patient_id
     data = None
@@ -1432,16 +1430,16 @@ def set_treatment_location(id):
 
     try:
         data = request.get_json()
-        print(f"Parsed JSON data: {data}")
+        current_app.logger.info(f"Parsed JSON data: {data}")
         location_value = data.get('location')
 
         if not location_value or location_value not in ['CostaSpine Clinic', 'Home Visit']:
-            print("Invalid or missing location value.")
+            current_app.logger.info("Invalid or missing location value.")
             return jsonify({'success': False, 'message': 'Invalid or missing location.'}), 400
 
         # Set the location
         treatment.location = location_value
-        print(f"Location set to: {location_value}")
+        current_app.logger.info(f"Location set to: {location_value}")
 
         # --- Auto-Fee Logic for CostaSpine Clinic ---
         if location_value == 'CostaSpine Clinic':
@@ -1453,15 +1451,15 @@ def set_treatment_location(id):
             if earliest_treatment_id is not None and treatment.id == earliest_treatment_id:
                 treatment.fee_charged = 80.00
                 auto_set_fee = 80.00
-                print(f"Auto-setting fee to 80 for treatment {treatment.id} (earliest)")
+                current_app.logger.info(f"Auto-setting fee to 80 for treatment {treatment.id} (earliest)")
             else:
                 treatment.fee_charged = 70.00
                 auto_set_fee = 70.00
-                print(f"Auto-setting fee to 70 for treatment {treatment.id}")
+                current_app.logger.info(f"Auto-setting fee to 70 for treatment {treatment.id}")
         # --- End Auto-Fee Logic ---
 
         db.session.commit()
-        print(f"Location and potentially fee updated in DB for treatment {id}")
+        current_app.logger.info(f"Location and potentially fee updated in DB for treatment {id}")
         
         response_data = {
             'success': True, 
@@ -1477,7 +1475,7 @@ def set_treatment_location(id):
 
     except Exception as e:
         db.session.rollback()
-        print(f"!!! UNEXPECTED Error setting location for treatment {id}: {e} !!!")
+        current_app.logger.info(f"!!! UNEXPECTED Error setting location for treatment {id}: {e} !!!")
         traceback.print_exc()
         return jsonify({'success': False, 'message': 'An internal error occurred.'}), 500
 
