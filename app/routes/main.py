@@ -2646,6 +2646,44 @@ def edit_patient(id):
     # For GET, ensure patient data (including portal_user_account details if any) is passed
     return render_template('edit_patient.html', patient=patient)
 
+@main.route('/patient/<int:id>/delete', methods=['POST'])
+@login_required
+@physio_required
+def delete_patient(id):
+    """Delete a patient and all associated records."""
+    patient = Patient.query.get_or_404(id)
+
+    if not current_user.is_admin and patient.user_id != current_user.id:
+        flash('You do not have permission to delete this patient.', 'danger')
+        return redirect(url_for('main.patients_list'))
+
+    try:
+        # Delete treatments and their trigger points
+        for treatment in patient.treatments:
+            TriggerPoint.query.filter_by(treatment_id=treatment.id).delete()
+            db.session.delete(treatment)
+
+        # Delete related reports and recurring appointments
+        PatientReport.query.filter_by(patient_id=patient.id).delete()
+        RecurringAppointment.query.filter_by(patient_id=patient.id).delete()
+
+        # Unlink any matched Calendly bookings
+        UnmatchedCalendlyBooking.query.filter_by(matched_patient_id=patient.id).update({'matched_patient_id': None})
+
+        # Remove portal user account if present
+        if patient.portal_user_account:
+            db.session.delete(patient.portal_user_account)
+
+        db.session.delete(patient)
+        db.session.commit()
+        flash('Patient deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting patient: {e}', 'danger')
+        print(f"Error deleting patient {id}: {e}")
+
+    return redirect(url_for('main.patients_list'))
+
 # --- Patient Dashboard Route ---
 @main.route('/patient/dashboard')
 @login_required
