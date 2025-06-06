@@ -10,6 +10,11 @@
     background: linear-gradient(135deg, var(--primary-color), #1f3a93);
     color: #fff;
     text-align: center;
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 .hero h1 {
     font-size: 2.5rem;
@@ -43,9 +48,10 @@
 {% block content %}
 <section class="hero">
     <div class="container">
-        <h1>Simplify Rehab &amp; Return-to-Play Decisions</h1>
-        <p>All-in-one platform for physiotherapists to track, analyze and report patient progress.</p>
-        <a href="#signup" class="btn btn-light btn-lg">Get Early Access</a>
+        <h1>Struggling to track patient progress?</h1>
+        <p class="lead">Too many tools, not enough results?</p>
+        <p>Track rehab progress in one clean dashboard.<br>Send reports. Get paid. Stay focused.</p>
+        <a href="#signup" class="btn btn-light btn-lg">Join Early Access</a>
     </div>
 </section>
 
@@ -56,16 +62,16 @@
 <section class="container my-5">
     <div class="row text-center">
         <div class="col-md-4 problem">
-            <span>📉 Tired of Excel sheets?</span><br>
-            Stop juggling spreadsheets and keep every record in one place.
+            <span>📉 Struggling to track progress across devices?</span><br>
+            Keep every note in one place—no more spreadsheets.
         </div>
         <div class="col-md-4 problem">
-            <span>🤯 Too many tools, not enough clarity?</span><br>
-            Manage scheduling, notes and progress all in one dashboard.
+            <span>🤯 Too many tools, not enough results?</span><br>
+            Scheduling, notes and analytics in a single dashboard.
         </div>
         <div class="col-md-4 problem">
-            <span>⏱️ Manual testing is wasting your time?</span><br>
-            Automated progress reports speed up your workflow.
+            <span>⏱️ Manual testing slowing you down?</span><br>
+            Automated reports free up your time.
         </div>
     </div>
 </section>
@@ -81,6 +87,7 @@
                 <button type="submit" class="btn btn-primary">Join the Beta</button>
             </div>
         </form>
+        <p class="mt-3 text-muted">Free while in beta &mdash; plans from &euro;9/month.</p>
     </div>
 </section>
 
