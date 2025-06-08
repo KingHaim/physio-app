@@ -32,7 +32,7 @@
 {% block content %}
 <div class="container-fluid">
     <div class="page-header">
-        <h1 class="h2">Calendar</h1>
+        <h1 class="h2">{{ _('Calendar') }}</h1>
     </div>
 
     <div class="card">
@@ -47,16 +47,16 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="newAppointmentModalLabel">New Appointment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="newAppointmentModalLabel">{{ _('New Appointment') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
             </div>
             <div class="modal-body">
                 <form id="newAppointmentForm">
                     <input type="hidden" id="csrf_token" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
-                        <label for="appointmentPatient" class="form-label">Patient</label>
+                        <label for="appointmentPatient" class="form-label">{{ _('Patient') }}</label>
                         <select class="form-select" id="appointmentPatient" name="patient_id" required>
-                            <option value="" selected disabled>Select Patient...</option>
+                            <option value="" selected disabled>{{ _('Select Patient...') }}</option>
                             {% for patient in patients %}
                                 <option value="{{ patient.id }}">{{ patient.name }}</option>
                             {% endfor %}
@@ -64,28 +64,28 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="appointmentDate" class="form-label">Date</label>
+                            <label for="appointmentDate" class="form-label">{{ _('Date') }}</label>
                             <input type="date" class="form-control" id="appointmentDate" name="date" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="appointmentTime" class="form-label">Time</label>
+                            <label for="appointmentTime" class="form-label">{{ _('Time') }}</label>
                             <input type="time" class="form-control" id="appointmentTime" name="time" required>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="appointmentTreatmentType" class="form-label">Treatment Type</label>
-                        <input type="text" class="form-control" id="appointmentTreatmentType" name="treatment_type" placeholder="e.g., Initial Assessment, Follow-up" required>
+                        <label for="appointmentTreatmentType" class="form-label">{{ _('Treatment Type') }}</label>
+                        <input type="text" class="form-control" id="appointmentTreatmentType" name="treatment_type" placeholder="{{ _('e.g., Initial Assessment, Follow-up') }}" required>
                     </div>
                      <div class="mb-3">
-                        <label for="appointmentLocation" class="form-label">Location</label>
+                        <label for="appointmentLocation" class="form-label">{{ _('Location') }}</label>
                         <select class="form-select" id="appointmentLocation" name="location">
-                            <option value="CostaSpine Clinic" selected>CostaSpine Clinic</option>
-                            <option value="Home Visit">Home Visit</option>
-                            <option value="Online">Online</option>
+                            <option value="CostaSpine Clinic" selected>{{ _('CostaSpine Clinic') }}</option>
+                            <option value="Home Visit">{{ _('Home Visit') }}</option>
+                            <option value="Online">{{ _('Online') }}</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="appointmentNotes" class="form-label">Notes (Optional)</label>
+                        <label for="appointmentNotes" class="form-label">{{ _('Notes (Optional)') }}</label>
                         <textarea class="form-control" id="appointmentNotes" name="notes" rows="3"></textarea>
                     </div>
                     <!-- Hidden field for status, default to Scheduled -->
@@ -93,8 +93,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="submit" class="btn btn-primary" form="newAppointmentForm">Create Appointment</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+                <button type="submit" class="btn btn-primary" form="newAppointmentForm">{{ _('Create Appointment') }}</button>
             </div>
         </div>
     </div>

@@ -24,3 +24,4 @@ Flask-Bcrypt>=1.0
 reportlab>=4.0
 weasyprint>=60
 stripe>=7.0,<8.0
+Flask-Babel>=4.0

@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}{{ patient.name }} - Patient Details{% endblock %}
+{% block title %}{{ patient.name }} - {{ _('Patient Details') }}{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     {% if not today is defined %}
         <div class="alert alert-warning">
-            <strong>Warning:</strong> The 'today' variable is not defined. Some features may not work correctly.
+            <strong>{{ _('Warning:') }}</strong> {{ _("The 'today' variable is not defined. Some features may not work correctly.") }}
         </div>
     {% endif %}
 
     <!-- Add this after the flash messages section -->
     {% if session.get('auto_completed_treatments') %}
     <div class="alert alert-info alert-dismissible fade show" role="alert">
-        {{ session.get('auto_completed_treatments') }} past treatment(s) were automatically marked as completed.
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        {{ session.get('auto_completed_treatments') }} {{ _('past treatment(s) were automatically marked as completed.') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ _('Close') }}"></button>
     </div>
     {% endif %}
 
@@ -23,30 +23,30 @@
         <div class="col-md-8">
             <h1 class="mb-3">{{ patient.name }}</h1>
             <div class="patient-info mb-3">
-                <p class="mb-1"><strong>Date of Birth:</strong> {{ patient.date_of_birth.strftime('%Y-%m-%d') if patient.date_of_birth else 'Not provided' }}</p>
-                <p class="mb-1"><strong>Contact:</strong> {{ patient.contact }}</p>
-                <p class="mb-1"><strong>Status:</strong> <span class="badge bg-{{ 'primary' if patient.status == 'Active' else 'secondary' }}">{{ patient.status }}</span></p>
+                <p class="mb-1"><strong>{{ _('Date of Birth:') }}</strong> {{ patient.date_of_birth.strftime('%Y-%m-%d') if patient.date_of_birth else _('Not provided') }}</p>
+                <p class="mb-1"><strong>{{ _('Contact:') }}</strong> {{ patient.contact }}</p>
+                <p class="mb-1"><strong>{{ _('Status:') }}</strong> <span class="badge bg-{{ 'primary' if patient.status == 'Active' else 'secondary' }}">{{ patient.status }}</span></p>
             </div>
         </div>
         <div class="col-md-4 text-md-end">
             <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end">
                 <a href="{{ url_for('main.edit_patient', id=patient.id) }}" class="btn btn-primary">
-                    <i class="bi bi-pencil"></i> Edit Patient
+                    <i class="bi bi-pencil"></i> {{ _('Edit Patient') }}
                 </a>
                 <a href="{{ url_for('main.new_treatment_page', patient_id=patient.id) }}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Add Treatment
+                    <i class="bi bi-plus-circle"></i> {{ _('Add Treatment') }}
                 </a>
                 <a href="{{ url_for('main.new_recurring_appointment', patient_id=patient.id) }}" class="btn btn-secondary">
-                    <i class="bi bi-calendar-plus"></i> Add Recurring
+                    <i class="bi bi-calendar-plus"></i> {{ _('Add Recurring') }}
                 </a>
                 <button id="generateReportBtn" class="btn btn-info">
-                    <i class="bi bi-file-earmark-text"></i> Generate AI Report
+                    <i class="bi bi-file-earmark-text"></i> {{ _('Generate AI Report') }}
                 </button>
                 <button id="generateExerciseBtn" class="btn btn-warning">
-                    <i class="bi bi-clipboard-heart"></i> Generate Exercise Homework
+                    <i class="bi bi-clipboard-heart"></i> {{ _('Generate Exercise Homework') }}
                 </button>
                 <a href="{{ url_for('main.patient_reports_list', patient_id=patient.id) }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-file-text"></i> View Latest Report
+                    <i class="bi bi-file-text"></i> {{ _('View Latest Report') }}
                 </a>
             </div>
         </div>
@@ -58,9 +58,9 @@
             {% if patient.recurring_appointments %}
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-calendar-repeat"></i> Recurring Appointments</h5>
+                    <h5 class="mb-0"><i class="bi bi-calendar-repeat"></i> {{ _('Recurring Appointments') }}</h5>
                     <a href="{{ url_for('main.new_recurring_appointment', patient_id=patient.id) }}" class="btn btn-sm btn-primary">
-                        <i class="bi bi-plus-circle"></i> Add Rule
+                        <i class="bi bi-plus-circle"></i> {{ _('Add Rule') }}
                     </a>
                 </div>
                 <div class="card-body">
@@ -79,15 +79,15 @@
                                     </small>
                                 </div>
                                 <p class="mb-1">
-                                    Starts: {{ rule.start_date.strftime('%Y-%m-%d') }} 
-                                    {% if rule.end_date %} | Ends: {{ rule.end_date.strftime('%Y-%m-%d') }} {% endif %}
-                                    | Time: {{ rule.time_of_day.strftime('%H:%M') }}
+                                    {{ _('Starts:') }} {{ rule.start_date.strftime('%Y-%m-%d') }} 
+                                    {% if rule.end_date %} | {{ _('Ends:') }} {{ rule.end_date.strftime('%Y-%m-%d') }} {% endif %}
+                                    | {{ _('Time:') }} {{ rule.time_of_day.strftime('%H:%M') }}
                                 </p>
-                                <small class="text-muted">Location: {{ rule.location or 'N/A' }} | Fee: {{ ('€' + "{:.2f}".format(rule.fee_charged)) if rule.fee_charged else 'N/A' }}</small>
+                                <small class="text-muted">{{ _('Location:') }} {{ rule.location or 'N/A' }} | {{ _('Fee:') }} {{ ('€' + "{:.2f}".format(rule.fee_charged)) if rule.fee_charged else 'N/A' }}</small>
                                 <div class="mt-2">
-                                    <a href="{{ url_for('main.edit_recurring_appointment', id=rule.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> Edit</a>
-                                    <form action="{{ url_for('main.delete_recurring_appointment', id=rule.id) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Are you sure you want to delete this recurring rule?');">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>
+                                    <a href="{{ url_for('main.edit_recurring_appointment', id=rule.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> {{ _('Edit') }}</a>
+                                    <form action="{{ url_for('main.delete_recurring_appointment', id=rule.id) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('{{ _('Are you sure you want to delete this recurring rule?') }}');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> {{ _('Delete') }}</button>
                                     </form>
                                 </div>
                             </div>
@@ -104,7 +104,7 @@
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-clipboard-pulse"></i> Diagnosis</h5>
+                    <h5 class="mb-0"><i class="bi bi-clipboard-pulse"></i> {{ _('Diagnosis') }}</h5>
                 </div>
                 <div class="card-body">
                     <p>{{ patient.diagnosis }}</p>
@@ -114,7 +114,7 @@
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-journal-medical"></i> Treatment Plan</h5>
+                    <h5 class="mb-0"><i class="bi bi-journal-medical"></i> {{ _('Treatment Plan') }}</h5>
                 </div>
                 <div class="card-body">
                     <p>{{ patient.treatment_plan }}</p>
@@ -128,35 +128,35 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-clipboard-data"></i> Past Treatments</h5>
+                    <h5 class="mb-0"><i class="bi bi-clipboard-data"></i> {{ _('Past Treatments') }}</h5>
                     <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newTreatmentModal">
-                        <i class="bi bi-plus-circle"></i> Add Past Treatment
+                        <i class="bi bi-plus-circle"></i> {{ _('Add Past Treatment') }}
                     </button>
                 </div>
                 <div class="card-body">
                     <!-- Bulk Action Controls - Moved above table -->
                     <div id="bulkActions" class="mb-3 p-3 bg-light rounded" style="display: none;"> 
-                        <h6>Bulk Actions for Selected (<span id="selectedCount">0</span>):</h6>
+                        <h6>{{ _('Bulk Actions for Selected') }} (<span id="selectedCount">0</span>):</h6>
                         <div class="row gx-2 gy-2">
                             <div class="col-auto">
-                                <div class="btn-group btn-group-sm" role="group" aria-label="Set Location">
-                                    <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="location" data-value="CostaSpine Clinic">Set Loc: CostaSpine</button>
-                                    <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="location" data-value="Home Visit">Set Loc: Home Visit</button>
+                                <div class="btn-group btn-group-sm" role="group" aria-label="{{ _('Set Location') }}">
+                                    <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="location" data-value="CostaSpine Clinic">{{ _('Set Loc: CostaSpine') }}</button>
+                                    <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="location" data-value="Home Visit">{{ _('Set Loc: Home Visit') }}</button>
                                 </div>
                             </div>
                             <div class="col-auto">
-                                <div class="btn-group btn-group-sm" role="group" aria-label="Set Payment Method">
-                                    <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="payment_method" data-value="Cash">Set Pmt: Cash</button>
-                                    <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="payment_method" data-value="Card">Set Pmt: Card</button>
+                                <div class="btn-group btn-group-sm" role="group" aria-label="{{ _('Set Payment Method') }}">
+                                    <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="payment_method" data-value="Cash">{{ _('Set Pmt: Cash') }}</button>
+                                    <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="payment_method" data-value="Card">{{ _('Set Pmt: Card') }}</button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Debug information to check patient treatments are loaded -->
-                    <p class="text-muted small">Total treatments for this patient: {{ treatments|length }}</p>
+                    <p class="text-muted small">{{ _('Total treatments for this patient:') }} {{ treatments|length }}</p>
                     <!-- Note about past treatments -->
-                    <p class="text-muted small">Showing treatments completed on or before today ({{ today.strftime('%Y-%m-%d') }})</p>
+                    <p class="text-muted small">{{ _('Showing treatments completed on or before today') }} ({{ today.strftime('%Y-%m-%d') }})</p>
                     
                     <!-- Simple, direct treatment listing without modals -->
                     {% if treatments|length > 0 %}
@@ -165,13 +165,13 @@
                                 <thead>
                                     <tr>
                                         <th><input class="form-check-input" type="checkbox" id="selectAllCheckbox"></th>
-                                        <th>Date</th>
-                                        <th>Type</th>
-                                        <th>Status</th>
-                                        <th>Pain Level</th>
-                                        <th>Fee (€)</th>
-                                        <th>Payment</th>
-                                        <th>Actions</th>
+                                        <th>{{ _('Date') }}</th>
+                                        <th>{{ _('Type') }}</th>
+                                        <th>{{ _('Status') }}</th>
+                                        <th>{{ _('Pain Level') }}</th>
+                                        <th>{{ _('Fee (€)') }}</th>
+                                        <th>{{ _('Payment') }}</th>
+                                        <th>{{ _('Actions') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>

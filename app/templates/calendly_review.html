@@ -1,28 +1,28 @@
 {% extends "base.html" %}
 
-{% block title %}Review Calendly Bookings{% endblock %}
+{% block title %}{{ _('Review Calendly Bookings') }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="page-header d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="bi bi-calendar-check"></i> Review Calendly Bookings</h1>
+        <h1><i class="bi bi-calendar-check"></i> {{ _('Review Calendly Bookings') }}</h1>
     </div>
 
     {% if unmatched_bookings %}
     <div class="card mb-4">
         <div class="card-header">
-            <h5 class="mb-0">Unmatched Calendly Bookings</h5>
+            <h5 class="mb-0">{{ _('Unmatched Calendly Bookings') }}</h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Appointment Type</th>
-                            <th>Date/Time</th>
-                            <th>Actions</th>
+                            <th>{{ _('Name') }}</th>
+                            <th>{{ _('Email') }}</th>
+                            <th>{{ _('Appointment Type') }}</th>
+                            <th>{{ _('Date/Time') }}</th>
+                            <th>{{ _('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -35,11 +35,11 @@
                             <td>
                                 <button class="btn btn-sm btn-primary" 
                                         onclick="showMatchModal('{{ booking.id }}', '{{ booking.name }}')">
-                                    Match to Patient
+                                    {{ _('Match to Patient') }}
                                 </button>
                                 <button class="btn btn-sm btn-success" 
                                         onclick="createNewPatient('{{ booking.id }}')">
-                                    Create New Patient
+                                    {{ _('Create New Patient') }}
                                 </button>
                             </td>
                         </tr>
@@ -51,7 +51,7 @@
     </div>
     {% else %}
     <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i> No unmatched Calendly bookings to review.
+        <i class="bi bi-info-circle"></i> {{ _('No unmatched Calendly bookings to review.') }}
     </div>
     {% endif %}
 </div>
@@ -61,15 +61,15 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Match Booking to Patient</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">{{ _('Match Booking to Patient') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
             </div>
             <div class="modal-body">
-                <p>Select an existing patient to match with <strong id="bookingName"></strong>:</p>
+                <p>{{ _('Select an existing patient to match with') }} <strong id="bookingName"></strong>:</p>
                 <input type="hidden" id="bookingId">
                 <div class="mb-3">
                     <input type="text" class="form-control" id="patientSearch" 
-                           placeholder="Search patients...">
+                           placeholder="{{ _('Search patients...') }}">
                 </div>
                 <div class="list-group" id="patientResults">
                     <!-- Patient results will be populated here -->
@@ -125,7 +125,7 @@
                 });
                 
                 if (patients.length === 0) {
-                    resultsContainer.innerHTML = '<div class="list-group-item">No patients found</div>';
+                    resultsContainer.innerHTML = '<div class="list-group-item">{{ _("No patients found") }}</div>';
                 }
             });
     });
@@ -156,8 +156,8 @@
                     newRow.innerHTML = `
                         <td colspan="5" class="text-center">
                             <div class="alert alert-success mb-0">
-                                Booking matched successfully! 
-                                <a href="/patient/${patientId}" class="alert-link">View patient profile</a>
+                                {{ _('Booking matched successfully!') }}
+                                <a href="/patient/${patientId}" class="alert-link">{{ _('View patient profile') }}</a>
                             </div>
                         </td>
                     `;
@@ -177,13 +177,13 @@
                     location.reload();
                 }
             } else {
-                alert('Error matching patient: ' + data.error);
+                alert('{{ _("Error matching patient:") }} ' + data.error);
             }
         });
     }
     
     function createNewPatient(bookingId) {
-        if (confirm('Create a new patient record from this booking?')) {
+        if (confirm('{{ _("Create a new patient record from this booking?") }}')) {
             fetch('/api/calendly/create-patient-from-booking', {
                 method: 'POST',
                 headers: {
@@ -204,10 +204,10 @@
                         newRow.className = 'table-success';
                         newRow.innerHTML = `
                             <td colspan="5" class="text-center">
-                                <div class="alert alert-success mb-0">
-                                    Patient created successfully! 
-                                    <a href="/patient/${data.patient_id}" class="alert-link">View patient profile</a>
-                                </div>
+                                                            <div class="alert alert-success mb-0">
+                                {{ _('Patient created successfully!') }}
+                                <a href="/patient/${data.patient_id}" class="alert-link">{{ _('View patient profile') }}</a>
+                            </div>
                             </td>
                         `;
                         row.parentNode.replaceChild(newRow, row);
@@ -226,7 +226,7 @@
                         location.reload();
                     }
                 } else {
-                    alert('Error creating patient: ' + data.error);
+                    alert('{{ _("Error creating patient:") }} ' + data.error);
                 }
             });
         }

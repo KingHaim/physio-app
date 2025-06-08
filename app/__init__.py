@@ -1,15 +1,17 @@
 # app/__init__.py
 import os
-from flask import Flask
+from flask import Flask, request, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from config import Config
 import markdown
 from markupsafe import Markup
 from flask_login import LoginManager
+from flask_babel import Babel, get_locale
 from flask_wtf.csrf import CSRFProtect
 import logging
 import stripe # Import stripe
+from logging.handlers import RotatingFileHandler
 
 db = SQLAlchemy()
 
@@ -21,6 +23,9 @@ login_manager.login_message_category = 'info'
 # Initialize CSRF protection
 csrf = CSRFProtect()
 
+# Initialize Babel for translations
+babel = Babel()
+
 # Import models here *before* Migrate is instantiated
 from app import models 
 
@@ -29,9 +34,38 @@ migrate = Migrate()
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(Config)
-    
+
+    # This function needs to be defined before being passed to babel.init_app
+    def get_user_locale():
+        # Add logging for debugging
+        app.logger.debug(f"Attempting to determine locale. Session lang: {session.get('lang')}")
+        
+        # 1. Check for language in session first
+        if 'lang' in session:
+            lang = session['lang']
+            app.logger.debug(f"Found lang '{lang}' in session.")
+            return lang
+        
+        # 2. Check for user's preference
+        from flask_login import current_user
+        if current_user.is_authenticated and current_user.language:
+            lang = current_user.language
+            app.logger.debug(f"Found lang '{lang}' in user preferences.")
+            return lang
+            
+        # 3. Fallback to browser's accept_languages header
+        lang = request.accept_languages.best_match(app.config['BABEL_SUPPORTED_LOCALES'])
+        app.logger.debug(f"Falling back to browser lang: '{lang}'.")
+        return lang
+
+    # Configure Babel and pass the selector function during initialization
+    app.config.setdefault('BABEL_DEFAULT_LOCALE', 'en')
+    app.config.setdefault('BABEL_SUPPORTED_LOCALES', ['en', 'es', 'fr', 'it'])
+    babel.init_app(app, locale_selector=get_user_locale)
+
     # Configure basic logging
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
+    app.logger.setLevel(logging.DEBUG)  # Set Flask's logger level
     app.logger.info("Flask app created and logging configured.")
     
     # Set Stripe API Key from config
@@ -63,14 +97,14 @@ def create_app(config_class=Config):
     #         print("FLASK APP VERY_EARLY_DEBUG: Stripe webhook path and method MATCHED!")
 
     # Import and register blueprints
-    from app.routes.main import main
-    app.register_blueprint(main)
+    from app.routes.main import main as main_blueprint
+    app.register_blueprint(main_blueprint)
 
-    from app.routes.api import api
-    app.register_blueprint(api)
+    from app.routes.api import api as api_blueprint
+    app.register_blueprint(api_blueprint, url_prefix='/api')
 
-    from app.routes.auth import auth
-    app.register_blueprint(auth)
+    from app.routes.auth import auth as auth_blueprint
+    app.register_blueprint(auth_blueprint, url_prefix='/auth')
 
     from app.routes.webhooks import webhook_bp
     app.register_blueprint(webhook_bp)
@@ -118,4 +152,26 @@ def create_app(config_class=Config):
                 # Else, count remains 0 if Calendly not configured for non-admin physio
         return dict(pending_review_count=count)
 
+    @app.context_processor
+    def inject_conf_var():
+        return dict(
+            BABEL_SUPPORTED_LOCALES=app.config['BABEL_SUPPORTED_LOCALES'],
+            get_locale=get_locale,
+            get_locale_display_name=get_locale_display_name
+        )
+
     return app
+
+# --- Helper function to replace get_locale_display_name ---
+def get_locale_display_name(locale_identifier):
+    """
+    Returns the display name for a given locale identifier.
+    This is a workaround for older Flask-Babel versions.
+    """
+    # Simple mapping for the languages you use
+    display_names = {
+        'en': 'English',
+        'es': 'Español'
+    }
+    return display_names.get(str(locale_identifier), str(locale_identifier))
+# ---------------------------------------------------------

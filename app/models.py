@@ -188,7 +188,7 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)
     email = db.Column(db.String(120), unique=True, index=True, nullable=False)
-    password_hash = db.Column(db.String(256))
+    password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -199,8 +199,12 @@ class User(db.Model, UserMixin):
     calendly_api_token = db.Column(db.String(255), nullable=True)
     calendly_user_uri = db.Column(db.String(255), nullable=True)
     
-    role = db.Column(db.String(20), nullable=False, default='physio') # e.g., 'physio', 'admin', 'patient'
-    patients = db.relationship('Patient', backref='clinician', lazy='dynamic', foreign_keys='[Patient.user_id]') # Patients associated with this user (clinician)
+    role = db.Column(db.String(20), default='physio')  # e.g., 'admin', 'physio'
+    language = db.Column(db.String(5), default='en') # Add language preference field
+    
+    # Specify the foreign key to resolve ambiguity
+    patients = db.relationship('Patient', foreign_keys='[Patient.user_id]', backref='practitioner', lazy='dynamic')
+    
     patient_record = db.relationship('Patient', backref=db.backref('portal_user_account', uselist=False), foreign_keys='[Patient.portal_user_id]', uselist=False) # Link to a Patient record if this User is a patient portal user
     unmatched_calendly_bookings = db.relationship('UnmatchedCalendlyBooking', backref='user', lazy='dynamic') # Added relationship
     

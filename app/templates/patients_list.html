@@ -1,30 +1,30 @@
 <!-- app/templates/patients_list.html -->
 {% extends "base.html" %}
 
-{% block title %}Patient List{% endblock %}
+{% block title %}{{ _('Patient List') }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-3">
     <!-- Header with title, search, filter, and add button -->
     <div class="row mb-4 align-items-center">
         <div class="col-md-3">
-            <h1 class="h3 mb-0"><i class="bi bi-people"></i> Patient List</h1>
+            <h1 class="h3 mb-0"><i class="bi bi-people"></i> {{ _('Patient List') }}</h1>
         </div>
         <div class="col-md-4">
-            <input type="text" id="patientSearch" class="form-control" placeholder="Search patients...">
+            <input type="text" id="patientSearch" class="form-control" placeholder="{{ _('Search patients...') }}">
         </div>
         <div class="col-md-2">
             <select id="filterStatus" class="form-select">
-                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
-                <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
-                <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Inactive</option>
-                <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>Completed</option>
-                <option value="Pending Review" {% if status_filter == 'Pending Review' %}selected{% endif %}>Pending Review</option>
+                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>{{ _('All Status') }}</option>
+                <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>{{ _('Active') }}</option>
+                <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>{{ _('Inactive') }}</option>
+                <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>{{ _('Completed') }}</option>
+                <option value="Pending Review" {% if status_filter == 'Pending Review' %}selected{% endif %}>{{ _('Pending Review') }}</option>
             </select>
         </div>
         <div class="col-md-3 text-md-end mt-2 mt-md-0">
             <a href="{{ url_for('main.new_patient') }}" class="btn btn-primary">
-                <i class="bi bi-person-plus-fill"></i> Register New Patient
+                <i class="bi bi-person-plus-fill"></i> {{ _('Register New Patient') }}
             </a>
         </div>
     </div>
@@ -35,23 +35,23 @@
             <div class="alert alert-info p-2 d-flex align-items-center" role="alert">
                 <i class="bi bi-info-circle-fill fs-5 me-2"></i>
                 <div>
-                    <strong>Patient Capacity:</strong>
+                    <strong>{{ _('Patient Capacity:') }}</strong>
                     <span class="fw-semibold">{{ current_patients_count }} /</span>
                     {% if patient_plan_limit is not none %}
-                        <span class="fw-semibold">{{ patient_plan_limit }}</span> patients.
+                        <span class="fw-semibold">{{ patient_plan_limit }}</span> {{ _('patients') }}.
                         {% if current_patients_count >= patient_plan_limit %}
-                            <span class="badge bg-danger ms-1">Limit Reached!</span>
-                            <a href="{{ url_for('main.pricing_page') }}" class="btn btn-warning btn-sm ms-1 py-0">Upgrade</a>
+                            <span class="badge bg-danger ms-1">{{ _('Limit Reached!') }}</span>
+                            <a href="{{ url_for('main.pricing_page') }}" class="btn btn-warning btn-sm ms-1 py-0">{{ _('Upgrade') }}</a>
                         {% elif (patient_plan_limit - current_patients_count) <= 5 %}
-                            <span class="badge bg-warning text-dark ms-1">Nearing Limit ({{ patient_plan_limit - current_patients_count }} remaining)</span>
+                            <span class="badge bg-warning text-dark ms-1">{{ _('Nearing Limit') }} ({{ patient_plan_limit - current_patients_count }} {{ _('remaining') }})</span>
                         {% else %}
-                            <span class="text-muted ms-1">({{ patient_plan_limit - current_patients_count }} remaining)</span>
+                            <span class="text-muted ms-1">({{ patient_plan_limit - current_patients_count }} {{ _('remaining') }})</span>
                         {% endif %}
                     {% else %}
-                        <span class="fw-semibold">Unlimited</span> patients.
+                        <span class="fw-semibold">{{ _('Unlimited') }}</span> {{ _('patients') }}.
                     {% endif %}
                     <small class="d-block text-muted mt-1">
-                        If you need to add more patients beyond your current limit, please consider upgrading your plan.
+                        {{ _('If you need to add more patients beyond your current limit, please consider upgrading your plan.') }}
                     </small>
                 </div>
             </div>
@@ -64,22 +64,22 @@
             <div class="btn-group">
                 <button class="btn btn-outline-primary dropdown-toggle" type="button" 
                         data-bs-toggle="dropdown" aria-expanded="false">
-                    Bulk Actions
+                    {{ _('Bulk Actions') }}
                 </button>
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item" href="#" onclick="bulkUpdateStatus('Active')">
-                        Mark Selected as Active
+                        {{ _('Mark Selected as Active') }}
                     </a></li>
                     <li><a class="dropdown-item" href="#" onclick="bulkUpdateStatus('Inactive')">
-                        Mark Selected as Inactive
+                        {{ _('Mark Selected as Inactive') }}
                     </a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="#" onclick="bulkDeletePatients()">
-                        <i class="bi bi-trash"></i> Delete Selected Patients
+                        <i class="bi bi-trash"></i> {{ _('Delete Selected Patients') }}
                     </a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="#" onclick="selectAllPendingReview()">
-                        Select All Pending Review
+                        {{ _('Select All Pending Review') }}
                     </a></li>
                 </ul>
             </div>
@@ -96,10 +96,10 @@
                             <th>
                                 <input type="checkbox" class="form-check-input" id="selectAll" onclick="toggleSelectAll()">
                             </th>
-                            <th>Name</th>
-                            <th>Diagnosis</th>
-                            <th>Last Visit</th>
-                            <th>Status</th>
+                            <th>{{ _('Name') }}</th>
+                            <th>{{ _('Diagnosis') }}</th>
+                            <th>{{ _('Last Visit') }}</th>
+                            <th>{{ _('Status') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -115,12 +115,12 @@
                                    {{ patient.name }}
                                 </a>
                             </td>
-                            <td>{{ patient.diagnosis|truncate(40) if patient.diagnosis else "No diagnosis" }}</td>
+                            <td>{{ patient.diagnosis|truncate(40) if patient.diagnosis else _('No diagnosis') }}</td>
                             <td>
                                 {% if patient.treatments and patient.treatments[-1].created_at %}
                                     {{ patient.treatments[-1].created_at.strftime('%Y-%m-%d') }}
                                 {% else %}
-                                    <span class="text-muted">No visits yet</span>
+                                    <span class="text-muted">{{ _('No visits yet') }}</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -128,7 +128,7 @@
                                     {% if patient.status == 'Active' %}status-active
                                     {% elif patient.status == 'Inactive' %}status-inactive
                                     {% else %}status-completed{% endif %}">
-                                    {{ patient.status }}
+                                    {{ _(patient.status) }}
                                 </span>
                             </td>
                         </tr>
@@ -142,7 +142,7 @@
     {% if not patients %}
     <div class="alert alert-info text-center my-4">
         <i class="bi bi-info-circle me-2"></i>
-        No patients found matching your search criteria.
+        {{ _('No patients found matching your search criteria.') }}
     </div>
     {% endif %}
 </div>
@@ -152,25 +152,25 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Quick Treatment Entry</h5>
+                <h5 class="modal-title">{{ _('Quick Treatment Entry') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="quickTreatmentForm" method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
-                        <label for="treatment_type" class="form-label">Treatment Description</label>
+                        <label for="treatment_type" class="form-label">{{ _('Treatment Description') }}</label>
                         <textarea class="form-control" name="treatment_type" required></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="notes" class="form-label">Progress Notes</label>
+                        <label for="notes" class="form-label">{{ _('Progress Notes') }}</label>
                         <textarea class="form-control" name="notes"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="created_at" class="form-label">Appointment Date</label>
+                        <label for="created_at" class="form-label">{{ _('Appointment Date') }}</label>
                         <input type="date" class="form-control" name="created_at">
                     </div>
-                    <button type="submit" class="btn btn-primary">Save Treatment</button>
+                    <button type="submit" class="btn btn-primary">{{ _('Save Treatment') }}</button>
                 </form>
             </div>
         </div>
@@ -344,7 +344,7 @@
     function bulkUpdateStatus(status) {
         const selectedCheckboxes = document.querySelectorAll('.patient-checkbox:checked');
         if (selectedCheckboxes.length === 0) {
-            alert('Please select at least one patient');
+            alert('{{ _("Please select at least one patient") }}');
             return;
         }
         
@@ -367,7 +367,7 @@
             if (data.success) {
                 window.location.reload();
             } else {
-                alert('Error: ' + data.error);
+                alert('{{ _("Error: ") }}' + data.error);
             }
         });
     }
@@ -375,11 +375,11 @@
     function bulkDeletePatients() {
         const selectedCheckboxes = document.querySelectorAll('.patient-checkbox:checked');
         if (selectedCheckboxes.length === 0) {
-            alert('Please select at least one patient to delete.');
+            alert('{{ _("Please select at least one patient to delete.") }}');
             return;
         }
 
-        if (!confirm(`Are you sure you want to delete ${selectedCheckboxes.length} selected patient(s)? This action cannot be undone.`)) {
+        if (!confirm(`${'{{ _("Are you sure you want to delete") }}'} ${selectedCheckboxes.length} ${'{{ _("selected patient(s)? This action cannot be undone.") }}'}`)) {
             return;
         }
         
@@ -399,15 +399,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message || 'Selected patients deleted successfully.');
+                alert(data.message || '{{ _("Selected patients deleted successfully.") }}');
                 window.location.reload();
             } else {
-                alert('Error: ' + (data.error || 'Could not delete selected patients.'));
+                alert('{{ _("Error: ") }}' + (data.error || '{{ _("Could not delete selected patients.") }}'));
             }
         })
         .catch(error => {
-            console.error('Error during bulk delete:', error);
-            alert('An unexpected error occurred while deleting patients.');
+            console.error('{{ _("Error during bulk delete:") }}', error);
+            alert('{{ _("An unexpected error occurred while deleting patients.") }}');
         });
     }
 </script>

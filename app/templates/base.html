@@ -1,6 +1,6 @@
 <!-- app/templates/base.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ g.locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -434,22 +434,22 @@
                 <ul class="nav flex-column">
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint == 'main.index' else '' }}" href="{{ url_for('main.index') }}">
-                            <i class="bi bi-house-door"></i> Dashboard
+                            <i class="bi bi-house-door"></i> {{ _('Dashboard') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint == 'main.calendar_page' else '' }}" href="{{ url_for('main.calendar_page') }}">
-                            <i class="bi bi-calendar3"></i> Calendar
+                            <i class="bi bi-calendar3"></i> {{ _('Calendar') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint == 'main.patients_list' else '' }}" href="{{ url_for('main.patients_list') }}">
-                            <i class="bi bi-people"></i> Patients
+                            <i class="bi bi-people"></i> {{ _('Patients') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint == 'main.appointments' else '' }}" href="{{ url_for('main.appointments') }}">
-                            <i class="bi bi-calendar-event"></i> Appointments
+                            <i class="bi bi-calendar-event"></i> {{ _('Appointments') }}
                         </a>
                     </li>
                     <!-- Removing Finances from here -->
@@ -464,11 +464,11 @@
                     <!-- Physio/Admin Specific Links -->
                     {% if current_user.is_authenticated and current_user.role != 'patient' %}
                         <div class="nav-section">
-                            <div class="nav-section-title">Management</div>
+                            <div class="nav-section-title">{{ _('Management') }}</div>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.path == url_for('main.review_calendly_bookings') %}active{% endif %}" 
                                    href="{{ url_for('main.review_calendly_bookings') }}">
-                                    <i class="bi bi-clipboard-check"></i> Pending Review
+                                    <i class="bi bi-clipboard-check"></i> {{ _('Pending Review') }}
                                     {% if pending_review_count > 0 %}
                                     <span class="badge bg-danger rounded-pill">{{ pending_review_count }}</span>
                                     {% endif %}
@@ -476,30 +476,30 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint == 'main.review_payments' %}active{% endif %}" href="{{ url_for('main.review_payments') }}">
-                                    <i class="bi bi-credit-card-2-front"></i> Review Payments
+                                    <i class="bi bi-credit-card-2-front"></i> {{ _('Review Payments') }}
                                 </a>
                             </li>
                         </div>
                         
                         <div class="nav-section">
-                            <div class="nav-section-title">Reports</div>
+                            <div class="nav-section-title">{{ _('Reports') }}</div>
                             <li class="nav-item">
                                 <a class="nav-link {% if '/analytics' in request.path %}active{% endif %}" href="{{ url_for('main.analytics') }}">
-                                    <i class="bi bi-graph-up"></i> Analytics
+                                    <i class="bi bi-graph-up"></i> {{ _('Analytics') }}
                                 </a>
                             </li>
                             <li class="nav-item"> <!-- Added Finances here -->
                                 <a class="nav-link {{ 'active' if request.endpoint == 'main.financials' else '' }}" href="{{ url_for('main.financials') }}">
-                                    <i class="bi bi-cash-coin"></i> Finances
+                                    <i class="bi bi-cash-coin"></i> {{ _('Finances') }}
                                 </a>
                             </li>
                         </div>
                         
                         <div class="nav-section">
-                            <div class="nav-section-title">Settings</div>
+                            <div class="nav-section-title">{{ _('Settings') }}</div>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint == 'main.manage_calendly_settings' %}active{% endif %}" href="{{ url_for('main.manage_calendly_settings') }}">
-                                    <i class="bi bi-calendar-plus"></i> Calendly Settings
+                                    <i class="bi bi-calendar-plus"></i> {{ _('Calendly Settings') }}
                                 </a>
                             </li>
                             {# Add other general settings links here later #}
@@ -509,15 +509,15 @@
                     <!-- Patient-Specific Links (Only show if user is patient) -->
                     {% if current_user.is_authenticated and current_user.role == 'patient' %}
                         <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'main.patient_dashboard' %}active{% endif %}" href="{{ url_for('main.patient_dashboard') }}"><i class="bi bi-person-circle me-2"></i> My Dashboard</a>
+                            <a class="nav-link {% if request.endpoint == 'main.patient_dashboard' %}active{% endif %}" href="{{ url_for('main.patient_dashboard') }}"><i class="bi bi-person-circle me-2"></i> {{ _('My Dashboard') }}</a>
                         </li>
                         {# Removed Profile link from here #}
                         {# Add other patient-specific links here if needed (e.g., Homework history?) #}
 
                         <div class="nav-section">
-                            <div class="nav-section-title">Account</div>
+                            <div class="nav-section-title">{{ _('Account') }}</div>
                             <li class="nav-item">
-                                <a class="nav-link {% if request.endpoint == 'main.patient_profile' %}active{% endif %}" href="{{ url_for('main.patient_profile') }}"><i class="bi bi-person-vcard me-2"></i> My Profile</a>
+                                <a class="nav-link {% if request.endpoint == 'main.patient_profile' %}active{% endif %}" href="{{ url_for('main.patient_profile') }}"><i class="bi bi-person-vcard me-2"></i> {{ _('My Profile') }}</a>
                             </li>
                             {# Add other account/settings links here later #}
                         </div>
@@ -534,16 +534,28 @@
                         {% if current_user.is_authenticated and current_user.stripe_customer_id %}
                         <li class="nav-item">
                             <a class="nav-link logout-link" href="{{ url_for('main.my_account') }}">
-                                <i class="bi bi-person-circle"></i> My Account
+                                <i class="bi bi-person-circle"></i> {{ _('My Account') }}
                             </a>
                         </li>
                         {% endif %}
                         <li class="nav-item">
                             <a class="nav-link logout-link" href="{{ url_for('auth.logout') }}">
-                                <i class="bi bi-box-arrow-right"></i> Logout
+                                <i class="bi bi-box-arrow-right"></i> {{ _('Logout') }}
                             </a>
                         </li>
                     </ul>
+                    <div class="mt-3">
+                        <div class="btn-group dropup">
+                            <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-translate"></i> {{ get_locale_display_name(get_locale()) or 'Language' }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                                {% for lang in BABEL_SUPPORTED_LOCALES %}
+                                    <li><a class="dropdown-item" href="{{ url_for('main.set_language', lang_code=lang) }}">{{ get_locale_display_name(lang) }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 

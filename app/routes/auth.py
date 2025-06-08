@@ -59,7 +59,7 @@ def login():
             
         return redirect(next_page)
     
-    return render_template('auth/login.html')
+    return render_template('auth/login.html', supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
 
 @auth.route('/logout')
 def logout():
@@ -81,12 +81,12 @@ def register():
         if User.query.filter_by(username=username).first():
             flash('Username already exists', 'danger')
             # return redirect(url_for('auth.register')) # Keep them on the page with the form and error
-            return render_template('auth/register.html', form=form) 
+            return render_template('auth/register.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES']) 
 
         if User.query.filter_by(email=email).first():
             flash('Email already registered', 'danger')
             # return redirect(url_for('auth.register')) # Keep them on the page with the form and error
-            return render_template('auth/register.html', form=form)
+            return render_template('auth/register.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
         
         # Create new user
         user = User(username=username, email=email)
@@ -110,4 +110,4 @@ def register():
             for error in errors:
                 flash(f"Error in {getattr(form, field).label.text}: {error}", 'danger')
     
-    return render_template('auth/register.html', form=form) 
+    return render_template('auth/register.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES']) 

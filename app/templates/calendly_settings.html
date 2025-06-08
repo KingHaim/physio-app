@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Calendly Settings{% endblock %}
+{% block title %}{{ _('Calendly Settings') }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="mb-4"><i class="bi bi-calendar-event"></i> Manage Calendly Settings</h1>
+    <h1 class="mb-4"><i class="bi bi-calendar-event"></i> {{ _('Manage Calendly Settings') }}</h1>
 
     <p class="text-muted">
-        Connect your Calendly account to see your personal pending bookings. 
-        You can find your API token and User URI in your <a href="https://calendly.com/integrations/api_webhooks" target="_blank" rel="noopener noreferrer">Calendly API & Webhooks page</a>.
+        {{ _('Connect your Calendly account to see your personal pending bookings.') }}
+        {{ _('You can find your API token and User URI in your') }} <a href="https://calendly.com/integrations/api_webhooks" target="_blank" rel="noopener noreferrer">{{ _('Calendly API & Webhooks page') }}</a>.
     </p>
 
     <div class="card shadow-sm">
@@ -17,18 +17,18 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
 
                 <div class="mb-3">
-                    <label for="calendly_api_token" class="form-label">Calendly API Token</label>
-                    <input type="password" class="form-control" id="calendly_api_token" name="calendly_api_token" value="{{ calendly_api_token or '' }}" placeholder="Enter your Calendly API token">
-                    <small class="form-text text-muted">Your token will be stored securely. Leave blank if you wish to not update or remove it.</small> {# Added placeholder and clarification #}
+                    <label for="calendly_api_token" class="form-label">{{ _('Calendly API Token') }}</label>
+                    <input type="password" class="form-control" id="calendly_api_token" name="calendly_api_token" value="{{ calendly_api_token or '' }}" placeholder="{{ _('Enter your Calendly API token') }}">
+                    <small class="form-text text-muted">{{ _('Your token will be stored securely. Leave blank if you wish to not update or remove it.') }}</small> {# Added placeholder and clarification #}
                 </div>
 
                 <div class="mb-3">
-                    <label for="calendly_user_uri" class="form-label">Calendly User URI</label>
-                    <input type="text" class="form-control" id="calendly_user_uri" name="calendly_user_uri" value="{{ calendly_user_uri or '' }}" placeholder="e.g., https://api.calendly.com/users/YOUR_USER_ID">
-                    <small class="form-text text-muted">This is used to identify events belonging to your Calendly account. Example: <code>https://api.calendly.com/users/GARAGEBOB</code>. Leave blank to remove.</small> {# Added placeholder and clarification #}
+                    <label for="calendly_user_uri" class="form-label">{{ _('Calendly User URI') }}</label>
+                    <input type="text" class="form-control" id="calendly_user_uri" name="calendly_user_uri" value="{{ calendly_user_uri or '' }}" placeholder="{{ _('e.g., https://api.calendly.com/users/YOUR_USER_ID') }}">
+                    <small class="form-text text-muted">{{ _('This is used to identify events belonging to your Calendly account. Example:') }} <code>https://api.calendly.com/users/GARAGEBOB</code>. {{ _('Leave blank to remove.') }}</small> {# Added placeholder and clarification #}
                 </div>
 
-                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save Settings</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> {{ _('Save Settings') }}</button>
             </form>
         </div>
     </div>

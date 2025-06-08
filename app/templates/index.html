@@ -1,7 +1,7 @@
 <!-- app/templates/index.html -->
 {% extends "base.html" %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}{{ _('Dashboard') }}{% endblock %}
 
 {% block styles %}
 {{ super() }}
@@ -72,15 +72,7 @@
         color: var(--primary-color); /* Use primary color for icons in headers */
     }
 
-    /* Style adjustments for Quick Action buttons if needed */
-    .quick-actions-grid .btn {
-        /* Add any specific styles for quick action buttons, e.g., ensure text isn't too large */
-        font-size: 0.9rem;
-        padding: 0.5rem 0.75rem; /* Adjust padding if they feel too big */
-    }
-    .quick-actions-grid .btn i {
-        font-size: 1rem; /* Ensure icons in buttons are appropriately sized */
-    }
+
 
     .dashboard-header-banner {
         background-color: #e9ecef; /* A light, neutral background */
@@ -120,54 +112,35 @@
         /* border: 1px solid #dee2e6; Optional border */
     }
 
-    /* Styles for the new Quick Actions list */
-    .quick-actions-list .list-group-item {
-        padding: 0.85rem 1.25rem; /* Adjust padding */
-        font-size: 0.95rem;
-        border-left: 0;
-        border-right: 0;
-    }
-    .quick-actions-list .list-group-item:first-child {
-        border-top: 0;
-    }
-    .quick-actions-list .list-group-item:last-child {
-        border-bottom: 0;
-    }
-    .quick-actions-list .list-group-item i {
-        font-size: 1.1rem; /* Slightly larger icons in list */
-        color: var(--primary-color); /* Icon color */
-    }
-    .quick-actions-list .badge {
-        font-size: 0.8em;
-    }
+
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-3">
-    <h1 class="h3 mb-3"><i class="bi bi-speedometer2"></i> Dashboard</h1> {# Increased mb slightly #}
+    <h1 class="h3 mb-3"><i class="bi bi-speedometer2"></i> {{ _('Dashboard') }}</h1> {# Increased mb slightly #}
 
     <!-- Dashboard Header Banner -->
     <div class="dashboard-header-banner">
-        <h4>Welcome back, {{ current_user.username }}!</h4>
-        <p>Here's an overview of your clinic's activity.</p>
+        <h4>{{ _('Welcome back, %(username)s!', username=current_user.username) }}</h4>
+        <p>{{ _('Here\'s an overview of your clinic\'s activity.') }}</p>
         
         {# Moved Subscription Status Display Here #}
         {% if current_plan_name %}
         <div class="subscription-status-text">
             <i class="bi bi-award-fill text-success me-1"></i> 
-            Current Plan: <strong>{{ current_plan_name }}</strong> 
-            (Status: <span class="fw-semibold">{{ current_subscription_status }}</span>)
+            {{ _('Current Plan') }}: <strong>{{ current_plan_name }}</strong> 
+            ({{ _('Status') }}: <span class="fw-semibold">{{ current_subscription_status }}</span>)
             {% if current_subscription_ends_at %}
-                - {% if current_subscription_status == 'Trialing' %}Ends{% else %}Renews{% endif %}: {{ current_subscription_ends_at.strftime('%d %b %Y') }}
+                - {% if current_subscription_status == 'Trialing' %}{{ _('Ends') }}{% else %}{{ _('Renews') }}{% endif %}: {{ current_subscription_ends_at.strftime('%d %b %Y') }}
             {% endif %}
-            <a href="{{ url_for('main.my_account') }}" class="ms-2 badge bg-primary text-decoration-none">Manage Plan</a> {# Changed link to my_account #}
+            <a href="{{ url_for('main.my_account') }}" class="ms-2 badge bg-primary text-decoration-none">{{ _('Manage Plan') }}</a> {# Changed link to my_account #}
         </div>
         {% elif current_user.is_authenticated and not current_user.is_subscribed %}
         <div class="subscription-status-text">
             <i class="bi bi-info-circle-fill text-primary me-1"></i> 
-            You are currently not subscribed to a plan. 
-            <a href="{{ url_for('main.pricing_page') }}" class="ms-1 badge bg-success text-decoration-none">View Plans</a>
+            {{ _('You are currently not subscribed to a plan.') }}
+            <a href="{{ url_for('main.pricing_page') }}" class="ms-1 badge bg-success text-decoration-none">{{ _('View Plans') }}</a>
         </div>
         {% endif %}
     </div>
@@ -179,7 +152,7 @@
             <div class="col-md-3">
                 <div class="card stats-card card-patients-capacity">
                     <div class="card-body text-center">
-                        <h5 class="card-title mb-3">Patient Capacity</h5>
+                        <h5 class="card-title mb-3">{{ _('Patient Capacity') }}</h5>
                         {% if patient_plan_limit is not none %}
                             <div style="max-width: 150px; max-height: 150px; margin: 0 auto;">
                                 <canvas id="patientCapacityChart" 
@@ -191,10 +164,10 @@
                                 <span class="stats-text">
                                     {{ current_patients_count }} / {{ patient_plan_limit }}
                                     {% if current_patients_count >= patient_plan_limit %}
-                                        <br><strong class="text-danger">Limit Reached!</strong> 
-                                        <a href="{{ url_for('main.pricing_page') }}" class="badge bg-warning text-dark text-decoration-none ms-1">Upgrade</a>
+                                        <br><strong class="text-danger">{{ _('Limit Reached!') }}</strong> 
+                                        <a href="{{ url_for('main.pricing_page') }}" class="badge bg-warning text-dark text-decoration-none ms-1">{{ _('Upgrade') }}</a>
                                     {% elif (patient_plan_limit - current_patients_count) <= 5 %}
-                                        <br><strong class="text-warning">Nearing Limit</strong>
+                                        <br><strong class="text-warning">{{ _('Nearing Limit') }}</strong>
                                     {% endif %}
                                 </span>
                             </p>
@@ -202,7 +175,7 @@
                             <h2 class="display-4">{{ current_patients_count }}</h2>
                             <p class="card-text">
                                 <i class="bi bi-infinity"></i> 
-                                <span class="stats-text">Unlimited Patients</span>
+                                <span class="stats-text">{{ _('Unlimited Patients') }}</span>
                             </p>
                         {% endif %}
                     </div>
@@ -211,10 +184,10 @@
             <div class="col-md-3">
                 <div class="card stats-card card-active-patients">
                     <div class="card-body">
-                        <h5 class="card-title">Active Patients</h5>
+                        <h5 class="card-title">{{ _('Active Patients') }}</h5>
                         <h2 class="display-4">{{ active_patients }}</h2>
                         <p class="card-text">
-                            <i class="bi bi-person-check"></i> <span class="stats-text">Currently under treatment</span>
+                            <i class="bi bi-person-check"></i> <span class="stats-text">{{ _('Currently under treatment') }}</span>
                         </p>
                     </div>
                 </div>
@@ -222,10 +195,10 @@
             <div class="col-md-3">
                 <div class="card stats-card card-today-appts">
                     <div class="card-body">
-                        <h5 class="card-title">Today's Appointments</h5>
+                        <h5 class="card-title">{{ _('Today\'s Appointments') }}</h5>
                         <h2 class="display-4">{{ today_appointments }}</h2>
                         <p class="card-text">
-                            <i class="bi bi-calendar-day"></i> <span class="stats-text">Scheduled for today</span>
+                            <i class="bi bi-calendar-day"></i> <span class="stats-text">{{ _('Scheduled for today') }}</span>
                         </p>
                     </div>
                 </div>
@@ -233,10 +206,10 @@
             <div class="col-md-3">
                 <div class="card stats-card card-pending-review">
                     <div class="card-body">
-                        <h5 class="card-title">Pending Review</h5>
+                        <h5 class="card-title">{{ _('Pending Review') }}</h5>
                         <h2 class="display-4">{{ pending_review_count }}</h2>
                         <p class="card-text">
-                            <i class="bi bi-clipboard-check"></i> <span class="stats-text">Patients needing review</span>
+                            <i class="bi bi-clipboard-check"></i> <span class="stats-text">{{ _('Patients needing review') }}</span>
                         </p>
                     </div>
                 </div>
@@ -249,12 +222,12 @@
     <!-- Main Content Area -->
     <div class="row mt-4"> {# Added mt-4 for spacing from charts/stats #}
         <!-- Upcoming Appointments -->
-        <div class="col-lg-7 mb-4"> {# Reverted from col-lg-12 back to col-lg-7 for diagnostics #}
+        <div class="col-lg-12 mb-4">
             <div class="card dashboard-card h-100"> {# Added dashboard-card class #}
                 <div class="card-header dashboard-card-header"> {# Added dashboard-card-header class #}
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 card-title-icon"><i class="bi bi-calendar-week me-2"></i>Upcoming Appointments</h5>
-                        <a href="{{ url_for('main.appointments') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                        <h5 class="mb-0 card-title-icon"><i class="bi bi-calendar-week me-2"></i>{{ _('Upcoming Appointments') }}</h5>
+                        <a href="{{ url_for('main.appointments') }}" class="btn btn-sm btn-outline-primary">{{ _('View All') }}</a>
                     </div>
                 </div>
                 <div class="card-body p-0">
@@ -263,10 +236,10 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Patient</th>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th class="text-end">Actions</th>
+                                    <th>{{ _('Patient') }}</th>
+                                    <th>{{ _('Date') }}</th>
+                                    <th>{{ _('Time') }}</th>
+                                    <th class="text-end">{{ _('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -286,7 +259,7 @@
                                     <td>
                                         {# Use the relative_date calculated in the route #}
                                         <span class="badge bg-{{ 'danger' if appt.relative_date == 'Today' else 'info' if appt.relative_date == 'Tomorrow' else 'secondary' }}">
-                                            {{ appt.relative_date }}
+                                            {{ _(appt.relative_date) }}
                                         </span>
                                     </td>
                                     <td>
@@ -312,48 +285,16 @@
                     {% else %}
                     <div class="text-center py-5">
                         <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
-                        <p class="text-muted mt-2">No upcoming appointments</p>
+                        <p class="text-muted mt-2">{{ _('No upcoming appointments') }}</p>
                         <button class="btn btn-primary" onclick="openCalendly()">
-                            <i class="bi bi-calendar-plus"></i> Schedule Appointment
+                            <i class="bi bi-calendar-plus"></i> {{ _('Schedule Appointment') }}
                         </button>
                     </div>
                     {% endif %}
                 </div>
             </div>
         </div>
-        
-        <!-- Quick Actions - TO BE REMOVED -->
-        <!-- 
-        <div class="col-lg-5 mb-4"> {# Changed to col-lg-5 and added mb-4 for spacing #}
-            <div class="card dashboard-card h-100"> {# Added dashboard-card class #}
-                <div class="card-header dashboard-card-header"> {# Added dashboard-card-header class #}
-                    <h5 class="mb-0 card-title-icon"><i class="bi bi-lightning-charge me-2"></i>Quick Actions</h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush quick-actions-list">
-                        <a href="{{ url_for('main.new_patient') }}" class="list-group-item list-group-item-action d-flex align-items-center">
-                            <i class="bi bi-person-plus me-3"></i> New Patient
-                        </a>
-                        <button type="button" class="list-group-item list-group-item-action d-flex align-items-center" onclick="openCalendly()">
-                            <i class="bi bi-calendar-plus me-3"></i> Schedule Appointment
-                        </button>
-                        <a href="{{ url_for('main.patients_list', status='Pending Review') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            <span><i class="bi bi-clipboard-check me-3"></i> Review Pending Patients</span>
-                            {% if pending_review_count > 0 %}
-                            <span class="badge bg-danger rounded-pill">{{ pending_review_count }}</span>
-                            {% endif %}
-                        </a>
-                        <a href="{{ url_for('main.review_calendly_bookings') }}" class="list-group-item list-group-item-action d-flex align-items-center">
-                            <i class="bi bi-calendar-check me-3"></i> Review Calendly Bookings
-                        </a>
-                        <a href="{{ url_for('main.analytics') }}" class="list-group-item list-group-item-action d-flex align-items-center">
-                            <i class="bi bi-graph-up me-3"></i> View Analytics
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        -->
+
     </div>
 </div>
 {% endblock %}
@@ -380,8 +321,8 @@
 
                     let capacityData = {
                         labels: [
-                            'Current Patients (' + currentPatients + ')',
-                            'Remaining Capacity (' + remainingCapacity + ')'
+                            `{{ _('Current Patients') }} (${currentPatients})`,
+                            `{{ _('Remaining Capacity') }} (${remainingCapacity})`
                         ],
                         datasets: [{
                             data: [currentPatients, remainingCapacity],
@@ -399,7 +340,7 @@
                     };
                     
                     if (currentPatients >= limit) {
-                        capacityData.labels = ['Patients (' + currentPatients + ')', 'Limit (' + limit + ') - Over! '];
+                        capacityData.labels = [`{{ _('Patients') }} (${currentPatients})`, `{{ _('Limit') }} (${limit}) - {{ _('Over!') }}`];
                         capacityData.datasets[0].data = [currentPatients, 0];
                         capacityData.datasets[0].backgroundColor = ['rgba(220, 53, 69, 0.8)', 'rgba(255, 255, 255, 0.3)'];
                         capacityData.datasets[0].borderColor = ['rgba(220, 53, 69, 1)', 'rgba(255, 255, 255, 0.5)'];
@@ -437,7 +378,7 @@
             data: {
                 labels: weeklyLabels,
                 datasets: [{
-                    label: 'Appointments',
+                    label: '{{ _('Appointments') }}',
                     data: weeklyCounts,
                     backgroundColor: 'rgba(41, 128, 185, 0.6)',
                     borderColor: 'rgba(41, 128, 185, 1)',
@@ -477,7 +418,7 @@
                                 return tooltipItems[0].label;
                             },
                             label: function(tooltipItem) {
-                                return 'Appointments: ' + tooltipItem.raw;
+                                return '{{ _('Appointments') }}: ' + tooltipItem.raw;
                             }
                         }
                     }
@@ -491,67 +432,48 @@
         const searchResults = document.getElementById('searchResults');
         
         if (quickSearch && searchResults) {
-            quickSearch.addEventListener('input', async (e) => {
+            quickSearch.addEventListener('input', _.debounce(async (e) => {
                 if (e.target.value.length < 2) {
                     searchResults.innerHTML = '';
                     return;
                 }
                 
                 try {
-                    const response = await fetch(`/search?q=${e.target.value}`);
+                    const response = await fetch(`/api/quick_search?q=${e.target.value}`);
+                    if (!response.ok) {
+                        searchResults.innerHTML = `<div class="list-group-item list-group-item-danger">{{ _('Error fetching results.') }}</div>`;
+                        return;
+                    }
                     const data = await response.json();
                     
-                    searchResults.innerHTML = data.map(patient => `
-                        <a href="/patient/${patient.id}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">${patient.name}</h6>
-                                <span class="status-badge status-${patient.status.toLowerCase()}">
-                                    ${patient.status}
-                                </span>
-                            </div>
-                            <small>${patient.diagnosis}</small>
-                        </a>
-                    `).join('');
+                    if (data.length) {
+                        searchResults.innerHTML = data.map(patient => `
+                            <a href="/patient/${patient.id}" class="list-group-item list-group-item-action">
+                                <strong>${patient.name}</strong> (${patient.email})
+                            </a>
+                        `).join('');
+                    } else {
+                        searchResults.innerHTML = `<div class="list-group-item">{{ _('No patients found.') }}</div>`;
+                    }
                 } catch (error) {
-                    console.error('Error searching patients:', error);
+                    console.error('Quick search error:', error);
+                    searchResults.innerHTML = `<div class="list-group-item list-group-item-danger">{{ _('An error occurred.') }}</div>`;
                 }
-            });
-        }
-
-        // Patient list search and filter
-        const patientSearch = document.getElementById('patientSearch');
-        const statusFilter = document.getElementById('statusFilter');
-        
-        if (patientSearch && statusFilter) {
-            function updatePatientList() {
-                const searchParams = new URLSearchParams(window.location.search);
-                searchParams.set('search', patientSearch.value);
-                searchParams.set('status', statusFilter.value);
-                window.location.href = `/?${searchParams.toString()}`;
-            }
-            
-            patientSearch.addEventListener('keyup', (e) => {
-                if (e.key === 'Enter') {
-                    updatePatientList();
-                }
-            });
-            
-            statusFilter.addEventListener('change', updatePatientList);
-        }
-
-        // Quick treatment functionality
-        const quickTreatmentModalElement = document.getElementById('quickTreatmentModal');
-        const quickTreatmentFormElement = document.getElementById('quickTreatmentForm');
-
-        window.quickTreatment = function(patientId) {
-            if (quickTreatmentModalElement && quickTreatmentFormElement) {
-                const modal = new bootstrap.Modal(quickTreatmentModalElement);
-                quickTreatmentFormElement.action = `/treatment/new/${patientId}`;
-                modal.show();
-            } else {
-                console.error('Quick treatment modal elements not found.');
-            }
+            }, 300)); // Debounce
         }
     });
+
+    function openCalendly() {
+        // You should fetch the Calendly link from the user's settings
+        const calendlyLink = "{{ current_user.calendly_link }}";
+        if (calendlyLink) {
+            Calendly.initPopupWidget({ url: calendlyLink });
+        } else {
+            // Fallback if the link isn't set
+            alert("{{ _('The practitioner has not set up their Calendly link yet.') }}");
+        }
+        return false;
+    }
+
 </script>
 {% endblock %}

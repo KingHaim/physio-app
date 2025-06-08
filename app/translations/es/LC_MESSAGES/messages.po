@@ -1,0 +1,2143 @@
+# Spanish translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-06-08 15:33+0200\n"
+"PO-Revision-Date: 2025-06-07 19:15+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: app/templates/analytics.html:3 app/templates/base.html:488
+#: app/templates/pricing.html:216
+msgid "Analytics"
+msgstr "Analíticas"
+
+#: app/templates/analytics.html:7
+msgid "Practice Analytics"
+msgstr "Analíticas de la Clínica"
+
+#: app/templates/analytics.html:14
+msgid "Total Patients"
+msgstr "Pacientes Totales"
+
+#: app/templates/analytics.html:22 app/templates/index.html:187
+msgid "Active Patients"
+msgstr "Pacientes Activos"
+
+#: app/templates/analytics.html:30
+msgid "Total Treatments"
+msgstr "Tratamientos Totales"
+
+#: app/templates/analytics.html:38
+msgid "Avg. Monthly Revenue"
+msgstr "Ingresos Medios Mensuales"
+
+#: app/templates/analytics.html:47
+msgid "Avg. Treatments/Patient"
+msgstr "Tratamientos Medios/Paciente"
+
+#: app/templates/analytics.html:56
+msgid "CostaSpine Fee (This Week)"
+msgstr "Tarifa CostaSpine (Esta Semana)"
+
+#: app/templates/analytics.html:58
+msgid "Total Weekly CS Revenue:"
+msgstr "Ingresos Semanales CS:"
+
+#: app/templates/analytics.html:66
+msgid "Est. Total Autónomo Contr. (€)"
+msgstr "Contr. Total Estimada Autónomo (€)"
+
+#: app/templates/analytics.html:68
+msgid "Sum of estimated monthly contributions (€)"
+msgstr "Suma de contribuciones mensuales estimadas (€)"
+
+#: app/templates/analytics.html:74
+msgid "Click to see list"
+msgstr "Haz clic para ver la lista"
+
+#: app/templates/analytics.html:76
+msgid "Inactive This Week"
+msgstr "Inactivos Esta Semana"
+
+#: app/templates/analytics.html:88
+msgid "Treatments by Month"
+msgstr "Tratamientos por Mes"
+
+#: app/templates/analytics.html:92 app/templates/analytics.html:103
+#: app/templates/analytics.html:118 app/templates/analytics.html:129
+#: app/templates/analytics.html:144 app/templates/analytics.html:155
+#: app/templates/analytics.html:166
+msgid "No data available to display."
+msgstr "No hay datos disponibles para mostrar."
+
+#: app/templates/analytics.html:99
+msgid "New Patients by Month"
+msgstr "Nuevos Pacientes por Mes"
+
+#: app/templates/analytics.html:114
+msgid "Revenue by Visit Type"
+msgstr "Ingresos por Tipo de Visita"
+
+#: app/templates/analytics.html:125
+msgid "Revenue by Location (Top 10)"
+msgstr "Ingresos por Ubicación (Top 10)"
+
+#: app/templates/analytics.html:140
+msgid "Common Diagnoses"
+msgstr "Diagnósticos Comunes"
+
+#: app/templates/analytics.html:151
+msgid "Patient Status Distribution"
+msgstr "Distribución de Estado de Pacientes"
+
+#: app/templates/analytics.html:162
+msgid "Payment Method Distribution"
+msgstr "Distribución de Métodos de Pago"
+
+#: app/templates/analytics.html:177
+msgid "Top Patients by Revenue"
+msgstr "Top Pacientes por Ingresos"
+
+#: app/templates/analytics.html:181 app/templates/analytics.html:238
+#: app/templates/analytics.html:242 app/templates/analytics.html:246
+#: app/templates/analytics.html:250 app/templates/analytics.html:272
+#: app/templates/analytics.html:388
+msgid "Loading..."
+msgstr "Cargando..."
+
+#: app/templates/analytics.html:193
+msgid "AI Practice Insights"
+msgstr "Perspectivas de la Clínica (IA)"
+
+#: app/templates/analytics.html:198
+msgid "Generate New Report"
+msgstr "Generar Nuevo Informe"
+
+#: app/templates/analytics.html:212
+msgid "Report generated on:"
+msgstr "Informe generado el:"
+
+#: app/templates/analytics.html:215
+msgid "Using DeepSeek AI based on current practice data."
+msgstr "Usando DeepSeek AI basado en los datos actuales de la clínica."
+
+#: app/templates/analytics.html:229
+#, fuzzy, python-format
+msgid "CostaSpine Fee Breakdown (30%%)"
+msgstr "Desglose de Tarifas de CostaSpine (30%)"
+
+#: app/templates/analytics.html:230 app/templates/analytics.html:257
+#: app/templates/analytics.html:269 app/templates/analytics.html:275
+#: app/templates/calendar.html:51 app/templates/calendar.html:96
+#: app/templates/calendly_review.html:65 app/templates/my_account.html:138
+#: app/templates/my_account.html:167 app/templates/patient_detail.html:17
+msgid "Close"
+msgstr "Cerrar"
+
+#: app/templates/analytics.html:233
+msgid ""
+"Total fee calculated based on treatments logged at 'CostaSpine Clinic' "
+"location with a fee."
+msgstr ""
+"Tarifa total calculada en base a los tratamientos registrados en la "
+"ubicación 'CostaSpine Clinic' con tarifa."
+
+#: app/templates/analytics.html:237
+msgid "Total (All Time):"
+msgstr "Total (Siempre):"
+
+#: app/templates/analytics.html:241
+msgid "This Year:"
+msgstr "Este Año:"
+
+#: app/templates/analytics.html:245
+msgid "This Month:"
+msgstr "Este Mes:"
+
+#: app/templates/analytics.html:249
+msgid "This Week:"
+msgstr "Esta Semana:"
+
+#: app/templates/analytics.html:254
+msgid "Calculations are based on treatment dates."
+msgstr "Los cálculos se basan en las fechas de los tratamientos."
+
+#: app/templates/analytics.html:268
+msgid "Patients Made Inactive This Week"
+msgstr "Pacientes Inactivos Esta Semana"
+
+#: app/templates/analytics.html:400
+msgid "No patient revenue data available."
+msgstr "No hay datos de ingresos de pacientes disponibles."
+
+#: app/templates/analytics.html:416
+msgid "Error loading data."
+msgstr "Error al cargar los datos."
+
+#: app/templates/analytics.html:436 app/templates/analytics.html:463
+msgid "Error"
+msgstr "Error"
+
+#: app/templates/analytics.html:444
+msgid "No patients became inactive in the last 7 days."
+msgstr "Ningún paciente se ha vuelto inactivo en los últimos 7 días."
+
+#: app/templates/analytics.html:464
+msgid "Could not load patient list."
+msgstr "No se pudo cargar la lista de pacientes."
+
+#: app/templates/analytics.html:517
+msgid "Treatments"
+msgstr "Tratamientos"
+
+#: app/templates/analytics.html:535
+msgid "New Patients"
+msgstr "Nuevos Pacientes"
+
+#: app/templates/analytics.html:553 app/templates/analytics.html:570
+msgid "Revenue"
+msgstr "Ingresos"
+
+#: app/templates/analytics.html:587 app/templates/analytics.html:634
+msgid "Count"
+msgstr "Cantidad"
+
+#: app/templates/analytics.html:615 app/templates/edit_patient.html:61
+#: app/templates/my_account.html:74 app/templates/patients_list.html:19
+msgid "Active"
+msgstr "Activo"
+
+#: app/templates/analytics.html:615 app/templates/edit_patient.html:64
+#: app/templates/patients_list.html:20
+msgid "Inactive"
+msgstr "Inactivo"
+
+#: app/templates/analytics.html:677
+msgid "No data"
+msgstr ""
+
+#: app/templates/appointments.html:4 app/templates/appointments.html:65
+#: app/templates/base.html:452 app/templates/index.html:381
+#: app/templates/index.html:421
+msgid "Appointments"
+msgstr "Citas"
+
+#: app/templates/appointments.html:67 app/templates/calendar.html:50
+msgid "New Appointment"
+msgstr "Nueva Cita"
+
+#: app/templates/appointments.html:74
+msgid "Controls"
+msgstr "Controles"
+
+#: app/templates/appointments.html:78
+msgid "Date Range"
+msgstr "Rango de Fechas"
+
+#: app/templates/appointments.html:82
+msgid "to"
+msgstr "a"
+
+#: app/templates/appointments.html:86
+msgid "Filter"
+msgstr "Filtrar"
+
+#: app/templates/appointments.html:91
+msgid "Quick Filters"
+msgstr "Filtros Rápidos"
+
+#: app/templates/appointments.html:93
+msgid "Today"
+msgstr "Hoy"
+
+#: app/templates/appointments.html:94
+msgid "This Week"
+msgstr "Esta Semana"
+
+#: app/templates/appointments.html:95
+msgid "This Month"
+msgstr "Este Mes"
+
+#: app/templates/appointments.html:99
+msgid "View Mode"
+msgstr "Modo de Vista"
+
+#: app/templates/appointments.html:102
+msgid "List"
+msgstr "Lista"
+
+#: app/templates/appointments.html:105 app/templates/base.html:442
+#: app/templates/calendar.html:35
+msgid "Calendar"
+msgstr "Calendario"
+
+#: app/templates/appointments.html:117
+msgid "Schedule with Calendly"
+msgstr "Programar con Calendly"
+
+#: app/templates/appointments.html:120
+msgid "Show Calendly"
+msgstr "Mostrar Calendly"
+
+#: app/templates/appointments.html:141 app/templates/calendar.html:71
+#: app/templates/index.html:241
+msgid "Time"
+msgstr "Hora"
+
+#: app/templates/appointments.html:142 app/templates/appointments.html:218
+#: app/templates/calendar.html:57 app/templates/index.html:239
+msgid "Patient"
+msgstr "Paciente"
+
+#: app/templates/appointments.html:143 app/templates/appointments.html:231
+#: app/templates/patient_detail.html:169 app/templates/treatment_detail.html:86
+msgid "Type"
+msgstr "Tipo"
+
+#: app/templates/appointments.html:144 app/templates/appointments.html:240
+msgid "Duration"
+msgstr "Duración"
+
+#: app/templates/appointments.html:145 app/templates/edit_patient.html:58
+#: app/templates/index.html:133 app/templates/patient_detail.html:170
+#: app/templates/patients_list.html:102
+msgid "Status"
+msgstr "Estado"
+
+#: app/templates/appointments.html:146 app/templates/appointments.html:248
+msgid "Notes"
+msgstr "Notas"
+
+#: app/templates/appointments.html:147 app/templates/calendly_review.html:25
+#: app/templates/index.html:242 app/templates/patient_detail.html:174
+#: app/templates/review_payments.html:25
+msgid "Actions"
+msgstr "Acciones"
+
+#: app/templates/appointments.html:211
+msgid "Schedule New Appointment"
+msgstr "Programar Nueva Cita"
+
+#: app/templates/appointments.html:220
+msgid "Select Patient"
+msgstr "Seleccionar Paciente"
+
+#: app/templates/appointments.html:227
+msgid "Date & Time"
+msgstr "Fecha y Hora"
+
+#: app/templates/appointments.html:233
+msgid "Initial Assessment"
+msgstr "Evaluación Inicial"
+
+#: app/templates/appointments.html:234
+msgid "Follow-up"
+msgstr "Seguimiento"
+
+#: app/templates/appointments.html:235
+msgid "Treatment"
+msgstr "Tratamiento"
+
+#: app/templates/appointments.html:236
+msgid "Review"
+msgstr "Revisión"
+
+#: app/templates/appointments.html:242
+msgid "30 minutes"
+msgstr "30 minutos"
+
+#: app/templates/appointments.html:243
+msgid "45 minutes"
+msgstr "45 minutos"
+
+#: app/templates/appointments.html:244
+msgid "1 hour"
+msgstr "1 hora"
+
+#: app/templates/appointments.html:254 app/templates/edit_patient.html:136
+#: app/templates/edit_patient.html:164 app/templates/new_patient.html:66
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: app/templates/appointments.html:255
+msgid "Schedule"
+msgstr "Programar"
+
+#: app/templates/base.html:437 app/templates/index.html:4
+#: app/templates/index.html:121
+msgid "Dashboard"
+msgstr "Panel de Control"
+
+#: app/templates/base.html:447 app/templates/index.html:343
+msgid "Patients"
+msgstr "Pacientes"
+
+#: app/templates/base.html:467
+msgid "Management"
+msgstr "Gestión"
+
+#: app/templates/base.html:471 app/templates/index.html:209
+#: app/templates/patients_list.html:22
+msgid "Pending Review"
+msgstr "Pendiente de Revisión"
+
+#: app/templates/base.html:479
+msgid "Review Payments"
+msgstr "Revisar Pagos"
+
+#: app/templates/base.html:485
+msgid "Reports"
+msgstr "Informes"
+
+#: app/templates/base.html:493
+msgid "Finances"
+msgstr "Finanzas"
+
+#: app/templates/base.html:499
+msgid "Settings"
+msgstr "Ajustes"
+
+#: app/templates/base.html:502 app/templates/calendly_settings.html:3
+msgid "Calendly Settings"
+msgstr "Ajustes de Calendly"
+
+#: app/templates/base.html:512
+msgid "My Dashboard"
+msgstr "Mi Panel"
+
+#: app/templates/base.html:518
+msgid "Account"
+msgstr "Cuenta"
+
+#: app/templates/base.html:520
+msgid "My Profile"
+msgstr "Mi Perfil"
+
+#: app/templates/base.html:537 app/templates/my_account.html:3
+#: app/templates/my_account.html:43
+msgid "My Account"
+msgstr "Mi Cuenta"
+
+#: app/templates/base.html:543
+msgid "Logout"
+msgstr "Cerrar Sesión"
+
+#: app/templates/calendar.html:59
+msgid "Select Patient..."
+msgstr "Seleccionar Paciente..."
+
+#: app/templates/calendar.html:67 app/templates/index.html:240
+#: app/templates/patient_detail.html:168 app/templates/treatment_detail.html:19
+msgid "Date"
+msgstr "Fecha"
+
+#: app/templates/calendar.html:76
+msgid "Treatment Type"
+msgstr "Tipo de Tratamiento"
+
+#: app/templates/calendar.html:77
+msgid "e.g., Initial Assessment, Follow-up"
+msgstr "ej., Evaluación Inicial, Seguimiento"
+
+#: app/templates/calendar.html:80 app/templates/review_payments.html:23
+msgid "Location"
+msgstr "Ubicación"
+
+#: app/templates/calendar.html:82
+msgid "CostaSpine Clinic"
+msgstr "Clínica CostaSpine"
+
+#: app/templates/calendar.html:83
+msgid "Home Visit"
+msgstr "Visita a Domicilio"
+
+#: app/templates/calendar.html:84
+msgid "Online"
+msgstr "En Línea"
+
+#: app/templates/calendar.html:88
+msgid "Notes (Optional)"
+msgstr "Notas (Opcional)"
+
+#: app/templates/calendar.html:97
+#, fuzzy
+msgid "Create Appointment"
+msgstr "Programar Cita"
+
+#: app/templates/calendly_review.html:3 app/templates/calendly_review.html:8
+msgid "Review Calendly Bookings"
+msgstr "Revisar Reservas de Calendly"
+
+#: app/templates/calendly_review.html:14
+msgid "Unmatched Calendly Bookings"
+msgstr "Reservas de Calendly Sin Asignar"
+
+#: app/templates/calendly_review.html:21 app/templates/patients_list.html:99
+msgid "Name"
+msgstr "Nombre"
+
+#: app/templates/calendly_review.html:22 app/templates/pricing.html:223
+msgid "Email"
+msgstr "Correo Electrónico"
+
+#: app/templates/calendly_review.html:23
+msgid "Appointment Type"
+msgstr "Tipo de Cita"
+
+#: app/templates/calendly_review.html:24
+msgid "Date/Time"
+msgstr "Fecha/Hora"
+
+#: app/templates/calendly_review.html:38
+msgid "Match to Patient"
+msgstr "Asignar a Paciente"
+
+#: app/templates/calendly_review.html:42
+msgid "Create New Patient"
+msgstr "Crear Nuevo Paciente"
+
+#: app/templates/calendly_review.html:54
+msgid "No unmatched Calendly bookings to review."
+msgstr "No hay reservas de Calendly sin asignar para revisar."
+
+#: app/templates/calendly_review.html:64
+msgid "Match Booking to Patient"
+msgstr "Asignar Reserva a Paciente"
+
+#: app/templates/calendly_review.html:68
+msgid "Select an existing patient to match with"
+msgstr "Selecciona un paciente existente para asignar con"
+
+#: app/templates/calendly_review.html:72 app/templates/patients_list.html:14
+msgid "Search patients..."
+msgstr "Buscar pacientes..."
+
+#: app/templates/calendly_review.html:128
+msgid "No patients found"
+msgstr "No se encontraron pacientes"
+
+#: app/templates/calendly_review.html:159
+msgid "Booking matched successfully!"
+msgstr "¡Reserva asignada exitosamente!"
+
+#: app/templates/calendly_review.html:160
+#: app/templates/calendly_review.html:209
+msgid "View patient profile"
+msgstr "Ver perfil del paciente"
+
+#: app/templates/calendly_review.html:180
+msgid "Error matching patient:"
+msgstr "Error al asignar paciente:"
+
+#: app/templates/calendly_review.html:186
+msgid "Create a new patient record from this booking?"
+msgstr "¿Crear un nuevo registro de paciente desde esta reserva?"
+
+#: app/templates/calendly_review.html:208
+msgid "Patient created successfully!"
+msgstr "¡Paciente creado exitosamente!"
+
+#: app/templates/calendly_review.html:229
+msgid "Error creating patient:"
+msgstr "Error al crear paciente:"
+
+#: app/templates/calendly_settings.html:7
+msgid "Manage Calendly Settings"
+msgstr "Gestionar Ajustes de Calendly"
+
+#: app/templates/calendly_settings.html:10
+msgid "Connect your Calendly account to see your personal pending bookings."
+msgstr "Conecta tu cuenta de Calendly para ver tus reservas pendientes personales."
+
+#: app/templates/calendly_settings.html:11
+msgid "You can find your API token and User URI in your"
+msgstr "Puedes encontrar tu token de API y URI de usuario en tu"
+
+#: app/templates/calendly_settings.html:11
+msgid "Calendly API & Webhooks page"
+msgstr "página de API y Webhooks de Calendly"
+
+#: app/templates/calendly_settings.html:20
+msgid "Calendly API Token"
+msgstr "Token de API de Calendly"
+
+#: app/templates/calendly_settings.html:21
+msgid "Enter your Calendly API token"
+msgstr "Ingresa tu token de API de Calendly"
+
+#: app/templates/calendly_settings.html:22
+msgid ""
+"Your token will be stored securely. Leave blank if you wish to not update"
+" or remove it."
+msgstr ""
+"Tu token se almacenará de forma segura. Déjalo en blanco si no deseas "
+"actualizarlo o eliminarlo."
+
+#: app/templates/calendly_settings.html:26
+msgid "Calendly User URI"
+msgstr "URI de Usuario de Calendly"
+
+#: app/templates/calendly_settings.html:27
+msgid "e.g., https://api.calendly.com/users/YOUR_USER_ID"
+msgstr "ej., https://api.calendly.com/users/TU_ID_DE_USUARIO"
+
+#: app/templates/calendly_settings.html:28
+msgid ""
+"This is used to identify events belonging to your Calendly account. "
+"Example:"
+msgstr ""
+"Esto se usa para identificar eventos que pertenecen a tu cuenta de "
+"Calendly. Ejemplo:"
+
+#: app/templates/calendly_settings.html:28
+msgid "Leave blank to remove."
+msgstr "Déjalo en blanco para eliminar."
+
+#: app/templates/calendly_settings.html:31
+msgid "Save Settings"
+msgstr "Guardar Ajustes"
+
+#: app/templates/edit_patient.html:4 app/templates/patient_detail.html:88
+#, fuzzy
+msgid "Edit"
+msgstr "Dedicado"
+
+#: app/templates/edit_patient.html:13
+#, fuzzy
+msgid "Edit Patient Details"
+msgstr "Portal del Paciente"
+
+#: app/templates/edit_patient.html:16
+#, fuzzy
+msgid "Back to Patient"
+msgstr "Pacientes Activos"
+
+#: app/templates/edit_patient.html:25
+#, fuzzy
+msgid "Personal Information"
+msgstr "Integración con Wearables"
+
+#: app/templates/edit_patient.html:27 app/templates/new_patient.html:18
+#, fuzzy
+msgid "Full Name"
+msgstr "Nombre"
+
+#: app/templates/edit_patient.html:37 app/templates/new_patient.html:23
+msgid "Date of Birth"
+msgstr ""
+
+#: app/templates/edit_patient.html:47 app/templates/new_patient.html:28
+msgid "Contact Information"
+msgstr ""
+
+#: app/templates/edit_patient.html:54
+msgid "Phone number or email address"
+msgstr ""
+
+#: app/templates/edit_patient.html:67
+#, fuzzy
+msgid "Treatment Completed"
+msgstr "Completado"
+
+#: app/templates/edit_patient.html:75
+#, fuzzy
+msgid "Medical Information"
+msgstr "Integración con Wearables"
+
+#: app/templates/edit_patient.html:77 app/templates/new_patient.html:33
+#: app/templates/patient_detail.html:107 app/templates/patients_list.html:100
+msgid "Diagnosis"
+msgstr "Diagnóstico"
+
+#: app/templates/edit_patient.html:87 app/templates/new_patient.html:38
+#: app/templates/patient_detail.html:117
+#, fuzzy
+msgid "Treatment Plan"
+msgstr "Tratamientos"
+
+#: app/templates/edit_patient.html:92
+msgid "Outline the proposed treatment strategy"
+msgstr ""
+
+#: app/templates/edit_patient.html:96 app/templates/new_patient.html:43
+#, fuzzy
+msgid "Additional Notes"
+msgstr "Notas Clínicas"
+
+#: app/templates/edit_patient.html:101
+msgid "Any additional information or observations"
+msgstr "Cualquier información u observación adicional"
+
+#: app/templates/edit_patient.html:109
+msgid "Patient Portal Access"
+msgstr "Acceso al Portal del Paciente"
+
+#: app/templates/edit_patient.html:110
+msgid ""
+"Manage the patient's login credentials to access their exercise "
+"prescriptions."
+msgstr ""
+"Gestiona las credenciales de acceso del paciente para acceder a sus "
+"prescripciones de ejercicios."
+
+#: app/templates/edit_patient.html:113 app/templates/new_patient.html:54
+msgid "Login Email"
+msgstr "Email de Acceso"
+
+#: app/templates/edit_patient.html:118
+msgid "Enter an email and password below to create a login."
+msgstr "Introduce un email y contraseña abajo para crear un acceso."
+
+#: app/templates/edit_patient.html:122
+msgid "New Password"
+msgstr "Nueva Contraseña"
+
+#: app/templates/edit_patient.html:124
+msgid "Leave blank to keep current password"
+msgstr "Deja en blanco para mantener la contraseña actual"
+
+#: app/templates/edit_patient.html:125
+msgid "Only enter a new password if you want to change it."
+msgstr "Solo introduce una nueva contraseña si quieres cambiarla."
+
+#: app/templates/edit_patient.html:133
+msgid "Delete Patient"
+msgstr "Eliminar Paciente"
+
+#: app/templates/edit_patient.html:140
+msgid "Save Changes"
+msgstr "Guardar Cambios"
+
+#: app/templates/edit_patient.html:155
+msgid "Confirm Delete"
+msgstr "Confirmar Eliminación"
+
+#: app/templates/edit_patient.html:159
+msgid ""
+"Are you sure you want to permanently delete this patient? This action "
+"cannot be undone."
+msgstr ""
+"¿Estás seguro de que quieres eliminar permanentemente este paciente? Esta"
+" acción no se puede deshacer."
+
+#: app/templates/edit_patient.html:165
+msgid "Yes, Delete"
+msgstr "Sí, Eliminar"
+
+#: app/templates/edit_patient.html:177
+msgid "Confirm Cancel"
+msgstr "Confirmar Cancelación"
+
+#: app/templates/edit_patient.html:181
+msgid "Are you sure you want to cancel? Any unsaved changes will be lost."
+msgstr ""
+"¿Estás seguro de que quieres cancelar? Se perderán los cambios no "
+"guardados."
+
+#: app/templates/edit_patient.html:184
+msgid "No, Continue Editing"
+msgstr "No, Continuar Editando"
+
+#: app/templates/edit_patient.html:185
+msgid "Yes, Cancel"
+msgstr "Sí, Cancelar"
+
+#: app/templates/financials.html:3 app/templates/financials.html:8
+msgid "Financial Report"
+msgstr "Informe Financiero"
+
+#: app/templates/financials.html:11
+msgid "Select Year:"
+msgstr "Seleccionar Año:"
+
+#: app/templates/financials.html:24
+msgid "Yearly Financial Summary:"
+msgstr "Resumen Financiero Anual:"
+
+#: app/templates/financials.html:31
+msgid "Metric"
+msgstr "Métrica"
+
+#: app/templates/financials.html:32
+msgid "Q1 (Jan-Mar)"
+msgstr "T1 (Ene-Mar)"
+
+#: app/templates/financials.html:33
+msgid "Q2 (Apr-Jun)"
+msgstr "T2 (Abr-Jun)"
+
+#: app/templates/financials.html:34
+msgid "Q3 (Jul-Sep)"
+msgstr "T3 (Jul-Sep)"
+
+#: app/templates/financials.html:35
+msgid "Q4 (Oct-Dec)"
+msgstr "T4 (Oct-Dic)"
+
+#: app/templates/financials.html:36
+msgid "Annual Total"
+msgstr "Total Anual"
+
+#: app/templates/index.html:125
+#, python-format
+msgid "Welcome back, %(username)s!"
+msgstr "¡Bienvenido de vuelta, %(username)s!"
+
+#: app/templates/index.html:126
+msgid "Here's an overview of your clinic's activity."
+msgstr "Aquí tienes un resumen de la actividad de tu clínica."
+
+#: app/templates/index.html:132 app/templates/pricing.html:238
+#: app/templates/pricing.html:309
+msgid "Current Plan"
+msgstr "Plan Actual"
+
+#: app/templates/index.html:135
+msgid "Ends"
+msgstr ""
+
+#: app/templates/index.html:135
+msgid "Renews"
+msgstr ""
+
+#: app/templates/index.html:137
+#, fuzzy
+msgid "Manage Plan"
+msgstr "Cambiar de Plan"
+
+#: app/templates/index.html:142
+msgid "You are currently not subscribed to a plan."
+msgstr ""
+
+#: app/templates/index.html:143 app/templates/my_account.html:127
+msgid "View Plans"
+msgstr "Ver Planes"
+
+#: app/templates/index.html:155
+msgid "Patient Capacity"
+msgstr "Capacidad de Pacientes"
+
+#: app/templates/index.html:167 app/templates/patients_list.html:43
+msgid "Limit Reached!"
+msgstr "¡Límite Alcanzado!"
+
+#: app/templates/index.html:168 app/templates/patients_list.html:44
+msgid "Upgrade"
+msgstr "Ampliar"
+
+#: app/templates/index.html:170 app/templates/patients_list.html:46
+msgid "Nearing Limit"
+msgstr "Límite Cercano"
+
+#: app/templates/index.html:178
+msgid "Unlimited Patients"
+msgstr "Pacientes Ilimitados"
+
+#: app/templates/index.html:190
+msgid "Currently under treatment"
+msgstr "Actualmente en tratamiento"
+
+#: app/templates/index.html:198
+msgid "Today's Appointments"
+msgstr "Citas de Hoy"
+
+#: app/templates/index.html:201
+msgid "Scheduled for today"
+msgstr "Programadas para hoy"
+
+#: app/templates/index.html:212
+msgid "Patients needing review"
+msgstr "Pacientes que necesitan revisión"
+
+#: app/templates/index.html:229
+msgid "Upcoming Appointments"
+msgstr "Próximas Citas"
+
+#: app/templates/index.html:230
+msgid "View All"
+msgstr "Ver Todo"
+
+#: app/templates/index.html:288
+msgid "No upcoming appointments"
+msgstr "No hay citas próximas"
+
+#: app/templates/index.html:290
+msgid "Schedule Appointment"
+msgstr "Programar Cita"
+
+#: app/templates/index.html:324
+msgid "Current Patients"
+msgstr "Pacientes Actuales"
+
+#: app/templates/index.html:325
+msgid "Remaining Capacity"
+msgstr "Capacidad Restante"
+
+#: app/templates/index.html:343
+msgid "Limit"
+msgstr "Límite"
+
+#: app/templates/index.html:343
+msgid "Over!"
+msgstr "¡Superado!"
+
+#: app/templates/index.html:444
+msgid "Error fetching results."
+msgstr ""
+
+#: app/templates/index.html:456
+#, fuzzy
+msgid "No patients found."
+msgstr "Nuevos Pacientes por Mes"
+
+#: app/templates/index.html:460
+msgid "An error occurred."
+msgstr ""
+
+#: app/templates/index.html:473
+msgid "The practitioner has not set up their Calendly link yet."
+msgstr ""
+
+#: app/templates/landing.html:145
+msgid "Free while in beta"
+msgstr "Gratis durante la beta"
+
+#: app/templates/landing.html:145
+msgid "plans from"
+msgstr "planes desde"
+
+#: app/templates/landing.html:145 app/templates/pricing.html:244
+msgid "month"
+msgstr "mes"
+
+#: app/templates/my_account.html:49
+msgid "Manage Subscription"
+msgstr "Gestionar Suscripción"
+
+#: app/templates/my_account.html:52
+msgid "Profile"
+msgstr "Perfil"
+
+#: app/templates/my_account.html:55 app/templates/my_account.html:229
+msgid "Billing History"
+msgstr "Historial de Facturación"
+
+#: app/templates/my_account.html:61
+msgid "Current Subscription"
+msgstr "Suscripción Actual"
+
+#: app/templates/my_account.html:69 app/templates/patient_detail.html:28
+msgid "Status:"
+msgstr "Estado:"
+
+#: app/templates/my_account.html:72
+msgid "Pending Cancellation"
+msgstr "Cancelación Pendiente"
+
+#: app/templates/my_account.html:76
+msgid "Trialing"
+msgstr "En Prueba"
+
+#: app/templates/my_account.html:82
+msgid "Price:"
+msgstr "Precio:"
+
+#: app/templates/my_account.html:86
+msgid "Renews/Expires on:"
+msgstr "Renueva/Expira el:"
+
+#: app/templates/my_account.html:91
+msgid "Trial Ends:"
+msgstr "La Prueba Termina:"
+
+#: app/templates/my_account.html:99 app/templates/my_account.html:115
+msgid "Your subscription for"
+msgstr "Tu suscripción para"
+
+#: app/templates/my_account.html:99
+msgid "is scheduled to cancel on"
+msgstr "está programada para cancelarse el"
+
+#: app/templates/my_account.html:100
+msgid "the end of the current period"
+msgstr "el final del período actual"
+
+#: app/templates/my_account.html:101
+msgid "You will retain access until then."
+msgstr "Conservarás el acceso hasta entonces."
+
+#: app/templates/my_account.html:106
+msgid "Change Plan"
+msgstr "Cambiar de Plan"
+
+#: app/templates/my_account.html:107
+msgid "Manage Billing Details"
+msgstr "Gestionar Detalles de Facturación"
+
+#: app/templates/my_account.html:109
+msgid "Cancel Subscription"
+msgstr "Cancelar Suscripción"
+
+#: app/templates/my_account.html:115
+msgid "is currently"
+msgstr "está actualmente"
+
+#: app/templates/my_account.html:117
+msgid "Please"
+msgstr "Por favor"
+
+#: app/templates/my_account.html:117
+msgid "update your billing information"
+msgstr "actualiza tu información de facturación"
+
+#: app/templates/my_account.html:120
+msgid "View Plans / Resubscribe"
+msgstr "Ver Planes / Resuscribirse"
+
+#: app/templates/my_account.html:126
+msgid "You do not have an active subscription."
+msgstr "No tienes una suscripción activa."
+
+#: app/templates/my_account.html:137
+msgid "Confirm Cancellation"
+msgstr "Confirmar Cancelación"
+
+#: app/templates/my_account.html:141
+msgid "Are you sure you want to cancel your"
+msgstr "¿Estás seguro de que quieres cancelar tu"
+
+#: app/templates/my_account.html:141
+msgid "current"
+msgstr "actual"
+
+#: app/templates/my_account.html:141
+msgid "subscription?"
+msgstr "suscripción?"
+
+#: app/templates/my_account.html:142
+msgid ""
+"If you cancel, your subscription will remain active until the end of your"
+" current billing period"
+msgstr ""
+"Si cancelas, tu suscripción permanecerá activa hasta el final de tu "
+"período de facturación actual"
+
+#: app/templates/my_account.html:142
+msgid "end of period"
+msgstr "final del período"
+
+#: app/templates/my_account.html:145
+msgid "Keep Subscription"
+msgstr "Mantener Suscripción"
+
+#: app/templates/my_account.html:148
+msgid "Yes, Cancel Subscription"
+msgstr "Sí, Cancelar Suscripción"
+
+#: app/templates/my_account.html:158
+msgid "User Profile"
+msgstr "Perfil de Usuario"
+
+#: app/templates/my_account.html:175
+msgid "Update Email"
+msgstr "Actualizar Email"
+
+#: app/templates/my_account.html:192
+msgid "Change Password"
+msgstr "Cambiar Contraseña"
+
+#: app/templates/my_account.html:230
+msgid "Details about past invoices and payment methods will be displayed here."
+msgstr "Aquí se mostrarán los detalles sobre facturas pasadas y métodos de pago."
+
+#: app/templates/my_account.html:231
+msgid "Manage Billing Details on Stripe"
+msgstr "Gestionar Detalles de Facturación en Stripe"
+
+#: app/templates/new_patient.html:4 app/templates/new_patient.html:12
+#, fuzzy
+msgid "New Patient"
+msgstr "Nuevos Pacientes"
+
+#: app/templates/new_patient.html:50
+#, fuzzy
+msgid "Patient Portal Access (Optional)"
+msgstr "Portal del Paciente"
+
+#: app/templates/new_patient.html:51
+msgid ""
+"Enter an email and password if you want the patient to be able to log in "
+"and view their exercise prescriptions."
+msgstr ""
+
+#: app/templates/auth/login.html:23 app/templates/new_patient.html:58
+msgid "Password"
+msgstr "Contraseña"
+
+#: app/templates/new_patient.html:59
+msgid "Set initial password"
+msgstr ""
+
+#: app/templates/new_patient.html:60
+msgid "Leave blank if login email is not provided."
+msgstr ""
+
+#: app/templates/new_patient.html:65
+#, fuzzy
+msgid "Create Patient"
+msgstr "Pacientes Activos"
+
+#: app/templates/patient_detail.html:3
+msgid "Patient Details"
+msgstr "Detalles del Paciente"
+
+#: app/templates/patient_detail.html:9
+msgid "Warning:"
+msgstr "Advertencia:"
+
+#: app/templates/patient_detail.html:9
+msgid "The 'today' variable is not defined. Some features may not work correctly."
+msgstr ""
+"La variable 'today' no está definida. Algunas funciones pueden no "
+"funcionar correctamente."
+
+#: app/templates/patient_detail.html:16
+msgid "past treatment(s) were automatically marked as completed."
+msgstr "tratamiento(s) pasado(s) fueron marcados automáticamente como completados."
+
+#: app/templates/patient_detail.html:26
+msgid "Date of Birth:"
+msgstr "Fecha de Nacimiento:"
+
+#: app/templates/patient_detail.html:26
+msgid "Not provided"
+msgstr "No proporcionado"
+
+#: app/templates/patient_detail.html:27
+msgid "Contact:"
+msgstr "Contacto:"
+
+#: app/templates/patient_detail.html:34
+msgid "Edit Patient"
+msgstr "Editar Paciente"
+
+#: app/templates/patient_detail.html:37
+msgid "Add Treatment"
+msgstr "Agregar Tratamiento"
+
+#: app/templates/patient_detail.html:40
+msgid "Add Recurring"
+msgstr "Agregar Recurrente"
+
+#: app/templates/patient_detail.html:43
+msgid "Generate AI Report"
+msgstr "Generar Informe IA"
+
+#: app/templates/patient_detail.html:46
+msgid "Generate Exercise Homework"
+msgstr "Generar Ejercicios"
+
+#: app/templates/patient_detail.html:49
+msgid "View Latest Report"
+msgstr "Ver Último Informe"
+
+#: app/templates/patient_detail.html:61
+msgid "Recurring Appointments"
+msgstr "Citas Recurrentes"
+
+#: app/templates/patient_detail.html:63
+msgid "Add Rule"
+msgstr "Agregar Regla"
+
+#: app/templates/patient_detail.html:82
+msgid "Starts:"
+msgstr "Inicia:"
+
+#: app/templates/patient_detail.html:83
+msgid "Ends:"
+msgstr "Termina:"
+
+#: app/templates/patient_detail.html:84
+msgid "Time:"
+msgstr "Hora:"
+
+#: app/templates/patient_detail.html:86
+msgid "Location:"
+msgstr "Ubicación:"
+
+#: app/templates/patient_detail.html:86
+msgid "Fee:"
+msgstr "Tarifa:"
+
+#: app/templates/patient_detail.html:89
+msgid "Are you sure you want to delete this recurring rule?"
+msgstr "¿Estás seguro de que quieres eliminar esta regla recurrente?"
+
+#: app/templates/patient_detail.html:90
+msgid "Delete"
+msgstr "Eliminar"
+
+#: app/templates/patient_detail.html:131
+msgid "Past Treatments"
+msgstr "Tratamientos Pasados"
+
+#: app/templates/patient_detail.html:133
+msgid "Add Past Treatment"
+msgstr "Agregar Tratamiento Pasado"
+
+#: app/templates/patient_detail.html:139
+msgid "Bulk Actions for Selected"
+msgstr "Acciones en Lote para Seleccionados"
+
+#: app/templates/patient_detail.html:142
+msgid "Set Location"
+msgstr "Establecer Ubicación"
+
+#: app/templates/patient_detail.html:143
+msgid "Set Loc: CostaSpine"
+msgstr "Ubicación: CostaSpine"
+
+#: app/templates/patient_detail.html:144
+msgid "Set Loc: Home Visit"
+msgstr "Ubicación: Visita a Domicilio"
+
+#: app/templates/patient_detail.html:148
+msgid "Set Payment Method"
+msgstr "Establecer Método de Pago"
+
+#: app/templates/patient_detail.html:149
+msgid "Set Pmt: Cash"
+msgstr "Pago: Efectivo"
+
+#: app/templates/patient_detail.html:150
+msgid "Set Pmt: Card"
+msgstr "Pago: Tarjeta"
+
+#: app/templates/patient_detail.html:157
+msgid "Total treatments for this patient:"
+msgstr "Total de tratamientos para este paciente:"
+
+#: app/templates/patient_detail.html:159
+msgid "Showing treatments completed on or before today"
+msgstr "Mostrando tratamientos completados en o antes de hoy"
+
+#: app/templates/patient_detail.html:171 app/templates/treatment_detail.html:22
+msgid "Pain Level"
+msgstr "Nivel de Dolor"
+
+#: app/templates/patient_detail.html:172
+msgid "Fee (€)"
+msgstr "Tarifa (€)"
+
+#: app/templates/patient_detail.html:173
+msgid "Payment"
+msgstr "Pago"
+
+#: app/templates/patients_list.html:4 app/templates/patients_list.html:11
+msgid "Patient List"
+msgstr "Lista de Pacientes"
+
+#: app/templates/patients_list.html:18
+msgid "All Status"
+msgstr "Todos los Estados"
+
+#: app/templates/patients_list.html:21
+msgid "Completed"
+msgstr "Completado"
+
+#: app/templates/patients_list.html:27
+msgid "Register New Patient"
+msgstr "Registrar Nuevo Paciente"
+
+#: app/templates/patients_list.html:38
+msgid "Patient Capacity:"
+msgstr "Capacidad de Pacientes:"
+
+#: app/templates/patients_list.html:41 app/templates/patients_list.html:51
+#: app/templates/pricing.html:253 app/templates/pricing.html:353
+msgid "patients"
+msgstr "pacientes"
+
+#: app/templates/patients_list.html:46 app/templates/patients_list.html:48
+msgid "remaining"
+msgstr "restantes"
+
+#: app/templates/patients_list.html:51 app/templates/pricing.html:253
+msgid "Unlimited"
+msgstr "Ilimitado"
+
+#: app/templates/patients_list.html:54
+msgid ""
+"If you need to add more patients beyond your current limit, please "
+"consider upgrading your plan."
+msgstr ""
+"Si necesitas añadir más pacientes más allá de tu límite actual, por favor"
+" considera ampliar tu plan."
+
+#: app/templates/patients_list.html:67
+msgid "Bulk Actions"
+msgstr "Acciones en Lote"
+
+#: app/templates/patients_list.html:71
+msgid "Mark Selected as Active"
+msgstr "Marcar Seleccionados como Activos"
+
+#: app/templates/patients_list.html:74
+msgid "Mark Selected as Inactive"
+msgstr "Marcar Seleccionados como Inactivos"
+
+#: app/templates/patients_list.html:78
+msgid "Delete Selected Patients"
+msgstr "Eliminar Pacientes Seleccionados"
+
+#: app/templates/patients_list.html:82
+msgid "Select All Pending Review"
+msgstr "Seleccionar Todos los Pendientes de Revisión"
+
+#: app/templates/patients_list.html:101
+msgid "Last Visit"
+msgstr "Última Visita"
+
+#: app/templates/patients_list.html:118
+msgid "No diagnosis"
+msgstr "Sin diagnóstico"
+
+#: app/templates/patients_list.html:123
+msgid "No visits yet"
+msgstr "Aún sin visitas"
+
+#: app/templates/patients_list.html:145
+msgid "No patients found matching your search criteria."
+msgstr "No se encontraron pacientes que coincidan con tus criterios de búsqueda."
+
+#: app/templates/patients_list.html:155
+msgid "Quick Treatment Entry"
+msgstr "Entrada Rápida de Tratamiento"
+
+#: app/templates/patients_list.html:162
+msgid "Treatment Description"
+msgstr "Descripción del Tratamiento"
+
+#: app/templates/patients_list.html:166 app/templates/treatment_detail.html:45
+msgid "Progress Notes"
+msgstr "Notas de Progreso"
+
+#: app/templates/patients_list.html:170
+msgid "Appointment Date"
+msgstr "Fecha de la Cita"
+
+#: app/templates/patients_list.html:173
+msgid "Save Treatment"
+msgstr "Guardar Tratamiento"
+
+#: app/templates/patients_list.html:347
+msgid "Please select at least one patient"
+msgstr "Por favor, selecciona al menos un paciente"
+
+#: app/templates/patients_list.html:370 app/templates/patients_list.html:405
+msgid "Error: "
+msgstr "Error: "
+
+#: app/templates/patients_list.html:378
+msgid "Please select at least one patient to delete."
+msgstr "Por favor, selecciona al menos un paciente para eliminar."
+
+#: app/templates/patients_list.html:382
+msgid "Are you sure you want to delete"
+msgstr "¿Estás seguro de que quieres eliminar"
+
+#: app/templates/patients_list.html:382
+msgid "selected patient(s)? This action cannot be undone."
+msgstr "paciente(s) seleccionado(s)? Esta acción no se puede deshacer."
+
+#: app/templates/patients_list.html:402
+msgid "Selected patients deleted successfully."
+msgstr "Pacientes seleccionados eliminados correctamente."
+
+#: app/templates/patients_list.html:405
+msgid "Could not delete selected patients."
+msgstr "No se pudieron eliminar los pacientes seleccionados."
+
+#: app/templates/patients_list.html:409
+msgid "Error during bulk delete:"
+msgstr "Error durante la eliminación en lote:"
+
+#: app/templates/patients_list.html:410
+msgid "An unexpected error occurred while deleting patients."
+msgstr "Ocurrió un error inesperado al eliminar los pacientes."
+
+#: app/templates/pricing.html:3
+msgid "Subscription Plans"
+msgstr "Planes de Suscripción"
+
+#: app/templates/pricing.html:180
+msgid "Choose Your Plan"
+msgstr "Elige tu Plan"
+
+#: app/templates/pricing.html:181
+msgid "Select a plan that best fits your needs and unlock your potential."
+msgstr ""
+"Selecciona el plan que mejor se adapte a tus necesidades y libera tu "
+"potencial."
+
+#: app/templates/pricing.html:208
+msgid "Patient Management"
+msgstr "Gestión de Pacientes"
+
+#: app/templates/pricing.html:208
+msgid "Core"
+msgstr "Básico"
+
+#: app/templates/pricing.html:208 app/templates/pricing.html:209
+#: app/templates/pricing.html:210 app/templates/pricing.html:211
+#: app/templates/pricing.html:212 app/templates/pricing.html:215
+#: app/templates/pricing.html:216
+msgid "Standard"
+msgstr "Estándar"
+
+#: app/templates/pricing.html:208 app/templates/pricing.html:209
+#: app/templates/pricing.html:210 app/templates/pricing.html:211
+#: app/templates/pricing.html:215 app/templates/pricing.html:216
+msgid "Advanced"
+msgstr "Avanzado"
+
+#: app/templates/pricing.html:209
+msgid "Scheduling"
+msgstr "Agendamiento"
+
+#: app/templates/pricing.html:209 app/templates/pricing.html:210
+#: app/templates/pricing.html:211 app/templates/pricing.html:212
+#: app/templates/pricing.html:215 app/templates/pricing.html:216
+msgid "Basic"
+msgstr "Básico"
+
+#: app/templates/pricing.html:210
+msgid "Clinical Notes"
+msgstr "Notas Clínicas"
+
+#: app/templates/pricing.html:211
+msgid "Billing"
+msgstr "Facturación"
+
+#: app/templates/pricing.html:212
+msgid "Reporting"
+msgstr "Reportes"
+
+#: app/templates/pricing.html:212
+msgid "AI-Powered"
+msgstr "Con IA"
+
+#: app/templates/pricing.html:213
+msgid "Calendly Integration"
+msgstr "Integración con Calendly"
+
+#: app/templates/pricing.html:214
+msgid "Patient Portal"
+msgstr "Portal del Paciente"
+
+#: app/templates/pricing.html:215
+msgid "Telehealth"
+msgstr "Telesalud"
+
+#: app/templates/pricing.html:217
+msgid "Multi-Practitioner Calendars"
+msgstr "Calendarios Multi-Profesional"
+
+#: app/templates/pricing.html:218
+msgid "AI Driven Insights"
+msgstr "Perspectivas con IA"
+
+#: app/templates/pricing.html:219
+msgid "Wearable Integration"
+msgstr "Integración con Wearables"
+
+#: app/templates/pricing.html:220
+msgid "Multi-Location Support"
+msgstr "Soporte Multi-Ubicación"
+
+#: app/templates/pricing.html:221
+msgid "API Access"
+msgstr "Acceso API"
+
+#: app/templates/pricing.html:222
+msgid "Custom Branding"
+msgstr "Marca Personalizada"
+
+#: app/templates/pricing.html:223 app/templates/pricing.html:304
+#: app/templates/pricing.html:357
+msgid "Support"
+msgstr "Soporte"
+
+#: app/templates/pricing.html:223
+msgid "Community"
+msgstr "Comunidad"
+
+#: app/templates/pricing.html:223
+msgid "Priority Email"
+msgstr "Correo Prioritario"
+
+#: app/templates/pricing.html:223
+msgid "Dedicated"
+msgstr "Dedicado"
+
+#: app/templates/pricing.html:253 app/templates/pricing.html:353
+msgid "Up to"
+msgstr "Hasta"
+
+#: app/templates/pricing.html:254 app/templates/pricing.html:354
+msgid "practitioner"
+msgid_plural "practitioners"
+msgstr[0] "profesional"
+msgstr[1] "profesionales"
+
+#: app/templates/pricing.html:270
+msgid "Everything in Basic, plus:"
+msgstr "Todo en Básico, más:"
+
+#: app/templates/pricing.html:287
+msgid "Everything in Standard, plus:"
+msgstr "Todo en Estándar, más:"
+
+#: app/templates/pricing.html:318
+msgid "Change to"
+msgstr "Cambiar a"
+
+#: app/templates/pricing.html:325
+msgid "Choose Plan"
+msgstr "Elegir Plan"
+
+#: app/templates/pricing.html:330
+msgid "Sign Up & Choose"
+msgstr "Registrarse y Elegir"
+
+#: app/templates/pricing.html:348
+msgid "Perfect for getting started and exploring the core features."
+msgstr "Perfecto para empezar y explorar las características principales."
+
+#: app/templates/pricing.html:364
+msgid "You are on the Free Plan"
+msgstr "Estás en el Plan Gratuito"
+
+#: app/templates/pricing.html:367 app/templates/pricing.html:370
+msgid "Get Started for Free"
+msgstr "Comienza Gratis"
+
+#: app/templates/pricing.html:380
+msgid "No subscription plans are currently available. Please check back later."
+msgstr ""
+"No hay planes de suscripción disponibles actualmente. Por favor, vuelve "
+"más tarde."
+
+#: app/templates/review_payments.html:3
+msgid "Review Incomplete Payments"
+msgstr "Revisar Pagos Incompletos"
+
+#: app/templates/review_payments.html:7
+msgid "Review Incomplete Financial Details"
+msgstr "Revisar Detalles Financieros Incompletos"
+
+#: app/templates/review_payments.html:11
+msgid "Completed Treatments Missing Fee or Payment Method"
+msgstr "Tratamientos Completados Sin Tarifa o Método de Pago"
+
+#: app/templates/review_payments.html:15
+msgid "Found"
+msgstr "Se encontraron"
+
+#: app/templates/review_payments.html:15
+msgid "completed treatment(s) with missing fee or payment method."
+msgstr "tratamiento(s) completado(s) sin tarifa o método de pago."
+
+#: app/templates/review_payments.html:20
+msgid "Patient Name"
+msgstr "Nombre del Paciente"
+
+#: app/templates/review_payments.html:21
+msgid "Treatment Date"
+msgstr "Fecha del Tratamiento"
+
+#: app/templates/review_payments.html:22
+msgid "Fee Charged"
+msgstr "Tarifa Cobrada"
+
+#: app/templates/review_payments.html:24
+msgid "Payment Method"
+msgstr "Método de Pago"
+
+#: app/templates/review_payments.html:86
+msgid "No completed treatments found with missing fees or payment methods."
+msgstr "No se encontraron tratamientos completados sin tarifas o métodos de pago."
+
+#: app/templates/treatment_detail.html:4 app/templates/treatment_detail.html:12
+#, fuzzy
+msgid "Treatment Details"
+msgstr "Detalles del Tratamiento"
+
+#: app/templates/treatment_detail.html:17
+msgid "Basic Information"
+msgstr "Información Básica"
+
+#: app/templates/treatment_detail.html:38
+msgid "Movement"
+msgstr "Movimiento"
+
+#: app/templates/treatment_detail.html:42
+msgid "Description"
+msgstr "Descripción"
+
+#: app/templates/treatment_detail.html:50
+msgid "Trigger Points Map"
+msgstr "Mapa de Puntos Gatillo"
+
+#: app/templates/treatment_detail.html:52
+msgid "Body chart"
+msgstr "Gráfico corporal"
+
+#: app/templates/treatment_detail.html:81
+msgid "Trigger Points Analysis"
+msgstr "Análisis de Puntos Gatillo"
+
+#: app/templates/treatment_detail.html:87
+msgid "Muscle"
+msgstr "Músculo"
+
+#: app/templates/treatment_detail.html:88
+msgid "Intensity"
+msgstr "Intensidad"
+
+#: app/templates/treatment_detail.html:89
+msgid "Symptoms"
+msgstr "Síntomas"
+
+#: app/templates/treatment_detail.html:90
+msgid "Referral Pattern"
+msgstr "Patrón de Referencia"
+
+#: app/templates/treatment_detail.html:134
+msgid "Evaluation Results"
+msgstr "Resultados de Evaluación"
+
+#: app/templates/treatment_detail.html:137
+msgid "Pain Characteristics"
+msgstr "Características del Dolor"
+
+#: app/templates/treatment_detail.html:145
+msgid "Muscle-Specific Symptoms"
+msgstr "Síntomas Específicos del Músculo"
+
+#: app/templates/treatment_detail.html:167
+msgid "Treatment Timeline"
+msgstr "Línea de Tiempo del Tratamiento"
+
+#: app/templates/treatment_detail.html:177
+msgid "Pain:"
+msgstr "Dolor:"
+
+#: app/templates/treatment_detail.html:181
+msgid "Current"
+msgstr "Actual"
+
+#: app/templates/auth/login.html:3
+msgid "Login"
+msgstr "Iniciar Sesión"
+
+#: app/templates/auth/login.html:13
+msgid "Sign in to your account"
+msgstr "Inicia sesión en tu cuenta"
+
+#: app/templates/auth/login.html:19
+msgid "Username"
+msgstr "Usuario"
+
+#: app/templates/auth/login.html:28
+msgid "Remember me"
+msgstr "Recuérdame"
+
+#: app/templates/auth/login.html:31
+msgid "Sign In"
+msgstr "Iniciar Sesión"
+
+#: venv/lib/python3.9/site-packages/click/_termui_impl.py:556
+#, python-brace-format
+msgid "{editor}: Editing failed"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/_termui_impl.py:560
+#, python-brace-format
+msgid "{editor}: Editing failed: {e}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:1124
+msgid "Aborted!"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:1349
+#: venv/lib/python3.9/site-packages/click/core.py:1379
+#, python-brace-format
+msgid "(Deprecated) {text}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:1396
+msgid "Options"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:1422
+#, python-brace-format
+msgid "Got unexpected extra argument ({args})"
+msgid_plural "Got unexpected extra arguments ({args})"
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:1438
+#, python-brace-format
+msgid "DeprecationWarning: The command {name!r} is deprecated."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:1645
+msgid "Commands"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:1677
+msgid "Missing command."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:1755
+#, python-brace-format
+msgid "No such command {name!r}."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:2313
+msgid "Value must be an iterable."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:2334
+#, python-brace-format
+msgid "Takes {nargs} values but 1 was given."
+msgid_plural "Takes {nargs} values but {len} were given."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:2783
+#, python-brace-format
+msgid "env var: {var}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:2813
+msgid "(dynamic)"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:2828
+#, python-brace-format
+msgid "default: {default}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/core.py:2841
+msgid "required"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/decorators.py:457
+#, python-format
+msgid "%(prog)s, version %(version)s"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/decorators.py:520
+msgid "Show the version and exit."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/decorators.py:541
+msgid "Show this message and exit."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/exceptions.py:49
+#: venv/lib/python3.9/site-packages/click/exceptions.py:88
+#, python-brace-format
+msgid "Error: {message}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/exceptions.py:80
+#, python-brace-format
+msgid "Try '{command} {option}' for help."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/exceptions.py:129
+#, python-brace-format
+msgid "Invalid value: {message}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/exceptions.py:131
+#, python-brace-format
+msgid "Invalid value for {param_hint}: {message}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/exceptions.py:187
+msgid "Missing argument"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/exceptions.py:189
+msgid "Missing option"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/exceptions.py:191
+msgid "Missing parameter"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/exceptions.py:193
+#, python-brace-format
+msgid "Missing {param_type}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/exceptions.py:200
+#, python-brace-format
+msgid "Missing parameter: {param_name}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/exceptions.py:220
+#, python-brace-format
+msgid "No such option: {name}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/exceptions.py:232
+#, python-brace-format
+msgid "Did you mean {possibility}?"
+msgid_plural "(Possible options: {possibilities})"
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.9/site-packages/click/exceptions.py:270
+msgid "unknown error"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/exceptions.py:277
+#, python-brace-format
+msgid "Could not open file {filename!r}: {message}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/parser.py:233
+#, python-brace-format
+msgid "Argument {name!r} takes {nargs} values."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/parser.py:415
+#, python-brace-format
+msgid "Option {name!r} does not take a value."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/parser.py:476
+#, python-brace-format
+msgid "Option {name!r} requires an argument."
+msgid_plural "Option {name!r} requires {nargs} arguments."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.9/site-packages/click/shell_completion.py:326
+msgid "Shell completion is not supported for Bash versions older than 4.4."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/shell_completion.py:333
+msgid "Couldn't detect Bash version, shell completion is not supported."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/termui.py:158
+msgid "Repeat for confirmation"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/termui.py:174
+msgid "Error: The value you entered was invalid."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/termui.py:176
+#, python-brace-format
+msgid "Error: {e.message}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/termui.py:187
+msgid "Error: The two entered values do not match."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/termui.py:243
+msgid "Error: invalid input"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/termui.py:773
+msgid "Press any key to continue..."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:267
+#, python-brace-format
+msgid ""
+"Choose from:\n"
+"\t{choices}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:299
+#, python-brace-format
+msgid "{value!r} is not {choice}."
+msgid_plural "{value!r} is not one of {choices}."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:393
+#, python-brace-format
+msgid "{value!r} does not match the format {format}."
+msgid_plural "{value!r} does not match the formats {formats}."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:415
+#, python-brace-format
+msgid "{value!r} is not a valid {number_type}."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:471
+#, python-brace-format
+msgid "{value} is not in the range {range}."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:612
+#, python-brace-format
+msgid "{value!r} is not a valid boolean."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:636
+#, python-brace-format
+msgid "{value!r} is not a valid UUID."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:826
+msgid "file"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:828
+msgid "directory"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:830
+msgid "path"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:881
+#, python-brace-format
+msgid "{name} {filename!r} does not exist."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:890
+#, python-brace-format
+msgid "{name} {filename!r} is a file."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:898
+#, python-brace-format
+msgid "{name} {filename!r} is a directory."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:907
+#, python-brace-format
+msgid "{name} {filename!r} is not readable."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:916
+#, python-brace-format
+msgid "{name} {filename!r} is not writable."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:925
+#, python-brace-format
+msgid "{name} {filename!r} is not executable."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/click/types.py:992
+#, python-brace-format
+msgid "{len_type} values are required, but {len_value} was given."
+msgid_plural "{len_type} values are required, but {len_value} were given."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.9/site-packages/flask_wtf/file.py:55
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:293
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:323
+msgid "This field is required."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/flask_wtf/file.py:94
+#, python-brace-format
+msgid "File does not have an approved extension: {extensions}"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/flask_wtf/file.py:101
+msgid "File does not have an approved extension."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:86
+#, python-format
+msgid "Invalid field name '%s'."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:99
+#, python-format
+msgid "Field must be equal to %(other_name)s."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:146
+#, python-format
+msgid "Field must be at least %(min)d character long."
+msgid_plural "Field must be at least %(min)d characters long."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:152
+#, python-format
+msgid "Field cannot be longer than %(max)d character."
+msgid_plural "Field cannot be longer than %(max)d characters."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:158
+#, python-format
+msgid "Field must be exactly %(max)d character long."
+msgid_plural "Field must be exactly %(max)d characters long."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:164
+#, python-format
+msgid "Field must be between %(min)d and %(max)d characters long."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:216
+#, python-format
+msgid "Number must be at least %(min)s."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:219
+#, python-format
+msgid "Number must be at most %(max)s."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:222
+#, python-format
+msgid "Number must be between %(min)s and %(max)s."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:358
+msgid "Invalid input."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:422
+msgid "Invalid email address."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:460
+msgid "Invalid IP address."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:503
+msgid "Invalid Mac address."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:540
+msgid "Invalid URL."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:561
+msgid "Invalid UUID."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:595
+#, python-format
+msgid "Invalid value, must be one of: %(values)s."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:631
+#, python-format
+msgid "Invalid value, can't be any of: %(values)s."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:700
+msgid "This field cannot be edited."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/validators.py:716
+msgid "This field is disabled and cannot have a value."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/csrf/core.py:96
+msgid "Invalid CSRF Token."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/csrf/session.py:64
+msgid "CSRF token missing."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/csrf/session.py:72
+msgid "CSRF failed."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/csrf/session.py:77
+msgid "CSRF token expired."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:142
+msgid "Invalid Choice: could not coerce."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:149
+#: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:203
+msgid "Choices cannot be None."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:155
+msgid "Not a valid choice."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:194
+msgid "Invalid choice(s): one or more data inputs could not be coerced."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:212
+#, python-format
+msgid "'%(value)s' is not a valid choice for this field."
+msgid_plural "'%(value)s' are not valid choices for this field."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.9/site-packages/wtforms/fields/datetime.py:52
+msgid "Not a valid datetime value."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/fields/datetime.py:78
+msgid "Not a valid date value."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/fields/datetime.py:104
+msgid "Not a valid time value."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/fields/datetime.py:149
+msgid "Not a valid week value."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/fields/numeric.py:82
+#: venv/lib/python3.9/site-packages/wtforms/fields/numeric.py:92
+msgid "Not a valid integer value."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/fields/numeric.py:168
+msgid "Not a valid decimal value."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/wtforms/fields/numeric.py:197
+msgid "Not a valid float value."
+msgstr ""
+

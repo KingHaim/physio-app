@@ -30,6 +30,13 @@ LOCAL_TZ = pytz.timezone('Europe/Madrid') # <<< Replace with your actual local t
 
 main = Blueprint('main', __name__)
 
+# Route to change application language
+@main.route('/set_language/<lang_code>')
+def set_language(lang_code):
+    if lang_code in current_app.config.get('BABEL_SUPPORTED_LOCALES', []):
+        session['lang'] = lang_code
+    return redirect(request.referrer or url_for('main.index'))
+
 # --- Role Checking Decorator ---
 def physio_required(f):
     @functools.wraps(f)

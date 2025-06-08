@@ -1,7 +1,7 @@
 <!-- app/templates/appointments.html -->
 {% extends "base.html" %}
 
-{% block title %}Appointments{% endblock %}
+{% block title %}{{ _('Appointments') }}{% endblock %}
 
 {% block styles %}
 {{ super() }}
@@ -62,47 +62,47 @@
 <div class="container-fluid py-4" data-calendly-sync-enabled="{{ calendly_sync_enabled|tojson }}">
     <!-- Page Header -->
     <div class="page-header d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="bi bi-calendar-week me-2"></i>Appointments</h1>
+        <h1><i class="bi bi-calendar-week me-2"></i>{{ _('Appointments') }}</h1>
         <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#newAppointmentModal">
-            <i class="bi bi-plus-circle"></i> New Appointment
+            <i class="bi bi-plus-circle"></i> {{ _('New Appointment') }}
         </button>
     </div>
 
     <!-- Controls Card: Date Filter and View Toggle -->
     <div class="card controls-card mb-4">
         <div class="card-header">
-            <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>Controls</h5>
+            <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>{{ _('Controls') }}</h5>
         </div>
         <div class="card-body">
             <div class="control-group date-range-group">
-                <label class="form-label" for="startDate">Date Range</label>
+                <label class="form-label" for="startDate">{{ _('Date Range') }}</label>
                 <div class="input-group">
                     <input type="date" class="form-control" id="startDate" 
                            value="{{ start_date }}" name="start_date">
-                    <span class="input-group-text">to</span>
+                    <span class="input-group-text">{{ _('to') }}</span>
                     <input type="date" class="form-control" id="endDate" 
                            value="{{ end_date }}" name="end_date">
                     <button class="btn btn-primary" id="filterDates">
-                        <i class="bi bi-funnel"></i> Filter
+                        <i class="bi bi-funnel"></i> {{ _('Filter') }}
                     </button>
                 </div>
             </div>
             <div class="control-group quick-filters-group">
-                <label class="form-label">Quick Filters</label>
+                <label class="form-label">{{ _('Quick Filters') }}</label>
                 <div class="btn-group">
-                    <button class="btn btn-outline-secondary" data-period="today">Today</button>
-                    <button class="btn btn-outline-secondary" data-period="week">This Week</button>
-                    <button class="btn btn-outline-secondary" data-period="month">This Month</button>
+                    <button class="btn btn-outline-secondary" data-period="today">{{ _('Today') }}</button>
+                    <button class="btn btn-outline-secondary" data-period="week">{{ _('This Week') }}</button>
+                    <button class="btn btn-outline-secondary" data-period="month">{{ _('This Month') }}</button>
                 </div>
             </div>
             <div class="control-group view-mode-group">
-                <label class="form-label">View Mode</label>
+                <label class="form-label">{{ _('View Mode') }}</label>
                 <div class="btn-group w-100">
                     <button class="btn btn-outline-primary active" data-view="list">
-                        <i class="bi bi-list-ul"></i> List
+                        <i class="bi bi-list-ul"></i> {{ _('List') }}
                     </button>
                     <button class="btn btn-outline-primary" data-view="calendar">
-                        <i class="bi bi-calendar3"></i> Calendar
+                        <i class="bi bi-calendar3"></i> {{ _('Calendar') }}
                     </button>
                 </div>
             </div>
@@ -114,10 +114,10 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Schedule with Calendly</h5>
+                    <h5 class="mb-0">{{ _('Schedule with Calendly') }}</h5>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="showCalendlyToggle">
-                        <label class="form-check-label" for="showCalendlyToggle">Show Calendly</label>
+                        <label class="form-check-label" for="showCalendlyToggle">{{ _('Show Calendly') }}</label>
                     </div>
                 </div>
                 <div class="card-body">
@@ -138,13 +138,13 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Time</th>
-                            <th>Patient</th>
-                            <th>Type</th>
-                            <th>Duration</th>
-                            <th>Status</th>
-                            <th>Notes</th>
-                            <th>Actions</th>
+                            <th>{{ _('Time') }}</th>
+                            <th>{{ _('Patient') }}</th>
+                            <th>{{ _('Type') }}</th>
+                            <th>{{ _('Duration') }}</th>
+                            <th>{{ _('Status') }}</th>
+                            <th>{{ _('Notes') }}</th>
+                            <th>{{ _('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -208,51 +208,51 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Schedule New Appointment</h5>
+                <h5 class="modal-title">{{ _('Schedule New Appointment') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="appointmentForm" method="POST">
                     {{ csrf_token() }}
                     <div class="mb-3">
-                        <label class="form-label">Patient</label>
+                        <label class="form-label">{{ _('Patient') }}</label>
                         <select class="form-select" name="patient_id" required>
-                            <option value="">Select Patient</option>
+                            <option value="">{{ _('Select Patient') }}</option>
                             {% for patient in patients %}
                                 <option value="{{ patient.id }}">{{ patient.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Date & Time</label>
+                        <label class="form-label">{{ _('Date & Time') }}</label>
                         <input type="datetime-local" class="form-control" name="appointment_datetime" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Type</label>
+                        <label class="form-label">{{ _('Type') }}</label>
                         <select class="form-select" name="appointment_type" required>
-                            <option value="Initial Assessment">Initial Assessment</option>
-                            <option value="Follow-up">Follow-up</option>
-                            <option value="Treatment">Treatment</option>
-                            <option value="Review">Review</option>
+                            <option value="Initial Assessment">{{ _('Initial Assessment') }}</option>
+                            <option value="Follow-up">{{ _('Follow-up') }}</option>
+                            <option value="Treatment">{{ _('Treatment') }}</option>
+                            <option value="Review">{{ _('Review') }}</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Duration</label>
+                        <label class="form-label">{{ _('Duration') }}</label>
                         <select class="form-select" name="duration" required>
-                            <option value="30">30 minutes</option>
-                            <option value="45">45 minutes</option>
-                            <option value="60">1 hour</option>
+                            <option value="30">{{ _('30 minutes') }}</option>
+                            <option value="45">{{ _('45 minutes') }}</option>
+                            <option value="60">{{ _('1 hour') }}</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Notes</label>
+                        <label class="form-label">{{ _('Notes') }}</label>
                         <textarea class="form-control" name="notes" rows="3"></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" form="appointmentForm" class="btn btn-primary">Schedule</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                <button type="submit" form="appointmentForm" class="btn btn-primary">{{ _('Schedule') }}</button>
             </div>
         </div>
     </div>

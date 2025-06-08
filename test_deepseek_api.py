@@ -3,10 +3,19 @@ import os
 import requests
 import json
 import sys
+import pytest
 from dotenv import load_dotenv
+import pytest
 
-def test_api_key(api_key, verbose=True):
+@pytest.fixture
+def api_key():
+    return os.environ.get('DEEPSEEK_API_KEY', '')
+
+def run_api_key_test(api_key, verbose=True):
     """Test if a DeepSeek API key is valid by making a simple request."""
+
+    if not api_key:
+        pytest.skip("DEEPSEEK_API_KEY not provided")
     
     # Define possible API endpoints to try
     api_endpoints = [
@@ -111,7 +120,7 @@ def main():
         return
     
     print(f"Testing DeepSeek API connection with key: {api_key[:8]}...")
-    success, endpoint = test_api_key(api_key)
+    success, endpoint = run_api_key_test(api_key)
     
     if success:
         print(f"\nAPI key is valid! Use this endpoint: {endpoint}")
@@ -126,5 +135,13 @@ def main():
         print("3. Verify you're using the correct API endpoint for your account")
         print("4. Try generating a new API key from your DeepSeek account")
 
+load_dotenv()
+DEEPSEEK_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+
+@pytest.mark.skipif(not DEEPSEEK_KEY, reason="DEEPSEEK_API_KEY not provided")
+def test_api_key():
+    success, _ = run_api_key_test(DEEPSEEK_KEY, verbose=False)
+    assert success, "DeepSeek API key validation failed"
+
 if __name__ == "__main__":
-    main() 
+    main()
