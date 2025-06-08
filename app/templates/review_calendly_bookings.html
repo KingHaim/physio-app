@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}Calendly Bookings{% endblock %}
+{% block title %}{{ _('Calendly Bookings') }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-3">
     <!-- Header with sync button -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0"><i class="bi bi-calendar-check"></i> Calendly Bookings</h1>
+        <h1 class="h3 mb-0"><i class="bi bi-calendar-check"></i> {{ _('Calendly Bookings') }}</h1>
         {# Conditionally render the sync button based on calendly_configured_for_user #}
         {% if calendly_configured_for_user %}
             <button id="syncCalendlyBtn" class="btn btn-primary">
-                <i class="bi bi-arrow-repeat"></i> Sync Calendly Data
+                <i class="bi bi-arrow-repeat"></i> {{ _('Sync Calendly Data') }}
             </button>
         {% else %}
-            <button class="btn btn-secondary" disabled title="Please configure your Calendly API token and User URI in settings to enable sync.">
-                <i class="bi bi-arrow-repeat"></i> Sync Calendly Data (Configure Settings)
+            <button class="btn btn-secondary" disabled title="{{ _('Please configure your Calendly API token and User URI in settings to enable sync.') }}">
+                <i class="bi bi-arrow-repeat"></i> {{ _('Sync Calendly Data (Configure Settings)') }}
             </button>
         {% endif %}
     </div>
@@ -22,7 +22,7 @@
     <!-- Unmatched bookings section -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white border-0">
-            <h5 class="mb-0"><i class="bi bi-question-circle"></i> Unmatched Bookings</h5>
+            <h5 class="mb-0"><i class="bi bi-question-circle"></i> {{ _('Unmatched Bookings') }}</h5>
         </div>
         <div class="card-body p-0">
             {% if unmatched_bookings %}
@@ -30,11 +30,11 @@
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Appointment Time</th>
-                            <th class="text-end">Actions</th>
+                            <th>{{ _('Name') }}</th>
+                            <th>{{ _('Email') }}</th>
+                            <th>{{ _('Phone') }}</th>
+                            <th>{{ _('Appointment Time') }}</th>
+                            <th class="text-end">{{ _('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -48,12 +48,12 @@
                                 <div class="btn-group">
                                     <a href="{{ url_for('main.match_booking_to_patient', booking_id=booking.id) }}" 
                                        class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-link"></i> Match to Patient
+                                        <i class="bi bi-link"></i> {{ _('Match to Patient') }}
                                     </a>
                                     <form method="POST" action="{{ url_for('main.create_patient_from_booking', booking_id=booking.id) }}" style="display: inline;">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Create New Patient from this Booking">
-                                            <i class="bi bi-person-plus"></i> Create Patient
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="{{ _('Create New Patient from this Booking') }}">
+                                            <i class="bi bi-person-plus"></i> {{ _('Create Patient') }}
                                         </button>
                                     </form>
                                 </div>
@@ -66,7 +66,7 @@
             {% else %}
             <div class="text-center py-5">
                 <i class="bi bi-calendar-check text-muted" style="font-size: 2rem;"></i>
-                <p class="text-muted mt-2">No unmatched Calendly bookings</p>
+                <p class="text-muted mt-2">{{ _('No unmatched Calendly bookings') }}</p>
             </div>
             {% endif %}
         </div>
@@ -75,7 +75,7 @@
     <!-- Recent matched bookings section -->
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-0">
-            <h5 class="mb-0"><i class="bi bi-check-circle"></i> Recently Matched Bookings</h5>
+            <h5 class="mb-0"><i class="bi bi-check-circle"></i> {{ _('Recently Matched Bookings') }}</h5>
         </div>
         <div class="card-body p-0">
             {% if recent_matched_appointments %}
@@ -83,10 +83,10 @@
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Patient</th>
-                            <th>Appointment Time</th>
-                            <th>Status</th>
-                            <th class="text-end">Actions</th>
+                            <th>{{ _('Patient') }}</th>
+                            <th>{{ _('Appointment Time') }}</th>
+                            <th>{{ _('Status') }}</th>
+                            <th class="text-end">{{ _('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -122,7 +122,7 @@
             {% else %}
             <div class="text-center py-5">
                 <i class="bi bi-calendar-check text-muted" style="font-size: 2rem;"></i>
-                <p class="text-muted mt-2">No recently matched bookings</p>
+                <p class="text-muted mt-2">{{ _('No recently matched bookings') }}</p>
             </div>
             {% endif %}
         </div>
@@ -135,7 +135,7 @@
         const button = this;
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Syncing...';
+        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> {{ _("Syncing...") }}';
         
         // Call the API endpoint to sync Calendly events
         fetch('/api/sync-calendly-events')

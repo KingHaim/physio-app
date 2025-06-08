@@ -171,7 +171,9 @@ def get_locale_display_name(locale_identifier):
     # Simple mapping for the languages you use
     display_names = {
         'en': 'English',
-        'es': 'Español'
+        'es': 'Español',
+        'fr': 'Français',
+        'it': 'Italiano'
     }
     return display_names.get(str(locale_identifier), str(locale_identifier))
 # ---------------------------------------------------------

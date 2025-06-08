@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-06-08 15:33+0200\n"
+"POT-Creation-Date: 2025-06-08 19:23+0200\n"
 "PO-Revision-Date: 2025-06-07 13:26+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -296,6 +296,7 @@ msgstr ""
 
 #: app/templates/appointments.html:142 app/templates/appointments.html:218
 #: app/templates/calendar.html:57 app/templates/index.html:239
+#: app/templates/review_calendly_bookings.html:86
 msgid "Patient"
 msgstr ""
 
@@ -311,6 +312,7 @@ msgstr ""
 #: app/templates/appointments.html:145 app/templates/edit_patient.html:58
 #: app/templates/index.html:133 app/templates/patient_detail.html:170
 #: app/templates/patients_list.html:102
+#: app/templates/review_calendly_bookings.html:88
 msgid "Status"
 msgstr ""
 
@@ -320,6 +322,8 @@ msgstr ""
 
 #: app/templates/appointments.html:147 app/templates/calendly_review.html:25
 #: app/templates/index.html:242 app/templates/patient_detail.html:174
+#: app/templates/review_calendly_bookings.html:37
+#: app/templates/review_calendly_bookings.html:89
 #: app/templates/review_payments.html:25
 msgid "Actions"
 msgstr ""
@@ -483,11 +487,13 @@ msgid "Unmatched Calendly Bookings"
 msgstr ""
 
 #: app/templates/calendly_review.html:21 app/templates/patients_list.html:99
+#: app/templates/review_calendly_bookings.html:33
 #, fuzzy
 msgid "Name"
 msgstr "Username"
 
 #: app/templates/calendly_review.html:22 app/templates/pricing.html:223
+#: app/templates/review_calendly_bookings.html:34
 msgid "Email"
 msgstr ""
 
@@ -500,6 +506,7 @@ msgid "Date/Time"
 msgstr ""
 
 #: app/templates/calendly_review.html:38
+#: app/templates/review_calendly_bookings.html:51
 msgid "Match to Patient"
 msgstr ""
 
@@ -521,6 +528,10 @@ msgstr ""
 
 #: app/templates/calendly_review.html:72 app/templates/patients_list.html:14
 msgid "Search patients..."
+msgstr ""
+
+#: app/templates/calendly_review.html:120
+msgid "No contact info"
 msgstr ""
 
 #: app/templates/calendly_review.html:128
@@ -1072,6 +1083,7 @@ msgid "Leave blank if login email is not provided."
 msgstr ""
 
 #: app/templates/new_patient.html:65
+#: app/templates/review_calendly_bookings.html:56
 msgid "Create Patient"
 msgstr ""
 
@@ -1506,6 +1518,58 @@ msgstr ""
 
 #: app/templates/pricing.html:380
 msgid "No subscription plans are currently available. Please check back later."
+msgstr ""
+
+#: app/templates/review_calendly_bookings.html:3
+#: app/templates/review_calendly_bookings.html:9
+msgid "Calendly Bookings"
+msgstr ""
+
+#: app/templates/review_calendly_bookings.html:13
+msgid "Sync Calendly Data"
+msgstr ""
+
+#: app/templates/review_calendly_bookings.html:16
+msgid ""
+"Please configure your Calendly API token and User URI in settings to "
+"enable sync."
+msgstr ""
+
+#: app/templates/review_calendly_bookings.html:17
+msgid "Sync Calendly Data (Configure Settings)"
+msgstr ""
+
+#: app/templates/review_calendly_bookings.html:25
+msgid "Unmatched Bookings"
+msgstr ""
+
+#: app/templates/review_calendly_bookings.html:35
+msgid "Phone"
+msgstr ""
+
+#: app/templates/review_calendly_bookings.html:36
+#: app/templates/review_calendly_bookings.html:87
+msgid "Appointment Time"
+msgstr ""
+
+#: app/templates/review_calendly_bookings.html:55
+msgid "Create New Patient from this Booking"
+msgstr ""
+
+#: app/templates/review_calendly_bookings.html:69
+msgid "No unmatched Calendly bookings"
+msgstr ""
+
+#: app/templates/review_calendly_bookings.html:78
+msgid "Recently Matched Bookings"
+msgstr ""
+
+#: app/templates/review_calendly_bookings.html:125
+msgid "No recently matched bookings"
+msgstr ""
+
+#: app/templates/review_calendly_bookings.html:138
+msgid "Syncing..."
 msgstr ""
 
 #: app/templates/review_payments.html:3

@@ -117,7 +117,7 @@
                 patients.forEach(patient => {
                     const item = document.createElement('a');
                     item.className = 'list-group-item list-group-item-action';
-                    item.innerHTML = `<strong>${patient.name}</strong> - ${patient.contact || 'No contact info'}`;
+                    item.innerHTML = `<strong>${patient.name}</strong> - ${patient.contact || '{{ _("No contact info") }}'}`;
                     item.onclick = function() {
                         matchPatient(document.getElementById('bookingId').value, patient.id);
                     };

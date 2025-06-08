@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-06-08 15:33+0200\n"
+"POT-Creation-Date: 2025-06-08 19:23+0200\n"
 "PO-Revision-Date: 2025-06-07 19:15+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -134,9 +134,9 @@ msgid "Using DeepSeek AI based on current practice data."
 msgstr "Usando DeepSeek AI basado en los datos actuales de la clínica."
 
 #: app/templates/analytics.html:229
-#, fuzzy, python-format
+#, python-format
 msgid "CostaSpine Fee Breakdown (30%%)"
-msgstr "Desglose de Tarifas de CostaSpine (30%)"
+msgstr "Desglose de Tarifas de CostaSpine (30%%)"
 
 #: app/templates/analytics.html:230 app/templates/analytics.html:257
 #: app/templates/analytics.html:269 app/templates/analytics.html:275
@@ -226,7 +226,7 @@ msgstr "Inactivo"
 
 #: app/templates/analytics.html:677
 msgid "No data"
-msgstr ""
+msgstr "Sin datos"
 
 #: app/templates/appointments.html:4 app/templates/appointments.html:65
 #: app/templates/base.html:452 app/templates/index.html:381
@@ -298,6 +298,7 @@ msgstr "Hora"
 
 #: app/templates/appointments.html:142 app/templates/appointments.html:218
 #: app/templates/calendar.html:57 app/templates/index.html:239
+#: app/templates/review_calendly_bookings.html:86
 msgid "Patient"
 msgstr "Paciente"
 
@@ -313,6 +314,7 @@ msgstr "Duración"
 #: app/templates/appointments.html:145 app/templates/edit_patient.html:58
 #: app/templates/index.html:133 app/templates/patient_detail.html:170
 #: app/templates/patients_list.html:102
+#: app/templates/review_calendly_bookings.html:88
 msgid "Status"
 msgstr "Estado"
 
@@ -322,6 +324,8 @@ msgstr "Notas"
 
 #: app/templates/appointments.html:147 app/templates/calendly_review.html:25
 #: app/templates/index.html:242 app/templates/patient_detail.html:174
+#: app/templates/review_calendly_bookings.html:37
+#: app/templates/review_calendly_bookings.html:89
 #: app/templates/review_payments.html:25
 msgid "Actions"
 msgstr "Acciones"
@@ -472,9 +476,8 @@ msgid "Notes (Optional)"
 msgstr "Notas (Opcional)"
 
 #: app/templates/calendar.html:97
-#, fuzzy
 msgid "Create Appointment"
-msgstr "Programar Cita"
+msgstr "Crear Cita"
 
 #: app/templates/calendly_review.html:3 app/templates/calendly_review.html:8
 msgid "Review Calendly Bookings"
@@ -485,10 +488,12 @@ msgid "Unmatched Calendly Bookings"
 msgstr "Reservas de Calendly Sin Asignar"
 
 #: app/templates/calendly_review.html:21 app/templates/patients_list.html:99
+#: app/templates/review_calendly_bookings.html:33
 msgid "Name"
 msgstr "Nombre"
 
 #: app/templates/calendly_review.html:22 app/templates/pricing.html:223
+#: app/templates/review_calendly_bookings.html:34
 msgid "Email"
 msgstr "Correo Electrónico"
 
@@ -501,6 +506,7 @@ msgid "Date/Time"
 msgstr "Fecha/Hora"
 
 #: app/templates/calendly_review.html:38
+#: app/templates/review_calendly_bookings.html:51
 msgid "Match to Patient"
 msgstr "Asignar a Paciente"
 
@@ -523,6 +529,10 @@ msgstr "Selecciona un paciente existente para asignar con"
 #: app/templates/calendly_review.html:72 app/templates/patients_list.html:14
 msgid "Search patients..."
 msgstr "Buscar pacientes..."
+
+#: app/templates/calendly_review.html:120
+msgid "No contact info"
+msgstr "Sin información de contacto"
 
 #: app/templates/calendly_review.html:128
 msgid "No patients found"
@@ -610,51 +620,44 @@ msgid "Save Settings"
 msgstr "Guardar Ajustes"
 
 #: app/templates/edit_patient.html:4 app/templates/patient_detail.html:88
-#, fuzzy
 msgid "Edit"
-msgstr "Dedicado"
+msgstr "Editar"
 
 #: app/templates/edit_patient.html:13
-#, fuzzy
 msgid "Edit Patient Details"
-msgstr "Portal del Paciente"
+msgstr "Editar Detalles del Paciente"
 
 #: app/templates/edit_patient.html:16
-#, fuzzy
 msgid "Back to Patient"
-msgstr "Pacientes Activos"
+msgstr "Volver al Paciente"
 
 #: app/templates/edit_patient.html:25
-#, fuzzy
 msgid "Personal Information"
-msgstr "Integración con Wearables"
+msgstr "Información Personal"
 
 #: app/templates/edit_patient.html:27 app/templates/new_patient.html:18
-#, fuzzy
 msgid "Full Name"
-msgstr "Nombre"
+msgstr "Nombre Completo"
 
 #: app/templates/edit_patient.html:37 app/templates/new_patient.html:23
 msgid "Date of Birth"
-msgstr ""
+msgstr "Fecha de Nacimiento"
 
 #: app/templates/edit_patient.html:47 app/templates/new_patient.html:28
 msgid "Contact Information"
-msgstr ""
+msgstr "Información de Contacto"
 
 #: app/templates/edit_patient.html:54
 msgid "Phone number or email address"
-msgstr ""
+msgstr "Número de teléfono o dirección de correo electrónico"
 
 #: app/templates/edit_patient.html:67
-#, fuzzy
 msgid "Treatment Completed"
-msgstr "Completado"
+msgstr "Tratamiento Completado"
 
 #: app/templates/edit_patient.html:75
-#, fuzzy
 msgid "Medical Information"
-msgstr "Integración con Wearables"
+msgstr "Información Médica"
 
 #: app/templates/edit_patient.html:77 app/templates/new_patient.html:33
 #: app/templates/patient_detail.html:107 app/templates/patients_list.html:100
@@ -663,18 +666,16 @@ msgstr "Diagnóstico"
 
 #: app/templates/edit_patient.html:87 app/templates/new_patient.html:38
 #: app/templates/patient_detail.html:117
-#, fuzzy
 msgid "Treatment Plan"
-msgstr "Tratamientos"
+msgstr "Plan de Tratamiento"
 
 #: app/templates/edit_patient.html:92
 msgid "Outline the proposed treatment strategy"
-msgstr ""
+msgstr "Describir la estrategia de tratamiento propuesta"
 
 #: app/templates/edit_patient.html:96 app/templates/new_patient.html:43
-#, fuzzy
 msgid "Additional Notes"
-msgstr "Notas Clínicas"
+msgstr "Notas Adicionales"
 
 #: app/templates/edit_patient.html:101
 msgid "Any additional information or observations"
@@ -813,13 +814,12 @@ msgid "Renews"
 msgstr ""
 
 #: app/templates/index.html:137
-#, fuzzy
 msgid "Manage Plan"
-msgstr "Cambiar de Plan"
+msgstr "Gestionar Plan"
 
 #: app/templates/index.html:142
 msgid "You are currently not subscribed to a plan."
-msgstr ""
+msgstr "Actualmente no estás suscrito a un plan."
 
 #: app/templates/index.html:143 app/templates/my_account.html:127
 msgid "View Plans"
@@ -895,20 +895,19 @@ msgstr "¡Superado!"
 
 #: app/templates/index.html:444
 msgid "Error fetching results."
-msgstr ""
+msgstr "Error al obtener resultados."
 
 #: app/templates/index.html:456
-#, fuzzy
 msgid "No patients found."
-msgstr "Nuevos Pacientes por Mes"
+msgstr "No se encontraron pacientes."
 
 #: app/templates/index.html:460
 msgid "An error occurred."
-msgstr ""
+msgstr "Ocurrió un error."
 
 #: app/templates/index.html:473
 msgid "The practitioner has not set up their Calendly link yet."
-msgstr ""
+msgstr "El profesional aún no ha configurado su enlace de Calendly."
 
 #: app/templates/landing.html:145
 msgid "Free while in beta"
@@ -1067,20 +1066,20 @@ msgid "Manage Billing Details on Stripe"
 msgstr "Gestionar Detalles de Facturación en Stripe"
 
 #: app/templates/new_patient.html:4 app/templates/new_patient.html:12
-#, fuzzy
 msgid "New Patient"
-msgstr "Nuevos Pacientes"
+msgstr "Nuevo Paciente"
 
 #: app/templates/new_patient.html:50
-#, fuzzy
 msgid "Patient Portal Access (Optional)"
-msgstr "Portal del Paciente"
+msgstr "Acceso al Portal del Paciente (Opcional)"
 
 #: app/templates/new_patient.html:51
 msgid ""
 "Enter an email and password if you want the patient to be able to log in "
 "and view their exercise prescriptions."
 msgstr ""
+"Introduce un email y contraseña si quieres que el paciente pueda iniciar "
+"sesión y ver sus prescripciones de ejercicios."
 
 #: app/templates/auth/login.html:23 app/templates/new_patient.html:58
 msgid "Password"
@@ -1088,16 +1087,16 @@ msgstr "Contraseña"
 
 #: app/templates/new_patient.html:59
 msgid "Set initial password"
-msgstr ""
+msgstr "Establecer contraseña inicial"
 
 #: app/templates/new_patient.html:60
 msgid "Leave blank if login email is not provided."
-msgstr ""
+msgstr "Deja en blanco si no se proporciona email de acceso."
 
 #: app/templates/new_patient.html:65
-#, fuzzy
+#: app/templates/review_calendly_bookings.html:56
 msgid "Create Patient"
-msgstr "Pacientes Activos"
+msgstr "Crear Paciente"
 
 #: app/templates/patient_detail.html:3
 msgid "Patient Details"
@@ -1540,6 +1539,60 @@ msgstr ""
 "No hay planes de suscripción disponibles actualmente. Por favor, vuelve "
 "más tarde."
 
+#: app/templates/review_calendly_bookings.html:3
+#: app/templates/review_calendly_bookings.html:9
+msgid "Calendly Bookings"
+msgstr "Reservas de Calendly"
+
+#: app/templates/review_calendly_bookings.html:13
+msgid "Sync Calendly Data"
+msgstr "Sincronizar Datos de Calendly"
+
+#: app/templates/review_calendly_bookings.html:16
+msgid ""
+"Please configure your Calendly API token and User URI in settings to "
+"enable sync."
+msgstr ""
+"Por favor configura tu token de API de Calendly y URI de usuario en "
+"configuración para habilitar la sincronización."
+
+#: app/templates/review_calendly_bookings.html:17
+msgid "Sync Calendly Data (Configure Settings)"
+msgstr "Sincronizar Datos de Calendly (Configurar Ajustes)"
+
+#: app/templates/review_calendly_bookings.html:25
+msgid "Unmatched Bookings"
+msgstr "Reservas Sin Asignar"
+
+#: app/templates/review_calendly_bookings.html:35
+msgid "Phone"
+msgstr "Teléfono"
+
+#: app/templates/review_calendly_bookings.html:36
+#: app/templates/review_calendly_bookings.html:87
+msgid "Appointment Time"
+msgstr "Hora de la Cita"
+
+#: app/templates/review_calendly_bookings.html:55
+msgid "Create New Patient from this Booking"
+msgstr "Crear Nuevo Paciente desde esta Reserva"
+
+#: app/templates/review_calendly_bookings.html:69
+msgid "No unmatched Calendly bookings"
+msgstr "No hay reservas de Calendly sin asignar"
+
+#: app/templates/review_calendly_bookings.html:78
+msgid "Recently Matched Bookings"
+msgstr "Reservas Asignadas Recientemente"
+
+#: app/templates/review_calendly_bookings.html:125
+msgid "No recently matched bookings"
+msgstr "No hay reservas asignadas recientemente"
+
+#: app/templates/review_calendly_bookings.html:138
+msgid "Syncing..."
+msgstr "Sincronizando..."
+
 #: app/templates/review_payments.html:3
 msgid "Review Incomplete Payments"
 msgstr "Revisar Pagos Incompletos"
@@ -1581,7 +1634,6 @@ msgid "No completed treatments found with missing fees or payment methods."
 msgstr "No se encontraron tratamientos completados sin tarifas o métodos de pago."
 
 #: app/templates/treatment_detail.html:4 app/templates/treatment_detail.html:12
-#, fuzzy
 msgid "Treatment Details"
 msgstr "Detalles del Tratamiento"
 
