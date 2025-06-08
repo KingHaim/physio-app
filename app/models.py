@@ -12,7 +12,12 @@ class Patient(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    portal_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True, unique=True)
+    portal_user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('user.id', use_alter=True, name='fk_portal_user_id_user'),
+        nullable=True, 
+        unique=True
+    )
     name = db.Column(db.String(100), nullable=False)
     date_of_birth = db.Column(db.Date)
     contact = db.Column(db.String(100))
