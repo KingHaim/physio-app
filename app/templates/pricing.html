@@ -258,16 +258,31 @@
                                     {{ ngettext('practitioner', 'practitioners', practitioner_limit) }}
                                 </li>
                                 
-                                {# Core features shared by all paid plans #}
-                                {% if plan.slug in ['basic-usd', 'standard-usd', 'premium-usd'] %}
+                                {# Core features with progressive levels based on plan #}
+                                {% if plan.slug == 'basic-usd' %}
                                     <li><i class="{{ feature_map.patient_management.icon }}"></i> {{ feature_map.patient_management.name }}: {{ feature_map.patient_management.levels.core }}</li>
                                     <li><i class="{{ feature_map.scheduling.icon }}"></i> {{ feature_map.scheduling.name }}: {{ feature_map.scheduling.levels.basic }}</li>
                                     <li><i class="{{ feature_map.clinical_notes.icon }}"></i> {{ feature_map.clinical_notes.name }}: {{ feature_map.clinical_notes.levels.basic }}</li>
                                     <li><i class="{{ feature_map.billing.icon }}"></i> {{ feature_map.billing.name }}: {{ feature_map.billing.levels.basic }}</li>
                                     <li><i class="{{ feature_map.reporting.icon }}"></i> {{ feature_map.reporting.name }}: {{ feature_map.reporting.levels.basic }}</li>
-                                    {% if feature_map.calendly_integration.is_boolean and plan.features.get('calendly_integration') %}
-                                        <li><i class="{{ feature_map.calendly_integration.icon }}"></i> {{ feature_map.calendly_integration.name }}</li>
-                                    {% endif %}
+                                    <li><i class="{{ feature_map.calendly_integration.icon }}"></i> {{ feature_map.calendly_integration.name }}</li>
+                                    <li><i class="{{ feature_map.support.icon }}"></i> {{ _('Email') }} {{ _('Support') }}</li>
+                                {% elif plan.slug == 'standard-usd' %}
+                                    <li><i class="{{ feature_map.patient_management.icon }}"></i> {{ feature_map.patient_management.name }}: {{ feature_map.patient_management.levels.core }}</li>
+                                    <li><i class="{{ feature_map.scheduling.icon }}"></i> {{ feature_map.scheduling.name }}: {{ feature_map.scheduling.levels.standard }}</li>
+                                    <li><i class="{{ feature_map.clinical_notes.icon }}"></i> {{ feature_map.clinical_notes.name }}: {{ feature_map.clinical_notes.levels.standard }}</li>
+                                    <li><i class="{{ feature_map.billing.icon }}"></i> {{ feature_map.billing.name }}: {{ feature_map.billing.levels.standard }}</li>
+                                    <li><i class="{{ feature_map.reporting.icon }}"></i> {{ feature_map.reporting.name }}: {{ feature_map.reporting.levels.standard }}</li>
+                                    <li><i class="{{ feature_map.calendly_integration.icon }}"></i> {{ feature_map.calendly_integration.name }}</li>
+                                    <li><i class="{{ feature_map.support.icon }}"></i> {{ _('Priority Email') }} {{ _('Support') }}</li>
+                                {% elif plan.slug == 'premium-usd' %}
+                                    <li><i class="{{ feature_map.patient_management.icon }}"></i> {{ feature_map.patient_management.name }}: {{ feature_map.patient_management.levels.core }}</li>
+                                    <li><i class="{{ feature_map.scheduling.icon }}"></i> {{ feature_map.scheduling.name }}: {{ feature_map.scheduling.levels.advanced }}</li>
+                                    <li><i class="{{ feature_map.clinical_notes.icon }}"></i> {{ feature_map.clinical_notes.name }}: {{ feature_map.clinical_notes.levels.advanced }}</li>
+                                    <li><i class="{{ feature_map.billing.icon }}"></i> {{ feature_map.billing.name }}: {{ feature_map.billing.levels.advanced }}</li>
+                                    <li><i class="{{ feature_map.reporting.icon }}"></i> {{ feature_map.reporting.name }}: {{ feature_map.reporting.levels.advanced_ai }}</li>
+                                    <li><i class="{{ feature_map.calendly_integration.icon }}"></i> {{ feature_map.calendly_integration.name }}</li>
+                                    <li><i class="{{ feature_map.support.icon }}"></i> {{ _('Dedicated') }} {{ _('Support') }}</li>
                                 {% endif %}
 
                                 {# "Plus" features for Standard and Premium #}
@@ -303,11 +318,7 @@
                                         {% endif %}
                                     {% endfor %}
                                 {% endif %}
-                                
-                                {# Support Level #}
-                                {% if plan.features.support and plan.features.support in feature_map.support.levels %}
-                                    <li><i class="{{ feature_map.support.icon }}"></i> {{ feature_map.support.levels[plan.features.support] }} {{ _('Support') }}</li>
-                                {% endif %}
+
                             </ul>
                             <div class="mt-auto pt-3 text-center">
                                 {% if plan.id == active_plan_id %}
