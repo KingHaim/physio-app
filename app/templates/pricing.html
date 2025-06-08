@@ -250,8 +250,8 @@
                             </p>
 
                         <ul class="plan-features">
-                                <li><i class="bi bi-people-fill"></i> {{ _('Up to') }} <strong>{{ plan.features.patient_limit if plan.features.patient_limit is not none else _('Unlimited') }}</strong> {{ _('patients') }}</li>
-                                {% set practitioner_limit = plan.features.practitioner_limit | default(0, true) | int %}
+                                <li><i class="bi bi-people-fill"></i> {{ _('Up to') }} <strong>{{ plan.patient_limit if plan.patient_limit is not none else _('Unlimited') }}</strong> {{ _('patients') }}</li>
+                                {% set practitioner_limit = plan.practitioner_limit | default(0, true) | int %}
                                 <li>
                                     <i class="bi bi-person-badge-fill"></i>
                                     <strong>{{ practitioner_limit }}</strong>
@@ -355,8 +355,8 @@
                         <div class="row justify-content-center">
                             <div class="col-md-7">
                                 <ul class="plan-features text-start mx-auto" style="max-width: 350px;">
-                                    <li><i class="bi bi-people-fill"></i> {{ _('Up to') }} <strong>{{ free_plan.features.patient_limit }}</strong> {{ _('patients') }}</li>
-                                    {% set free_practitioner_limit = free_plan.features.practitioner_limit | default(0, true) | int %}
+                                    <li><i class="bi bi-people-fill"></i> {{ _('Up to') }} <strong>{{ free_plan.patient_limit }}</strong> {{ _('patients') }}</li>
+                                    {% set free_practitioner_limit = free_plan.practitioner_limit | default(0, true) | int %}
                                     <li>
                                         <i class="bi bi-person-badge-fill"></i>
                                         <strong>{{ free_practitioner_limit }}</strong>
