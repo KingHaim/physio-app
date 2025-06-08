@@ -251,7 +251,12 @@
 
                         <ul class="plan-features">
                                 <li><i class="bi bi-people-fill"></i> {{ _('Up to') }} <strong>{{ plan.features.patient_limit if plan.features.patient_limit is not none else _('Unlimited') }}</strong> {{ _('patients') }}</li>
-                                <li><i class="bi bi-person-badge-fill"></i> <strong>{{ plan.features.practitioner_limit }}</strong> {{ ngettext('practitioner', 'practitioners', plan.features.practitioner_limit) }}</li>
+                                {% set practitioner_limit = plan.features.practitioner_limit | default(0, true) | int %}
+                                <li>
+                                    <i class="bi bi-person-badge-fill"></i>
+                                    <strong>{{ practitioner_limit }}</strong>
+                                    {{ ngettext('practitioner', 'practitioners', practitioner_limit) }}
+                                </li>
                                 
                                 {# Core features shared by all paid plans #}
                                 {% if plan.slug in ['basic-usd', 'standard-usd', 'premium-usd'] %}
@@ -351,7 +356,12 @@
                             <div class="col-md-7">
                                 <ul class="plan-features text-start mx-auto" style="max-width: 350px;">
                                     <li><i class="bi bi-people-fill"></i> {{ _('Up to') }} <strong>{{ free_plan.features.patient_limit }}</strong> {{ _('patients') }}</li>
-                                    <li><i class="bi bi-person-badge-fill"></i> <strong>{{ free_plan.features.practitioner_limit }}</strong> {{ ngettext('practitioner', 'practitioners', free_plan.features.practitioner_limit) }}</li>
+                                    {% set free_practitioner_limit = free_plan.features.practitioner_limit | default(0, true) | int %}
+                                    <li>
+                                        <i class="bi bi-person-badge-fill"></i>
+                                        <strong>{{ free_practitioner_limit }}</strong>
+                                        {{ ngettext('practitioner', 'practitioners', free_practitioner_limit) }}
+                                    </li>
                                     <li><i class="{{ feature_map.patient_management.icon }}"></i> {{ feature_map.patient_management.name }}: {{ feature_map.patient_management.levels.core }}</li>
                                     <li><i class="{{ feature_map.scheduling.icon }}"></i> {{ feature_map.scheduling.name }}: {{ feature_map.scheduling.levels.basic }}</li>
                                     <li><i class="{{ feature_map.support.icon }}"></i> {{ feature_map.support.levels.community }} {{ _('Support') }}</li>
