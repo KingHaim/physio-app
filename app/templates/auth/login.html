@@ -31,6 +31,16 @@
                             <button type="submit" class="btn btn-primary">{{ _('Sign In') }}</button>
                         </div>
                     </form>
+                    
+                    <!-- Registration Link -->
+                    <div class="text-center mt-3">
+                        <p class="text-muted">
+                            {{ _('Not a member?') }}
+                            <a href="{{ url_for('auth.register') }}" class="text-decoration-none">
+                                {{ _('Register here for free') }}
+                            </a>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

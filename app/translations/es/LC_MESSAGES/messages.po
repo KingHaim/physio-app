@@ -2193,3 +2193,11 @@ msgstr ""
 msgid "Not a valid float value."
 msgstr ""
 
+#: app/templates/auth/login.html:38
+msgid "Not a member?"
+msgstr "¿No eres miembro?"
+
+#: app/templates/auth/login.html:40
+msgid "Register here for free"
+msgstr "Regístrate aquí gratis"
+
