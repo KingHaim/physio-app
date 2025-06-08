@@ -1686,7 +1686,7 @@ msgstr "Connexion"
 
 #: app/templates/auth/login.html:13
 msgid "Sign in to your account"
-msgstr "Connectez-vous \\u00e0 votre compte"
+msgstr "Connectez-vous à votre compte"
 
 #: app/templates/auth/login.html:19
 msgid "Username"
