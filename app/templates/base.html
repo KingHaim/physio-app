@@ -531,7 +531,7 @@
                         {# <small class="user-role text-muted">{{ current_user.role }}</small> #}
                     </div>
                     <ul class="nav flex-column mt-2">
-                        {% if current_user.is_authenticated and current_user.stripe_customer_id %}
+                        {% if current_user.is_authenticated %}
                         <li class="nav-item">
                             <a class="nav-link logout-link" href="{{ url_for('main.my_account') }}">
                                 <i class="bi bi-person-circle"></i> {{ _('My Account') }}
