@@ -332,7 +332,7 @@
                                         {% endif %}
                                     {% else %}
                                         {# User is not logged in, redirect to sign up with plan #}
-                                        <a href="{{ url_for('auth.signup', plan=plan.slug) }}" class="btn btn-primary w-100">{{ _('Sign Up & Choose') }} {{ plan.name }}</a>
+                                        <a href="{{ url_for('auth.register', plan=plan.slug) }}" class="btn btn-primary w-100">{{ _('Sign Up & Choose') }} {{ plan.name }}</a>
                                     {% endif %}
                                 {% endif %}
                             </div>
@@ -374,10 +374,10 @@
                                     <span class="badge bg-success rounded-pill free-plan-badge p-3">{{ _('You are on the Free Plan') }}</span>
                                 {% else %}
                                     {# If they have a paid plan, they shouldn't "downgrade" here, but we can show they're not on free #}
-                                    <a href="{{ url_for('auth.signup') }}" class="btn btn-success btn-lg">{{ _('Get Started for Free') }}</a>
+                                    <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg">{{ _('Get Started for Free') }}</a>
                                 {% endif %}
                             {% else %}
-                                 <a href="{{ url_for('auth.signup') }}" class="btn btn-success btn-lg">{{ _('Get Started for Free') }}</a>
+                                 <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg">{{ _('Get Started for Free') }}</a>
                             {% endif %}
                         </div>
                     </div>
