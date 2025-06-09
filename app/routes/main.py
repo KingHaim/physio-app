@@ -3155,8 +3155,14 @@ def my_account():
     
     user_subscription = current_user.current_subscription
     active_plan = None
+    current_plan_name = "Free Plan"  # Default to Free Plan
+    current_subscription_status = "Active"  # Free plan is always active
+    
     if user_subscription and hasattr(user_subscription, 'plan'):
         active_plan = user_subscription.plan
+        if active_plan:
+            current_plan_name = active_plan.name
+            current_subscription_status = user_subscription.status.replace('_', ' ').title()
 
     if request.method == 'POST':
         if email_form.submit_email.data and email_form.validate():
@@ -3190,6 +3196,8 @@ def my_account():
     return render_template('my_account.html', 
                            user_subscription=user_subscription, 
                            active_plan=active_plan,
+                           current_plan_name=current_plan_name,
+                           current_subscription_status=current_subscription_status,
                            email_form=email_form,
                            password_form=password_form)
 

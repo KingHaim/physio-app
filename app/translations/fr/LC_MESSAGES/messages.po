@@ -2208,3 +2208,15 @@ msgstr "Plan Gratuit"
 msgid "Upgrade Plan"
 msgstr "Mettre à Niveau le Plan"
 
+msgid "Free"
+msgstr "Gratuit"
+
+msgid "Features:"
+msgstr "Fonctionnalités:"
+
+msgid "Basic features with limited capacity"
+msgstr "Fonctionnalités de base avec capacité limitée"
+
+msgid "Upgrade to Paid Plan"
+msgstr "Passer au Plan Payant"
+

@@ -2222,3 +2222,15 @@ msgstr "Piano Gratuito"
 msgid "Upgrade Plan"
 msgstr "Aggiorna Piano"
 
+msgid "Free"
+msgstr "Gratuito"
+
+msgid "Features:"
+msgstr "Caratteristiche:"
+
+msgid "Basic features with limited capacity"
+msgstr "Funzionalità di base con capacità limitata"
+
+msgid "Upgrade to Paid Plan"
+msgstr "Aggiorna a Piano a Pagamento"
+

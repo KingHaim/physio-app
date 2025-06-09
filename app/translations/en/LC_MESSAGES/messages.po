@@ -2200,6 +2200,18 @@ msgstr "Free Plan"
 msgid "Upgrade Plan"
 msgstr "Upgrade Plan"
 
+msgid "Free"
+msgstr "Free"
+
+msgid "Features:"
+msgstr "Features:"
+
+msgid "Basic features with limited capacity"
+msgstr "Basic features with limited capacity"
+
+msgid "Upgrade to Paid Plan"
+msgstr "Upgrade to Paid Plan"
+
 #: app/templates/pricing.html:25
 msgid "Or... continue with basic features if you prefer to start small."
 msgstr "Or... continue with basic features if you prefer to start small."
