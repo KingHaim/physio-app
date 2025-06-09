@@ -2212,6 +2212,48 @@ msgstr "Basic features with limited capacity"
 msgid "Upgrade to Paid Plan"
 msgstr "Upgrade to Paid Plan"
 
+msgid "New Appointment"
+msgstr "New Appointment"
+
+msgid "Patient"
+msgstr "Patient"
+
+msgid "Select Patient..."
+msgstr "Select Patient..."
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Time"
+msgstr "Time"
+
+msgid "Treatment Type"
+msgstr "Treatment Type"
+
+msgid "e.g., Initial Assessment, Follow-up"
+msgstr "e.g., Initial Assessment, Follow-up"
+
+msgid "Location"
+msgstr "Location"
+
+msgid "CostaSpine Clinic"
+msgstr "CostaSpine Clinic"
+
+msgid "Home Visit"
+msgstr "Home Visit"
+
+msgid "Online"
+msgstr "Online"
+
+msgid "Notes (Optional)"
+msgstr "Notes (Optional)"
+
+msgid "Close"
+msgstr "Close"
+
+msgid "Create Appointment"
+msgstr "Create Appointment"
+
 #: app/templates/pricing.html:25
 msgid "Or... continue with basic features if you prefer to start small."
 msgstr "Or... continue with basic features if you prefer to start small."

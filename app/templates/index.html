@@ -288,7 +288,7 @@
                     <div class="text-center py-5">
                         <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
                         <p class="text-muted mt-2">{{ _('No upcoming appointments') }}</p>
-                        <button class="btn btn-primary" onclick="openCalendly()">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAppointmentModal">
                             <i class="bi bi-calendar-plus"></i> {{ _('Schedule Appointment') }}
                         </button>
                     </div>
@@ -299,6 +299,65 @@
 
     </div>
 </div>
+
+<!-- New Appointment Modal -->
+<div class="modal fade" id="newAppointmentModal" tabindex="-1" aria-labelledby="newAppointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newAppointmentModalLabel">{{ _('New Appointment') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newAppointmentForm">
+                    <input type="hidden" id="csrf_token" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="appointmentPatient" class="form-label">{{ _('Patient') }}</label>
+                        <select class="form-select" id="appointmentPatient" name="patient_id" required>
+                            <option value="" selected disabled>{{ _('Select Patient...') }}</option>
+                            {% for patient in current_user.patients %}
+                                <option value="{{ patient.id }}">{{ patient.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="appointmentDate" class="form-label">{{ _('Date') }}</label>
+                            <input type="date" class="form-control" id="appointmentDate" name="date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="appointmentTime" class="form-label">{{ _('Time') }}</label>
+                            <input type="time" class="form-control" id="appointmentTime" name="time" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="appointmentTreatmentType" class="form-label">{{ _('Treatment Type') }}</label>
+                        <input type="text" class="form-control" id="appointmentTreatmentType" name="treatment_type" placeholder="{{ _('e.g., Initial Assessment, Follow-up') }}" required>
+                    </div>
+                     <div class="mb-3">
+                        <label for="appointmentLocation" class="form-label">{{ _('Location') }}</label>
+                        <select class="form-select" id="appointmentLocation" name="location">
+                            <option value="CostaSpine Clinic" selected>{{ _('CostaSpine Clinic') }}</option>
+                            <option value="Home Visit">{{ _('Home Visit') }}</option>
+                            <option value="Online">{{ _('Online') }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="appointmentNotes" class="form-label">{{ _('Notes (Optional)') }}</label>
+                        <textarea class="form-control" id="appointmentNotes" name="notes" rows="3"></textarea>
+                    </div>
+                    <!-- Hidden field for status, default to Scheduled -->
+                    <input type="hidden" id="appointmentStatus" name="status" value="Scheduled">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+                <button type="submit" class="btn btn-primary" form="newAppointmentForm">{{ _('Create Appointment') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End New Appointment Modal -->
 {% endblock %}
 
 {% block scripts %}
@@ -463,18 +522,55 @@
                 }
             }, 300)); // Debounce
         }
+        
+        // Set default date to today when modal opens
+        const newAppointmentModal = document.getElementById('newAppointmentModal');
+        if (newAppointmentModal) {
+            newAppointmentModal.addEventListener('show.bs.modal', function () {
+                const today = new Date().toISOString().split('T')[0]; // Get YYYY-MM-DD format
+                document.getElementById('appointmentDate').value = today;
+                document.getElementById('appointmentTime').value = '09:00'; // Default to 9 AM
+            });
+        }
     });
 
-    function openCalendly() {
-        // You should fetch the Calendly link from the user's settings
-        const calendlyLink = "{{ current_user.calendly_link }}";
-        if (calendlyLink) {
-            Calendly.initPopupWidget({ url: calendlyLink });
-        } else {
-            // Fallback if the link isn't set
-            alert("{{ _('The practitioner has not set up their Calendly link yet.') }}");
-        }
-        return false;
+    // Handle New Appointment Form Submission
+    const newAppointmentForm = document.getElementById('newAppointmentForm');
+    if (newAppointmentForm) {
+        newAppointmentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(newAppointmentForm);
+            const patientId = formData.get('patient_id');
+            
+            // Combine date and time for the 'date' field expected by add_treatment
+            const dateValue = formData.get('date');
+            const timeValue = formData.get('time');
+            formData.set('date', `${dateValue}T${timeValue}`); // Format as YYYY-MM-DDTHH:MM
+            formData.delete('time'); // Remove original time field as it's combined
+
+            fetch(`/patient/${patientId}/treatment`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success || (data.redirect_url && data.message && data.message.includes('success'))) {
+                    var modalInstance = bootstrap.Modal.getInstance(document.getElementById('newAppointmentModal'));
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                    // Show success message and refresh page to show new appointment
+                    alert(data.message || 'Appointment created successfully!');
+                    window.location.reload(); // Refresh to show new appointment in upcoming appointments
+                } else {
+                    alert('Error: ' + (data.message || 'Could not create appointment.'));
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting new appointment:', error);
+                alert('An error occurred while creating the appointment.');
+            });
+        });
     }
 
 </script>

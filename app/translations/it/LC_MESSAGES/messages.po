@@ -2234,3 +2234,45 @@ msgstr "Funzionalità di base con capacità limitata"
 msgid "Upgrade to Paid Plan"
 msgstr "Aggiorna a Piano a Pagamento"
 
+msgid "New Appointment"
+msgstr "Nuovo Appuntamento"
+
+msgid "Patient"
+msgstr "Paziente"
+
+msgid "Select Patient..."
+msgstr "Seleziona Paziente..."
+
+msgid "Date"
+msgstr "Data"
+
+msgid "Time"
+msgstr "Ora"
+
+msgid "Treatment Type"
+msgstr "Tipo di Trattamento"
+
+msgid "e.g., Initial Assessment, Follow-up"
+msgstr "ad es., Valutazione Iniziale, Follow-up"
+
+msgid "Location"
+msgstr "Posizione"
+
+msgid "CostaSpine Clinic"
+msgstr "Clinica CostaSpine"
+
+msgid "Home Visit"
+msgstr "Visita a Domicilio"
+
+msgid "Online"
+msgstr "Online"
+
+msgid "Notes (Optional)"
+msgstr "Note (Opzionale)"
+
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "Create Appointment"
+msgstr "Crea Appuntamento"
+
