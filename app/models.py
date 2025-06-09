@@ -223,7 +223,7 @@ class User(db.Model, UserMixin):
         """Returns (current_patient_count, patient_limit_for_plan)."""
         # Ensure Patient model is accessible here, it should be as it's defined in the same file.
         current_patient_count = Patient.query.filter_by(user_id=self.id).count()
-        limit = None
+        limit = 10  # Default Free Plan limit of 10 patients
         plan = self.active_plan
         if plan:
             limit = plan.patient_limit
@@ -300,15 +300,17 @@ class User(db.Model, UserMixin):
             return False
 
         plan = self.active_plan
-        if not plan: 
-            return True 
+        patient_limit = 10  # Default Free Plan limit of 10 patients
         
-        if plan.patient_limit is None: 
+        if plan and plan.patient_limit is not None:
+            patient_limit = plan.patient_limit
+        elif plan and plan.patient_limit is None:
+            # Unlimited plan (Premium)
             return False
         
         # Ensure Patient model is accessible here
         current_patient_count = Patient.query.filter_by(user_id=self.id).count()
-        return current_patient_count >= plan.patient_limit
+        return current_patient_count >= patient_limit
 
     def get_feature_limit(self, feature_limit_key: str) -> Optional[int]:
         """
