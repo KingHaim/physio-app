@@ -227,46 +227,71 @@
         {% set standard_plus_feature_keys = ['patient_portal', 'telehealth', 'multi_practitioner_calendars', 'analytics'] %}
         {% set premium_plus_feature_keys = ['ai_driven_insights', 'telehealth', 'custom_branding', 'api_access'] %}
 
-        {# Display Free Plan first - more prominent placement #}
+        {# Display Free Plan first - but make it less appealing than paid plans #}
         {% if free_plan_obj.data %}
         {% set free_plan = free_plan_obj.data %}
             <div class="row justify-content-center mb-5">
-                <div class="col-lg-8">
-                    <div class="free-plan-section text-center">
+                <div class="col-lg-10">
+                    <div class="free-plan-section text-center" style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.5rem; padding: 2rem;">
                         <div class="free-plan-header mb-4">
-                            <h3>{{ free_plan.name }}</h3>
-                            <p class="lead text-muted">{{ _('Perfect for getting started and exploring the core features.') }}</p>
+                            <h3 class="text-muted">{{ free_plan.name }}</h3>
+                            <p class="lead text-muted">{{ _('Or... continue with basic features if you prefer to start small.') }}</p>
                         </div>
                         <div class="row justify-content-center">
-                            <div class="col-md-7">
-                                <ul class="plan-features text-start mx-auto" style="max-width: 350px;">
-                                    <li><i class="bi bi-people-fill"></i> {{ _('Up to') }} <strong>{{ free_plan.patient_limit }}</strong> {{ _('patients') }}</li>
-                                    {% set free_practitioner_limit = free_plan.practitioner_limit | default(0, true) | int %}
-                                    <li>
-                                        <i class="bi bi-person-badge-fill"></i>
-                                        <strong>{{ free_practitioner_limit }}</strong>
-                                        {{ ngettext('practitioner', 'practitioners', free_practitioner_limit) }}
-                                    </li>
-                                    <li><i class="{{ feature_map.patient_management.icon }}"></i> {{ feature_map.patient_management.name }}: {{ feature_map.patient_management.levels.core }}</li>
-                                    <li><i class="{{ feature_map.scheduling.icon }}"></i> {{ feature_map.scheduling.name }}: {{ feature_map.scheduling.levels.basic }}</li>
-                                    <li><i class="{{ feature_map.support.icon }}"></i> {{ feature_map.support.levels.community }} {{ _('Support') }}</li>
-                                </ul>
+                            <div class="col-md-10">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-people-fill text-muted me-2"></i>
+                                            <span>{{ _('Up to') }} <strong>{{ free_plan.patient_limit }}</strong> {{ _('patients') }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {% set free_practitioner_limit = free_plan.practitioner_limit | default(0, true) | int %}
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-person-badge-fill text-muted me-2"></i>
+                                            <span><strong>{{ free_practitioner_limit }}</strong> {{ ngettext('practitioner', 'practitioners', free_practitioner_limit) }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <i class="{{ feature_map.patient_management.icon }} text-muted me-2"></i>
+                                            <span class="small">{{ feature_map.patient_management.name }}: {{ feature_map.patient_management.levels.core }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <i class="{{ feature_map.scheduling.icon }} text-muted me-2"></i>
+                                            <span class="small">{{ feature_map.scheduling.name }}: {{ feature_map.scheduling.levels.basic }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <i class="{{ feature_map.support.icon }} text-muted me-2"></i>
+                                            <span class="small">{{ feature_map.support.levels.community }} {{ _('Support') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="mt-4">
                             {% if is_authenticated %}
                                 {% if not active_plan_id %}
-                                    {# User is on free plan - show they're continuing #}
-                                    <span class="badge bg-success rounded-pill free-plan-badge p-3">
-                                        <i class="bi bi-check-circle-fill me-2"></i>{{ _('Continue on Free Plan') }}
+                                    {# User is on free plan - show current status #}
+                                    <span class="text-muted small">
+                                        <i class="bi bi-check-circle me-2"></i>{{ _('You are currently on the Free Plan') }}
                                     </span>
                                 {% else %}
-                                    {# User has a paid plan - no action needed #}
-                                    <span class="text-muted">{{ _('You have a paid subscription') }}</span>
+                                    {# User has a paid plan - show paid status #}
+                                    <span class="text-muted small">
+                                        <i class="bi bi-star-fill me-2"></i>{{ _('You have a paid subscription') }}
+                                    </span>
                                 {% endif %}
                             {% else %}
-                                {# User not logged in - show get started button #}
-                                <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg">{{ _('Get Started for Free') }}</a>
+                                {# User not logged in - show simple info, no confusing button #}
+                                <span class="text-muted small">
+                                    <i class="bi bi-info-circle me-2"></i>{{ _('No credit card required') }}
+                                </span>
                             {% endif %}
                         </div>
                     </div>

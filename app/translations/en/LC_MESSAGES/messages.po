@@ -2188,3 +2188,17 @@ msgstr "Continue on Free Plan"
 msgid "You have a paid subscription"
 msgstr "You have a paid subscription"
 
+msgid "You are currently on the Free Plan"
+msgstr "You are currently on the Free Plan"
+
+msgid "No credit card required"
+msgstr "No credit card required"
+
+#: app/templates/pricing.html:25
+msgid "Or... continue with basic features if you prefer to start small."
+msgstr "Or... continue with basic features if you prefer to start small."
+
+#: app/templates/pricing.html:43
+msgid "Or remain on the Free Plan"
+msgstr "Or remain on the Free Plan"
+
