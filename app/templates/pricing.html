@@ -227,6 +227,52 @@
         {% set standard_plus_feature_keys = ['patient_portal', 'telehealth', 'multi_practitioner_calendars', 'analytics'] %}
         {% set premium_plus_feature_keys = ['ai_driven_insights', 'telehealth', 'custom_branding', 'api_access'] %}
 
+        {# Display Free Plan first - more prominent placement #}
+        {% if free_plan_obj.data %}
+        {% set free_plan = free_plan_obj.data %}
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-8">
+                    <div class="free-plan-section text-center">
+                        <div class="free-plan-header mb-4">
+                            <h3>{{ free_plan.name }}</h3>
+                            <p class="lead text-muted">{{ _('Perfect for getting started and exploring the core features.') }}</p>
+                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-md-7">
+                                <ul class="plan-features text-start mx-auto" style="max-width: 350px;">
+                                    <li><i class="bi bi-people-fill"></i> {{ _('Up to') }} <strong>{{ free_plan.patient_limit }}</strong> {{ _('patients') }}</li>
+                                    {% set free_practitioner_limit = free_plan.practitioner_limit | default(0, true) | int %}
+                                    <li>
+                                        <i class="bi bi-person-badge-fill"></i>
+                                        <strong>{{ free_practitioner_limit }}</strong>
+                                        {{ ngettext('practitioner', 'practitioners', free_practitioner_limit) }}
+                                    </li>
+                                    <li><i class="{{ feature_map.patient_management.icon }}"></i> {{ feature_map.patient_management.name }}: {{ feature_map.patient_management.levels.core }}</li>
+                                    <li><i class="{{ feature_map.scheduling.icon }}"></i> {{ feature_map.scheduling.name }}: {{ feature_map.scheduling.levels.basic }}</li>
+                                    <li><i class="{{ feature_map.support.icon }}"></i> {{ feature_map.support.levels.community }} {{ _('Support') }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            {% if is_authenticated %}
+                                {% if not active_plan_id %}
+                                    {# User is on free plan - show they're continuing #}
+                                    <span class="badge bg-success rounded-pill free-plan-badge p-3">
+                                        <i class="bi bi-check-circle-fill me-2"></i>{{ _('Continue on Free Plan') }}
+                                    </span>
+                                {% else %}
+                                    {# User has a paid plan - no action needed #}
+                                    <span class="text-muted">{{ _('You have a paid subscription') }}</span>
+                                {% endif %}
+                            {% else %}
+                                {# User not logged in - show get started button #}
+                                <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg">{{ _('Get Started for Free') }}</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
 
         {# Display Paid Plans in one row #}
         {% if paid_plans %}
@@ -353,48 +399,7 @@
             </div>
         {% endif %}
 
-        {# Display Free Plan separately, if it exists #}
-        {% if free_plan_obj.data %}
-        {% set free_plan = free_plan_obj.data %}
-            <div class="row justify-content-center">
-                <div class="col-lg-8">
-                    <div class="free-plan-section text-center">
-                        <div class="free-plan-header mb-4">
-                            <h3>{{ free_plan.name }}</h3>
-                            <p class="lead text-muted">{{ _('Perfect for getting started and exploring the core features.') }}</p>
-                        </div>
-                        <div class="row justify-content-center">
-                            <div class="col-md-7">
-                                <ul class="plan-features text-start mx-auto" style="max-width: 350px;">
-                                    <li><i class="bi bi-people-fill"></i> {{ _('Up to') }} <strong>{{ free_plan.patient_limit }}</strong> {{ _('patients') }}</li>
-                                    {% set free_practitioner_limit = free_plan.practitioner_limit | default(0, true) | int %}
-                                    <li>
-                                        <i class="bi bi-person-badge-fill"></i>
-                                        <strong>{{ free_practitioner_limit }}</strong>
-                                        {{ ngettext('practitioner', 'practitioners', free_practitioner_limit) }}
-                                    </li>
-                                    <li><i class="{{ feature_map.patient_management.icon }}"></i> {{ feature_map.patient_management.name }}: {{ feature_map.patient_management.levels.core }}</li>
-                                    <li><i class="{{ feature_map.scheduling.icon }}"></i> {{ feature_map.scheduling.name }}: {{ feature_map.scheduling.levels.basic }}</li>
-                                    <li><i class="{{ feature_map.support.icon }}"></i> {{ feature_map.support.levels.community }} {{ _('Support') }}</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                             {% if is_authenticated %}
-                                {% if not active_plan_id %}
-                                    <span class="badge bg-success rounded-pill free-plan-badge p-3">{{ _('You are on the Free Plan') }}</span>
-                                {% else %}
-                                    {# If they have a paid plan, they shouldn't "downgrade" here, but we can show they're not on free #}
-                                    <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg">{{ _('Get Started for Free') }}</a>
-                                {% endif %}
-                            {% else %}
-                                 <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg">{{ _('Get Started for Free') }}</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
+
 
     {% else %}
         <div class="alert alert-warning" role="alert">

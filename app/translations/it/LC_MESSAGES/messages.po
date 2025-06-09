@@ -2194,3 +2194,11 @@ msgstr "Non sei un membro?"
 msgid "Register here for free"
 msgstr "Registrati qui gratuitamente"
 
+#: app/templates/pricing.html:43
+msgid "Continue on Free Plan"
+msgstr "Continua con Piano Gratuito"
+
+#: app/templates/pricing.html:46
+msgid "You have a paid subscription"
+msgstr "Hai un abbonamento a pagamento"
+

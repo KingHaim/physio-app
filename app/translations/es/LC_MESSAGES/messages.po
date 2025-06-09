@@ -2201,3 +2201,11 @@ msgstr "¿No eres miembro?"
 msgid "Register here for free"
 msgstr "Regístrate aquí gratis"
 
+#: app/templates/pricing.html:43
+msgid "Continue on Free Plan"
+msgstr "Continuar con Plan Gratuito"
+
+#: app/templates/pricing.html:46
+msgid "You have a paid subscription"
+msgstr "Tienes una suscripción de pago"
+
