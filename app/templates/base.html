@@ -460,6 +460,7 @@
                     {% if current_user.is_authenticated and current_user.role != 'patient' %}
                         <div class="nav-section">
                             <div class="nav-section-title">{{ _('Management') }}</div>
+                            {% if current_user.is_admin or (current_user.calendly_api_token and current_user.calendly_user_uri) %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.path == url_for('main.review_calendly_bookings') %}active{% endif %}" 
                                    href="{{ url_for('main.review_calendly_bookings') }}">
@@ -469,6 +470,7 @@
                                     {% endif %}
                                 </a>
                             </li>
+                            {% endif %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint == 'main.review_payments' %}active{% endif %}" href="{{ url_for('main.review_payments') }}">
                                     <i class="bi bi-credit-card-2-front"></i> {{ _('Review Payments') }}
