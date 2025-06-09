@@ -154,8 +154,8 @@ def index():
     month_end = today.replace(day=monthrange(today.year, today.month)[1])
 
     # Initialize subscription variables to avoid UnboundLocalError if user is not authenticated or has no sub
-    current_plan_name = "N/A"
-    current_subscription_status = "N/A"
+    current_plan_name = "Free Plan"  # Default to Free Plan for any user without a paid subscription
+    current_subscription_status = "Active"  # Free plan is always active
     current_subscription_ends_at = None
     
     # Patient usage details

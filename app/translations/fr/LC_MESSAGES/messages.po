@@ -2202,3 +2202,9 @@ msgstr "Vous êtes actuellement sur le Plan Gratuit"
 msgid "No credit card required"
 msgstr "Aucune carte de crédit requise"
 
+msgid "Free Plan"
+msgstr "Plan Gratuit"
+
+msgid "Upgrade Plan"
+msgstr "Mettre à Niveau le Plan"
+

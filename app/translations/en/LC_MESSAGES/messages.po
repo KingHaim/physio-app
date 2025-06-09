@@ -2194,6 +2194,12 @@ msgstr "You are currently on the Free Plan"
 msgid "No credit card required"
 msgstr "No credit card required"
 
+msgid "Free Plan"
+msgstr "Free Plan"
+
+msgid "Upgrade Plan"
+msgstr "Upgrade Plan"
+
 #: app/templates/pricing.html:25
 msgid "Or... continue with basic features if you prefer to start small."
 msgstr "Or... continue with basic features if you prefer to start small."

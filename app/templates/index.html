@@ -125,24 +125,26 @@
         <h4>{{ _('Welcome back, %(username)s!', username=current_user.username) }}</h4>
         <p>{{ _('Here\'s an overview of your clinic\'s activity.') }}</p>
         
-        {# Moved Subscription Status Display Here #}
-        {% if current_plan_name %}
+        {# Subscription Status Display - Always show current plan #}
         <div class="subscription-status-text">
-            <i class="bi bi-award-fill text-success me-1"></i> 
-            {{ _('Current Plan') }}: <strong>{{ current_plan_name }}</strong> 
-            ({{ _('Status') }}: <span class="fw-semibold">{{ current_subscription_status }}</span>)
-            {% if current_subscription_ends_at %}
-                - {% if current_subscription_status == 'Trialing' %}{{ _('Ends') }}{% else %}{{ _('Renews') }}{% endif %}: {{ current_subscription_ends_at.strftime('%d %b %Y') }}
+            {% if current_plan_name == 'Free Plan' %}
+                <i class="bi bi-gift-fill text-primary me-1"></i> 
+            {% else %}
+                <i class="bi bi-award-fill text-success me-1"></i> 
             {% endif %}
-            <a href="{{ url_for('main.my_account') }}" class="ms-2 badge bg-primary text-decoration-none">{{ _('Manage Plan') }}</a> {# Changed link to my_account #}
+            {{ _('Current Plan') }}: <strong>{{ current_plan_name }}</strong> 
+            {% if current_plan_name != 'Free Plan' %}
+                ({{ _('Status') }}: <span class="fw-semibold">{{ current_subscription_status }}</span>)
+                {% if current_subscription_ends_at %}
+                    - {% if current_subscription_status == 'Trialing' %}{{ _('Ends') }}{% else %}{{ _('Renews') }}{% endif %}: {{ current_subscription_ends_at.strftime('%d %b %Y') }}
+                {% endif %}
+            {% endif %}
+            {% if current_plan_name == 'Free Plan' %}
+                <a href="{{ url_for('main.pricing_page') }}" class="ms-2 badge bg-success text-decoration-none">{{ _('Upgrade Plan') }}</a>
+            {% else %}
+                <a href="{{ url_for('main.my_account') }}" class="ms-2 badge bg-primary text-decoration-none">{{ _('Manage Plan') }}</a>
+            {% endif %}
         </div>
-        {% elif current_user.is_authenticated and not current_user.is_subscribed %}
-        <div class="subscription-status-text">
-            <i class="bi bi-info-circle-fill text-primary me-1"></i> 
-            {{ _('You are currently not subscribed to a plan.') }}
-            <a href="{{ url_for('main.pricing_page') }}" class="ms-1 badge bg-success text-decoration-none">{{ _('View Plans') }}</a>
-        </div>
-        {% endif %}
     </div>
     
     <!-- Key Metrics Panel (Stats Cards & Weekly Chart) -->

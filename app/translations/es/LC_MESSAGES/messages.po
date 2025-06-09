@@ -2223,3 +2223,9 @@ msgstr "Actualmente estás en el Plan Gratuito"
 msgid "No credit card required"
 msgstr "No se requiere tarjeta de crédito"
 
+msgid "Free Plan"
+msgstr "Plan Gratuito"
+
+msgid "Upgrade Plan"
+msgstr "Actualizar Plan"
+
