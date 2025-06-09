@@ -440,41 +440,40 @@ msgstr "Esci"
 
 #: app/templates/calendar.html:59
 msgid "Select Patient..."
-msgstr ""
+msgstr "Seleziona Paziente..."
 
 #: app/templates/calendar.html:67 app/templates/index.html:240
 #: app/templates/patient_detail.html:168 app/templates/treatment_detail.html:19
 msgid "Date"
-msgstr ""
+msgstr "Data"
 
 #: app/templates/calendar.html:76
 msgid "Treatment Type"
-msgstr ""
+msgstr "Tipo di Trattamento"
 
 #: app/templates/calendar.html:77
 msgid "e.g., Initial Assessment, Follow-up"
-msgstr ""
+msgstr "es., Valutazione Iniziale, Follow-up"
 
 #: app/templates/calendar.html:80 app/templates/review_payments.html:23
-#, fuzzy
 msgid "Location"
-msgstr "Accesso"
+msgstr "Posizione"
 
 #: app/templates/calendar.html:82
 msgid "CostaSpine Clinic"
-msgstr ""
+msgstr "Clinica CostaSpine"
 
 #: app/templates/calendar.html:83
 msgid "Home Visit"
-msgstr ""
+msgstr "Visita Domiciliare"
 
 #: app/templates/calendar.html:84
 msgid "Online"
-msgstr ""
+msgstr "Online"
 
 #: app/templates/calendar.html:88
 msgid "Notes (Optional)"
-msgstr ""
+msgstr "Note (Opzionale)"
 
 #: app/templates/calendar.html:97
 msgid "Create Appointment"

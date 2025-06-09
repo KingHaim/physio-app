@@ -475,10 +475,6 @@ msgstr "En Línea"
 msgid "Notes (Optional)"
 msgstr "Notas (Opcional)"
 
-#: app/templates/calendar.html:97
-msgid "Create Appointment"
-msgstr "Crear Cita"
-
 #: app/templates/calendly_review.html:3 app/templates/calendly_review.html:8
 msgid "Review Calendly Bookings"
 msgstr "Revisar Reservas de Calendly"

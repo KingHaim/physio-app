@@ -438,11 +438,6 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'main.calendar_page' else '' }}" href="{{ url_for('main.calendar_page') }}">
-                            <i class="bi bi-calendar3"></i> {{ _('Calendar') }}
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint == 'main.patients_list' else '' }}" href="{{ url_for('main.patients_list') }}">
                             <i class="bi bi-people"></i> {{ _('Patients') }}
                         </a>

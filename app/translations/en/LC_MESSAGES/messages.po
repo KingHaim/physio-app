@@ -279,7 +279,7 @@ msgstr ""
 #: app/templates/appointments.html:105 app/templates/base.html:442
 #: app/templates/calendar.html:35
 msgid "Calendar"
-msgstr ""
+msgstr "Calendar"
 
 #: app/templates/appointments.html:117
 msgid "Schedule with Calendly"
@@ -438,7 +438,7 @@ msgstr ""
 
 #: app/templates/calendar.html:59
 msgid "Select Patient..."
-msgstr ""
+msgstr "Select Patient..."
 
 #: app/templates/calendar.html:67 app/templates/index.html:240
 #: app/templates/patient_detail.html:168 app/templates/treatment_detail.html:19
@@ -447,32 +447,32 @@ msgstr ""
 
 #: app/templates/calendar.html:76
 msgid "Treatment Type"
-msgstr ""
+msgstr "Treatment Type"
 
 #: app/templates/calendar.html:77
 msgid "e.g., Initial Assessment, Follow-up"
-msgstr ""
+msgstr "e.g., Initial Assessment, Follow-up"
 
 #: app/templates/calendar.html:80 app/templates/review_payments.html:23
 #, fuzzy
 msgid "Location"
-msgstr "Login"
+msgstr "Location"
 
 #: app/templates/calendar.html:82
 msgid "CostaSpine Clinic"
-msgstr ""
+msgstr "CostaSpine Clinic"
 
 #: app/templates/calendar.html:83
 msgid "Home Visit"
-msgstr ""
+msgstr "Home Visit"
 
 #: app/templates/calendar.html:84
 msgid "Online"
-msgstr ""
+msgstr "Online"
 
 #: app/templates/calendar.html:88
 msgid "Notes (Optional)"
-msgstr ""
+msgstr "Notes (Optional)"
 
 #: app/templates/calendar.html:97
 msgid "Create Appointment"

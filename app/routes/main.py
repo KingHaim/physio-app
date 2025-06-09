@@ -789,10 +789,16 @@ def get_appointments():
     # Or ensure we include the full end_date by using time.max if necessary
     end_dt = datetime.combine(end_date, time.min) # Fetch treatments strictly *before* the end date's start
 
-    treatments = Treatment.query.filter(
+    # Filter treatments based on user role
+    treatments_query = Treatment.query.filter(
         Treatment.created_at >= start_dt,
         Treatment.created_at < end_dt # Use < end_dt
-    ).options(joinedload(Treatment.patient)).all() # Eager load patient
+    ).options(joinedload(Treatment.patient)) # Eager load patient
+    
+    if not current_user.is_admin and current_user.role == 'physio':
+        treatments_query = treatments_query.join(Patient).filter(Patient.user_id == current_user.id)
+    
+    treatments = treatments_query.all()
 
     for apt in treatments:
         # Use patient name safely
@@ -824,7 +830,12 @@ def get_appointments():
         existing_treatments_datetimes.add((apt.patient_id, apt.created_at))
 
     # 3. Fetch active recurring appointments
-    active_rules = RecurringAppointment.query.filter_by(is_active=True).options(joinedload(RecurringAppointment.patient)).all()
+    recurring_query = RecurringAppointment.query.filter_by(is_active=True).options(joinedload(RecurringAppointment.patient))
+    
+    if not current_user.is_admin and current_user.role == 'physio':
+        recurring_query = recurring_query.join(Patient).filter(Patient.user_id == current_user.id)
+    
+    active_rules = recurring_query.all()
 
     # 4. Calculate future occurrences within the requested window [start_date, end_date)
     for rule in active_rules:
