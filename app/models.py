@@ -223,6 +223,11 @@ class User(db.Model, UserMixin):
         """Returns (current_patient_count, patient_limit_for_plan)."""
         # Ensure Patient model is accessible here, it should be as it's defined in the same file.
         current_patient_count = Patient.query.filter_by(user_id=self.id).count()
+        
+        # Admin users have unlimited access
+        if self.is_admin:
+            return current_patient_count, None
+            
         limit = 10  # Default Free Plan limit of 10 patients
         plan = self.active_plan
         if plan:
@@ -318,6 +323,10 @@ class User(db.Model, UserMixin):
         Example: `user.get_feature_limit('ai_reports_limit')`
         Returns None if no limit is set or no active plan.
         """
+        # Admin users have unlimited access to all features
+        if self.is_admin:
+            return None
+            
         plan = self.active_plan
         if not plan or not plan.features:
             return None
