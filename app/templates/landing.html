@@ -6,184 +6,776 @@
 {{ super() }}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
-.hero {
-    padding: 4rem 0;
-    background: linear-gradient(135deg, var(--primary-color), #1f3a93);
-    color: #fff;
-    text-align: center;
-    min-height: 60vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+:root {
+    --primary-color: #2980b9;
+    --primary-dark: #1a6ea8;
+    --primary-light: #3498db;
+    --accent-color: #e74c3c;
+    --text-dark: #2c3e50;
+    --text-light: #7f8c8d;
+    --bg-light: #f8fafc;
+    --bg-section: #ffffff;
 }
-.hero h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
-.hero p {
-    font-size: 1.25rem;
-    margin-bottom: 1.5rem;
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: var(--text-dark);
+    overflow-x: hidden;
 }
-.problem-section .problem {
-    margin-bottom: 1.5rem;
-    font-size: 1.1rem;
-}
-.email-cta {
-    background-color: #f8f9fa;
-    padding: 2rem 0;
-}
-.footer {
-    background: #222;
-    color: #fff;
+
+/* Navigation */
+.navbar-custom {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     padding: 1rem 0;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+    transition: all 0.3s ease;
 }
-.footer a {
-    color: #fff;
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--primary-color) !important;
+}
+
+.nav-link {
+    font-weight: 500;
+    color: var(--text-dark) !important;
     margin: 0 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: var(--primary-color) !important;
+}
+
+.btn-nav {
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
     text-decoration: none;
 }
-.feature-card {
+
+.btn-nav-outline {
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-nav-outline:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-nav-primary {
+    background: var(--primary-color);
+    color: white;
+    border: 2px solid var(--primary-color);
+}
+
+.btn-nav-primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(41, 128, 185, 0.3);
+}
+
+/* Hero Section */
+.hero {
+    background: linear-gradient(135deg, #f8fafc 0%, #e8f4f8 100%);
+    padding: 8rem 0 6rem;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%232980b9;stop-opacity:0.05"/><stop offset="100%" style="stop-color:%233498db;stop-opacity:0.1"/></linearGradient></defs><circle cx="800" cy="200" r="300" fill="url(%23grad)"/><circle cx="1000" cy="500" r="200" fill="url(%23grad)"/></svg>') no-repeat center;
+    background-size: cover;
+    opacity: 0.6;
+    z-index: 0;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.hero h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+}
+
+.hero h1 .highlight {
+    color: var(--primary-color);
+    position: relative;
+}
+
+.hero h1 .highlight::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+    border-radius: 2px;
+}
+
+.hero .lead {
+    font-size: 1.3rem;
+    color: var(--text-light);
+    margin-bottom: 2rem;
+    font-weight: 400;
+}
+
+.hero-cta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-hero {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-hero-primary {
+    background: var(--primary-color);
+    color: white;
     border: none;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 8px 25px rgba(41, 128, 185, 0.3);
 }
+
+.btn-hero-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(41, 128, 185, 0.4);
+    color: white;
+}
+
+.btn-hero-outline {
+    background: transparent;
+    color: var(--text-dark);
+    border: 2px solid #dee2e6;
+}
+
+.btn-hero-outline:hover {
+    background: #f8f9fa;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.hero-image {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-image img {
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    transform: perspective(1000px) rotateY(-15deg) rotateX(5deg);
+    transition: transform 0.3s ease;
+}
+
+.hero-image:hover img {
+    transform: perspective(1000px) rotateY(-10deg) rotateX(2deg);
+}
+
+/* Stats Section */
+.stats-section {
+    background: white;
+    padding: 4rem 0;
+    border-top: 1px solid #f1f5f9;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: var(--text-light);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+}
+
+/* Features Section */
+.features-section {
+    background: var(--bg-light);
+    padding: 6rem 0;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+}
+
+.section-subtitle {
+    font-size: 1.2rem;
+    color: var(--text-light);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.feature-card {
+    background: white;
+    padding: 3rem 2rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border: 1px solid #f1f5f9;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+}
+
 .feature-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transform: translateY(-10px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 }
-.fade-in-section {
+
+.feature-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.feature-icon i {
+    font-size: 1.8rem;
+    color: white;
+}
+
+.feature-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+}
+
+.feature-description {
+    color: var(--text-light);
+    line-height: 1.6;
+}
+
+/* CTA Section */
+.cta-section {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    padding: 6rem 0;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><circle cx="200" cy="100" r="80" fill="rgba(255,255,255,0.05)"/><circle cx="1000" cy="300" r="120" fill="rgba(255,255,255,0.03)"/><circle cx="800" cy="500" r="60" fill="rgba(255,255,255,0.07)"/></svg>') no-repeat;
+    background-size: cover;
+}
+
+.cta-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+}
+
+.cta-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.cta-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+.cta-form {
+    max-width: 500px;
+    margin: 0 auto;
+    display: flex;
+    gap: 1rem;
+}
+
+.cta-input {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border: none;
+    border-radius: 30px;
+    font-size: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.cta-input:focus {
+    outline: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn-cta {
+    padding: 1rem 2rem;
+    background: white;
+    color: var(--primary-color);
+    border: none;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
+}
+
+/* Trust Section */
+.trust-section {
+    background: white;
+    padding: 3rem 0;
+    text-align: center;
+    border-top: 1px solid #f1f5f9;
+}
+
+.trust-text {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
+
+.trust-subtext {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+/* Footer */
+.footer {
+    background: var(--text-dark);
+    color: white;
+    padding: 2rem 0;
+    text-align: center;
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1rem;
+}
+
+.footer-link {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+    color: white;
+}
+
+/* Animations */
+.fade-in-up {
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-    will-change: opacity, transform;
+    transform: translateY(30px);
+    transition: all 0.6s ease;
 }
-.fade-in-section.is-visible {
+
+.fade-in-up.animate {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero {
+        padding: 6rem 0 4rem;
+        text-align: center;
+    }
+    
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+    
+    .hero-cta {
+        justify-content: center;
+    }
+    
+    .cta-form {
+        flex-direction: column;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .feature-card {
+        margin-bottom: 2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero h1 {
+        font-size: 2rem;
+    }
+    
+    .hero .lead {
+        font-size: 1.1rem;
+    }
+    
+    .btn-hero {
+        width: 100%;
+        text-align: center;
+    }
 }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-custom">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <i class="bi bi-heart-pulse me-2"></i>PhysioTracker
+        </a>
+        
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto me-4">
+                <li class="nav-item">
+                    <a class="nav-link" href="#features">Features</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.pricing_page') }}">Pricing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#about">About</a>
+                </li>
+            </ul>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('auth.login') }}" class="btn-nav btn-nav-outline">Sign In</a>
+                <a href="{{ url_for('auth.register') }}" class="btn-nav btn-nav-primary">Get Started</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
 <section class="hero">
     <div class="container">
-        <h1>Struggling to track patient progress?</h1>
-        <p class="lead">Too many tools, not enough results?</p>
-        <p>Track rehab progress in one clean dashboard.<br>Send reports. Get paid. Stay focused.</p>
-        <a href="#signup" class="btn btn-light btn-lg">Join Early Access</a>
-    </div>
-</section>
-
-<section class="text-center my-5 fade-in-section">
-    <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80" class="img-fluid rounded shadow" alt="A doctor looking at a tablet showing health data.">
-</section>
-
-<section class="container my-5 problem-section fade-in-section">
-    <div class="row text-center">
-        <div class="col-md-4 problem">
-            <i class="bi bi-phone-stack h1 text-primary"></i>
-            <h4 class="mt-3">Track on Any Device</h4>
-            <p>Keep every note in one place—no more spreadsheets.</p>
-        </div>
-        <div class="col-md-4 problem">
-            <i class="bi bi-layout-wtf h1 text-primary"></i>
-            <h4 class="mt-3">Unified Dashboard</h4>
-            <p>Scheduling, notes, and analytics in a single dashboard.</p>
-        </div>
-        <div class="col-md-4 problem">
-            <i class="bi bi-robot h1 text-primary"></i>
-            <h4 class="mt-3">Automated Reporting</h4>
-            <p>AI-powered reports free up your valuable time.</p>
-        </div>
-    </div>
-</section>
-
-<section class="container my-5 fade-in-section">
-    <h2 class="text-center mb-4">Key Features</h2>
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 feature-card">
-                <div class="card-body text-center">
-                    <i class="bi bi-calendar2-week h2 text-success"></i>
-                    <h5 class="card-title mt-3">Smart Scheduling</h5>
-                    <p class="card-text">Integrate with Calendly to sync bookings and manage your schedule effortlessly.</p>
+        <div class="row align-items-center">
+            <div class="col-lg-6 hero-content">
+                <h1 class="fade-in-up">
+                    Transform Your <span class="highlight">Physio Practice</span> with AI-Powered Insights
+                </h1>
+                <p class="lead fade-in-up">
+                    Stop juggling spreadsheets and endless paperwork. Track patient progress, generate AI reports, and manage your practice in one intelligent platform designed for modern physiotherapists.
+                </p>
+                <div class="hero-cta fade-in-up">
+                    <a href="#signup" class="btn-hero btn-hero-primary">
+                        <i class="bi bi-rocket-takeoff me-2"></i>Start Free Trial
+                    </a>
+                    <a href="#features" class="btn-hero btn-hero-outline">
+                        <i class="bi bi-play-circle me-2"></i>See How It Works
+                    </a>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 feature-card">
-                <div class="card-body text-center">
-                    <i class="bi bi-graph-up-arrow h2 text-success"></i>
-                    <h5 class="card-title mt-3">AI-Powered Reports</h5>
-                    <p class="card-text">Generate detailed patient progress reports with a single click using AI.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 feature-card">
-                <div class="card-body text-center">
-                    <i class="bi bi-credit-card h2 text-success"></i>
-                    <h5 class="card-title mt-3">Integrated Payments</h5>
-                    <p class="card-text">Manage fees, track payments, and handle invoicing directly within the app.</p>
-                </div>
+            <div class="col-lg-6 hero-image">
+                <img src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
+                     class="img-fluid fade-in-up" 
+                     alt="Modern physiotherapy clinic with tablet showing patient data">
             </div>
         </div>
     </div>
 </section>
 
-<section id="signup" class="email-cta fade-in-section">
+<!-- Stats Section -->
+<section class="stats-section">
     <div class="container">
-        <h2 class="h4 text-center mb-3">Be the first to test the platform</h2>
-        <form action="https://example.com/subscribe" method="post" class="row g-2 justify-content-center">
-            <div class="col-sm-6 col-md-4">
-                <input type="email" class="form-control" name="email" placeholder="Enter your email" required>
+        <div class="row">
+            <div class="col-md-3 col-6">
+                <div class="stat-item fade-in-up">
+                    <span class="stat-number">500+</span>
+                    <span class="stat-label">Active Physiotherapists</span>
+                </div>
             </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-primary">Join the Beta</button>
+            <div class="col-md-3 col-6">
+                <div class="stat-item fade-in-up">
+                    <span class="stat-number">15k+</span>
+                    <span class="stat-label">Patients Treated</span>
+                </div>
             </div>
-        </form>
-        <p class="mt-3 text-muted">{{ _('Free while in beta') }} &mdash; {{ _('plans from') }} &euro;9/{{ _('month') }}.</p>
+            <div class="col-md-3 col-6">
+                <div class="stat-item fade-in-up">
+                    <span class="stat-number">92%</span>
+                    <span class="stat-label">Time Saved</span>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item fade-in-up">
+                    <span class="stat-number">4.9★</span>
+                    <span class="stat-label">User Rating</span>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
-<section class="text-center my-4 fade-in-section">
-    <p class="text-muted mb-1">Trusted by physios in Marbella</p>
-    <p class="text-muted">Affordable for solo physios and clinics alike</p>
+<!-- Features Section -->
+<section class="features-section" id="features">
+    <div class="container">
+        <div class="section-header fade-in-up">
+            <h2 class="section-title">Everything You Need to Excel</h2>
+            <p class="section-subtitle">
+                Powerful features designed specifically for physiotherapy practices, from solo practitioners to multi-location clinics.
+            </p>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <h3 class="feature-title">Smart Scheduling</h3>
+                    <p class="feature-description">
+                        Seamlessly integrate with Calendly and manage appointments across multiple locations. Automated reminders and real-time availability.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <h3 class="feature-title">AI-Powered Reports</h3>
+                    <p class="feature-description">
+                        Generate comprehensive treatment reports with our AI assistant. Include progress photos, exercise prescriptions, and outcome measures automatically.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <h3 class="feature-title">Progress Analytics</h3>
+                    <p class="feature-description">
+                        Visualize patient outcomes with interactive charts and trigger point mapping. Track pain levels, ROM, and functional improvements over time.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h3 class="feature-title">GDPR Compliant</h3>
+                    <p class="feature-description">
+                        Your patient data is protected with enterprise-grade security. Full GDPR compliance with data encryption and secure backups.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                    <h3 class="feature-title">Payment Tracking</h3>
+                    <p class="feature-description">
+                        Monitor fees, track payments, and generate financial reports. Integrate with your existing billing systems effortlessly.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <i class="bi bi-phone"></i>
+                    </div>
+                    <h3 class="feature-title">Mobile Access</h3>
+                    <p class="feature-description">
+                        Access your practice data anywhere, anytime. Responsive design works perfectly on tablets and smartphones.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 
-<footer class="footer text-center">
+<!-- CTA Section -->
+<section class="cta-section" id="signup">
     <div class="container">
-        <a href="{{ url_for('main.pricing_page') }}">Pricing</a>
-        <a href="#">About</a>
-        <a href="#">Contact</a>
+        <div class="cta-content fade-in-up">
+            <h2 class="cta-title">Ready to Transform Your Practice?</h2>
+            <p class="cta-subtitle">Join hundreds of physiotherapists who have revolutionized their workflow</p>
+            
+            <form action="https://example.com/subscribe" method="post" class="cta-form">
+                <input type="email" class="cta-input" name="email" placeholder="Enter your email address" required>
+                <button type="submit" class="btn-cta">
+                    <i class="bi bi-arrow-right me-2"></i>Start Free Trial
+                </button>
+            </form>
+            
+            <p class="mt-3" style="opacity: 0.8; font-size: 0.9rem;">
+                {{ _('Free while in beta') }} • {{ _('plans from') }} €9/{{ _('month') }} • No credit card required
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Trust Section -->
+<section class="trust-section">
+    <div class="container">
+        <p class="trust-text">Trusted by physiotherapy clinics across Spain and Europe</p>
+        <p class="trust-subtext">From solo practitioners in Marbella to multi-location clinics in Madrid</p>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-links">
+            <a href="{{ url_for('main.pricing_page') }}" class="footer-link">Pricing</a>
+            <a href="#about" class="footer-link">About</a>
+            <a href="#" class="footer-link">Privacy</a>
+            <a href="#" class="footer-link">Terms</a>
+            <a href="#" class="footer-link">Contact</a>
+        </div>
+        <p style="opacity: 0.7; margin: 0;">&copy; 2024 PhysioTracker. All rights reserved.</p>
     </div>
 </footer>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const sections = document.querySelectorAll('.fade-in-section');
+    // Smooth scrolling for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
 
-    if ("IntersectionObserver" in window) {
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, {
-            threshold: 0.1
-        });
+    // Intersection Observer for animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
 
-        sections.forEach(section => {
-            observer.observe(section);
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate');
+                observer.unobserve(entry.target);
+            }
         });
-    } else {
-        // Fallback for older browsers
-        sections.forEach(section => {
-            section.classList.add('is-visible');
+    }, observerOptions);
+
+    // Observe all fade-in elements
+    document.querySelectorAll('.fade-in-up').forEach(el => {
+        observer.observe(el);
+    });
+
+    // Navbar scroll effect
+    window.addEventListener('scroll', () => {
+        const navbar = document.querySelector('.navbar-custom');
+        if (window.scrollY > 50) {
+            navbar.style.background = 'rgba(255, 255, 255, 0.98)';
+            navbar.style.boxShadow = '0 2px 30px rgba(0, 0, 0, 0.12)';
+        } else {
+            navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+            navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.08)';
+        }
+    });
+
+    // Trigger initial animations for elements in viewport
+    setTimeout(() => {
+        document.querySelectorAll('.fade-in-up').forEach(el => {
+            const rect = el.getBoundingClientRect();
+            if (rect.top < window.innerHeight && rect.bottom > 0) {
+                el.classList.add('animate');
+            }
         });
-    }
+    }, 100);
 });
 </script>
 {% endblock %}
