@@ -38,6 +38,8 @@ class Patient(db.Model):
     postcode = db.Column(db.String(20))
     preferred_location = db.Column(db.String(50), default='Clinic')  # Clinic or Home Visit
 
+    consents = db.relationship('UserConsent', backref='patient', lazy=True)
+
 class Treatment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
@@ -196,12 +198,29 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Personal fields
+    first_name = db.Column(db.String(64), nullable=True)
+    last_name = db.Column(db.String(64), nullable=True)
+    date_of_birth = db.Column(db.Date, nullable=True)
+    sex = db.Column(db.String(16), nullable=True)  # 'Masculino', 'Femenino', 'Otro'
+    license_number = db.Column(db.String(32), nullable=True)
+    
+    # Clinic fields
+    clinic_name = db.Column(db.String(150), nullable=True)
+    clinic_address = db.Column(db.String(200), nullable=True)
+    clinic_phone = db.Column(db.String(30), nullable=True)
+    clinic_email = db.Column(db.String(120), nullable=True)
+    clinic_website = db.Column(db.String(120), nullable=True)
+    clinic_description = db.Column(db.Text, nullable=True)
+    
+    # Financial fields
+    contribution_base = db.Column(db.Float, nullable=True)
     
     # Stripe Customer ID
     stripe_customer_id = db.Column(db.String(255), nullable=True, unique=True, index=True)
     
     # Calendly specific fields
-    calendly_api_token = db.Column(db.String(255), nullable=True)
+    calendly_api_key = db.Column(db.String(255), nullable=True)
     calendly_user_uri = db.Column(db.String(255), nullable=True)
     
     role = db.Column(db.String(20), default='physio')  # e.g., 'admin', 'physio'
@@ -214,9 +233,10 @@ class User(db.Model, UserMixin):
     unmatched_calendly_bookings = db.relationship('UnmatchedCalendlyBooking', backref='user', lazy='dynamic') # Added relationship
     
     # Subscription relationship
-    # Ensure this doesn't conflict with a 'user' backref from UserSubscription if you were to define it there.
-    # The current UserSubscription does not define a direct 'user' relationship field, relying on the backref from here.
     subscriptions = db.relationship('UserSubscription', backref='user', lazy='dynamic', order_by=UserSubscription.created_at.desc())
+
+    data_processing_activities = db.relationship('DataProcessingActivity', backref='user', lazy=True)
+    security_logs = db.relationship('SecurityLog', backref='user', lazy=True)
 
     @property
     def patient_usage_details(self) -> Tuple[int, Optional[int]]:
@@ -341,3 +361,64 @@ class User(db.Model, UserMixin):
         
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+class FixedCost(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    description = db.Column(db.String(150), nullable=False)
+    monthly_amount = db.Column(db.Float, nullable=False)
+    user = db.relationship('User', backref=db.backref('fixed_costs', lazy=True))
+
+class DataProcessingActivity(db.Model):
+    __tablename__ = 'data_processing_activity'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    activity_type = db.Column(db.String(50), nullable=False)  # e.g., 'patient_registration', 'treatment_record'
+    data_categories = db.Column(db.String(200), nullable=False)  # e.g., 'personal_data,health_data'
+    purpose = db.Column(db.String(200), nullable=False)
+    retention_period = db.Column(db.Integer, nullable=False)  # in months
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class UserConsent(db.Model):
+    __tablename__ = 'user_consent'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
+    purpose = db.Column(db.String(50), nullable=False)
+    given_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('consents', lazy=True))
+
+class SecurityLog(db.Model):
+    __tablename__ = 'security_log'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    event_type = db.Column(db.String(50), nullable=False)  # e.g., 'login', 'data_access', 'data_modification'
+    ip_address = db.Column(db.String(45), nullable=True)
+    user_agent = db.Column(db.String(200), nullable=True)
+    details = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class SecurityBreach(db.Model):
+    __tablename__ = 'security_breach'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    breach_type = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    affected_users = db.Column(db.Integer, nullable=False)
+    detected_at = db.Column(db.DateTime, nullable=False)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    resolution_details = db.Column(db.Text, nullable=True)
+    notification_sent = db.Column(db.Boolean, default=False)
+    notification_date = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
