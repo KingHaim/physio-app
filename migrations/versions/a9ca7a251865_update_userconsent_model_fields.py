@@ -1,7 +1,7 @@
 """Update UserConsent model fields
 
 Revision ID: a9ca7a251865
-Revises: ff42825be70f
+Revises: 5ad53f2be9cb
 Create Date: 2025-06-13 10:59:11.739933
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'a9ca7a251865'
-down_revision = 'ff42825be70f'
+down_revision = '5ad53f2be9cb'
 branch_labels = None
 depends_on = None
 
