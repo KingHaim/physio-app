@@ -249,7 +249,7 @@
                 <h4 class="mb-3">{{ _('Billing History') }}</h4>
                 <p>{{ _('Details about past invoices and payment methods will be displayed here.') }}</p>
                 <p><a href="{{ url_for('main.manage_subscription') }}" class="btn btn-info"><i class="bi bi-gear-fill"></i> {{ _('Manage Billing Details on Stripe') }}</a></p>
-                {# TODO: Integrate Stripe API to list invoices etc. #}
+                <div id="invoiceHistory" class="mt-3"></div>
             </div>
         </div>
     </div>
@@ -261,6 +261,39 @@
 {# Add any page-specific JavaScript here if needed #}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const invoiceContainer = document.getElementById('invoiceHistory');
+
+    function loadInvoiceHistory() {
+        if (!invoiceContainer) return;
+
+        fetch('/api/invoices')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.invoices.length === 0) {
+                        invoiceContainer.innerHTML = '<p>No invoices found.</p>';
+                        return;
+                    }
+
+                    const list = document.createElement('ul');
+                    data.invoices.forEach(inv => {
+                        const li = document.createElement('li');
+                        const date = new Date(inv.created * 1000).toLocaleDateString();
+                        li.innerHTML = `<a href="${inv.invoice_pdf}" target="_blank">${inv.number} - ${inv.amount_paid / 100} ${inv.currency.toUpperCase()} - ${date}</a>`;
+                        list.appendChild(li);
+                    });
+                    invoiceContainer.innerHTML = '';
+                    invoiceContainer.appendChild(list);
+                } else {
+                    invoiceContainer.innerHTML = `<p>${data.message || 'Failed to load invoices.'}</p>`;
+                }
+            })
+            .catch(err => {
+                console.error('Error loading invoices:', err);
+                invoiceContainer.innerHTML = '<p>Error loading invoices.</p>';
+            });
+    }
+
     // Activate tab if URL hash is present (e.g., /my-account#billing)
     var hash = window.location.hash;
     if (hash) {
@@ -295,8 +328,17 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 window.location.hash = targetPaneId;
             }
+
+            if (targetPaneId === '#billing') {
+                loadInvoiceHistory();
+            }
         });
     });
+
+    // If the billing tab is initially active via hash
+    if (hash === '#billing' || hash === '#billing-tab-pane') {
+        loadInvoiceHistory();
+    }
 });
 </script>
 {% endblock %} 

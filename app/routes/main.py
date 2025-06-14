@@ -382,29 +382,19 @@ def patient_detail(id):
         Treatment.status == 'Scheduled'
     ).all()
 
-    if past_treatments:
-        count = 0
-        for treatment_item in past_treatments: # Renamed to avoid conflict
-            treatment_item.status = 'Completed'
-            count += 1
-        if count > 0:
-            try:
-                db.session.commit()
-                flash(f"{count} past treatment(s) automatically marked as completed.", "info")
-            except Exception as e:
-                db.session.rollback()
-                print(f"Error auto-completing treatments for patient {id}: {e}")
-                flash("Error updating past treatment statuses.", "danger")
-
-    treatment_count = db.session.query(Treatment.id).filter(Treatment.patient_id == id).count()
-    is_first_visit = treatment_count == 0
-    print(f"Is first visit for patient {id}? {is_first_visit}")
+    # Add consent form
+    form = UserConsentForm()
+    
+    # Check if this is the first visit
+    is_first_visit = not treatments
 
     return render_template('patient_detail.html', 
-                           patient=patient, 
-                           today=today, 
-                           treatments=treatments,
-                          is_first_visit=is_first_visit)
+                         patient=patient, 
+                         treatments=treatments,
+                         past_treatments=past_treatments,
+                         today=today,
+                         form=form,
+                         is_first_visit=is_first_visit)
 
 @main.route('/patient/<int:patient_id>/treatment', methods=['POST'])
 @login_required
@@ -3608,6 +3598,28 @@ def security_breach():
     
     breaches = SecurityBreach.query.order_by(SecurityBreach.detected_at.desc()).all()
     return render_template('security_breach.html', breaches=breaches)
+
+@main.route('/api/consent/<int:consent_id>/revoke', methods=['POST'])
+@login_required
+def api_revoke_consent(consent_id):
+    consent = UserConsent.query.get_or_404(consent_id)
+    if consent.user_id != current_user.id and not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    consent.is_active = False
+    db.session.commit()
+    return jsonify({'success': True})
+
+@main.route('/api/security-breach/<int:breach_id>/resolve', methods=['POST'])
+@login_required
+@admin_required
+def api_resolve_breach(breach_id):
+    breach = SecurityBreach.query.get_or_404(breach_id)
+    data = request.get_json() or {}
+    breach.resolved_at = datetime.utcnow()
+    breach.resolution_details = data.get('details')
+    db.session.commit()
+    return jsonify({'success': True})
 
 def log_security_event(user_id, event_type, details=None):
     """Helper function to log security events"""

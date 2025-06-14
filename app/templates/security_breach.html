@@ -144,8 +144,29 @@
 {{ super() }}
 <script>
 function markAsResolved(breachId) {
-    // TODO: Implement AJAX call to mark breach as resolved
-    alert('This feature will be implemented soon.');
+    const details = prompt('Enter resolution details (optional):', '');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+    fetch(`/api/security-breach/${breachId}/resolve`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ details: details })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to mark breach as resolved.');
+        }
+    })
+    .catch(err => {
+        console.error('Error resolving breach:', err);
+        alert('An error occurred while updating the breach.');
+    });
 }
 </script>
 {% endblock %}

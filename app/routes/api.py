@@ -885,3 +885,26 @@ def handle_subscription_change(subscription_data):
             subscription.ended_at = datetime.fromtimestamp(subscription_data.get('ended_at'))
         db.session.commit()
         current_app.logger.info(f"Subscription {stripe_subscription_id} status updated to {subscription.status}")
+
+@api.route('/invoices')
+@login_required
+def list_invoices():
+    customer_id = current_user.stripe_customer_id
+    if not customer_id:
+        return jsonify({'success': False, 'message': 'No Stripe customer ID found.'}), 400
+
+    try:
+        invoices = stripe.Invoice.list(customer=customer_id, limit=20)
+        result = []
+        for inv in invoices.auto_paging_iter():
+            result.append({
+                'number': inv.number,
+                'amount_paid': inv.amount_paid,
+                'currency': inv.currency,
+                'created': inv.created,
+                'invoice_pdf': inv.invoice_pdf
+            })
+        return jsonify({'success': True, 'invoices': result})
+    except Exception as e:
+        current_app.logger.error(f"Error fetching invoices for user {current_user.id}: {e}")
+        return jsonify({'success': False, 'message': 'Failed to retrieve invoices.'}), 500
