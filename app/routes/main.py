@@ -751,7 +751,7 @@ def appointments():
     if current_user.is_admin:
         calendly_configured_for_user = True # Admins are implicitly configured to see all
     elif current_user.role == 'physio':
-        if current_user.calendly_api_token and current_user.calendly_user_uri:
+        if current_user.calendly_api_key and current_user.calendly_user_uri:
             calendly_configured_for_user = True
 
     return render_template('appointments.html',
