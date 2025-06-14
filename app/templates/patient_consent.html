@@ -87,7 +87,7 @@
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                                                     {% if consent.is_active %}
-                                                    <button type="button" class="btn btn-warning" onclick="revokeConsent({{ consent.id }})">Revoke Consent</button>
+                                                    <button type="button" class="btn btn-warning" onclick="revokeConsent('{{ consent.id }}')">Revoke Consent</button>
                                                     {% endif %}
                                                 </div>
                                             </div>
