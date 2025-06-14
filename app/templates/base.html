@@ -460,13 +460,13 @@
                     {% if current_user.is_authenticated and current_user.role != 'patient' %}
                         <div class="nav-section">
                             <div class="nav-section-title">{{ _('Management') }}</div>
-                            {% if current_user.is_admin or (current_user.calendly_api_token and current_user.calendly_user_uri) %}
+                            {% if current_user.is_admin or (current_user.calendly_api_key and current_user.calendly_user_uri) %}
                             <li class="nav-item">
-                                <a class="nav-link {% if request.path == url_for('main.review_calendly_bookings') %}active{% endif %}" 
-                                   href="{{ url_for('main.review_calendly_bookings') }}">
-                                    <i class="bi bi-clipboard-check"></i> {{ _('Pending Review') }}
+                                <a class="nav-link {% if request.path == url_for('main.calendly_bookings') %}active{% endif %}" 
+                                   href="{{ url_for('main.calendly_bookings') }}">
+                                    <i class="bi bi-calendar-check"></i> {{ _('Calendly Bookings') }}
                                     {% if pending_review_count > 0 %}
-                                    <span class="badge bg-danger rounded-pill">{{ pending_review_count }}</span>
+                                        <span class="badge bg-danger">{{ pending_review_count }}</span>
                                     {% endif %}
                                 </a>
                             </li>

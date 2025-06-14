@@ -144,7 +144,7 @@ def create_app(config_class=Config):
             if current_user.is_admin:
                 count = UnmatchedCalendlyBooking.query.filter_by(status='Pending').count()
             elif current_user.role == 'physio': # Non-admin physio
-                if current_user.calendly_api_token and current_user.calendly_user_uri:
+                if current_user.calendly_api_key and current_user.calendly_user_uri:
                     count = UnmatchedCalendlyBooking.query.filter_by(
                         status='Pending',
                         user_id=current_user.id

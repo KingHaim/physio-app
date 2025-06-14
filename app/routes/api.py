@@ -16,8 +16,8 @@ api = Blueprint('api', __name__)
 @api.route('/sync-calendly-events', methods=['GET'])
 @login_required
 def sync_calendly_events():
-    # Use the current user's Calendly API token and URI
-    api_token = current_user.calendly_api_token
+    # Get Calendly API token from user settings
+    api_token = current_user.calendly_api_key
     user_calendly_uri_for_events = current_user.calendly_user_uri
 
     if not api_token:

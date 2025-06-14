@@ -17,9 +17,9 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
 
                 <div class="mb-3">
-                    <label for="calendly_api_token" class="form-label">{{ _('Calendly API Token') }}</label>
-                    <input type="password" class="form-control" id="calendly_api_token" name="calendly_api_token" value="{{ calendly_api_token or '' }}" placeholder="{{ _('Enter your Calendly API token') }}">
-                    <small class="form-text text-muted">{{ _('Your token will be stored securely. Leave blank if you wish to not update or remove it.') }}</small> {# Added placeholder and clarification #}
+                    <label for="calendly_api_key" class="form-label">{{ _('Calendly API Key') }}</label>
+                    <input type="password" class="form-control" id="calendly_api_key" name="calendly_api_key" value="{{ calendly_api_key or '' }}" placeholder="{{ _('Enter your Calendly API key') }}">
+                    <small class="form-text text-muted">{{ _('Your key will be stored securely. Leave blank if you wish to not update or remove it.') }}</small>
                 </div>
 
                 <div class="mb-3">

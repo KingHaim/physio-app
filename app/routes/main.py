@@ -193,7 +193,7 @@ def index():
     if current_user.is_admin:
         pending_review_count = UnmatchedCalendlyBooking.query.filter_by(status='Pending').count()
     elif current_user.role == 'physio':
-        if current_user.calendly_api_key and current_user.calendly_user_uri:
+        if current_user.calendly_api_token and current_user.calendly_user_uri:
             pending_review_count = UnmatchedCalendlyBooking.query.filter_by(
                 status='Pending',
                 user_id=current_user.id
@@ -2956,43 +2956,22 @@ def generate_new_analytics_report():
 @main.route('/profile/calendly-settings', methods=['GET', 'POST'])
 @login_required
 def manage_calendly_settings():
-    if current_user.role == 'patient':
-        flash('This page is not available for patient accounts.', 'warning')
-        return redirect(url_for('main.index'))
-
     if request.method == 'POST':
-        token = request.form.get('calendly_api_token', '').strip()
-        uri = request.form.get('calendly_user_uri', '').strip()
-
-        # Basic validation: Check if URI looks like a Calendly user URI
-        if uri and not uri.startswith('https://api.calendly.com/users/'):
-            flash('Invalid Calendly User URI format. It should start with "https://api.calendly.com/users/".', 'danger')
-            # Re-render form with submitted values
-            # generate_csrf() is called implicitly by Flask-WTF for POST requests if the form has a csrf_token field.
-            # However, to be absolutely sure the template has it for re-rendering on error:
-            csrf_token_value_on_post_error = generate_csrf()
-            return render_template('calendly_settings.html', 
-                                   calendly_api_token=token, 
-                                   calendly_user_uri=uri,
-                                   csrf_token_value=csrf_token_value_on_post_error)
-
-        current_user.calendly_api_token = token if token else None
-        current_user.calendly_user_uri = uri if uri else None
+        token = request.form.get('calendly_api_key', '').strip()
+        user_uri = request.form.get('calendly_user_uri', '').strip()
         
-        try:
-            db.session.commit()
-            flash('Calendly settings updated successfully!', 'success')
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Error updating Calendly settings for user {current_user.id}: {e}")
-            flash('An error occurred while saving your settings. Please try again.', 'danger')
+        current_user.calendly_api_key = token if token else None
+        current_user.calendly_user_uri = user_uri if user_uri else None
         
+        db.session.commit()
+        flash('Calendly settings updated successfully.', 'success')
         return redirect(url_for('main.manage_calendly_settings'))
-
-    # GET request
+    
+    # Generate CSRF token for the form
     csrf_token_value = generate_csrf()
+    
     return render_template('calendly_settings.html', 
-                           calendly_api_token=current_user.calendly_api_token, 
+                           calendly_api_key=current_user.calendly_api_key, 
                            calendly_user_uri=current_user.calendly_user_uri,
                            csrf_token_value=csrf_token_value)
 
