@@ -16,3 +16,6 @@ fixed_key.txt
 working_endpoint.txt
 *_backup_*.db
 run_with_api_key.sh
+
+# Ignore SQL dumps
+*.sql
