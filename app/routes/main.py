@@ -147,17 +147,17 @@ def get_relative_date_string(target_date):
 @main.route('/')
 @main.route('/index')
 def index():
-    print("🧠 Entrando a index", flush=True)
-    print(f"current_user: {current_user}", flush=True)
-    print(f"Tiene calendly_api_token? {'calendly_api_token' in dir(current_user)}", flush=True)
-    print(f"Tiene calendly_user_uri? {'calendly_user_uri' in dir(current_user)}", flush=True)
+    import sys
+    
+    print("🧠 Entrando en la función INDEX", file=sys.stderr, flush=True)
+    print(f"current_user: {current_user}", file=sys.stderr, flush=True)
+    print(f"Tiene calendly_api_token? {'calendly_api_token' in dir(current_user)}", file=sys.stderr, flush=True)
+    print(f"Tiene calendly_user_uri? {'calendly_user_uri' in dir(current_user)}", file=sys.stderr, flush=True)
     
     try:
         return render_template('index.html', title='Home')
     except Exception as e:
-        import traceback
-        print("💥 Error al renderizar index.html:", e, flush=True)
-        traceback.print_exc()
+        print(f"💥 CATCHED ERROR: {str(e)}", file=sys.stderr, flush=True)
         return "Internal error: check logs", 500
 
 @main.route('/api/treatment/<int:id>')
