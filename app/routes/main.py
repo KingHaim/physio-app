@@ -1,9 +1,9 @@
 # app/routes.py
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response, current_app, session, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response, current_app, session, send_file, abort
 from datetime import datetime, timedelta, date, time
 from calendar import monthrange, day_name # Import day_name
 from sqlalchemy import func, extract, or_, case, cast, Float, exc # Add exc import
-from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport, RecurringAppointment, User, PracticeReport, Plan  # Added Plan
+from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport, RecurringAppointment, User, PracticeReport, Plan, FixedCost  # Added FixedCost
 import json
 from app.utils import mark_past_treatments_as_completed, mark_inactive_patients
 from flask_login import login_required, current_user, logout_user # Import current_user and logout_user
@@ -22,7 +22,9 @@ from flask_wtf import FlaskForm # Import FlaskForm
 from flask_wtf.csrf import generate_csrf # Import generate_csrf
 import stripe # Ensure stripe is imported if not already
 from app.models import User, Plan, UserSubscription, Patient, Treatment, PatientReport # Make sure User, db are imported
-from app.forms import UpdateEmailForm, ChangePasswordForm # Import the new forms
+from app.forms import UpdateEmailForm, ChangePasswordForm, UserProfileForm, ClinicForm, ApiIntegrationsForm, FinancialSettingsForm, UserConsentForm # Import the new forms
+from app.models import DataProcessingActivity, UserConsent, SecurityBreach, SecurityLog
+from functools import wraps
 
 # Define timezones
 UTC = pytz.utc
@@ -49,6 +51,14 @@ def physio_required(f):
         return f(*args, **kwargs)
     return decorated_function
 # --- End Decorator ---
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Define the 2025 tax brackets based on the provided image
 # Each dict represents a bracket with its lower/upper income bounds,
@@ -2225,9 +2235,11 @@ def financials():
              year = int(selected_year)
              available_years = [year]
 
+    # --- Obtener gastos fijos del usuario autenticado ---
+    user_fixed_costs = FixedCost.query.filter_by(user_id=current_user.id).all()
+    total_fixed_monthly_expenses = sum(fc.monthly_amount for fc in user_fixed_costs)
 
     # --- Initialize data structures ---
-    # For Quarterly/Annual Table
     quarterly_data = {
         'q1': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
         'q2': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
@@ -2235,7 +2247,6 @@ def financials():
         'q4': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
         'annual': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0}
     }
-    # For Monthly Bracket Table
     monthly_data = {} # Key will be month number (1-12)
 
     tax_rate = 0.19
@@ -2245,13 +2256,10 @@ def financials():
                     7: 'q3', 8: 'q3', 9: 'q3',
                     10: 'q4', 11: 'q4', 12: 'q4'}
 
-    # --- Loop through months 1-12 to calculate monthly and aggregate quarterly/annual data ---
     for month in range(1, 13):
-        # Check if the month is in the future for the selected year
         current_month = datetime.now().month
         current_year = datetime.now().year
         if year == current_year and month > current_month:
-            # Initialize future months with zeros and default bracket info
             month_start_date = datetime(year, month, 1)
             monthly_data[month] = {
                 'month_name': month_start_date.strftime('%B'),
@@ -2263,15 +2271,13 @@ def financials():
                 'net_revenue_final': 0,
                 'diff_to_upper': '-'
             }
-            continue # Skip calculation for future months
+            continue
 
         month_start_date = datetime(year, month, 1)
-        # Get the last day of the month
         month_end_day = monthrange(year, month)[1]
         month_end_date = datetime(year, month, month_end_day, 23, 59, 59)
         q_key = quarters_map[month]
 
-        # Query treatments for the specific month
         monthly_treatments_query = Treatment.query.filter(
             Treatment.created_at >= month_start_date,
             Treatment.created_at <= month_end_date,
@@ -2281,10 +2287,8 @@ def financials():
 
         if not current_user.is_admin:
             monthly_treatments_query = monthly_treatments_query.join(Patient).filter(Patient.user_id == current_user.id)
-        
         monthly_treatments = monthly_treatments_query.all()
 
-        # Calculate monthly figures
         m_revenue = 0
         m_costaspine_revenue = 0
         m_costaspine_fee = 0
@@ -2293,14 +2297,11 @@ def financials():
         for t in monthly_treatments:
             fee = t.fee_charged or 0
             m_revenue += fee
-
             is_costaspine = t.location == 'CostaSpine Clinic'
             is_card = t.payment_method == 'Card'
-
             if is_costaspine:
                 m_costaspine_revenue += fee
                 m_costaspine_fee += fee * costaspine_fee_rate
-
             if is_card:
                 if is_costaspine:
                     m_taxable_card_revenue += fee * (1 - costaspine_fee_rate)
@@ -2310,63 +2311,61 @@ def financials():
         m_tax = m_taxable_card_revenue * tax_rate
         m_net = m_revenue - m_costaspine_fee - m_tax
 
-        # Find tax bracket for this month's net revenue
         current_bracket = find_bracket(m_net, TAX_BRACKETS_2025)
-        bracket_desc = "-" # Default if no treatments/net revenue
-        min_base_value = 0 # Store numeric value for calculation
+        bracket_desc = "-"
+        min_base_value = 0
         min_base_display = "-"
         diff_to_upper = "-"
-        monthly_contribution = 0 # Default contribution
+        monthly_contribution = 0
 
         if current_bracket:
             bracket_desc = current_bracket['desc']
             min_base_value = current_bracket['base']
             min_base_display = f"€{min_base_value:,.2f}"
             monthly_contribution = min_base_value * 0.314
-            
             upper_bound = current_bracket['upper']
             if upper_bound == float('inf'):
                 diff_to_upper = "Top Bracket"
             else:
                 diff = upper_bound - m_net
                 diff_to_upper = f"€{diff:,.2f}"
-        elif m_net > 0: 
-             bracket_desc = "Error: No bracket found"
+        elif m_net > 0:
+            bracket_desc = "Error: No bracket found"
 
         m_net_final = m_net - monthly_contribution
 
         monthly_data[month] = {
             'month_name': month_start_date.strftime('%B'),
-            'net_revenue': m_net, 
+            'net_revenue': m_net,
             'bracket': bracket_desc,
             'min_base': min_base_display,
             'monthly_contribution': monthly_contribution,
-            'fixed_expenses': TOTAL_FIXED_MONTHLY_EXPENSES, 
-            'net_revenue_final': m_net_final, 
+            'fixed_expenses': total_fixed_monthly_expenses,
+            'net_revenue_final': m_net_final,
             'diff_to_upper': diff_to_upper
         }
 
         quarterly_data[q_key]['revenue'] += m_revenue
         quarterly_data[q_key]['costaspine_revenue'] += m_costaspine_revenue
         quarterly_data[q_key]['costaspine_fee'] += m_costaspine_fee
-        quarterly_data[q_key]['tax'] += monthly_contribution 
-        quarterly_data[q_key]['fixed_expenses'] += TOTAL_FIXED_MONTHLY_EXPENSES 
+        quarterly_data[q_key]['tax'] += monthly_contribution
+        quarterly_data[q_key]['fixed_expenses'] += total_fixed_monthly_expenses
         quarterly_data[q_key]['net'] = quarterly_data[q_key]['revenue'] - quarterly_data[q_key]['costaspine_fee'] - quarterly_data[q_key]['tax'] - quarterly_data[q_key]['fixed_expenses']
 
         quarterly_data['annual']['revenue'] += m_revenue
         quarterly_data['annual']['costaspine_revenue'] += m_costaspine_revenue
         quarterly_data['annual']['costaspine_fee'] += m_costaspine_fee
-        quarterly_data['annual']['tax'] += monthly_contribution 
-        quarterly_data['annual']['fixed_expenses'] += TOTAL_FIXED_MONTHLY_EXPENSES 
+        quarterly_data['annual']['tax'] += monthly_contribution
+        quarterly_data['annual']['fixed_expenses'] += total_fixed_monthly_expenses
         quarterly_data['annual']['net'] = quarterly_data['annual']['revenue'] - quarterly_data['annual']['costaspine_fee'] - quarterly_data['annual']['tax'] - quarterly_data['annual']['fixed_expenses']
 
     return render_template(
         'financials.html',
-        data=quarterly_data, 
-        monthly_breakdown=monthly_data, 
+        data=quarterly_data,
+        monthly_breakdown=monthly_data,
         selected_year=selected_year,
-        available_years=sorted(list(set(available_years)), reverse=True), 
-        tax_year=2025 
+        available_years=sorted(list(set(available_years)), reverse=True),
+        tax_year=2025
     )
 
 # --- Review Missing Payments Route ---
@@ -3463,4 +3462,168 @@ def bulk_delete_patients():
 def landing_page():
     """Public marketing landing page."""
     return render_template('landing.html')
+
+@main.route('/user/settings', methods=['GET', 'POST'])
+@login_required
+def user_settings():
+    user_form = UserProfileForm()
+    clinic_form = ClinicForm()
+    api_form = ApiIntegrationsForm()
+    financial_form = FinancialSettingsForm()
+    
+    # Get existing fixed costs
+    fixed_costs = FixedCost.query.filter_by(user_id=current_user.id).all()
+    
+    if request.method == 'POST':
+        if 'submit' in request.form:
+            if user_form.validate_on_submit():
+                current_user.first_name = user_form.first_name.data
+                current_user.last_name = user_form.last_name.data
+                current_user.date_of_birth = user_form.date_of_birth.data
+                current_user.sex = user_form.sex.data
+                current_user.license_number = user_form.license_number.data
+                db.session.commit()
+                flash('Your profile has been updated.', 'success')
+                return redirect(url_for('main.user_settings'))
+        elif 'submit_clinic' in request.form:
+            if clinic_form.validate_on_submit():
+                current_user.clinic_name = clinic_form.clinic_name.data
+                current_user.clinic_address = clinic_form.clinic_address.data
+                current_user.clinic_phone = clinic_form.clinic_phone.data
+                current_user.clinic_email = clinic_form.clinic_email.data
+                current_user.clinic_website = clinic_form.clinic_website.data
+                current_user.clinic_description = clinic_form.clinic_description.data
+                db.session.commit()
+                flash('Your clinic information has been updated.', 'success')
+                return redirect(url_for('main.user_settings'))
+        elif 'submit_api' in request.form:
+            if api_form.validate_on_submit():
+                current_user.calendly_api_key = api_form.calendly_api_key.data
+                db.session.commit()
+                flash('Your API settings have been updated.', 'success')
+                return redirect(url_for('main.user_settings'))
+        elif 'submit_financial' in request.form:
+            if financial_form.validate_on_submit():
+                current_user.contribution_base = financial_form.contribution_base.data
+                db.session.commit()
+                flash('Your financial settings have been updated.', 'success')
+                return redirect(url_for('main.user_settings'))
+        elif 'submit_add_cost' in request.form:
+            if financial_form.validate_on_submit():
+                new_cost = FixedCost(
+                    user_id=current_user.id,
+                    description=financial_form.description.data,
+                    monthly_amount=financial_form.monthly_amount.data
+                )
+                db.session.add(new_cost)
+                db.session.commit()
+                flash('Fixed cost has been added.', 'success')
+                return redirect(url_for('main.user_settings'))
+    
+    # Pre-populate forms with existing data
+    user_form.first_name.data = current_user.first_name
+    user_form.last_name.data = current_user.last_name
+    user_form.date_of_birth.data = current_user.date_of_birth
+    user_form.sex.data = current_user.sex
+    user_form.license_number.data = current_user.license_number
+    
+    clinic_form.clinic_name.data = current_user.clinic_name
+    clinic_form.clinic_address.data = current_user.clinic_address
+    clinic_form.clinic_phone.data = current_user.clinic_phone
+    clinic_form.clinic_email.data = current_user.clinic_email
+    clinic_form.clinic_website.data = current_user.clinic_website
+    clinic_form.clinic_description.data = current_user.clinic_description
+    
+    api_form.calendly_api_key.data = current_user.calendly_api_key
+    
+    financial_form.contribution_base.data = current_user.contribution_base
+    
+    return render_template('user_settings.html', 
+                         user_form=user_form,
+                         clinic_form=clinic_form,
+                         api_form=api_form,
+                         financial_form=financial_form,
+                         fixed_costs=fixed_costs)
+
+@main.route('/user/settings/fixed-cost/<int:cost_id>/delete', methods=['POST'])
+@login_required
+def delete_fixed_cost(cost_id):
+    cost = FixedCost.query.filter_by(id=cost_id, user_id=current_user.id).first_or_404()
+    db.session.delete(cost)
+    db.session.commit()
+    flash('Fixed cost has been deleted.', 'success')
+    return redirect(url_for('main.user_settings'))
+
+@main.route('/privacy-policy')
+def privacy_policy():
+    return render_template('privacy_policy.html', last_updated=datetime.utcnow().strftime('%Y-%m-%d'))
+
+@main.route('/data-processing-activities')
+@login_required
+def data_processing_activities():
+    activities = DataProcessingActivity.query.filter_by(user_id=current_user.id).all()
+    return render_template('data_processing_activities.html', activities=activities)
+
+@main.route('/patient/<int:patient_id>/consent', methods=['GET', 'POST'])
+@login_required
+def patient_consent(patient_id):
+    patient = Patient.query.get_or_404(patient_id)
+    form = UserConsentForm()
+    
+    if form.validate_on_submit():
+        consent = UserConsent(
+            user_id=current_user.id,
+            patient_id=patient_id,
+            purpose=form.purpose.data,
+            expires_at=form.expires_at.data if form.expires_at.data else None,
+            notes=form.notes.data
+        )
+        db.session.add(consent)
+        db.session.commit()
+        flash('Consent recorded successfully.', 'success')
+        return redirect(url_for('main.patient_consent', patient_id=patient_id))
+    
+    consents = UserConsent.query.filter_by(patient_id=patient_id).order_by(UserConsent.given_at.desc()).all()
+    return render_template('patient_consent.html', patient=patient, form=form, consents=consents)
+
+@main.route('/security-breach', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def security_breach():
+    if request.method == 'POST':
+        breach = SecurityBreach(
+            breach_type=request.form.get('breach_type'),
+            description=request.form.get('description'),
+            affected_users=int(request.form.get('affected_users')),
+            detected_at=datetime.utcnow()
+        )
+        db.session.add(breach)
+        db.session.commit()
+        
+        # Notify affected users
+        # TODO: Implement notification system
+        
+        flash('Security breach has been recorded and notifications sent.', 'success')
+        return redirect(url_for('main.security_breach'))
+    
+    breaches = SecurityBreach.query.order_by(SecurityBreach.detected_at.desc()).all()
+    return render_template('security_breach.html', breaches=breaches)
+
+def log_security_event(user_id, event_type, details=None):
+    """Helper function to log security events"""
+    log = SecurityLog(
+        user_id=user_id,
+        event_type=event_type,
+        ip_address=request.remote_addr,
+        user_agent=request.user_agent.string,
+        details=details
+    )
+    db.session.add(log)
+    db.session.commit()
+
+# Add security logging to existing routes
+@main.before_request
+def before_request():
+    if current_user.is_authenticated:
+        log_security_event(current_user.id, 'page_access', f'Accessed {request.path}')
 

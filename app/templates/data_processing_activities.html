@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Data Processing Activities{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Data Processing Activities</h1>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Your Data Processing Activities</h2>
+                    
+                    {% if activities %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Activity Type</th>
+                                        <th>Data Categories</th>
+                                        <th>Purpose</th>
+                                        <th>Retention Period</th>
+                                        <th>Last Updated</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for activity in activities %}
+                                    <tr>
+                                        <td>{{ activity.activity_type }}</td>
+                                        <td>{{ activity.data_categories }}</td>
+                                        <td>{{ activity.purpose }}</td>
+                                        <td>{{ activity.retention_period }} months</td>
+                                        <td>{{ activity.updated_at.strftime('%Y-%m-%d') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center">No data processing activities recorded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Data Processing Information</h2>
+                    <p>This section provides information about how we process your data in compliance with GDPR requirements.</p>
+                    
+                    <h3 class="h5 mt-4">Data Categories</h3>
+                    <ul>
+                        <li><strong>Personal Data:</strong> Name, contact information, identification numbers</li>
+                        <li><strong>Health Data:</strong> Medical history, treatment records, diagnoses</li>
+                        <li><strong>Financial Data:</strong> Payment information, invoices, financial records</li>
+                        <li><strong>Usage Data:</strong> System logs, access records, preferences</li>
+                    </ul>
+
+                    <h3 class="h5 mt-4">Processing Purposes</h3>
+                    <ul>
+                        <li>Providing physiotherapy management services</li>
+                        <li>Managing patient records and treatments</li>
+                        <li>Processing payments and invoices</li>
+                        <li>Maintaining system security and performance</li>
+                        <li>Complying with legal obligations</li>
+                    </ul>
+
+                    <h3 class="h5 mt-4">Data Retention</h3>
+                    <p>We retain different types of data for different periods:</p>
+                    <ul>
+                        <li>Patient records: 5 years after last treatment</li>
+                        <li>Financial records: 6 years (legal requirement)</li>
+                        <li>System logs: 1 year</li>
+                        <li>User accounts: Until deletion is requested</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

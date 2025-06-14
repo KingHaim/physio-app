@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Consent - {{ patient.name }} {{ patient.surname }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Patient Consent Management</h1>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Patient Information</h2>
+                    <p><strong>Name:</strong> {{ patient.name }} {{ patient.surname }}</p>
+                    <p><strong>ID:</strong> {{ patient.id }}</p>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Current Consents</h2>
+                    
+                    {% if consents %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date Given</th>
+                                        <th>Purpose</th>
+                                        <th>Status</th>
+                                        <th>Expiry Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for consent in consents %}
+                                    <tr>
+                                        <td>{{ consent.given_at.strftime('%Y-%m-%d') }}</td>
+                                        <td>{{ consent.purpose }}</td>
+                                        <td>
+                                            {% if consent.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Expired</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ consent.expires_at.strftime('%Y-%m-%d') if consent.expires_at else 'N/A' }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#consentModal{{ consent.id }}">
+                                                View Details
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Modal for consent details -->
+                                    <div class="modal fade" id="consentModal{{ consent.id }}" tabindex="-1" aria-labelledby="consentModalLabel{{ consent.id }}" aria-hidden="true">
+                                        <div class="modal-dialog modal-lg">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="consentModalLabel{{ consent.id }}">Consent Details</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <dl class="row">
+                                                        <dt class="col-sm-3">Purpose</dt>
+                                                        <dd class="col-sm-9">{{ consent.purpose }}</dd>
+
+                                                        <dt class="col-sm-3">Given At</dt>
+                                                        <dd class="col-sm-9">{{ consent.given_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+
+                                                        <dt class="col-sm-3">Expires At</dt>
+                                                        <dd class="col-sm-9">{{ consent.expires_at.strftime('%Y-%m-%d %H:%M') if consent.expires_at else 'N/A' }}</dd>
+
+                                                        <dt class="col-sm-3">Status</dt>
+                                                        <dd class="col-sm-9">
+                                                            {% if consent.is_active %}
+                                                                <span class="badge bg-success">Active</span>
+                                                            {% else %}
+                                                                <span class="badge bg-secondary">Expired</span>
+                                                            {% endif %}
+                                                        </dd>
+
+                                                        <dt class="col-sm-3">Notes</dt>
+                                                        <dd class="col-sm-9">{{ consent.notes or 'No additional notes' }}</dd>
+                                                    </dl>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    {% if consent.is_active %}
+                                                    <button type="button" class="btn btn-warning" onclick="revokeConsent({{ consent.id }})">Revoke Consent</button>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center">No consent records found for this patient.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Record New Consent</h2>
+                    <form method="POST" action="{{ url_for('main.patient_consent', patient_id=patient.id) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="purpose" class="form-label">Purpose</label>
+                            <select class="form-select" id="purpose" name="purpose" required>
+                                <option value="">Select Purpose</option>
+                                <option value="treatment">Treatment</option>
+                                <option value="data_processing">Data Processing</option>
+                                <option value="marketing">Marketing Communications</option>
+                                <option value="research">Research Participation</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="expires_at" class="form-label">Expiry Date (Optional)</label>
+                            <input type="date" class="form-control" id="expires_at" name="expires_at">
+                            <div class="form-text">Leave empty for indefinite consent</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Additional Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Record Consent</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+{{ super() }}
+<script>
+function revokeConsent(consentId) {
+    if (confirm('Are you sure you want to revoke this consent?')) {
+        // TODO: Implement AJAX call to revoke consent
+        alert('This feature will be implemented soon.');
+    }
+}
+</script>
+{% endblock %}
+{% endblock %} 

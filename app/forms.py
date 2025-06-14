@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, TextAreaField, PasswordField, DecimalField, SelectField
 from wtforms.validators import DataRequired, Optional, Length, Email, URL, EqualTo, NumberRange
+from wtforms.fields import DateField
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=3, max=64)])
@@ -13,20 +14,23 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField('Register')
 
 class ClinicForm(FlaskForm):
-    name = StringField('Clinic Name', validators=[DataRequired(), Length(max=150)])
-    address_line1 = StringField('Address Line 1', validators=[Optional(), Length(max=150)])
-    address_line2 = StringField('Address Line 2', validators=[Optional(), Length(max=150)])
-    city = StringField('City', validators=[Optional(), Length(max=100)])
-    postcode = StringField('Postcode', validators=[Optional(), Length(max=20)])
-    phone = StringField('Phone Number', validators=[Optional(), Length(max=30)])
-    email = StringField('Clinic Email', validators=[Optional(), Email(), Length(max=120)])
-    website = StringField('Website', validators=[Optional(), URL(), Length(max=120)])
+    clinic_name = StringField('Clinic Name', validators=[DataRequired(), Length(max=150)])
+    clinic_address = StringField('Clinic Address', validators=[Optional(), Length(max=200)])
+    clinic_phone = StringField('Phone Number', validators=[Optional(), Length(max=30)])
+    clinic_email = StringField('Clinic Email', validators=[Optional(), Email(), Length(max=120)])
+    clinic_website = StringField('Website', validators=[Optional(), URL(), Length(max=120)])
+    clinic_description = TextAreaField('Description', validators=[Optional()])
     submit = SubmitField('Save Clinic Information')
 
 # We can add other forms here later, for example, a UserProfileForm
 class UserProfileForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=2, max=64)])
     email = StringField('Email', validators=[DataRequired(), Email(), Length(max=120)])
+    first_name = StringField('First Name', validators=[Optional(), Length(max=64)])
+    last_name = StringField('Last Name', validators=[Optional(), Length(max=64)])
+    date_of_birth = DateField('Date of Birth', format='%Y-%m-%d', validators=[Optional()])
+    sex = SelectField('Sex', choices=[('Masculino', 'Masculino'), ('Femenino', 'Femenino'), ('Otro', 'Otro')], validators=[Optional()])
+    license_number = StringField('License Number', validators=[Optional(), Length(max=32)])
     current_password = PasswordField('Current Password', validators=[Optional(), Length(min=6)])
     new_password = PasswordField('New Password', validators=[Optional(), Length(min=6)])
     confirm_new_password = PasswordField('Confirm New Password', 
@@ -53,15 +57,28 @@ class ApiIntegrationsForm(FlaskForm):
 # Renamed from FixedCostForm
 class FinancialSettingsForm(FlaskForm):
     # Field for setting the overall contribution base
-    autonomo_contribution_base = DecimalField('Set Your Fixed Autónomo Contribution Base (€)', 
-                                            validators=[Optional(), NumberRange(min=0)],
-                                            places=2,
-                                            description="Leave blank to use automatic calculation based on income brackets.")
+    contribution_base = DecimalField('Set Your Fixed Autónomo Contribution Base (€)', 
+                                   validators=[Optional(), NumberRange(min=0)],
+                                   places=2,
+                                   description="Leave blank to use automatic calculation based on income brackets.")
     submit_base = SubmitField('Save Contribution Base') # Separate submit for this
 
     # Fields for adding individual fixed costs
     description = StringField('Cost Description', validators=[Optional(), Length(max=150)])
-    monthly_amount = DecimalField('Monthly Amount (£)', 
-                                  validators=[Optional(), NumberRange(min=0)],
-                                  places=2) 
+    monthly_amount = DecimalField('Monthly Amount (€)', 
+                                validators=[Optional(), NumberRange(min=0)],
+                                places=2) 
     submit_add_cost = SubmitField('Add Fixed Cost') # Separate submit for adding costs 
+
+class UserConsentForm(FlaskForm):
+    purpose = SelectField('Purpose', validators=[DataRequired()], choices=[
+        ('', 'Select Purpose'),
+        ('treatment', 'Treatment'),
+        ('data_processing', 'Data Processing'),
+        ('marketing', 'Marketing Communications'),
+        ('research', 'Research Participation'),
+        ('other', 'Other')
+    ])
+    expires_at = DateField('Expiry Date', validators=[Optional()])
+    notes = TextAreaField('Additional Notes', validators=[Optional(), Length(max=500)])
+    submit = SubmitField('Record Consent') 

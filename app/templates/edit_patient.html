@@ -112,9 +112,9 @@
                             <div class="col-md-6 mb-3">
                                 <label for="patient_email" class="form-label">{{ _('Login Email') }}</label>
                                 <input type="email" class="form-control" id="patient_email" name="patient_email" 
-                                       value="{{ patient.user.email if patient.user else '' }}" 
+                                       value="{{ patient.portal_user_account.email if patient.portal_user_account else '' }}" 
                                        placeholder="patient.login@example.com">
-                                {% if not patient.user %}
+                                {% if not patient.portal_user_account %}
                                 <small class="form-text text-info">{{ _('Enter an email and password below to create a login.') }}</small>
                                 {% endif %}
                             </div>

@@ -495,6 +495,11 @@
                         <div class="nav-section">
                             <div class="nav-section-title">{{ _('Settings') }}</div>
                             <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'main.user_settings' %}active{% endif %}" href="{{ url_for('main.user_settings') }}">
+                                    <i class="bi bi-gear"></i> {{ _('User Settings') }}
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint == 'main.manage_calendly_settings' %}active{% endif %}" href="{{ url_for('main.manage_calendly_settings') }}">
                                     <i class="bi bi-calendar-plus"></i> {{ _('Calendly Settings') }}
                                 </a>

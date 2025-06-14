@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Security Breach Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Security Breach Management</h1>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Report New Security Breach</h2>
+                    <form method="POST" action="{{ url_for('main.security_breach') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="breach_type" class="form-label">Breach Type</label>
+                            <select class="form-select" id="breach_type" name="breach_type" required>
+                                <option value="">Select Type</option>
+                                <option value="unauthorized_access">Unauthorized Access</option>
+                                <option value="data_leak">Data Leak</option>
+                                <option value="system_compromise">System Compromise</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="affected_users" class="form-label">Number of Affected Users</label>
+                            <input type="number" class="form-control" id="affected_users" name="affected_users" min="0" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Report Breach</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Recent Security Breaches</h2>
+                    
+                    {% if breaches %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date Detected</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Affected Users</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for breach in breaches %}
+                                    <tr>
+                                        <td>{{ breach.detected_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>{{ breach.breach_type }}</td>
+                                        <td>{{ breach.description }}</td>
+                                        <td>{{ breach.affected_users }}</td>
+                                        <td>
+                                            {% if breach.resolved_at %}
+                                                <span class="badge bg-success">Resolved</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Under Investigation</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#breachModal{{ breach.id }}">
+                                                View Details
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Modal for breach details -->
+                                    <div class="modal fade" id="breachModal{{ breach.id }}" tabindex="-1" aria-labelledby="breachModalLabel{{ breach.id }}" aria-hidden="true">
+                                        <div class="modal-dialog modal-lg">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="breachModalLabel{{ breach.id }}">Breach Details</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <dl class="row">
+                                                        <dt class="col-sm-3">Breach Type</dt>
+                                                        <dd class="col-sm-9">{{ breach.breach_type }}</dd>
+
+                                                        <dt class="col-sm-3">Description</dt>
+                                                        <dd class="col-sm-9">{{ breach.description }}</dd>
+
+                                                        <dt class="col-sm-3">Affected Users</dt>
+                                                        <dd class="col-sm-9">{{ breach.affected_users }}</dd>
+
+                                                        <dt class="col-sm-3">Detected At</dt>
+                                                        <dd class="col-sm-9">{{ breach.detected_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+
+                                                        {% if breach.resolved_at %}
+                                                        <dt class="col-sm-3">Resolved At</dt>
+                                                        <dd class="col-sm-9">{{ breach.resolved_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+
+                                                        <dt class="col-sm-3">Resolution</dt>
+                                                        <dd class="col-sm-9">{{ breach.resolution_details }}</dd>
+                                                        {% endif %}
+
+                                                        <dt class="col-sm-3">Notification Status</dt>
+                                                        <dd class="col-sm-9">
+                                                            {% if breach.notification_sent %}
+                                                                Sent on {{ breach.notification_date.strftime('%Y-%m-%d %H:%M') }}
+                                                            {% else %}
+                                                                Pending
+                                                            {% endif %}
+                                                        </dd>
+                                                    </dl>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    {% if not breach.resolved_at %}
+                                                    <button type="button" class="btn btn-success" onclick="markAsResolved({{ breach.id }})">Mark as Resolved</button>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center">No security breaches recorded.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+{{ super() }}
+<script>
+function markAsResolved(breachId) {
+    // TODO: Implement AJAX call to mark breach as resolved
+    alert('This feature will be implemented soon.');
+}
+</script>
+{% endblock %}
+{% endblock %} 
