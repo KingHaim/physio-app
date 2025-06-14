@@ -145,130 +145,13 @@ def get_relative_date_string(target_date):
         return target_date.strftime("%Y-%m-%d")
 
 @main.route('/')
-@login_required
-@physio_required # <<< ADD DECORATOR
+@main.route('/index')
 def index():
-    user_id_for_utils = None
-    if current_user.is_authenticated and current_user.role != 'patient':
-        user_id_for_utils = current_user.id
-
-    # Run utility functions only if user is physio/admin and ID is available
-    if user_id_for_utils:
-        mark_past_treatments_as_completed(user_id=user_id_for_utils)
-        mark_inactive_patients(user_id=user_id_for_utils)
-
-    total_patients = Patient.query.filter_by(user_id=current_user.id).count() if current_user.is_authenticated and current_user.role != 'patient' else 0
-    active_patients = Patient.query.filter_by(user_id=current_user.id, status='Active').count() if current_user.is_authenticated and current_user.role != 'patient' else 0
-    today = datetime.utcnow().date() 
-    week_end = today + timedelta(days=6 - today.weekday()) 
-    month_end = today.replace(day=monthrange(today.year, today.month)[1])
-
-    # Initialize subscription variables to avoid UnboundLocalError if user is not authenticated or has no sub
-    current_plan_name = "Free Plan"  # Default to Free Plan for any user without a paid subscription
-    current_subscription_status = "Active"  # Free plan is always active
-    current_subscription_ends_at = None
-    
-    # Patient usage details
-    current_patients_count = 0
-    patient_plan_limit = None
-    if current_user.is_authenticated:
-        current_patients_count, patient_plan_limit = current_user.patient_usage_details
-
-    # --- Correctly calculate Today's Appointments --- 
-    # Convert today to a datetime object for the start of the day in UTC
-    today_start_utc = datetime.combine(today, datetime.min.time()).replace(tzinfo=UTC)
-    # Convert today to a datetime object for the end of the day in UTC
-    today_end_utc = datetime.combine(today, datetime.max.time()).replace(tzinfo=UTC)
-
-    todays_appointments_query = Treatment.query.join(Patient).filter(
-        Patient.user_id == current_user.id,
-        Treatment.status == 'Scheduled',
-        Treatment.created_at >= today_start_utc,
-        Treatment.created_at <= today_end_utc
-    )
-    today_appointments_count = todays_appointments_query.count()
-
-    # --- Calculate Pending Review Count (e.g., Unmatched Calendly Bookings) ---
-    pending_review_count = 0
-    if current_user.is_admin:
-        pending_review_count = UnmatchedCalendlyBooking.query.filter_by(status='Pending').count()
-    elif current_user.role == 'physio':
-        if current_user.calendly_api_token and current_user.calendly_user_uri:
-            pending_review_count = UnmatchedCalendlyBooking.query.filter_by(
-                status='Pending',
-                user_id=current_user.id
-            ).count()
-    # Add other conditions for pending review if necessary, e.g. Patient status
-
-    # --- Upcoming Appointments (Next 7 days, for current user only) --- 
-    upcoming_appointments_query = Treatment.query.join(Patient).filter(
-        Patient.user_id == current_user.id,
-        Treatment.status == 'Scheduled',
-        Treatment.created_at >= today,
-        Treatment.created_at < week_end
-    ).order_by(Treatment.created_at).limit(5).all()
-
-    # Process upcoming appointments to add relative date string and LOCAL time
-    upcoming_appointments_processed = []
-    for apt in upcoming_appointments_query:
-        # Make the UTC time timezone-aware
-        utc_time = apt.created_at.replace(tzinfo=UTC)
-        # Convert to local time
-        local_time = utc_time.astimezone(LOCAL_TZ)
-        
-        apt_date = local_time.date() # Use local date for relative string
-        relative_date = get_relative_date_string(apt_date)
-        apt_time_str = local_time.strftime("%H:%M") # Format local time
-        patient_name = apt.patient.name if apt.patient else "Unknown Patient"
-        
-        upcoming_appointments_processed.append({
-            'treatment': apt, 
-            'relative_date': relative_date,
-            'time': apt_time_str, # Use the formatted local time string
-            'patient_name': patient_name
-        })
-
-    # Get recent treatments
-    recent_treatments = Treatment.query.filter(
-        Treatment.patient_id == current_user.id,
-        Treatment.created_at < today,
-        Treatment.status == 'Scheduled'
-    ).order_by(Treatment.created_at.desc()).limit(5).all()
-
-    # --- Subscription Status --- 
-    if current_user.is_authenticated:
-        sub = current_user.current_subscription
-        if sub:
-            if sub.plan:
-                current_plan_name = sub.plan.name
-            current_subscription_status = sub.status.replace('_', ' ').title() # e.g., 'Past Due'
-            
-            if sub.status == 'trialing' and sub.trial_ends_at:
-                current_subscription_ends_at = sub.trial_ends_at
-            elif sub.current_period_ends_at:
-                current_subscription_ends_at = sub.current_period_ends_at
-    # --- End Subscription Status ---
-
-    return render_template('index.html',
-                           total_patients=total_patients,
-                           active_patients=active_patients,
-                           today_appointments=today_appointments_count, # Use the calculated count
-                           upcoming_appointments=upcoming_appointments_processed, 
-                           recent_treatments=recent_treatments,
-                           today=today, 
-                           week_end=week_end,
-                           month_end=month_end,
-                           # Subscription info
-                           current_plan_name=current_plan_name,
-                           current_subscription_status=current_subscription_status,
-                           current_subscription_ends_at=current_subscription_ends_at,
-                           current_patients_count=current_patients_count, 
-                           patient_plan_limit=patient_plan_limit,
-                           pending_review_count=pending_review_count, # Pass pending review count
-                           # Data for weekly appointments chart
-                           # weekly_appointment_labels=weekly_appointment_labels, # Removed
-                           # weekly_appointment_counts=weekly_appointment_counts, # Removed
-                           )
+    print("🧠 Entrando a index", flush=True)
+    print(f"current_user: {current_user}", flush=True)
+    print(f"Tiene calendly_api_token? {'calendly_api_token' in dir(current_user)}", flush=True)
+    print(f"Tiene calendly_user_uri? {'calendly_user_uri' in dir(current_user)}", flush=True)
+    return render_template('index.html', title='Home')
 
 @main.route('/api/treatment/<int:id>')
 @login_required # Assuming API endpoints also need login
