@@ -151,7 +151,14 @@ def index():
     print(f"current_user: {current_user}", flush=True)
     print(f"Tiene calendly_api_token? {'calendly_api_token' in dir(current_user)}", flush=True)
     print(f"Tiene calendly_user_uri? {'calendly_user_uri' in dir(current_user)}", flush=True)
-    return render_template('index.html', title='Home')
+    
+    try:
+        return render_template('index.html', title='Home')
+    except Exception as e:
+        import traceback
+        print("💥 Error al renderizar index.html:", e, flush=True)
+        traceback.print_exc()
+        return "Internal error: check logs", 500
 
 @main.route('/api/treatment/<int:id>')
 @login_required # Assuming API endpoints also need login
