@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 from datetime import datetime
+import os
 import sqlite3
+import getpass
 from werkzeug.security import generate_password_hash
 
 # Configuration
-username = "haim"
-email = "admin@example.com"
-password = "eminem"
-is_admin = True
+# Credentials can be provided via environment variables or entered interactively
+username = os.getenv("ADMIN_USERNAME") or input("Admin username: ")
+email = os.getenv("ADMIN_EMAIL") or input("Admin email: ")
+password = os.getenv("ADMIN_PASSWORD") or getpass.getpass("Admin password: ")
+is_admin = os.getenv("ADMIN_IS_ADMIN", "True").lower() in ("1", "true", "yes", "y")
 
 # Generate password hash using Werkzeug's function
 password_hash = generate_password_hash(password)
@@ -42,7 +45,6 @@ try:
     
     print("Successfully set up admin credentials:")
     print(f"Username: {username}")
-    print(f"Password: {password}")
     print(f"Email: {email}")
     print(f"Admin: {'Yes' if is_admin else 'No'}")
     
