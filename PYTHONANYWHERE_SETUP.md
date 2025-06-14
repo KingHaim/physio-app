@@ -45,7 +45,7 @@ This guide will help you deploy PhysioApp to PythonAnywhere.
    ```
 2. Add your environment variables:
    ```
-   CALENDLY_API_TOKEN=your_calendly_api_token_here
+   CALENDLY_API_KEY=your_calendly_api_key_here
    DEEPSEEK_API_KEY=your_deepseek_api_key_here
    DEEPSEEK_API_ENDPOINT=https://api.deepseek.com/v1/chat/completions
    SECRET_KEY=your_flask_secret_key_here

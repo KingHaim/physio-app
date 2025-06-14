@@ -16,7 +16,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Calendly API configuration
-    CALENDLY_API_TOKEN = os.environ.get('CALENDLY_API_TOKEN', '')
+    CALENDLY_API_KEY = os.environ.get('CALENDLY_API_KEY', '')
 
     # Stripe Webhook Signing Secret
     STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')

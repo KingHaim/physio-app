@@ -14,8 +14,8 @@ with app.app_context():
     
     for user in users:
         print(f"User: {user.email}")
-        print(f"  - API Token exists: {bool(user.calendly_api_token)}")
-        print(f"  - API Token value: '{user.calendly_api_token}'")
+        print(f"  - API Key exists: {bool(user.calendly_api_key)}")
+        print(f"  - API Key value: '{user.calendly_api_key}'")
         print(f"  - User URI exists: {bool(user.calendly_user_uri)}")
         print(f"  - User URI value: '{user.calendly_user_uri}'")
         print("-" * 50) 

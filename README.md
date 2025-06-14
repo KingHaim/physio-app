@@ -50,7 +50,7 @@ touch .env
 # Add your settings to .env
 # Example:
 SECRET_KEY=your-secret-key   # Required for Flask session security
-# CALENDLY_API_TOKEN=your-calendly-token
+# CALENDLY_API_KEY=your-calendly-key
 # DEEPSEEK_API_KEY=your-deepseek-api-key
 ```
 

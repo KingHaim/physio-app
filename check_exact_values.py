@@ -18,7 +18,7 @@ with app.app_context():
     print(f"User: {haim_user.email} (username: {haim_user.username})")
     
     # Check the token
-    token = haim_user.calendly_api_token
+    token = haim_user.calendly_api_key
     print(f"Token type: {type(token)}")
     print(f"Token length: {len(token) if token else 0}")
     print(f"Token repr: {repr(token)}")
@@ -32,15 +32,15 @@ with app.app_context():
     print(f"URI bool value: {bool(uri)}")
     
     # Check the literal condition used in the template
-    is_condition_true = bool(haim_user.calendly_api_token and haim_user.calendly_user_uri)
+    is_condition_true = bool(haim_user.calendly_api_key and haim_user.calendly_user_uri)
     print(f"\nTemplate condition result: {is_condition_true}")
     
     # Test with some forced proper values
-    haim_user.calendly_api_token = "test_token" 
+    haim_user.calendly_api_key = "test_token" 
     haim_user.calendly_user_uri = "https://api.calendly.com/users/test"
     
     # Check the condition again
-    is_condition_true_after_update = bool(haim_user.calendly_api_token and haim_user.calendly_user_uri)
+    is_condition_true_after_update = bool(haim_user.calendly_api_key and haim_user.calendly_user_uri)
     print(f"Template condition after update: {is_condition_true_after_update}")
     
     # Don't commit the test changes
