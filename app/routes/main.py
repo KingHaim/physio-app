@@ -1109,37 +1109,33 @@ def patient_reports_list(patient_id):
                            report=selected_report, # The specific report to display (or latest)
                            all_reports=all_patient_reports) # All reports for the dropdown
 
-@main.route('/calendly/review')
+@main.route('/calendly-bookings')
 @login_required
-@physio_required # <<< ADD DECORATOR
-def review_calendly_bookings():
-    unmatched_bookings_list = []
-    calendly_configured_for_user = False # Default for non-admins
-
+def calendly_bookings():
+    # Check if Calendly is configured for the current user
+    calendly_configured_for_user = False
     if current_user.is_admin:
-        unmatched_bookings_list = UnmatchedCalendlyBooking.query.filter_by(status='Pending').all()
         calendly_configured_for_user = True # Admins are implicitly configured to see all
     elif current_user.role == 'physio':
-        if current_user.calendly_api_token and current_user.calendly_user_uri:
+        if current_user.calendly_api_key and current_user.calendly_user_uri:
             calendly_configured_for_user = True
-            unmatched_bookings_list = UnmatchedCalendlyBooking.query.filter_by(
-                status='Pending',
-                user_id=current_user.id
-            ).all()
-        # Else, unmatched_bookings_list remains empty and calendly_configured_for_user is False
-    
-    # --- DEBUGGING PRINT --- 
-    print(f"--- DEBUG: /calendly/review route ---")
-    print(f"User: {current_user.email}, Is Admin: {current_user.is_admin}, Role: {current_user.role}")
-    print(f"Calendly Configured for this user context: {calendly_configured_for_user}")
-    print(f"Count of UnmatchedBookings being passed to template: {len(unmatched_bookings_list)}")
-    if unmatched_bookings_list:
-        print(f"First item details (if any): ID: {unmatched_bookings_list[0].id}, Name: {unmatched_bookings_list[0].name}, UserID: {unmatched_bookings_list[0].user_id}")
-    # --- END DEBUGGING PRINT ---
-    
-    return render_template('review_calendly_bookings.html', 
-                           unmatched_bookings=unmatched_bookings_list,
-                           calendly_configured_for_user=calendly_configured_for_user)
+
+    if not calendly_configured_for_user:
+        flash('Please configure your Calendly settings first.', 'warning')
+        return redirect(url_for('main.manage_calendly_settings'))
+
+    # Get all pending bookings for the current user
+    if current_user.is_admin:
+        pending_bookings = UnmatchedCalendlyBooking.query.filter_by(status='Pending').all()
+    else:
+        pending_bookings = UnmatchedCalendlyBooking.query.filter_by(
+            status='Pending',
+            user_id=current_user.id
+        ).all()
+
+    return render_template('calendly_bookings.html', 
+                         pending_bookings=pending_bookings,
+                         calendly_configured=calendly_configured_for_user)
 
 @main.route('/calendly/match_booking/<int:booking_id>', methods=['GET', 'POST'])
 @login_required
@@ -3617,4 +3613,32 @@ def log_security_event(user_id, event_type, details=None):
 def before_request():
     if current_user.is_authenticated:
         log_security_event(current_user.id, 'page_access', f'Accessed {request.path}')
+
+@main.route('/review-calendly-bookings')
+@login_required
+def review_calendly_bookings():
+    # Check if Calendly is configured for the current user
+    calendly_configured_for_user = False
+    if current_user.is_admin:
+        calendly_configured_for_user = True # Admins are implicitly configured to see all
+    elif current_user.role == 'physio':
+        if current_user.calendly_api_key and current_user.calendly_user_uri:
+            calendly_configured_for_user = True
+
+    if not calendly_configured_for_user:
+        flash('Please configure your Calendly settings first.', 'warning')
+        return redirect(url_for('main.manage_calendly_settings'))
+
+    # Get all pending bookings for the current user
+    if current_user.is_admin:
+        pending_bookings = UnmatchedCalendlyBooking.query.filter_by(status='Pending').all()
+    else:
+        pending_bookings = UnmatchedCalendlyBooking.query.filter_by(
+            status='Pending',
+            user_id=current_user.id
+        ).all()
+
+    return render_template('review_calendly_bookings.html', 
+                         pending_bookings=pending_bookings,
+                         calendly_configured=calendly_configured_for_user)
 

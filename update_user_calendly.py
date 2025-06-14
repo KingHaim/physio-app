@@ -16,7 +16,7 @@ with app.app_context():
         exit(1)
         
     print(f"Admin user found: {admin_user.email}")
-    print(f"Admin Calendly token: {bool(admin_user.calendly_api_token)}")
+    print(f"Admin Calendly key: {bool(admin_user.calendly_api_key)}")
     print(f"Admin Calendly URI: {bool(admin_user.calendly_user_uri)}")
     
     # Find your currently logged in user
@@ -30,15 +30,15 @@ with app.app_context():
         exit(1)
     
     print(f"\nFound your user: {current_user.email} (username: {current_user.username})")
-    print(f"Current Calendly token: {bool(current_user.calendly_api_token)}")
+    print(f"Current Calendly key: {bool(current_user.calendly_api_key)}")
     print(f"Current Calendly URI: {bool(current_user.calendly_user_uri)}")
     
     # Copy the credentials from admin to your user
-    current_user.calendly_api_token = admin_user.calendly_api_token
+    current_user.calendly_api_key = admin_user.calendly_api_key
     current_user.calendly_user_uri = admin_user.calendly_user_uri
     db.session.commit()
     
     print("\nUpdated your user with admin's Calendly credentials")
-    print(f"New Calendly token: {bool(current_user.calendly_api_token)}")
+    print(f"New Calendly key: {bool(current_user.calendly_api_key)}")
     print(f"New Calendly URI: {bool(current_user.calendly_user_uri)}")
     print("\nYou should now be able to use the Sync button!") 
