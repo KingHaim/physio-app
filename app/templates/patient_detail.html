@@ -639,7 +639,7 @@
             </div>
             <form action="{{ url_for('main.patient_consent', patient_id=patient.id) }}" method="POST">
                 <div class="modal-body">
-                    {{ form.hidden_tag() }}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     
                     <div class="mb-3">
                         <label for="purpose" class="form-label">{{ _('Purpose') }}</label>
@@ -661,7 +661,7 @@
 
                     <div class="mb-3">
                         <label for="notes" class="form-label">{{ _('Additional Notes') }}</label>
-                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="{{ _('Add any relevant details about this consent...') }}"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
