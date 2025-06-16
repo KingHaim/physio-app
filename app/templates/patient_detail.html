@@ -2,6 +2,130 @@
 
 {% block title %}{{ patient.name }} - {{ _('Patient Details') }}{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<style>
+    /* Enhanced Tab Styling */
+    .nav-tabs {
+        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 1.5rem;
+    }
+
+    .nav-tabs .nav-item {
+        margin-bottom: -2px;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        padding: 0.75rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .nav-tabs .nav-link i {
+        font-size: 1.1rem;
+        transition: transform 0.3s ease;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: var(--primary-color);
+        border: none;
+        background-color: rgba(41, 128, 185, 0.05);
+    }
+
+    .nav-tabs .nav-link.active {
+        color: var(--primary-color);
+        background-color: transparent;
+        border: none;
+        font-weight: 600;
+    }
+
+    .nav-tabs .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-color: var(--primary-color);
+        border-radius: 3px 3px 0 0;
+    }
+
+    .nav-tabs .nav-link:hover i {
+        transform: translateY(-2px);
+    }
+
+    /* Tab Content Styling */
+    .tab-content {
+        background-color: #fff;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .tab-pane {
+        padding: 1.5rem;
+    }
+
+    /* Card Styling within Tabs */
+    .tab-pane .card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .tab-pane .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .tab-pane .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem 1.25rem;
+    }
+
+    .tab-pane .card-header h5 {
+        margin: 0;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    /* Table Styling within Tabs */
+    .tab-pane .table {
+        margin-bottom: 0;
+    }
+
+    .tab-pane .table th {
+        font-weight: 600;
+        color: #2c3e50;
+        border-top: none;
+    }
+
+    .tab-pane .table td {
+        vertical-align: middle;
+    }
+
+    /* Badge Styling */
+    .badge {
+        padding: 0.5em 0.75em;
+        font-weight: 500;
+    }
+
+    .badge.bg-success {
+        background-color: #2ecc71 !important;
+    }
+
+    .badge.bg-secondary {
+        background-color: #95a5a6 !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     {% if not today is defined %}
@@ -271,7 +395,7 @@
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="bi bi-file-earmark-check"></i> {{ _('Patient Consents') }}</h5>
-                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newConsentModal">
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addConsentModal">
                                 <i class="bi bi-plus-circle"></i> {{ _('Add New Consent') }}
                             </button>
                         </div>
@@ -290,7 +414,7 @@
                                         </thead>
                                         <tbody>
                                             {% for consent in patient.consents|sort(attribute='given_at', reverse=true) %}
-                                            <tr>
+                                            <tr id="consent-row-{{ consent.id }}">
                                                 <td>{{ consent.given_at.strftime('%Y-%m-%d') }}</td>
                                                 <td>{{ consent.purpose }}</td>
                                                 <td>
@@ -302,6 +426,9 @@
                                                 </td>
                                                 <td>{{ consent.expires_at.strftime('%Y-%m-%d') if consent.expires_at else _('N/A') }}</td>
                                                 <td>
+                                                    <button type="button" class="btn btn-sm btn-danger delete-consent-btn" data-consent-id="{{ consent.id }}">
+                                                        <i class="bi bi-trash"></i> {{ _('Delete') }}
+                                                    </button>
                                                     <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#consentModal{{ consent.id }}">
                                                         <i class="bi bi-eye"></i> {{ _('View Details') }}
                                                     </button>
@@ -629,874 +756,242 @@
   </div>
 </div>
 
-<!-- New Consent Modal -->
-<div class="modal fade" id="newConsentModal" tabindex="-1" aria-labelledby="newConsentModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="newConsentModalLabel">{{ _('Record New Consent') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="{{ url_for('main.patient_consent', patient_id=patient.id) }}" method="POST">
-                <div class="modal-body">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    
-                    <div class="mb-3">
-                        <label for="purpose" class="form-label">{{ _('Purpose') }}</label>
-                        <select class="form-select" id="purpose" name="purpose" required>
-                            <option value="">{{ _('Select Purpose') }}</option>
-                            <option value="treatment">{{ _('Treatment') }}</option>
-                            <option value="data_processing">{{ _('Data Processing') }}</option>
-                            <option value="marketing">{{ _('Marketing Communications') }}</option>
-                            <option value="research">{{ _('Research Participation') }}</option>
-                            <option value="other">{{ _('Other') }}</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="expires_at" class="form-label">{{ _('Expiry Date (Optional)') }}</label>
-                        <input type="date" class="form-control" id="expires_at" name="expires_at">
-                        <div class="form-text">{{ _('Leave empty for indefinite consent') }}</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="notes" class="form-label">{{ _('Additional Notes') }}</label>
-                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="{{ _('Add any relevant details about this consent...') }}"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                    <button type="submit" class="btn btn-primary">{{ _('Record Consent') }}</button>
-                </div>
-            </form>
+<!-- Add Consent Modal -->
+<div class="modal fade" id="addConsentModal" tabindex="-1" aria-labelledby="addConsentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addConsentModalLabel">{{ _('Add Consent') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="consentTypeDropdown" class="form-label">{{ _('Consent Type') }}</label>
+          <select id="consentTypeDropdown" class="form-select">
+            <option value="">{{ _('Select consent type...') }}</option>
+            <option value="fisioterapia_general">{{ _('C.I FISIOTERAPIA GENERAL') }}</option>
+            <option value="consejeria_salud">{{ _('C.I CONSEJERÍA DE SALUD') }}</option>
+            <option value="neuromodulacion">{{ _('CONSENTIMIENTO INFORMADO NEUROMODULACIÓN PERCUTÁNEA') }}</option>
+            <option value="electroterapia">{{ _('C.I ELECTROTERAPIA') }}</option>
+            <option value="epi">{{ _('C.I EPI') }}</option>
+            <option value="puncion_seca">{{ _('C.I PUNCIÓN SECA') }}</option>
+            <option value="suelo_pelvico">{{ _('C.I SUELO PÉLVICO') }}</option>
+            <option value="acupuntura">{{ _('C.I ACUPUNTURA') }}</option>
+            <option value="manipulaciones_articulares">{{ _('C.I MANIPULACIONES ARTICULARES') }}</option>
+            <option value="masaje_terapeutico">{{ _('C.I MASAJE TERAPÉUTICO') }}</option>
+            <option value="proyectos_investigacion">{{ _('C.I PROYECTOS DE INVESTIGACIÓN') }}</option>
+          </select>
         </div>
+        <div id="consentTextContainer" class="mt-3"></div>
+        <div id="acceptSection" style="display:none;">
+          <hr>
+          <div class="row">
+            <div class="col-md-7">
+              <label class="form-label">{{ _('Signature (draw below):') }}</label>
+              <div style="border:1px solid #ccc; border-radius:4px; background:#fafafa;">
+                <canvas id="signaturePad" width="400" height="150" style="width:100%;max-width:400px;height:150px;"></canvas>
+              </div>
+              <div class="mt-2">
+                <button type="button" class="btn btn-secondary btn-sm" id="clearSignatureBtn">{{ _('Clear') }}</button>
+                <button type="button" class="btn btn-success btn-sm" id="saveSignatureBtn">{{ _('Accept with Signature') }}</button>
+              </div>
+            </div>
+            <div class="col-md-5 text-center">
+              <label class="form-label">{{ _('Or scan to accept on your device:') }}</label>
+              <div id="qrCode" class="d-flex justify-content-center mt-2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
-<style>
-    .upcoming-session {
-        background-color: #f8f9fa;
-        transition: background-color 0.2s;
-    }
-    
-    .upcoming-session:hover {
-        background-color: #e9ecef;
-    }
-    
-    .treatment-entry {
-        transition: background-color 0.2s;
-        background-color: white;
-    }
-    
-    .treatment-entry:hover {
-        background-color: #f0f8ff;
-    }
-    
-    .badge.bg-scheduled {
-        background-color: #3498db;
-    }
-    
-    .badge.bg-completed {
-        background-color: #28a745;
-    }
-    
-    .badge.bg-cancelled {
-        background-color: #dc3545;
-    }
-    
-    .badge.bg-in-progress {
-        background-color: #fd7e14;
-    }
-
-    #treatmentsList {
-        max-height: 600px;
-        overflow-y: auto;
-    }
-    
-    /* Body Chart Styles */
-    .body-map-container {
-        width: 100%;
-        max-width: 300px;
-        margin: 0 auto;
-        position: relative;
-        cursor: crosshair;
-    }
-    
-    .body-map {
-        width: 100%;
-        height: auto;
-        display: block;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        background-color: #f8f9fa;
-    }
-    
-    .body-map-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 10; /* Ensure overlay is above the image */
-    }
-    
-    .trigger-point {
-        cursor: pointer;
-        transition: r 0.2s ease;
-        pointer-events: all;
-    }
-</style>
-
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.6/dist/signature_pad.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-    // Define patient ID for use in JavaScript
-    const patientId = parseInt("{{ patient.id }}");
-    
-    // Add treatment form submission handler
-    document.addEventListener('DOMContentLoaded', function() {
-        // Trigger point management for the add treatment form
-        let addTriggerPoints = [];
-        let addPointIdCounter = 1;
-        let currentPointType = 'active';
-        
-        // Point type selection
-        const pointTypeButtons = document.querySelectorAll('[data-point-type]');
-        pointTypeButtons.forEach(btn => {
-            btn.addEventListener('click', function() {
-                pointTypeButtons.forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                currentPointType = this.dataset.pointType;
-            });
-        });
-        
-        // Get color for point type
-        function getPointColor(type) {
-            switch(type) {
-                case 'active': return '#dc3545';
-                case 'latent': return '#ffc107';
-                case 'satellite': return '#17a2b8';
-                default: return '#dc3545';
-            }
-        }
-        
-        // Create table row for a point
-        function createTableRow(point) {
-            const row = document.createElement('tr');
-            row.dataset.pointId = point.id;
-            
-            row.innerHTML = `
-                <td>
-                    <span class="badge bg-${point.type === 'active' ? 'danger' : (point.type === 'latent' ? 'warning' : 'info')}">
-                        ${point.type}
-                    </span>
-                </td>
-                <td>
-                    <select class="form-select form-select-sm" onchange="updateAddPointData('${point.id}', 'muscle', this.value)">
-                        <option value="">Select muscle</option>
-                        <option value="Trapezius" ${point.muscle === 'Trapezius' ? 'selected' : ''}>Trapezius</option>
-                        <option value="Levator Scapulae" ${point.muscle === 'Levator Scapulae' ? 'selected' : ''}>Levator Scapulae</option>
-                        <option value="Rhomboids" ${point.muscle === 'Rhomboids' ? 'selected' : ''}>Rhomboids</option>
-                        <option value="Deltoid" ${point.muscle === 'Deltoid' ? 'selected' : ''}>Deltoid</option>
-                    </select>
-                </td>
-                <td>
-                    <input type="number" class="form-control form-control-sm" min="1" max="10" 
-                           onchange="updateAddPointData('${point.id}', 'intensity', this.value)" value="${point.intensity || ''}"
-                           placeholder="1-10">
-                </td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="removeAddPoint('${point.id}')">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </td>
-            `;
-            return row;
-        }
-        
-        // Add point to both SVG and table
-        function addNewPoint(x, y, type = currentPointType, existingData = null) {
-            const pointId = existingData ? existingData.id : `point-${addPointIdCounter++}`;
-            const pointData = existingData || {
-                id: pointId,
-                x: Math.round(x),
-                y: Math.round(y),
-                type: type,
-                intensity: '',
-                muscle: '',
-                symptoms: '',
-                referral: ''
-            };
-            
-            // Check if this point already exists to prevent duplicates
-            if (!existingData && addTriggerPoints.some(p => p.id === pointId)) {
-                console.warn('Point already exists:', pointId);
+// Get CSRF token from meta tag at the very beginning
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+// Prevent duplicate script execution
+if (!window.__consentScriptLoaded) {
+  window.__consentScriptLoaded = true;
+  let signaturePad;
+  let currentConsentId = null;
+
+  function setupSignaturePad() {
+    const canvas = document.getElementById('signaturePad');
+    if (!canvas) return;
+    function resizeCanvas() {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      canvas.width = canvas.offsetWidth * ratio;
+      canvas.height = canvas.offsetHeight * ratio;
+      canvas.getContext("2d").scale(ratio, ratio);
+      if (signaturePad) signaturePad.clear();
+    }
+    resizeCanvas();
+    signaturePad = new SignaturePad(canvas);
+    document.getElementById('clearSignatureBtn').onclick = () => signaturePad.clear();
+  }
+
+  function setupQRCode(consentId) {
+    const qrDiv = document.getElementById('qrCode');
+    qrDiv.innerHTML = '';
+    const lang = '{{ g.get("lang", "es") }}';
+    const qrUrl = window.location.origin + '/consent/accept/' + consentId + '?lang=' + lang;
+    new QRCode(qrDiv, {
+      text: qrUrl,
+      width: 180,
+      height: 180
+    });
+  }
+
+  const addConsentModal = document.getElementById('addConsentModal');
+  addConsentModal.addEventListener('shown.bs.modal', function () {
+    setTimeout(setupSignaturePad, 200);
+  });
+
+  document.getElementById('consentTypeDropdown').addEventListener('change', function() {
+    const type = this.value;
+    const lang = getCurrentLang();
+    const patientId = '{{ patient.id }}';
+    console.log('Consent type:', type, 'Patient ID:', patientId, 'Lang:', lang);
+    if (!type || !patientId) {
+      document.getElementById('consentTextContainer').innerHTML = '';
+      document.getElementById('acceptSection').style.display = 'none';
+      currentConsentId = null;
                 return;
             }
-            
-            // Create SVG point
-            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            circle.setAttribute("cx", pointData.x);
-            circle.setAttribute("cy", pointData.y);
-            
-            // Make lower points larger and add stroke
-            const isLowerPoint = pointData.y > 400;
-            circle.setAttribute("r", isLowerPoint ? "7" : "4");
-            
-            circle.setAttribute("fill", getPointColor(pointData.type));
-            circle.setAttribute("class", "trigger-point");
-            circle.setAttribute("data-point-id", pointId);
-            
-            // Add a stroke to lower points to make them more visible
-            if (isLowerPoint) {
-                circle.setAttribute("stroke", "black");
-                circle.setAttribute("stroke-width", "1");
-            }
-            
-            circle.addEventListener('mouseover', () => circle.setAttribute("r", isLowerPoint ? "9" : "6"));
-            circle.addEventListener('mouseout', () => circle.setAttribute("r", isLowerPoint ? "7" : "4"));
-            
-            const pointsGroup = document.getElementById('addTriggerPoints');
-            
-            // To ensure correct z-order, lower points should appear last in the DOM
-            // First, get all existing points
-            const allExistingCircles = pointsGroup.querySelectorAll('circle');
-            
-            // If this is a lower point, append it to ensure it's rendered on top
-            if (isLowerPoint) {
-                pointsGroup.appendChild(circle);
-            } else {
-                // If it's an upper point, insert it at the beginning
-                if (allExistingCircles.length > 0) {
-                    pointsGroup.insertBefore(circle, allExistingCircles[0]);
-                } else {
-                    pointsGroup.appendChild(circle);
-                }
-            }
-            
-            const tbody = document.getElementById('addPointsTableBody');
-            tbody.appendChild(createTableRow(pointData));
-            
-            if (!existingData) {
-                addTriggerPoints.push(pointData);
-            } else if (!addTriggerPoints.find(p => p.id === pointData.id)) {
-                addTriggerPoints.push(pointData);
-            }
-            
-            updateAddFormData();
-        }
-        
-        window.updateAddPointData = function(pointId, field, value) {
-            const point = addTriggerPoints.find(p => p.id === pointId);
-            if (point) {
-                point[field] = value;
-                updateAddFormData();
-            }
-        };
-        
-        window.removeAddPoint = function(pointId) {
-            const index = addTriggerPoints.findIndex(p => p.id === pointId);
-            if (index > -1) {
-                addTriggerPoints.splice(index, 1);
-                document.querySelector(`#addTriggerPoints circle[data-point-id="${pointId}"]`)?.remove();
-                document.querySelector(`#addPointsTableBody tr[data-point-id="${pointId}"]`)?.remove();
-                updateAddFormData();
-            }
-        };
-        
-        function updateAddFormData() {
-            const dataInput = document.getElementById('addTriggerPointsData');
-            dataInput.value = JSON.stringify(addTriggerPoints);
-        }
-        
-        // Setup SVG click handler
-        const bodyMapOverlay = document.getElementById('bodyMapOverlayAdd');
-        
-        if (bodyMapOverlay) {
-            bodyMapOverlay.style.pointerEvents = 'all'; // Make overlay clickable
-            
-            bodyMapOverlay.addEventListener('click', function(evt) {
-                evt.preventDefault();
-                evt.stopPropagation(); // Prevent event from bubbling
-                
-                // Get click coordinates in SVG space
-                const pt = bodyMapOverlay.createSVGPoint();
-                pt.x = evt.clientX;
-                pt.y = evt.clientY;
-                
-                // Transform to SVG coordinate system
-                const svgP = pt.matrixTransform(bodyMapOverlay.getScreenCTM().inverse());
-                
-                console.log(`SVG click at (${svgP.x}, ${svgP.y})`);
-                
-                // Add the point
-                addNewPoint(svgP.x, svgP.y);
-            });
-        }
-        
-        // Treatment form submission handler
-        const treatmentForm = document.getElementById('treatmentForm');
-        if (treatmentForm) {
-            treatmentForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                
-                // Create FormData object
-                const formData = new FormData(treatmentForm);
-                
-                // The description field maps to treatment_type if treatment_type is not already set
-                if (!formData.get('treatment_type') || formData.get('treatment_type').trim() === '') {
-                    // No need to map now since we're using treatment_type directly
-                }
-                
-                // Progress notes maps to notes if notes is not already set
-                if (!formData.get('notes') || formData.get('notes').trim() === '') {
-                    // No need to map now since we're using notes directly
-                }
-                
-                // Make sure date is included
-                if (!formData.get('date')) {
-                    formData.set('date', new Date().toISOString().slice(0, 16));
-                }
-                
-                // Set evaluation_data from the trigger points data
-                formData.set('evaluation_data', document.getElementById('addTriggerPointsData').value);
-                
-                // Handle Calendly integration
-                const syncWithCalendly = document.getElementById('syncWithCalendly');
-                if (syncWithCalendly && syncWithCalendly.checked) {
-                    // Get Calendly details
-                    const eventType = document.getElementById('calendlyEventType').value;
-                    const location = document.getElementById('calendlyLocation').value;
-                    const appointmentDate = document.getElementById('calendlyAppointmentDate').value;
-                    
-                    // Add specific Calendly fields to the form data
-                    formData.set('calendly_integration', 'true');
-                    formData.set('calendly_event_type', eventType);
-                    formData.set('calendly_location', location);
-                    
-                    // Set appointment_date if provided (this prevents the next_appointment error)
-                    if (appointmentDate) {
-                        formData.set('appointment_date', appointmentDate);
-                    }
-                    
-                    // Add a note about Calendly integration
-                    let currentNotes = formData.get('notes') || '';
-                    const calendlyInfo = `\n\n--- Calendly Integration Enabled ---
-Event Type: ${eventType}
-Location: ${location}
-${appointmentDate ? 'Preferred Date: ' + appointmentDate : 'No specific date preference'}`;
-                    
-                    formData.set('notes', currentNotes + calendlyInfo);
-                }
-                
-                // Submit form via AJAX
-                fetch(`/patient/${patientId}/treatment`, {
+    fetch('/api/consent/create', {
                     method: 'POST',
                     headers: {
+        'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken
                     },
-                    body: formData
-                })
-                .then(response => {
-                    if (response.ok) {
-                        // Close the modal
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('newTreatmentModal'));
-                        modal.hide();
-                        
-                        // Reload the page to show the new treatment
-                        window.location.reload();
-                    } else {
-                        return response.json().then(data => {
-                            throw new Error(data.message || 'Error adding treatment');
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert(`Failed to add treatment: ${error.message}`);
-                });
-            });
-        }
-        
-        // Set up generate report button
-        const generateReportBtn = document.getElementById('generateReportBtn');
-        if (generateReportBtn) {
-            generateReportBtn.addEventListener('click', function() {
-                // Show confirmation dialog
-                if (confirm('Generate a comprehensive physiotherapy report based on all treatment history?\n\nThis process may take up to 30 seconds as it uses AI to analyze the treatment data.')) {
-                // Show loading state
-                const originalText = generateReportBtn.innerHTML;
-                    generateReportBtn.innerHTML = '<i class="bi bi-hourglass-split fa-spin"></i> Generating AI Report...';
-                generateReportBtn.disabled = true;
-                    generateReportBtn.classList.add('position-relative');
-                    
-                    // Add a spinner overlay
-                    const spinnerOverlay = document.createElement('div');
-                    spinnerOverlay.classList.add('position-absolute', 'top-0', 'start-0', 'w-100', 'h-100', 'd-flex', 'align-items-center', 'justify-content-center');
-                    spinnerOverlay.innerHTML = '<div class="spinner-border spinner-border-sm text-light" role="status"><span class="visually-hidden">Loading...</span></div>';
-                    generateReportBtn.appendChild(spinnerOverlay);
-                    
-                    // Call the API to generate the report
-                fetch(`/api/patient/${patientId}/generate-report`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    }
-                })
-                .then(response => response.json())
+      body: JSON.stringify({
+        consent_type: type,
+        patient_id: parseInt(patientId, 10),
+        lang: lang
+      })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Network response was not ok');
+      return res.json();
+    })
                 .then(data => {
                     if (data.success) {
-                        // Show success message
-                            alert('Report generated successfully! Opening the report now.');
-                        
-                            // Open the report in a new tab/window
-                            window.location.href = `/patient/${patientId}/report?report_id=${data.report_id}`;
-                    } else {
-                        // Show error message
-                        alert('Error generating report: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while generating the report.');
-                })
-                .finally(() => {
-                    // Reset button state
-                    generateReportBtn.innerHTML = originalText;
-                    generateReportBtn.disabled = false;
-                        generateReportBtn.classList.remove('position-relative');
-                    });
-                }
-            });
-        }
-
-        // Set up Generate Exercise Homework button
-        const generateExerciseBtn = document.getElementById('generateExerciseBtn');
-        const exerciseModalElement = document.getElementById('exercisePrescriptionModal');
-        const exerciseModal = exerciseModalElement ? new bootstrap.Modal(exerciseModalElement) : null;
-        const exerciseModalBody = document.getElementById('exercisePrescriptionBody');
-
-        if (generateExerciseBtn && exerciseModal && exerciseModalBody) {
-            generateExerciseBtn.addEventListener('click', function() {
-                if (confirm('Generate an AI-based exercise prescription based on the recent treatment history? This may take a few seconds.')) {
-                    // Show loading state
-                    const originalText = generateExerciseBtn.innerHTML;
-                    generateExerciseBtn.innerHTML = '<i class="bi bi-hourglass-split fa-spin"></i> Generating...';
-                    generateExerciseBtn.disabled = true;
-                    exerciseModalBody.innerHTML = '<p><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating exercise prescription...</p>';
-                    exerciseModal.show(); // Show modal with loading indicator
-
-                    // Call the API
-                    fetch(`/api/patient/${patientId}/generate-exercise-prescription`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token() }}'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success && data.prescription) {
-                             // Use DOMPurify to sanitize if available, otherwise basic rendering
-                            if (typeof DOMPurify !== 'undefined') {
-                                // Use marked.js if available to render Markdown
-                                if (typeof marked !== 'undefined') {
-                                     exerciseModalBody.innerHTML = DOMPurify.sanitize(marked.parse(data.prescription));
+        currentConsentId = data.consent_id;
+        fetch(`/api/consent_template?type=${type}&lang=${lang}&patient_id=${patientId}`)
+          .then(res => res.text())
+          .then(html => {
+            document.getElementById('consentTextContainer').innerHTML = html;
+            document.getElementById('acceptSection').style.display = 'block';
+            setTimeout(setupSignaturePad, 200);
+            setupQRCode(currentConsentId);
+          });
                                 } else {
-                                     // Basic rendering, preserving line breaks
-                                     const sanitizedHtml = DOMPurify.sanitize(data.prescription.replace(/\n/g, '<br>'));
-                                     exerciseModalBody.innerHTML = sanitizedHtml;
-                                }
-                            } else {
-                                // Fallback if DOMPurify or marked not available - less safe
-                                exerciseModalBody.innerText = data.prescription; 
-                                console.warn('DOMPurify/marked.js not available, rendering as plain text.');
-                            }
-                        } else {
-                            exerciseModalBody.innerHTML = `<div class="alert alert-danger">Error generating prescription: ${data.message || 'Unknown error'}</div>`;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching exercise prescription:', error);
-                        exerciseModalBody.innerHTML = '<div class="alert alert-danger">An error occurred while generating the prescription. Please try again.</div>';
-                    })
-                    .finally(() => {
-                        // Reset button state
-                        generateExerciseBtn.innerHTML = originalText;
-                        generateExerciseBtn.disabled = false;
-                    });
-                }
-            });
-        }
-
-        // Add event listener for new treatment modal
-        const newTreatmentModal = document.getElementById('newTreatmentModal');
-        if (newTreatmentModal) {
-            newTreatmentModal.addEventListener('show.bs.modal', function (event) {
-                // Read the flag from the modal's data attribute
-                const isFirstVisit = event.target.dataset.isFirstVisit === 'true'; // Convert string 'true' to boolean
-                console.log("Is first visit?", isFirstVisit);
-
-                // Always set the current date and time when the modal is opened
-                const dateField = document.getElementById('date');
-                if (dateField) {
-                    // Format for datetime-local input: YYYY-MM-DDTHH:MM
-                    const now = new Date();
-                    // Adjust for local timezone offset
-                    const timezoneOffset = now.getTimezoneOffset() * 60000; // offset in milliseconds
-                    const localISOTime = (new Date(now - timezoneOffset)).toISOString().slice(0, 16);
-                    dateField.value = localISOTime;
-                }
-
-                // Pre-fill financial fields based on visit history by setting HIDDEN fields
-                const visitTypeHidden = newTreatmentModal.querySelector('#visit_type');
-                const feeChargedHidden = newTreatmentModal.querySelector('#fee_charged');
-                const locationHidden = newTreatmentModal.querySelector('#location');
-                
-                // Ensure the hidden fields exist before setting values
-                if (visitTypeHidden && feeChargedHidden && locationHidden) {
-                    if (isFirstVisit === true) { // Explicit boolean check
-                        visitTypeHidden.value = 'Initial';
-                        feeChargedHidden.value = '80.00';
-                        locationHidden.value = 'CostaSpine Clinic'; // Default location
-                        console.log("Setting hidden fields for First Visit: location=CostaSpine Clinic, visit_type=Initial, fee=80.00");
-                    } else {
-                        visitTypeHidden.value = 'Follow-up';
-                        feeChargedHidden.value = '70.00';
-                        locationHidden.value = 'CostaSpine Clinic'; // Default location
-                        console.log("Setting hidden fields for Follow-up Visit: location=CostaSpine Clinic, visit_type=Follow-up, fee=70.00");
-                    }
-                } else {
-                    console.error("Could not find hidden input fields for location, visit_type, or fee_charged!");
-                }
-                
-                // Reset other VISIBLE fields 
-                newTreatmentModal.querySelector('#treatment_type').value = '';
-                newTreatmentModal.querySelector('#pain_level').value = '';
-                newTreatmentModal.querySelector('#movement_restriction').value = '';
-                newTreatmentModal.querySelector('#assessment').value = '';
-                newTreatmentModal.querySelector('#notes').value = '';
-                newTreatmentModal.querySelector('#status').value = 'Scheduled'; // Default status
-                newTreatmentModal.querySelector('#provider').value = ''; 
-                // newTreatmentModal.querySelector('#payment_method').value = ''; // No payment method input in modal
-                
-                // Reset trigger points
-                addTriggerPoints = []; // Assuming addTriggerPoints is accessible here
-                if (typeof updateAddFormData === 'function') {
-                  updateAddFormData(); // Update the hidden input
-                }
-                const addPointsGroup = document.getElementById('addTriggerPoints');
-                if (addPointsGroup) addPointsGroup.innerHTML = '';
-                const addPointsTable = document.getElementById('addPointsTableBody');
-                if (addPointsTable) addPointsTable.innerHTML = '';
-            });
-        }
-        
-        // Handle Calendly sync checkbox toggling
-        const syncWithCalendlyCheckbox = document.getElementById('syncWithCalendly');
-        if (syncWithCalendlyCheckbox) {
-            syncWithCalendlyCheckbox.addEventListener('change', function() {
-                const calendlyOptions = document.getElementById('calendlyOptions');
-                if (calendlyOptions) {
-                    if (this.checked) {
-                        calendlyOptions.style.display = 'block';
-                    } else {
-                        calendlyOptions.style.display = 'none';
-                    }
-                }
-            });
-        }
-
-        // --- Bulk Treatment Update Logic ---
-        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-        const treatmentCheckboxes = document.querySelectorAll('.treatment-checkbox');
-        const bulkActionsDiv = document.getElementById('bulkActions');
-        const selectedCountSpan = document.getElementById('selectedCount');
-        const bulkActionButtons = document.querySelectorAll('.bulk-action-btn');
-        const patientId = parseInt("{{ patient.id }}"); // Get patient ID for context
-
-        function updateBulkActionVisibility() {
-            const selectedCheckboxes = document.querySelectorAll('.treatment-checkbox:checked');
-            const count = selectedCheckboxes.length;
-            selectedCountSpan.textContent = count;
-            if (count > 0) {
-                bulkActionsDiv.style.display = 'block';
-            } else {
-                bulkActionsDiv.style.display = 'none';
-            }
-        }
-
-        if (selectAllCheckbox) {
-            selectAllCheckbox.addEventListener('change', function() {
-                treatmentCheckboxes.forEach(checkbox => {
-                    checkbox.checked = this.checked;
-                });
-                updateBulkActionVisibility();
-            });
-        }
-
-        treatmentCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                if (!this.checked) {
-                    selectAllCheckbox.checked = false; // Uncheck 'Select All' if any individual is unchecked
-                }
-                // Check if all are checked to potentially check 'Select All'
-                else if (document.querySelectorAll('.treatment-checkbox:checked').length === treatmentCheckboxes.length) {
-                   selectAllCheckbox.checked = true;
-                }
-                updateBulkActionVisibility();
-            });
-        });
-
-        bulkActionButtons.forEach(button => {
-            button.addEventListener('click', async function() {
-                const selectedIds = Array.from(document.querySelectorAll('.treatment-checkbox:checked')).map(cb => cb.value);
-                const field = this.dataset.field;
-                const value = this.dataset.value;
-                let confirmMessage = `Are you sure you want to set "${field}" to "${value}" for ${selectedIds.length} treatment(s)?`;
-
-                // Add specific message for CostaSpine location
-                if (field === 'location' && value === 'CostaSpine Clinic') {
-                    confirmMessage += `\n\nNote: This will also automatically set the fee to €80 for the patient's earliest treatment (if selected) and €70 for all other selected treatments.`;
-                }
-
-                if (selectedIds.length === 0) {
-                    alert('Please select at least one treatment to update.');
-                    return;
-                }
-
-                if (confirm(confirmMessage)) {
-                    // Disable buttons while processing
-                    bulkActionButtons.forEach(btn => btn.disabled = true);
-                    
-                    try {
-                        const response = await fetch('/api/treatments/bulk-update', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                treatment_ids: selectedIds,
-                                field: field,
-                                value: value
-                            })
-                        });
-
-                        const result = await response.json();
-
-                        if (response.ok && result.success) {
-                            alert(result.message);
-                            // Reload the page to see changes
-                            window.location.reload(); 
-                        } else {
-                            alert(`Error: ${result.message || 'Failed to update treatments.'}`);
-                        }
-                    } catch (error) {
-                        console.error('Bulk update error:', error);
-                        alert('An error occurred while performing the bulk update.');
-                    } finally {
-                        // Re-enable buttons
-                        bulkActionButtons.forEach(btn => btn.disabled = false);
-                    }
-                }
-            });
-        });
-        // --- End Bulk Treatment Update Logic ---
-
+        alert('Error: ' + data.message);
+        currentConsentId = null;
+      }
+    })
+    .catch(err => {
+      alert('Error: ' + err.message);
+      currentConsentId = null;
     });
+  });
 
-    function openTreatmentModal(treatmentId) {
-        fetch(`/api/treatment/${treatmentId}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('treatmentDate').textContent = data.date ? new Date(data.date).toLocaleDateString() : 'N/A';
-                document.getElementById('treatmentDescription').textContent = data.description || 'No description';
-                document.getElementById('treatmentNotes').textContent = data.progress_notes || 'No notes';
-                
-                // Update Pain Level display
-                const painLevelSpan = document.getElementById('treatmentPainLevel');
-                if (data.pain_level !== null && data.pain_level !== undefined) {
-                    const width = data.pain_level * 10;
-                    painLevelSpan.innerHTML = `
-                        <div class="progress" style="height: 20px; max-width: 150px;" title="Pain: ${data.pain_level}/10">
-                            <div class="progress-bar bg-danger" role="progressbar"
-                                 style="width: ${width}%;"
-                                 aria-valuenow="${data.pain_level}" aria-valuemin="0" aria-valuemax="10">
-                                ${data.pain_level}/10
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    painLevelSpan.innerHTML = '<span class="text-muted">N/E</span>';
-                }
-                
-                // Set the href for the edit button
-                const editButton = document.getElementById('editTreatmentBtn');
-                if (editButton) {
-                    editButton.href = `/treatment/${treatmentId}/edit`;
-                }
-                
-                const modal = new bootstrap.Modal(document.getElementById('treatmentDetailModal'));
-                modal.show();
-            })
-            .catch(error => {
-                console.error('Error fetching treatment details:', error);
-                alert('Failed to load treatment details.');
-            });
+  document.getElementById('saveSignatureBtn').onclick = () => {
+    if (!signaturePad || signaturePad.isEmpty()) {
+      alert('{{ _("Please provide a signature.") }}');
+      return;
+    }
+    if (!currentConsentId) {
+      alert('{{ _("Consent record not created.") }}');
+      return;
+    }
+    const dataUrl = signaturePad.toDataURL();
+    const patientId = '{{ patient.id }}';
+    fetch('/api/consent/accept', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify({
+        consent_id: currentConsentId,
+        patient_id: parseInt(patientId, 10),
+        signature: dataUrl
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert('{{ _("Consent and signature saved!") }}');
+        // Optionally close modal or refresh consents list
+      } else {
+        alert('{{ _("Error:") }} ' + data.message);
+      }
+    });
+  };
+}
+
+// Language instant switcher
+function getCurrentLang() {
+  return document.documentElement.lang || 'es';
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        const treatmentsTableBody = document.querySelector('#treatmentsTable tbody'); // Target the table body
-
-        if (!treatmentsTableBody) {
-            console.error("Treatments table body not found!");
+  // Verify CSRF token is available
+  if (!csrfToken) {
+    console.error('CSRF token not found!');
             return;
         }
 
-        // Use event delegation for handling clicks within the table body
-        treatmentsTableBody.addEventListener('click', async function(event) {
-            const setFeeBtn = event.target.closest('.set-fee-btn');
-            const setPaymentBtn = event.target.closest('.set-payment-btn');
-
-            if (setFeeBtn) {
-                await handleSetFee(setFeeBtn);
-            } else if (setPaymentBtn) {
-                await handleSetPayment(setPaymentBtn);
-            }
+  document.querySelectorAll('.lang-option').forEach(function(item) {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      const lang = this.getAttribute('data-lang');
+      fetch(`/set_language/${lang}`)
+        .then(() => {
+          window.location.reload();
         });
-
-        async function handleSetFee(button) {
-            const treatmentId = button.dataset.treatmentId;
-            const row = document.getElementById(`treatment-row-${treatmentId}`);
-            const feeInput = row.querySelector(`#fee-input-${treatmentId}`);
-            const feeStatus = row.querySelector(`#fee-status-${treatmentId}`);
-            const feeValue = parseFloat(feeInput.value);
-
-            if (isNaN(feeValue) || feeValue < 0) {
-                feeStatus.textContent = 'Invalid fee';
-                feeStatus.className = 'text-danger small d-block mt-1';
-                feeInput.focus();
-                return;
-            }
-
-            // UI feedback: loading
-            button.disabled = true;
-            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-            feeStatus.textContent = 'Saving...';
-            feeStatus.className = 'text-muted small d-block mt-1';
-
-            try {
-                const response = await fetch(`/api/treatment/${treatmentId}/set-fee`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content')
-                    },
-                    body: JSON.stringify({ fee: feeValue })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    feeStatus.textContent = 'Saved!';
-                    feeStatus.className = 'text-success small d-block mt-1';
-                    // Optionally disable input or change display after save
-                    // feeInput.readOnly = true; 
-                } else {
-                    throw new Error(data.message || `HTTP error ${response.status}`);
-                }
-            } catch (error) {
-                console.error('Error setting fee:', error);
-                feeStatus.textContent = `Error: ${error.message}`;
-                feeStatus.className = 'text-danger small d-block mt-1';
-            } finally {
-                // Restore button
-                button.disabled = false;
-                button.innerHTML = '<i class="bi bi-check-lg"></i>';
-                // Clear status message after a few seconds
-                setTimeout(() => { feeStatus.textContent = ''; }, 3000);
-            }
-        }
-
-        async function handleSetPayment(button) {
-            const treatmentId = button.dataset.treatmentId;
-            const paymentMethod = button.dataset.method;
-            const row = document.getElementById(`treatment-row-${treatmentId}`);
-            const paymentStatusSpan = row.querySelector(`#payment-status-${treatmentId}`);
-            const paymentButtonsDiv = row.querySelector(`#payment-buttons-${treatmentId}`);
-            const paymentUpdateStatus = row.querySelector(`#payment-update-status-${treatmentId}`);
-
-            // UI feedback: loading
-            if (paymentButtonsDiv) {
-                 paymentButtonsDiv.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
-            }
-            paymentUpdateStatus.textContent = 'Updating...';
-            paymentUpdateStatus.className = 'text-muted small d-block mt-1';
-
-            try {
-                const response = await fetch(`/api/treatment/${treatmentId}/set-payment`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content')
-                    },
-                    body: JSON.stringify({ payment_method: paymentMethod })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    paymentStatusSpan.textContent = `Paid - ${data.payment_method}`;
-                    paymentUpdateStatus.textContent = 'Saved!';
-                    paymentUpdateStatus.className = 'text-success small d-block mt-1';
-                    if (paymentButtonsDiv) {
-                        paymentButtonsDiv.remove(); // Remove buttons after successful update
-                    }
-                } else {
-                     throw new Error(data.message || `HTTP error ${response.status}`);
-                }
-            } catch (error) {
-                console.error('Error setting payment:', error);
-                paymentUpdateStatus.textContent = `Error: ${error.message}`;
-                paymentUpdateStatus.className = 'text-danger small d-block mt-1';
-                 // Restore buttons on error
-                 if (paymentButtonsDiv) {
-                     paymentButtonsDiv.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
-                 }
-            } finally {
-                 // Clear status message after a few seconds
-                 setTimeout(() => { paymentUpdateStatus.textContent = ''; }, 3000);
-            }
-        }
-
     });
+  });
 
-    function revokeConsent(consentId) {
-        if (!confirm('{{ _("Are you sure you want to revoke this consent?") }}')) {
-            return;
-        }
-
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-
-        fetch(`/api/consent/${consentId}/revoke`, {
+  document.querySelectorAll('.delete-consent-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const consentId = this.getAttribute('data-consent-id');
+      if (!confirm('Are you sure you want to delete this consent?')) return;
+      
+      fetch(`/api/consent/${consentId}/delete`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken
             }
         })
-        .then(response => response.json())
+      .then(res => res.json())
         .then(data => {
             if (data.success) {
-                window.location.reload();
+          const row = document.getElementById(`consent-row-${consentId}`);
+          if (row) {
+            row.remove();
             } else {
-                alert(data.message || '{{ _("Failed to revoke consent.") }}');
-            }
-        })
-        .catch(err => {
-            console.error('{{ _("Error revoking consent:") }}', err);
-            alert('{{ _("An error occurred while revoking consent.") }}');
-        });
-    }
+            console.error(`Could not find row for consent ${consentId}`);
+          }
+        } else {
+          alert(data.message || 'Failed to delete consent.');
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting consent:', error);
+        alert('An error occurred while deleting the consent.');
+      });
+    });
+  });
+});
 </script>
+{% endblock %}
 {% endblock %} 

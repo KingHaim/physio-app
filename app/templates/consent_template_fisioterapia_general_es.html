@@ -1,0 +1,34 @@
+<h4>Consentimiento Informado de Fisioterapia General</h4>
+<p>
+  Yo, {{ patient.name }}, con DNI {{ patient.dni if patient.dni else '________' }}, he sido informado/a de los beneficios y riesgos del tratamiento de fisioterapia. He tenido la oportunidad de hacer preguntas y todas han sido respondidas satisfactoriamente. Doy mi consentimiento para recibir tratamiento de fisioterapia.
+</p>
+<p>
+  Fecha: _______________________
+</p>
+<p>
+  Firma del paciente:
+</p>
+
+{% if guardian %}
+<p>
+    Mr./Ms. {{ guardian.name }} with ID {{ guardian.dni }}
+</p>
+<p>
+    As {{ guardian.relationship }}, I freely, voluntarily, and consciously give my consent for the treatments set out in this document.
+</p>
+{% endif %}
+
+<script>
+function getCurrentLang() {
+  return document.documentElement.lang || 'es';
+}
+
+document.getElementById('consentTypeDropdown').addEventListener('change', function() {
+  const type = this.value;
+  const lang = getCurrentLang();
+  const patientId = '{{ patient.id }}';
+  // ... resto del código ...
+  fetch(`/api/consent_template?type=${type}&lang=${lang}&patient_id=${patientId}`)
+    // ...
+});
+</script> 

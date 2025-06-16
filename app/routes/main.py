@@ -3639,3 +3639,82 @@ def before_request():
     if current_user.is_authenticated:
         log_security_event(current_user.id, 'page_access', f'Accessed {request.path}')
 
+@main.route('/api/consent/create', methods=['POST'])
+@login_required
+def api_create_consent():
+    data = request.get_json()
+    consent_type = data.get('consent_type')
+    patient_id = data.get('patient_id')
+    lang = data.get('lang', 'es')
+
+    print('consent_type:', consent_type, 'patient_id:', patient_id, 'lang:', lang)
+
+    if not all([consent_type, patient_id]):
+        print('Missing data:', data)
+        return jsonify({'success': False, 'message': 'Missing data'}), 400
+
+    try:
+        patient_id = int(patient_id)
+    except Exception as e:
+        print('Invalid patient_id:', patient_id, e)
+        return jsonify({'success': False, 'message': 'Invalid patient_id'}), 400
+
+    patient = Patient.query.get(patient_id)
+    if not patient:
+        print('Patient not found:', patient_id)
+        return jsonify({'success': False, 'message': 'Patient not found'}), 400
+
+    consent = UserConsent(
+        user_id=current_user.id,
+        patient_id=patient_id,
+        purpose=consent_type,
+        given_at=None,  # Will be set when signed
+        is_active=False,  # Will be set to True when signed
+        notes=None,
+        created_at=datetime.now(),
+        updated_at=datetime.now()
+    )
+    db.session.add(consent)
+    db.session.commit()
+
+    return jsonify({'success': True, 'consent_id': consent.id})
+
+@main.route('/api/consent_template')
+@login_required
+def api_consent_template():
+    consent_type = request.args.get('type')
+    lang = request.args.get('lang', 'es')
+    patient_id = request.args.get('patient_id')
+
+    # Map consent_type and lang to a template file
+    template_map = {
+        'fisioterapia_general': {
+            'es': 'consent_template_fisioterapia_general_es.html',
+            'en': 'consent_template_en.html',
+        },
+        # Add other types and languages here
+    }
+
+    template_file = template_map.get(consent_type, {}).get(lang)
+    if not template_file:
+        return "Consent template not found.", 404
+
+    # Fetch the patient from the database
+    patient = None
+    if patient_id:
+        from app.models import Patient
+        patient = Patient.query.get(int(patient_id))
+
+    return render_template(template_file, patient=patient, therapist=current_user, guardian=None)
+
+@main.route('/api/consent/<int:consent_id>/delete', methods=['POST'])
+@login_required
+def api_delete_consent(consent_id):
+    from app.models import UserConsent
+    consent = UserConsent.query.get_or_404(consent_id)
+    if consent.user_id != current_user.id and not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    db.session.delete(consent)
+    db.session.commit()
+    return jsonify({'success': True})
+

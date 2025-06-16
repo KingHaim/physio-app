@@ -1,6 +1,6 @@
 <!-- app/templates/base.html -->
 <!DOCTYPE html>
-<html lang="{{ g.locale }}">
+<html lang="{{ get_locale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -551,9 +551,9 @@
                             <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-translate"></i> {{ get_locale_display_name(get_locale()) or 'Language' }}
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                            <ul class="dropdown-menu dropdown-menu-end" id="languageDropdownMenu" aria-labelledby="languageDropdown">
                                 {% for lang in BABEL_SUPPORTED_LOCALES %}
-                                    <li><a class="dropdown-item" href="{{ url_for('main.set_language', lang_code=lang) }}">{{ get_locale_display_name(lang) }}</a></li>
+                                    <li><a class="dropdown-item lang-option" href="#" data-lang="{{ lang }}">{{ get_locale_display_name(lang) }}</a></li>
                                 {% endfor %}
                             </ul>
                         </div>
