@@ -458,54 +458,60 @@
                     
                     <!-- Physio/Admin Specific Links -->
                     {% if current_user.is_authenticated and current_user.role != 'patient' %}
-                        <div class="nav-section">
+                        <li class="nav-section">
                             <div class="nav-section-title">{{ _('Management') }}</div>
-                            {% if current_user.is_admin or (current_user.calendly_api_token and current_user.calendly_user_uri) %}
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.path == url_for('main.review_calendly_bookings') %}active{% endif %}" 
-                                   href="{{ url_for('main.review_calendly_bookings') }}">
-                                    <i class="bi bi-clipboard-check"></i> {{ _('Pending Review') }}
-                                    {% if pending_review_count > 0 %}
-                                    <span class="badge bg-danger rounded-pill">{{ pending_review_count }}</span>
-                                    {% endif %}
-                                </a>
-                            </li>
-                            {% endif %}
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.endpoint == 'main.review_payments' %}active{% endif %}" href="{{ url_for('main.review_payments') }}">
-                                    <i class="bi bi-credit-card-2-front"></i> {{ _('Review Payments') }}
-                                </a>
-                            </li>
-                        </div>
+                            <ul class="nav flex-column">
+                                {% if current_user.is_admin or (current_user.calendly_api_token and current_user.calendly_user_uri) %}
+                                <li class="nav-item">
+                                    <a class="nav-link {{ 'active' if request.endpoint == 'main.review_calendly_bookings' else '' }}"
+                                       href="{{ url_for('main.review_calendly_bookings') }}">
+                                        <i class="bi bi-clipboard-check"></i> {{ _('Pending Review') }}
+                                        {% if pending_review_count > 0 %}
+                                        <span class="badge bg-danger rounded-pill">{{ pending_review_count }}</span>
+                                        {% endif %}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li class="nav-item">
+                                    <a class="nav-link {{ 'active' if request.endpoint == 'main.review_payments' else '' }}" href="{{ url_for('main.review_payments') }}">
+                                        <i class="bi bi-credit-card-2-front"></i> {{ _('Review Payments') }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
                         
-                        <div class="nav-section">
+                        <li class="nav-section">
                             <div class="nav-section-title">{{ _('Reports') }}</div>
-                            <li class="nav-item">
-                                <a class="nav-link {% if '/analytics' in request.path %}active{% endif %}" href="{{ url_for('main.analytics') }}">
-                                    <i class="bi bi-graph-up"></i> {{ _('Analytics') }}
-                                </a>
-                            </li>
-                            <li class="nav-item"> <!-- Added Finances here -->
-                                <a class="nav-link {{ 'active' if request.endpoint == 'main.financials' else '' }}" href="{{ url_for('main.financials') }}">
-                                    <i class="bi bi-cash-coin"></i> {{ _('Finances') }}
-                                </a>
-                            </li>
-                        </div>
+                            <ul class="nav flex-column">
+                                <li class="nav-item">
+                                    <a class="nav-link {{ 'active' if request.endpoint == 'main.analytics' else '' }}" href="{{ url_for('main.analytics') }}">
+                                        <i class="bi bi-graph-up"></i> {{ _('Analytics') }}
+                                    </a>
+                                </li>
+                                <li class="nav-item"> <!-- Added Finances here -->
+                                    <a class="nav-link {{ 'active' if request.endpoint == 'main.financials' else '' }}" href="{{ url_for('main.financials') }}">
+                                        <i class="bi bi-cash-coin"></i> {{ _('Finances') }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
                         
-                        <div class="nav-section">
+                        <li class="nav-section">
                             <div class="nav-section-title">{{ _('Settings') }}</div>
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.endpoint == 'main.user_settings' %}active{% endif %}" href="{{ url_for('main.user_settings') }}">
-                                    <i class="bi bi-gear"></i> {{ _('User Settings') }}
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.endpoint == 'main.manage_calendly_settings' %}active{% endif %}" href="{{ url_for('main.manage_calendly_settings') }}">
-                                    <i class="bi bi-calendar-plus"></i> {{ _('Calendly Settings') }}
-                                </a>
-                            </li>
-                            {# Add other general settings links here later #}
-                        </div>
+                            <ul class="nav flex-column">
+                                <li class="nav-item">
+                                    <a class="nav-link {{ 'active' if request.endpoint == 'main.user_settings' else '' }}" href="{{ url_for('main.user_settings') }}">
+                                        <i class="bi bi-gear"></i> {{ _('User Settings') }}
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {{ 'active' if request.endpoint == 'main.manage_calendly_settings' else '' }}" href="{{ url_for('main.manage_calendly_settings') }}">
+                                        <i class="bi bi-calendar-plus"></i> {{ _('Calendly Settings') }}
+                                    </a>
+                                </li>
+                                {# Add other general settings links here later #}
+                            </ul>
+                        </li>
                     {% endif %}
                     
                     <!-- Patient-Specific Links (Only show if user is patient) -->
@@ -516,13 +522,15 @@
                         {# Removed Profile link from here #}
                         {# Add other patient-specific links here if needed (e.g., Homework history?) #}
 
-                        <div class="nav-section">
+                        <li class="nav-section">
                             <div class="nav-section-title">{{ _('Account') }}</div>
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.endpoint == 'main.patient_profile' %}active{% endif %}" href="{{ url_for('main.patient_profile') }}"><i class="bi bi-person-vcard me-2"></i> {{ _('My Profile') }}</a>
-                            </li>
-                            {# Add other account/settings links here later #}
-                        </div>
+                            <ul class="nav flex-column">
+                                <li class="nav-item">
+                                    <a class="nav-link {{ 'active' if request.endpoint == 'main.patient_profile' else '' }}" href="{{ url_for('main.patient_profile') }}"><i class="bi bi-person-vcard me-2"></i> {{ _('My Profile') }}</a>
+                                </li>
+                                {# Add other account/settings links here later #}
+                            </ul>
+                        </li>
                     {% endif %}
                 </ul>
 
