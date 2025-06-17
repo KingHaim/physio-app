@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, TextAreaField, PasswordField, DecimalField, SelectField
+from wtforms import StringField, SubmitField, TextAreaField, PasswordField, DecimalField, SelectField, BooleanField
 from wtforms.validators import DataRequired, Optional, Length, Email, URL, EqualTo, NumberRange
 from wtforms.fields import DateField
 
@@ -20,6 +20,10 @@ class ClinicForm(FlaskForm):
     clinic_email = StringField('Clinic Email', validators=[Optional(), Email(), Length(max=120)])
     clinic_website = StringField('Website', validators=[Optional(), URL(), Length(max=120)])
     clinic_description = TextAreaField('Description', validators=[Optional()])
+    clinic_first_session_fee = DecimalField('First Session Fee (€)', validators=[Optional(), NumberRange(min=0)], places=2)
+    clinic_subsequent_session_fee = DecimalField('Subsequent Session Fee (€)', validators=[Optional(), NumberRange(min=0)], places=2)
+    clinic_percentage_agreement = BooleanField('Percentage Agreement')
+    clinic_percentage_amount = DecimalField('Percentage Amount (%)', validators=[Optional(), NumberRange(min=0, max=100)], places=2)
     submit = SubmitField('Save Clinic Information')
 
 # We can add other forms here later, for example, a UserProfileForm

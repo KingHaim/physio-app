@@ -159,6 +159,46 @@
                             {% endif %}
                         </div>
 
+                        <div class="mb-3">
+                            {{ clinic_form.clinic_first_session_fee.label(class="form-label") }}
+                            {{ clinic_form.clinic_first_session_fee(class="form-control" + (" is-invalid" if clinic_form.clinic_first_session_fee.errors else "")) }}
+                            {% if clinic_form.clinic_first_session_fee.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in clinic_form.clinic_first_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ clinic_form.clinic_subsequent_session_fee.label(class="form-label") }}
+                            {{ clinic_form.clinic_subsequent_session_fee(class="form-control" + (" is-invalid" if clinic_form.clinic_subsequent_session_fee.errors else "")) }}
+                            {% if clinic_form.clinic_subsequent_session_fee.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in clinic_form.clinic_subsequent_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-check mb-3">
+                            {{ clinic_form.clinic_percentage_agreement(class="form-check-input" + (" is-invalid" if clinic_form.clinic_percentage_agreement.errors else "")) }}
+                            {{ clinic_form.clinic_percentage_agreement.label(class="form-check-label") }}
+                            {% if clinic_form.clinic_percentage_agreement.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in clinic_form.clinic_percentage_agreement.errors %}<span>{{ error }}</span>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ clinic_form.clinic_percentage_amount.label(class="form-label") }}
+                            {{ clinic_form.clinic_percentage_amount(class="form-control" + (" is-invalid" if clinic_form.clinic_percentage_amount.errors else "")) }}
+                            {% if clinic_form.clinic_percentage_amount.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in clinic_form.clinic_percentage_amount.errors %}<span>{{ error }}</span>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
                         <button type="submit" name="submit_clinic" class="btn btn-primary">Save Changes</button>
                     </form>
                 </div>
