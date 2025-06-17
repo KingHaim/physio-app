@@ -3483,6 +3483,10 @@ def user_settings():
                 current_user.clinic_email = clinic_form.clinic_email.data
                 current_user.clinic_website = clinic_form.clinic_website.data
                 current_user.clinic_description = clinic_form.clinic_description.data
+                current_user.clinic_first_session_fee = clinic_form.clinic_first_session_fee.data
+                current_user.clinic_subsequent_session_fee = clinic_form.clinic_subsequent_session_fee.data
+                current_user.clinic_percentage_agreement = clinic_form.clinic_percentage_agreement.data
+                current_user.clinic_percentage_amount = clinic_form.clinic_percentage_amount.data
                 db.session.commit()
                 flash('Your clinic information has been updated.', 'success')
                 return redirect(url_for('main.user_settings'))
@@ -3523,6 +3527,10 @@ def user_settings():
     clinic_form.clinic_email.data = current_user.clinic_email
     clinic_form.clinic_website.data = current_user.clinic_website
     clinic_form.clinic_description.data = current_user.clinic_description
+    clinic_form.clinic_first_session_fee.data = current_user.clinic_first_session_fee
+    clinic_form.clinic_subsequent_session_fee.data = current_user.clinic_subsequent_session_fee
+    clinic_form.clinic_percentage_agreement.data = current_user.clinic_percentage_agreement
+    clinic_form.clinic_percentage_amount.data = current_user.clinic_percentage_amount
     
     api_form.calendly_api_key.data = current_user.calendly_api_key
     

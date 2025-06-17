@@ -212,9 +212,13 @@ class User(db.Model, UserMixin):
     clinic_email = db.Column(db.String(120), nullable=True)
     clinic_website = db.Column(db.String(120), nullable=True)
     clinic_description = db.Column(db.Text, nullable=True)
-    
+
     # Financial fields
     contribution_base = db.Column(db.Float, nullable=True)
+    clinic_first_session_fee = db.Column(db.Float, nullable=True)
+    clinic_subsequent_session_fee = db.Column(db.Float, nullable=True)
+    clinic_percentage_agreement = db.Column(db.Boolean, default=False)
+    clinic_percentage_amount = db.Column(db.Float, nullable=True)
     
     # Stripe Customer ID
     stripe_customer_id = db.Column(db.String(255), nullable=True, unique=True, index=True)
