@@ -526,9 +526,15 @@ def set_treatment_fee(id):
         data = request.get_json()
         fee_value = float(data['fee'])
         treatment = Treatment.query.filter_by(id=id, practitioner_id=current_user.id).first_or_404()
-        treatment.fee = fee_value
+        treatment.fee_charged = fee_value
+        # Calculate clinic and therapist share
+        clinic_percentage = current_user.clinic_percentage_amount or 0
+        clinic_share = fee_value * (clinic_percentage / 100)
+        therapist_share = fee_value - clinic_share
+        treatment.clinic_share = clinic_share
+        treatment.therapist_share = therapist_share
         db.session.commit()
-        return jsonify({'success': True, 'new_fee': fee_value})
+        return jsonify({'success': True, 'new_fee': fee_value, 'clinic_share': clinic_share, 'therapist_share': therapist_share})
     except (ValueError, KeyError):
         return jsonify({'success': False, 'message': 'Invalid fee provided.'}), 400
     except Exception as e:

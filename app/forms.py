@@ -23,7 +23,7 @@ class ClinicForm(FlaskForm):
     clinic_first_session_fee = DecimalField('First Session Fee (€)', validators=[Optional(), NumberRange(min=0)], places=2)
     clinic_subsequent_session_fee = DecimalField('Subsequent Session Fee (€)', validators=[Optional(), NumberRange(min=0)], places=2)
     clinic_percentage_agreement = BooleanField('Percentage Agreement')
-    clinic_percentage_amount = DecimalField('Percentage Amount (%)', validators=[Optional(), NumberRange(min=0, max=100)], places=2)
+    clinic_percentage_amount = DecimalField('Clinic Share (%)', validators=[Optional(), NumberRange(min=0, max=100)], places=2)
     submit = SubmitField('Save Clinic Information')
 
 # We can add other forms here later, for example, a UserProfileForm

@@ -69,6 +69,9 @@ class Treatment(db.Model):
     
     trigger_points = db.relationship('TriggerPoint', backref='treatment', lazy=True)
 
+    clinic_share = db.Column(db.Float)
+    therapist_share = db.Column(db.Float)
+
 class TriggerPoint(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     treatment_id = db.Column(db.Integer, db.ForeignKey('treatment.id'), nullable=False)
