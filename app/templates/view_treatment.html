@@ -290,7 +290,7 @@
     function confirmDelete(treatmentId) {
         if (confirm('Are you sure you want to delete this treatment record? This action cannot be undone.')) {
             // Get CSRF token from meta tag
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            let csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             
             fetch(`/api/treatment/${treatmentId}`, {
                 method: 'DELETE',

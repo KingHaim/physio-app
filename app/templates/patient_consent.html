@@ -148,7 +148,7 @@ function revokeConsent(consentId) {
         return;
     }
 
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    var csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
     fetch(`/api/consent/${consentId}/revoke`, {
         method: 'POST',

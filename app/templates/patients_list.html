@@ -349,7 +349,7 @@
         }
         
         const patientIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.patientId);
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        let csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
         fetch('/api/patients/bulk-update-status', {
             method: 'POST',
@@ -384,7 +384,7 @@
         }
         
         const patientIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.patientId);
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        let csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
         fetch('/api/patients/bulk-delete', { // New endpoint
             method: 'DELETE',

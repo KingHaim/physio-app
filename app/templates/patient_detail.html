@@ -812,8 +812,7 @@
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.6/dist/signature_pad.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-// Get CSRF token from meta tag at the very beginning
-const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
 // Prevent duplicate script execution
 if (!window.__consentScriptLoaded) {
@@ -991,6 +990,69 @@ function getCurrentLang() {
       });
     });
   });
+
+  var generateBtn = document.getElementById('generateReportBtn');
+  if (generateBtn) {
+    generateBtn.addEventListener('click', function() {
+      generateBtn.disabled = true;
+      generateBtn.textContent = 'Generando...';
+      fetch(`/api/patient/{{ patient.id }}/generate-report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Generar Informe';
+        if (data.success) {
+          alert('Informe generado correctamente.');
+          window.location.reload();
+        } else {
+          alert('Error al generar el informe: ' + (data.message || ''));
+        }
+      })
+      .catch(error => {
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Generar Informe';
+        alert('Error al generar el informe: ' + error.message);
+      });
+    });
+  }
+
+  var generateExerciseBtn = document.getElementById('generateExerciseBtn');
+  if (generateExerciseBtn) {
+    var originalExerciseBtnHTML = generateExerciseBtn.innerHTML;
+    generateExerciseBtn.addEventListener('click', function() {
+      generateExerciseBtn.disabled = true;
+      generateExerciseBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Generando...';
+      fetch(`/api/patient/{{ patient.id }}/generate-exercise-prescription`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        generateExerciseBtn.disabled = false;
+        generateExerciseBtn.innerHTML = originalExerciseBtnHTML;
+        if (data.success) {
+          alert('Ejercicios generados correctamente.');
+          window.location.reload();
+        } else {
+          alert('Error al generar los ejercicios: ' + (data.message || ''));
+        }
+      })
+      .catch(error => {
+        generateExerciseBtn.disabled = false;
+        generateExerciseBtn.innerHTML = originalExerciseBtnHTML;
+        alert('Error al generar los ejercicios: ' + error.message);
+      });
+    });
+  }
 });
 </script>
 {% endblock %}

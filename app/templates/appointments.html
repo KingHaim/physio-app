@@ -378,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.cancelAppointment = function(appointmentId) {
         if (confirm('Are you sure you want to cancel this appointment?')) {
-            const csrfToken = document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content');
+            var csrfToken = document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content');
             showLoading(`Cancelling appointment ${appointmentId}...`);
             fetch(`/api/appointment/${appointmentId}/status`, {
                 method: 'POST',

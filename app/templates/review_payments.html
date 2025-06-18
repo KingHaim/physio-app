@@ -96,7 +96,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const tableBody = document.querySelector('#reviewPaymentsTable tbody');
-    const csrfToken = document.querySelector('meta[name=\"csrf-token\"]')?.content;
+    var csrfToken = document.querySelector('meta[name=\"csrf-token\"]')?.content;
 
     if (!csrfToken) {
         console.error("CSRF token meta tag not found! Requests will likely fail.");

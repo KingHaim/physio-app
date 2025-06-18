@@ -15,6 +15,7 @@ from io import BytesIO
 from xhtml2pdf import pisa
 import markdown
 import os
+import json
 from collections import defaultdict, Counter
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash
@@ -863,10 +864,10 @@ def reports():
         active_patients = Patient.query.filter_by(status='Active').count()
 
         monthly_treatments_query = db.session.query(
-            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
             func.count(Treatment.id).label('count')
-        ).group_by(func.strftime('%Y-%m', Treatment.created_at)) \
-            .order_by(func.strftime('%Y-%m', Treatment.created_at).desc()) \
+        ).group_by(func.to_char(Treatment.created_at, 'YYYY-MM')) \
+            .order_by(func.to_char(Treatment.created_at, 'YYYY-MM').desc()) \
             .limit(12).all()
 
         monthly_treatments = [(row[0], row[1]) for row in monthly_treatments_query]
@@ -912,10 +913,10 @@ def reports():
 @physio_required # <<< ADD DECORATOR
 def treatments_by_month():
     treatments = db.session.query(
-        func.strftime('%Y-%m', Treatment.created_at).label('month'),
+        func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
         func.count(Treatment.id).label('count')
-    ).group_by(func.strftime('%Y-%m', Treatment.created_at)) \
-        .order_by(func.strftime('%Y-%m', Treatment.created_at)) \
+    ).group_by(func.to_char(Treatment.created_at, 'YYYY-MM')) \
+        .order_by(func.to_char(Treatment.created_at, 'YYYY-MM')) \
         .all()
 
     return jsonify({
@@ -1600,6 +1601,8 @@ def generate_deepseek_report(analytics_data):
     Keep the tone professional, analytical, and insightful. Structure the report clearly with headings for each section (Executive Summary, Key Findings, Treatment Analysis, Patterns & Correlations, Actionable Insights).
     """
 
+    print("\n--- DeepSeek Prompt Sent ---\n" + prompt + "\n--- End Prompt ---\n")
+
     headers = {
         "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
         "Content-Type": "application/json",
@@ -1616,12 +1619,10 @@ def generate_deepseek_report(analytics_data):
     }
 
     try:
-        # ... (keep the existing API call and error handling logic) ...
         response = requests.post(DEEPSEEK_API_URL, headers=headers, json=payload, timeout=45) # Increased timeout
         response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
-        
         result = response.json()
-        
+        print("\n--- DeepSeek API Response ---\n" + str(result) + "\n--- End Response ---\n")
         # Check if the expected response structure is present
         if 'choices' in result and len(result['choices']) > 0 and 'message' in result['choices'][0] and 'content' in result['choices'][0]['message']:
             report_content = result['choices'][0]['message']['content'].strip()
@@ -1688,7 +1689,7 @@ def analytics():
         active_patients = Patient.query.filter(Patient.status == 'Active').count()
         total_treatments = Treatment.query.count()
         monthly_revenue_query = db.session.query(
-            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
             func.sum(Treatment.fee_charged).label('monthly_total')
         ).filter(Treatment.fee_charged.isnot(None)).group_by('month')
         costaspine_revenue_base_query = db.session.query(
@@ -1698,8 +1699,8 @@ def analytics():
             Treatment.fee_charged.isnot(None)
         )
         autonomo_base_query = db.session.query(
-            func.strftime('%Y-%m', Treatment.created_at).label('month'),
-            func.strftime('%Y', Treatment.created_at).label('year'),
+            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
+            func.to_char(Treatment.created_at, 'YYYY').label('year'),
             func.sum(Treatment.fee_charged).label('monthly_total_revenue'),
             func.sum(
                 case((Treatment.location == 'CostaSpine Clinic', Treatment.fee_charged), else_=0)
@@ -1713,7 +1714,7 @@ def analytics():
         active_patients = Patient.query.filter_by(user_id=current_user.id, status='Active').count()
         total_treatments = Treatment.query.join(Patient).filter(Patient.user_id == current_user.id).count()
         monthly_revenue_query = db.session.query(
-            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
             func.sum(Treatment.fee_charged).label('monthly_total')
         ).join(Patient).filter(Patient.user_id == current_user.id, Treatment.fee_charged.isnot(None)).group_by('month')
         costaspine_revenue_base_query = db.session.query(
@@ -1724,8 +1725,8 @@ def analytics():
             Treatment.fee_charged.isnot(None)
         )
         autonomo_base_query = db.session.query(
-            func.strftime('%Y-%m', Treatment.created_at).label('month'),
-            func.strftime('%Y', Treatment.created_at).label('year'),
+            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
+            func.to_char(Treatment.created_at, 'YYYY').label('year'),
             func.sum(Treatment.fee_charged).label('monthly_total_revenue'),
             func.sum(
                 case((Treatment.location == 'CostaSpine Clinic', Treatment.fee_charged), else_=0)
@@ -2754,7 +2755,7 @@ def generate_new_analytics_report():
 
         # Average Monthly Revenue
         monthly_revenue_base_query = db.session.query(
-            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
             func.sum(Treatment.fee_charged).label('monthly_total')
         ).filter(Treatment.fee_charged.isnot(None))
 
@@ -2821,7 +2822,7 @@ def generate_new_analytics_report():
         
         # Treatments by Month
         treatments_by_month_base_query = (db.session.query(
-            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
             func.count(Treatment.id).label('count')
             ).filter(Treatment.created_at >= twelve_months_ago))
         
@@ -2829,13 +2830,15 @@ def generate_new_analytics_report():
             treatments_by_month_base_query = treatments_by_month_base_query.join(Patient).filter(Patient.user_id == user_generating_report.id)
 
         treatments_by_month_query_result = (treatments_by_month_base_query
-            .group_by(func.strftime('%Y-%m', Treatment.created_at))
-            .order_by(func.strftime('%Y-%m', Treatment.created_at).asc()).all())
-        treatments_by_month = [{'month': t.month, 'count': t.count} for t in treatments_by_month_query_result]
+            .group_by(func.to_char(Treatment.created_at, 'YYYY-MM'))
+            .order_by(func.to_char(Treatment.created_at, 'YYYY-MM').asc()).all())
+        treatments_by_month = [
+            {'month': format_month(t[0]), 'count': t[1]} for t in treatments_by_month_query_result
+        ]
 
         # New Patients by Month
         new_patients_by_month_base_query = (db.session.query(
-            func.strftime('%Y-%m', Patient.created_at).label('month'), # Corrected to Patient.created_at
+            func.to_char(Patient.created_at, 'YYYY-MM').label('month'), # Corrected to Patient.created_at
             func.count(Patient.id).label('count')
             ).filter(Patient.created_at >= twelve_months_ago)) # Corrected to Patient.created_at
 
@@ -2843,9 +2846,11 @@ def generate_new_analytics_report():
             new_patients_by_month_base_query = new_patients_by_month_base_query.filter(Patient.user_id == user_generating_report.id)
 
         new_patients_by_month_query_result = (new_patients_by_month_base_query
-            .group_by(func.strftime('%Y-%m', Patient.created_at)) # Corrected to Patient.created_at
-            .order_by(func.strftime('%Y-%m', Patient.created_at).asc()).all()) # Corrected to Patient.created_at
-        new_patients_by_month = [{'month': p.month, 'count': p.count} for p in new_patients_by_month_query_result]
+            .group_by(func.to_char(Patient.created_at, 'YYYY-MM')) # Corrected to Patient.created_at
+            .order_by(func.to_char(Patient.created_at, 'YYYY-MM').asc()).all()) # Corrected to Patient.created_at
+        new_patients_by_month = [
+            {'month': format_month(p[0]), 'count': p[1]} for p in new_patients_by_month_query_result
+        ]
 
         analytics_data = {
             'total_patients': total_patients,
@@ -2860,31 +2865,43 @@ def generate_new_analytics_report():
             'patients_by_month': new_patients_by_month
         }
 
-        report_content = generate_deepseek_report(analytics_data) # Assuming this function is defined elsewhere
+        report_content = generate_deepseek_report(analytics_data)
+
+        # Detect AJAX/fetch request
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
         if "Error:" in report_content or "API key not configured" in report_content:
-            flash(f"Failed to generate AI report: {report_content}", "danger")
+            if is_ajax:
+                return jsonify(success=False, error=report_content)
+            else:
+                flash(f"Failed to generate AI report: {report_content}", "danger")
         else:
             report_user_id = None
             if not is_admin_generating:
                 report_user_id = user_generating_report.id
-            
             new_report = PracticeReport(
                 content=report_content, 
                 generated_at=datetime.utcnow(),
-                user_id=report_user_id # Set user_id here
+                user_id=report_user_id
             )
             db.session.add(new_report)
             db.session.commit()
-            flash("Successfully generated new AI practice insights report!", "success")
-            
+            if is_ajax:
+                return jsonify(success=True)
+            else:
+                flash("Successfully generated new AI practice insights report!", "success")
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error generating new analytics report for user {current_user.id if current_user else 'Unknown'}: {e}")
         current_app.logger.error(traceback.format_exc())
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify(success=False, error=str(e))
         flash(f"An unexpected error occurred while generating the report: {str(e)}", "danger")
 
-    return redirect(url_for('main.analytics'))
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify(success=True)
+    else:
+        return redirect(url_for('main.analytics'))
 
 @main.route('/profile/calendly-settings', methods=['GET', 'POST'])
 @login_required
@@ -3688,4 +3705,10 @@ def make_admin():
     db.session.commit()
     flash('You are now an admin user with unlimited access.', 'success')
     return redirect(url_for('main.index'))
+
+def format_month(month_str):
+    try:
+        return datetime.strptime(month_str, "%Y-%m").strftime("%B %Y")
+    except Exception:
+        return month_str
 

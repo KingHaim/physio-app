@@ -145,7 +145,7 @@
 <script>
 function markAsResolved(breachId) {
     const details = prompt('Enter resolution details (optional):', '');
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    var csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
     fetch(`/api/security-breach/${breachId}/resolve`, {
         method: 'POST',

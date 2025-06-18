@@ -10,6 +10,7 @@ from flask_login import login_required, current_user
 import traceback
 import stripe
 from flask import url_for
+from generate_patient_report import format_treatment_history
 
 api = Blueprint('api', __name__)
 
@@ -352,9 +353,76 @@ def update_appointment_status(id):
 @login_required
 def generate_patient_report(id):
     try:
-        patient = Patient.query.filter_by(id=id, practitioner_id=current_user.id).first_or_404()
-        # Full report generation logic should be here
-        report_content = "Report generation logic is complex and omitted for this summary. It should call an AI model."
+        patient = Patient.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+        treatments_query = Treatment.query.filter_by(patient_id=id).order_by(Treatment.created_at).all()
+        if not treatments_query:
+            return jsonify({'success': False, 'message': 'No treatments found for this patient.'}), 400
+
+        # Convert Patient object to dict for format_treatment_history
+        patient_dict = {
+            'id': patient.id,
+            'name': patient.name,
+            'diagnosis': patient.diagnosis,
+            'treatment_plan': getattr(patient, 'treatment_plan', None)
+        }
+
+        # Convert Treatment objects to dicts for format_treatment_history
+        treatments = []
+        for t in treatments_query:
+            trigger_points = []
+            if hasattr(t, 'trigger_points') and t.trigger_points:
+                for tp in t.trigger_points:
+                    trigger_points.append({
+                        'muscle': getattr(tp, 'muscle', None),
+                        'intensity': getattr(tp, 'intensity', None),
+                        'type': getattr(tp, 'type', None),
+                        'symptoms': getattr(tp, 'symptoms', None)
+                    })
+            treatment_dict = {
+                'id': t.id,
+                'created_at': t.created_at,
+                'treatment_type': t.treatment_type,
+                'notes': t.notes,
+                'pain_level': t.pain_level,
+                'movement_restriction': getattr(t, 'movement_restriction', None),
+                'status': t.status,
+                'trigger_points': trigger_points
+            }
+            treatments.append(treatment_dict)
+
+        # Build the prompt for the AI
+        prompt = format_treatment_history(patient_dict, treatments)
+
+        # Call DeepSeek
+        import os, requests
+        api_key = os.environ.get('DEEPSEEK_API_KEY')
+        if not api_key:
+            return jsonify({'success': False, 'message': 'DeepSeek API key not configured.'}), 500
+
+        response = requests.post(
+            "https://api.deepseek.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "deepseek-chat",
+                "messages": [
+                    {"role": "system", "content": "You are a professional physiotherapist with expertise in creating detailed, evidence-based treatment progress reports. You use precise physiotherapy terminology while ensuring your reports remain clear and accessible."},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.3,
+                "max_tokens": 4000
+            },
+            timeout=90
+        )
+        if response.status_code != 200:
+            return jsonify({'success': False, 'message': f"AI error: {response.text}"}), 500
+
+        result = response.json()
+        report_content = result['choices'][0]['message']['content']
+
+        # Save the report as PatientReport
         report = PatientReport(
             patient_id=id,
             content=report_content,
@@ -363,7 +431,7 @@ def generate_patient_report(id):
         )
         db.session.add(report)
         db.session.commit()
-        
+
         return jsonify({
             'success': True,
             'message': 'Report generated successfully',
@@ -494,16 +562,111 @@ def delete_report(id):
 @login_required
 def generate_exercise_prescription(id):
     try:
-        patient = Patient.query.filter_by(id=id, practitioner_id=current_user.id).first_or_404()
-        # AI generation logic here
-        prescription_content = "AI Generated Exercise Prescription"
+        patient = Patient.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+        treatments_query = Treatment.query.filter_by(patient_id=id).order_by(Treatment.created_at).all()
+        if not treatments_query:
+            return jsonify({'success': False, 'message': 'No treatments found for this patient.'}), 400
+
+        # Convert Patient object to dict
+        patient_dict = {
+            'id': patient.id,
+            'name': patient.name,
+            'diagnosis': patient.diagnosis,
+            'treatment_plan': getattr(patient, 'treatment_plan', None)
+        }
+
+        # Convert Treatment objects to dicts
+        treatments = []
+        for t in treatments_query:
+            trigger_points = []
+            if hasattr(t, 'trigger_points') and t.trigger_points:
+                for tp in t.trigger_points:
+                    trigger_points.append({
+                        'muscle': getattr(tp, 'muscle', None),
+                        'intensity': getattr(tp, 'intensity', None),
+                        'type': getattr(tp, 'type', None),
+                        'symptoms': getattr(tp, 'symptoms', None)
+                    })
+            treatment_dict = {
+                'id': t.id,
+                'created_at': t.created_at,
+                'treatment_type': t.treatment_type,
+                'notes': t.notes,
+                'pain_level': t.pain_level,
+                'movement_restriction': getattr(t, 'movement_restriction', None),
+                'status': t.status,
+                'trigger_points': trigger_points
+            }
+            treatments.append(treatment_dict)
+
+        # Prompt for exercise prescription
+        prompt = f"""
+        You are a physiotherapist. Based on the following patient data and treatment history, generate a detailed home exercise program (in markdown) for the patient to continue their rehabilitation at home. 
+        Focus on safety, progression, and clear instructions. Include 3-5 exercises, sets/reps, and any precautions. 
+        Use patient-friendly language.
+
+        # Patient Data
+        - Diagnosis: {patient_dict['diagnosis']}
+        - Treatment Plan: {patient_dict['treatment_plan']}
+        - Total Sessions: {len(treatments)}
+        - Most recent session notes: {treatments[-1]['notes'] if treatments else 'N/A'}
+
+        # Treatment History (summary)
+        {', '.join([t['treatment_type'] for t in treatments if t['treatment_type']])}
+
+        # Please format the program with headings, bullet points, and clear sections.
+        """
+
+        # Call DeepSeek
+        import os, requests
+        api_key = os.environ.get('DEEPSEEK_API_KEY')
+        if not api_key:
+            return jsonify({'success': False, 'message': 'DeepSeek API key not configured.'}), 500
+
+        response = requests.post(
+            "https://api.deepseek.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "deepseek-chat",
+                "messages": [
+                    {"role": "system", "content": "You are a professional physiotherapist with expertise in creating home exercise programs."},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.3,
+                "max_tokens": 2000
+            },
+            timeout=90
+        )
+        if response.status_code != 200:
+            return jsonify({'success': False, 'message': f"AI error: {response.text}"}), 500
+
+        result = response.json()
+        prescription_content = result['choices'][0]['message']['content']
+
+        # Save as PatientReport type 'Exercise Homework'
+        from app.models import PatientReport
+        from datetime import datetime
+        report = PatientReport(
+            patient_id=id,
+            content=prescription_content,
+            generated_date=datetime.now(),
+            report_type='Exercise Homework'
+        )
+        db.session.add(report)
+        db.session.commit()
+
         return jsonify({
             'success': True,
-            'prescription': prescription_content
+            'message': 'Exercise prescription generated successfully',
+            'report_id': report.id
         })
     except Exception as e:
+        db.session.rollback()
         current_app.logger.error(f"Error in generate_exercise_prescription: {e}")
-        return jsonify({'success': False, 'message': 'An internal error occurred.'}), 500
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @api.route('/treatment/<int:id>/set-payment', methods=['POST'])
 @login_required
@@ -569,12 +732,12 @@ def start_of_month(dt):
 def treatments_by_month():
     try:
         data_query = db.session.query(
-            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
             func.count(Treatment.id).label('count')
         ).join(Patient, Patient.id == Treatment.patient_id) \
          .filter(Patient.user_id == current_user.id) \
-         .group_by(func.strftime('%Y-%m', Treatment.created_at)) \
-         .order_by(func.strftime('%Y-%m', Treatment.created_at)) \
+         .group_by(func.to_char(Treatment.created_at, 'YYYY-MM')) \
+         .order_by(func.to_char(Treatment.created_at, 'YYYY-MM')) \
          .all()
         
         result = [{'month': item.month, 'count': item.count} for item in data_query]
@@ -588,11 +751,11 @@ def treatments_by_month():
 def patients_by_month():
     try:
         data = db.session.query(
-            func.strftime('%Y-%m', Patient.created_at).label('month'),
+            func.to_char(Patient.created_at, 'YYYY-MM').label('month'),
             func.count(Patient.id).label('count')
         ).filter(Patient.user_id == current_user.id) \
-         .group_by(func.strftime('%Y-%m', Patient.created_at)) \
-         .order_by(func.strftime('%Y-%m', Patient.created_at)) \
+         .group_by(func.to_char(Patient.created_at, 'YYYY-MM')) \
+         .order_by(func.to_char(Patient.created_at, 'YYYY-MM')) \
          .all()
         result = [{'month': r.month, 'count': r.count} for r in data]
         return jsonify(result)
