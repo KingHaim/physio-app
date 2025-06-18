@@ -41,7 +41,7 @@
                         <span class="fw-semibold">{{ patient_plan_limit }}</span> {{ _('patients') }}.
                         {% if current_patients_count >= patient_plan_limit %}
                             <span class="badge bg-danger ms-1">{{ _('Limit Reached!') }}</span>
-                            <a href="{{ url_for('main.pricing_page') }}" class="btn btn-warning btn-sm ms-1 py-0">{{ _('Upgrade') }}</a>
+                            <a href="{{ url_for('main.manage_subscription') }}" class="btn btn-warning btn-sm ms-1 py-0">{{ _('Upgrade') }}</a>
                         {% elif (patient_plan_limit - current_patients_count) <= 5 %}
                             <span class="badge bg-warning text-dark ms-1">{{ _('Nearing Limit') }} ({{ patient_plan_limit - current_patients_count }} {{ _('remaining') }})</span>
                         {% else %}

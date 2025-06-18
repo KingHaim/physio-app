@@ -1,34 +1,40 @@
 # app/routes.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response, current_app, session, send_file, abort
 from datetime import datetime, timedelta, date, time
-from calendar import monthrange, day_name # Import day_name
-from sqlalchemy import func, extract, or_, case, cast, Float, exc # Add exc import
-from app.models import db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, PatientReport, RecurringAppointment, User, PracticeReport, Plan, FixedCost  # Added FixedCost
-import json
+from calendar import monthrange, day_name
+from sqlalchemy import func, extract, or_, case, cast, Float, exc
+from app.models import (
+    db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, 
+    PatientReport, RecurringAppointment, User, PracticeReport, Plan, 
+    FixedCost, UserSubscription, DataProcessingActivity, UserConsent, 
+    SecurityBreach, SecurityLog
+)
 from app.utils import mark_past_treatments_as_completed, mark_inactive_patients
-from flask_login import login_required, current_user, logout_user # Import current_user and logout_user
+from flask_login import login_required, current_user, logout_user
 from io import BytesIO
 from xhtml2pdf import pisa
 import markdown
 import os
-from collections import defaultdict, Counter # Add Counter import
+from collections import defaultdict, Counter
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash
-import functools # Import functools for wraps
+import functools
 import requests
-import pytz # <<< Import pytz
-import traceback # Add traceback import
-from flask_wtf import FlaskForm # Import FlaskForm
-from flask_wtf.csrf import generate_csrf # Import generate_csrf
-import stripe # Ensure stripe is imported if not already
-from app.models import User, Plan, UserSubscription, Patient, Treatment, PatientReport # Make sure User, db are imported
-from app.forms import UpdateEmailForm, ChangePasswordForm, UserProfileForm, ClinicForm, ApiIntegrationsForm, FinancialSettingsForm, UserConsentForm # Import the new forms
-from app.models import DataProcessingActivity, UserConsent, SecurityBreach, SecurityLog
+import pytz
+import traceback
+from flask_wtf import FlaskForm
+from flask_wtf.csrf import generate_csrf
+import stripe
+from app.forms import (
+    UpdateEmailForm, ChangePasswordForm, UserProfileForm, ClinicForm,
+    ApiIntegrationsForm, FinancialSettingsForm, UserConsentForm
+)
 from functools import wraps
+from flask_babel import _
 
 # Define timezones
 UTC = pytz.utc
-LOCAL_TZ = pytz.timezone('Europe/Madrid') # <<< Replace with your actual local timezone
+LOCAL_TZ = pytz.timezone('Europe/Madrid')
 
 main = Blueprint('main', __name__)
 
@@ -145,130 +151,57 @@ def get_relative_date_string(target_date):
         return target_date.strftime("%Y-%m-%d")
 
 @main.route('/')
+def root():
+    """Public marketing landing page."""
+    return render_template('landing.html')
+
+@main.route('/index')
 @login_required
-@physio_required # <<< ADD DECORATOR
 def index():
-    user_id_for_utils = None
-    if current_user.is_authenticated and current_user.role != 'patient':
-        user_id_for_utils = current_user.id
-
-    # Run utility functions only if user is physio/admin and ID is available
-    if user_id_for_utils:
-        mark_past_treatments_as_completed(user_id=user_id_for_utils)
-        mark_inactive_patients(user_id=user_id_for_utils)
-
-    total_patients = Patient.query.filter_by(user_id=current_user.id).count() if current_user.is_authenticated and current_user.role != 'patient' else 0
-    active_patients = Patient.query.filter_by(user_id=current_user.id, status='Active').count() if current_user.is_authenticated and current_user.role != 'patient' else 0
-    today = datetime.utcnow().date() 
-    week_end = today + timedelta(days=6 - today.weekday()) 
-    month_end = today.replace(day=monthrange(today.year, today.month)[1])
-
-    # Initialize subscription variables to avoid UnboundLocalError if user is not authenticated or has no sub
-    current_plan_name = "Free Plan"  # Default to Free Plan for any user without a paid subscription
-    current_subscription_status = "Active"  # Free plan is always active
+    """Dashboard route for authenticated users."""
+    # Get current user's subscription info
+    current_plan_name = 'Free Plan'
+    current_subscription_status = None
     current_subscription_ends_at = None
-    
-    # Patient usage details
-    current_patients_count = 0
     patient_plan_limit = None
-    if current_user.is_authenticated:
-        current_patients_count, patient_plan_limit = current_user.patient_usage_details
-
-    # --- Correctly calculate Today's Appointments --- 
-    # Convert today to a datetime object for the start of the day in UTC
-    today_start_utc = datetime.combine(today, datetime.min.time()).replace(tzinfo=UTC)
-    # Convert today to a datetime object for the end of the day in UTC
-    today_end_utc = datetime.combine(today, datetime.max.time()).replace(tzinfo=UTC)
-
-    todays_appointments_query = Treatment.query.join(Patient).filter(
-        Patient.user_id == current_user.id,
-        Treatment.status == 'Scheduled',
-        Treatment.created_at >= today_start_utc,
-        Treatment.created_at <= today_end_utc
-    )
-    today_appointments_count = todays_appointments_query.count()
-
-    # --- Calculate Pending Review Count (e.g., Unmatched Calendly Bookings) ---
-    pending_review_count = 0
-    if current_user.is_admin:
-        pending_review_count = UnmatchedCalendlyBooking.query.filter_by(status='Pending').count()
-    elif current_user.role == 'physio':
-        if current_user.calendly_api_token and current_user.calendly_user_uri:
-            pending_review_count = UnmatchedCalendlyBooking.query.filter_by(
-                status='Pending',
-                user_id=current_user.id
-            ).count()
-    # Add other conditions for pending review if necessary, e.g. Patient status
-
-    # --- Upcoming Appointments (Next 7 days, for current user only) --- 
-    upcoming_appointments_query = Treatment.query.join(Patient).filter(
-        Patient.user_id == current_user.id,
-        Treatment.status == 'Scheduled',
-        Treatment.created_at >= today,
-        Treatment.created_at < week_end
-    ).order_by(Treatment.created_at).limit(5).all()
-
-    # Process upcoming appointments to add relative date string and LOCAL time
-    upcoming_appointments_processed = []
-    for apt in upcoming_appointments_query:
-        # Make the UTC time timezone-aware
-        utc_time = apt.created_at.replace(tzinfo=UTC)
-        # Convert to local time
-        local_time = utc_time.astimezone(LOCAL_TZ)
-        
-        apt_date = local_time.date() # Use local date for relative string
-        relative_date = get_relative_date_string(apt_date)
-        apt_time_str = local_time.strftime("%H:%M") # Format local time
-        patient_name = apt.patient.name if apt.patient else "Unknown Patient"
-        
-        upcoming_appointments_processed.append({
-            'treatment': apt, 
-            'relative_date': relative_date,
-            'time': apt_time_str, # Use the formatted local time string
-            'patient_name': patient_name
-        })
-
-    # Get recent treatments
-    recent_treatments = Treatment.query.filter(
-        Treatment.patient_id == current_user.id,
-        Treatment.created_at < today,
-        Treatment.status == 'Scheduled'
-    ).order_by(Treatment.created_at.desc()).limit(5).all()
-
-    # --- Subscription Status --- 
-    if current_user.is_authenticated:
-        sub = current_user.current_subscription
-        if sub:
-            if sub.plan:
-                current_plan_name = sub.plan.name
-            current_subscription_status = sub.status.replace('_', ' ').title() # e.g., 'Past Due'
-            
-            if sub.status == 'trialing' and sub.trial_ends_at:
-                current_subscription_ends_at = sub.trial_ends_at
-            elif sub.current_period_ends_at:
-                current_subscription_ends_at = sub.current_period_ends_at
-    # --- End Subscription Status ---
-
+    current_patients_count = Patient.query.filter_by(user_id=current_user.id).count()
+    active_patients = Patient.query.filter_by(user_id=current_user.id, status='active').count()
+    
+    # Calcular citas de hoy
+    today = datetime.utcnow().date()
+    today_appointments = Treatment.query.filter_by(provider=current_user.username).filter(
+        func.date(Treatment.created_at) == today
+    ).count()
+    
+    # Get user's subscription if exists
+    subscription = UserSubscription.query.filter_by(user_id=current_user.id).first()
+    if subscription and subscription.plan:
+        current_plan_name = subscription.plan.name
+        current_subscription_status = subscription.status
+        current_subscription_ends_at = subscription.current_period_ends_at  # Changed to use current_period_ends_at
+        if not current_user.is_admin:
+            patient_plan_limit = subscription.plan.patient_limit
+        else:
+            patient_plan_limit = None
+    else:
+        if not current_user.is_admin:
+            patient_plan_limit = 10  # Default Free Plan limit
+        else:
+            patient_plan_limit = None
+    
     return render_template('index.html',
-                           total_patients=total_patients,
-                           active_patients=active_patients,
-                           today_appointments=today_appointments_count, # Use the calculated count
-                           upcoming_appointments=upcoming_appointments_processed, 
-                           recent_treatments=recent_treatments,
-                           today=today, 
-                           week_end=week_end,
-                           month_end=month_end,
-                           # Subscription info
-                           current_plan_name=current_plan_name,
-                           current_subscription_status=current_subscription_status,
-                           current_subscription_ends_at=current_subscription_ends_at,
-                           current_patients_count=current_patients_count, 
-                           patient_plan_limit=patient_plan_limit,
-                           pending_review_count=pending_review_count, # Pass pending review count
-                           # Data for weekly appointments chart
-                           # weekly_appointment_labels=weekly_appointment_labels, # Removed
-                           # weekly_appointment_counts=weekly_appointment_counts, # Removed
-                           )
+                         current_plan_name=current_plan_name,
+                         current_subscription_status=current_subscription_status,
+                         current_subscription_ends_at=current_subscription_ends_at,
+                         patient_plan_limit=patient_plan_limit,
+                         current_patients_count=current_patients_count,
+                         active_patients=active_patients,
+                         today_appointments=today_appointments)
+
+@main.route('/welcome')
+def welcome_redirect():
+    """Redirect to the landing page at root."""
+    return redirect(url_for('main.root'))
 
 @main.route('/api/treatment/<int:id>')
 @login_required # Assuming API endpoints also need login
@@ -2998,25 +2931,20 @@ def manage_calendly_settings():
 
 # Route for the pricing page
 @main.route('/pricing')
-@login_required
 def pricing_page():
-    all_plans = Plan.query.filter_by(is_active=True).order_by(Plan.display_order).all()
-    
-    active_plan_id = None
-    user_subscription = None # Will hold the UserSubscription object
+    """Public pricing page."""
+    return render_template('public_pricing.html')
 
-    if current_user.is_authenticated:
-        user_subscription = current_user.current_subscription # Get the full subscription object
-        if user_subscription and user_subscription.plan:
-            active_plan_id = user_subscription.plan.id
-            
-    stripe_publishable_key = current_app.config.get('STRIPE_PUBLISHABLE_KEY')
+@main.route('/pricing/manage')
+@login_required
+def manage_subscription_plans():
+    """Manage subscription plans for admin users."""
+    if not current_user.is_admin:
+        flash(_('You do not have permission to access this page.'), 'error')
+        return redirect(url_for('main.index'))
     
-    return render_template('pricing.html', 
-                           plans=all_plans, 
-                           stripe_publishable_key=stripe_publishable_key,
-                           active_plan_id=active_plan_id,
-                           user_subscription=user_subscription) # Pass the subscription object
+    plans = Plan.query.all()
+    return render_template('manage_subscription_plans.html', plans=plans)
 
 @main.route('/subscription-success')
 @login_required
@@ -3079,7 +3007,7 @@ def manage_subscription():
         # The return_url is where the user will be redirected after they are done in the portal
         session = stripe.billing_portal.Session.create(
             customer=current_user.stripe_customer_id,
-            return_url=url_for('main.pricing_page', _external=True)
+            return_url=url_for('main.manage_subscription', _external=True)
         )
         return redirect(session.url)
     except stripe.error.StripeError as e:
@@ -3725,4 +3653,39 @@ def api_delete_consent(consent_id):
     db.session.delete(consent)
     db.session.commit()
     return jsonify({'success': True})
+
+@main.route('/subscription/manage')
+@login_required
+def manage_billing():
+    """Manage billing details for authenticated users."""
+    # Ensure the user has a Stripe Customer ID
+    if not current_user.stripe_customer_id:
+        flash('Unable to manage subscription: No Stripe customer ID found.', 'warning')
+        return redirect(url_for('main.pricing_page'))
+
+    try:
+        # Create a new Stripe Billing Portal session
+        session = stripe.billing_portal.Session.create(
+            customer=current_user.stripe_customer_id,
+            return_url=url_for('main.manage_billing', _external=True)
+        )
+        return redirect(session.url)
+    except stripe.error.StripeError as e:
+        flash(f'Could not open Stripe billing portal: {str(e)}', 'danger')
+        current_app.logger.error(f"Stripe Billing Portal error for user {current_user.id}: {str(e)}")
+        return redirect(url_for('main.pricing_page'))
+    except Exception as e:
+        flash('An unexpected error occurred while trying to access the billing portal.', 'danger')
+        current_app.logger.error(f"Unexpected error accessing billing portal for user {current_user.id}: {str(e)}")
+        return redirect(url_for('main.pricing_page'))
+
+@main.route('/make-admin')
+@login_required
+def make_admin():
+    """Make the current user an admin."""
+    current_user.is_admin = True
+    current_user.role = 'admin'
+    db.session.commit()
+    flash('You are now an admin user with unlimited access.', 'success')
+    return redirect(url_for('main.index'))
 

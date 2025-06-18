@@ -13,6 +13,12 @@ class RegistrationForm(FlaskForm):
     # plan = RadioField('Choose Your Plan', choices=[('free', 'Free Plan'), ('pro', 'Pro Plan ($19.99/month)')], default='free')
     submit = SubmitField('Register')
 
+class LoginForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    remember_me = BooleanField('Remember Me')
+    submit = SubmitField('Sign In')
+
 class ClinicForm(FlaskForm):
     clinic_name = StringField('Clinic Name', validators=[DataRequired(), Length(max=150)])
     clinic_address = StringField('Clinic Address', validators=[Optional(), Length(max=200)])

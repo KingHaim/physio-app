@@ -502,7 +502,7 @@ body {
 <nav class="navbar navbar-expand-lg navbar-custom">
     <div class="container">
         <a class="navbar-brand" href="#">
-            <i class="bi bi-heart-pulse me-2"></i>PhysioTracker
+            <i class="bi bi-heart-pulse me-2"></i>TRXCK
         </a>
         
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -515,14 +515,14 @@ body {
                     <a class="nav-link" href="#features">Features</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('main.pricing_page') }}">Pricing</a>
+                    <a class="nav-link" href="{{ url_for('main.pricing_page') }}">{{ _('Pricing') }}</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#about">About</a>
                 </li>
             </ul>
             <div class="d-flex gap-2">
-                <a href="{{ url_for('auth.login') }}" class="btn-nav btn-nav-outline">Sign In</a>
+                <a href="{{ url_for('auth.login') }}" class="btn-nav btn-nav-outline">Access</a>
                 <a href="{{ url_for('auth.register') }}" class="btn-nav btn-nav-primary">Get Started</a>
             </div>
         </div>
@@ -541,7 +541,7 @@ body {
                     Stop juggling spreadsheets and endless paperwork. Track patient progress, generate AI reports, and manage your practice in one intelligent platform designed for modern physiotherapists.
                 </p>
                 <div class="hero-cta fade-in-up">
-                    <a href="#signup" class="btn-hero btn-hero-primary">
+                    <a href="{{ url_for('auth.register') }}" class="btn-hero btn-hero-primary">
                         <i class="bi bi-rocket-takeoff me-2"></i>Start for Free 
                     </a>
                     <a href="#features" class="btn-hero btn-hero-outline">
@@ -715,7 +715,7 @@ body {
             <a href="#" class="footer-link">Terms</a>
             <a href="#" class="footer-link">Contact</a>
         </div>
-        <p style="opacity: 0.7; margin: 0;">&copy; 2024 PhysioTracker. All rights reserved.</p>
+        <p style="opacity: 0.7; margin: 0;">&copy; 2024 TRXCK. All rights reserved.</p>
     </div>
 </footer>
 

@@ -1,0 +1,175 @@
+{% extends "base_auth.html" %}
+
+{% block title %}{{ _('Subscription Plans') }} - TRXCK{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .plan-section {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        background-color: #f8f9fa;
+    }
+    div.plan-card {
+        background-color: #ffffff;
+        border: 1px solid #dee2e6 !important; 
+        border-top: 4px solid var(--secondary-color, #6c757d) !important; 
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        position: relative;
+    }
+    div.plan-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    div.plan-card .plan-header {
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    div.plan-card h3 { 
+        color: #343a40;
+        margin-top: 0;
+        font-weight: 600;
+        font-size: 1.4rem;
+        letter-spacing: -0.5px;
+    }
+    div.plan-card .plan-price {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color, #2980b9);
+        margin: 0.5rem 0 0.75rem 0;
+    }
+    div.plan-card .plan-price .currency {
+        font-size: 1.1rem;
+        font-weight: 500;
+        vertical-align: super;
+        margin-right: 2px;
+    }
+    div.plan-card .plan-price .interval {
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-weight: 400;
+        text-transform: uppercase;
+    }
+    div.plan-card .plan-description {
+        color: #5a6268;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        min-height: 40px;
+        line-height: 1.5;
+    }
+    div.plan-card .plan-features {
+        padding-left: 0;
+        list-style: none;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+    div.plan-card .plan-features li {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.6rem;
+        font-size: 0.85rem;
+        color: #495057;
+    }
+    div.plan-card .plan-features li i {
+        color: var(--primary-color, #2980b9);
+        margin-right: 0.7rem;
+        font-size: 1.1rem;
+        width: 18px;
+        text-align: center;
+    }
+    
+    div.plan-card .btn {
+        margin-top: auto;
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        border-radius: 0.3rem;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+    div.plan-card .btn-primary {
+        background-color: var(--primary-color, #2980b9) !important;
+        border-color: var(--primary-color, #2980b9) !important;
+        color: white !important;
+    }
+    div.plan-card .btn-primary:hover {
+        background-color: #2374a8 !important;
+        border-color: #216b9a !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-primary mb-3">Simple, Transparent Pricing</h1>
+        <p class="lead text-muted">Choose the perfect plan for your practice</p>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4 justify-content-center">
+        <!-- Free Plan -->
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title text-primary mb-4">Free</h5>
+                    <h2 class="display-4 fw-bold mb-4">$0<small class="fs-6 text-muted">/month</small></h2>
+                    <ul class="list-unstyled mb-4">
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Up to 5 patients</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Basic exercise library</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Email support</li>
+                    </ul>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100">Get Started</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pro Plan -->
+        <div class="col">
+            <div class="card h-100 border-0 shadow">
+                <div class="card-body p-4">
+                    <div class="ribbon ribbon-top-right"><span>POPULAR</span></div>
+                    <h5 class="card-title text-primary mb-4">Pro</h5>
+                    <h2 class="display-4 fw-bold mb-4">$29<small class="fs-6 text-muted">/month</small></h2>
+                    <ul class="list-unstyled mb-4">
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Unlimited patients</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Full exercise library</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Priority support</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Custom exercise creation</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Advanced analytics</li>
+                    </ul>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary w-100">Get Started</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enterprise Plan -->
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title text-primary mb-4">Enterprise</h5>
+                    <h2 class="display-4 fw-bold mb-4">$99<small class="fs-6 text-muted">/month</small></h2>
+                    <ul class="list-unstyled mb-4">
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Everything in Pro</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Multiple locations</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Team management</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Custom integrations</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Dedicated support</li>
+                    </ul>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100">Contact Sales</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <p class="text-muted">All plans include a 14-day free trial. No credit card required.</p>
+    </div>
+</div>
+{% endblock %} 

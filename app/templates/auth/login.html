@@ -9,26 +9,36 @@
             <div class="card shadow-sm mt-5">
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
-                        <h2 class="h3 mb-3">PhysioTracker</h2>
+                        <h2 class="h3 mb-3">TRXCK</h2>
                         <p class="text-muted">{{ _('Sign in to your account') }}</p>
                     </div>
                     
                     <form method="POST" action="{{ url_for('auth.login') }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        {{ form.csrf_token }}
                         <div class="mb-3">
-                            <label for="username" class="form-label">{{ _('Username') }}</label>
-                            <input type="text" class="form-control" id="username" name="username" required autofocus>
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control", autofocus=true) }}
+                            {% if form.email.errors %}
+                                {% for error in form.email.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
                         </div>
                         <div class="mb-3">
-                            <label for="password" class="form-label">{{ _('Password') }}</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
+                            {{ form.password.label(class="form-label") }}
+                            {{ form.password(class="form-control") }}
+                            {% if form.password.errors %}
+                                {% for error in form.password.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
                         </div>
                         <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                            <label class="form-check-label" for="remember">{{ _('Remember me') }}</label>
+                            {{ form.remember_me(class="form-check-input") }}
+                            {{ form.remember_me.label(class="form-check-label") }}
                         </div>
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">{{ _('Sign In') }}</button>
+                            {{ form.submit(class="btn btn-primary") }}
                         </div>
                     </form>
                     

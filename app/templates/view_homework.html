@@ -52,7 +52,7 @@
             {% if current_user.role == 'patient' %}
                 <li class="breadcrumb-item"><a href="{{ url_for('main.patient_dashboard') }}">My Dashboard</a></li>
             {% else %}
-                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('main.root') }}">Dashboard</a></li>
                 <li class="breadcrumb-item"><a href="{{ url_for('main.patient_detail', id=report.patient_id) }}">{{ report.patient.name }}</a></li>
             {% endif %}
             <li class="breadcrumb-item active" aria-current="page">View Homework</li>
@@ -78,6 +78,7 @@
             {% else %}
                 <a href="{{ url_for('main.patient_detail', id=report.patient_id) }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Patient</a>
             {% endif %}
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Back to Dashboard</a>
             {# Add a print button maybe? #}
             <button onclick="window.print();" class="btn btn-info float-end"><i class="bi bi-printer"></i> Print Homework</button>
         </div>

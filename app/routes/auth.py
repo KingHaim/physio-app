@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, current_user, login_required
 from app.models import User, db
-from app.forms import RegistrationForm
+from app.forms import RegistrationForm, LoginForm
 
 # If the above import fails, try this alternative:
 # from werkzeug.utils import url_parse
@@ -28,38 +28,18 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        remember = 'remember' in request.form
-        
-        user = User.query.filter_by(username=username).first()
-        current_app.logger.debug(
-            "Login attempt for username '%s'", username
-        )
-        
-        if user:
-            current_app.logger.debug("User found. DB password_hash: %s", user.password_hash)
-            password_check_result = user.check_password(password)
-            current_app.logger.debug("user.check_password result: %s", password_check_result)
-            if not password_check_result:
-                flash('Invalid username or password', 'danger')
-                return redirect(url_for('auth.login'))
-        elif user is None: # user not found
-            flash('Invalid username or password', 'danger')
-            return redirect(url_for('auth.login'))
-        
-        # If we reach here, user is not None and password check was successful (or wasn't needed if handled above)
-        login_user(user, remember=remember)
-        
-        next_page = request.args.get('next')
-        # Use our custom function instead of url_parse
-        if not next_page or not is_safe_url(next_page):
-            next_page = url_for('main.index')
-            
-        return redirect(next_page)
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user, remember=form.remember_me.data)
+            next_page = request.args.get('next')
+            if not next_page or not is_safe_url(next_page):
+                next_page = url_for('main.index')
+            return redirect(next_page)
+        flash('Invalid email or password', 'danger')
     
-    return render_template('auth/login.html', supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
+    return render_template('auth/login.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
 
 @auth.route('/logout')
 def logout():
@@ -69,7 +49,7 @@ def logout():
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.root'))
     
     form = RegistrationForm()
     if form.validate_on_submit():
@@ -80,12 +60,10 @@ def register():
         # Check if username or email already exists
         if User.query.filter_by(username=username).first():
             flash('Username already exists', 'danger')
-            # return redirect(url_for('auth.register')) # Keep them on the page with the form and error
             return render_template('auth/register.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES']) 
 
         if User.query.filter_by(email=email).first():
             flash('Email already registered', 'danger')
-            # return redirect(url_for('auth.register')) # Keep them on the page with the form and error
             return render_template('auth/register.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
         
         # Create new user
