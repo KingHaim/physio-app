@@ -213,20 +213,55 @@
                     <form method="POST" action="{{ url_for('main.user_settings') }}">
                         {{ api_form.hidden_tag() }}
                         
-                        <div class="mb-3">
-                            {{ api_form.calendly_api_key.label(class="form-label") }}
-                            {{ api_form.calendly_api_key(class="form-control" + (" is-invalid" if api_form.calendly_api_key.errors else "")) }}
-                            {% if api_form.calendly_api_key.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in api_form.calendly_api_key.errors %}<span>{{ error }}</span>{% endfor %}
+                        <!-- Integration Checkboxes -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Available Integrations</h5>
+                            <div class="form-check mb-3">
+                                {{ api_form.enable_calendly(class="form-check-input", id="enable_calendly") }}
+                                {{ api_form.enable_calendly.label(class="form-check-label", for="enable_calendly") }}
+                                <div class="form-text">
+                                    <i class="bi bi-calendar-event"></i> Sync appointments and bookings from Calendly
                                 </div>
-                            {% endif %}
-                            <div class="form-text">
-                                Find your Personal Access Token in your <a href="https://calendly.com/integrations/api_webhooks" target="_blank">Calendly API & Webhooks page</a>.
                             </div>
                         </div>
 
-                        <button type="submit" name="submit_api" class="btn btn-primary">Save Changes</button>
+                        <!-- Calendly Configuration (shown/hidden based on checkbox) -->
+                        <div id="calendly-config" class="mb-4" style="display: none;">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="bi bi-calendar-event"></i> Calendly Configuration</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        {{ api_form.calendly_api_key.label(class="form-label") }}
+                                        {{ api_form.calendly_api_key(class="form-control" + (" is-invalid" if api_form.calendly_api_key.errors else "")) }}
+                                        {% if api_form.calendly_api_key.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in api_form.calendly_api_key.errors %}<span>{{ error }}</span>{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                        <div class="form-text">
+                                            Find your Personal Access Token in your <a href="https://calendly.com/integrations/api_webhooks" target="_blank">Calendly API & Webhooks page</a>.
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        {{ api_form.calendly_user_uri.label(class="form-label") }}
+                                        {{ api_form.calendly_user_uri(class="form-control" + (" is-invalid" if api_form.calendly_user_uri.errors else "")) }}
+                                        {% if api_form.calendly_user_uri.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in api_form.calendly_user_uri.errors %}<span>{{ error }}</span>{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                        <div class="form-text">
+                                            Your Calendly User URI is needed to fetch your specific events. Format: https://api.calendly.com/users/your-user-id
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" name="submit_api" class="btn btn-primary">Save API Keys</button>
                     </form>
                 </div>
             </div>
@@ -324,4 +359,27 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendlyCheckbox = document.getElementById('enable_calendly');
+    const calendlyConfig = document.getElementById('calendly-config');
+    
+    // Function to toggle Calendly configuration visibility
+    function toggleCalendlyConfig() {
+        if (calendlyCheckbox.checked) {
+            calendlyConfig.style.display = 'block';
+        } else {
+            calendlyConfig.style.display = 'none';
+        }
+    }
+    
+    // Set initial state
+    toggleCalendlyConfig();
+    
+    // Add event listener for checkbox changes
+    calendlyCheckbox.addEventListener('change', toggleCalendlyConfig);
+});
+</script>
+
 {% endblock %} 

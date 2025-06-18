@@ -2903,50 +2903,6 @@ def generate_new_analytics_report():
     else:
         return redirect(url_for('main.analytics'))
 
-@main.route('/profile/calendly-settings', methods=['GET', 'POST'])
-@login_required
-def manage_calendly_settings():
-    if current_user.role == 'patient':
-        flash('This page is not available for patient accounts.', 'warning')
-        return redirect(url_for('main.index'))
-
-    if request.method == 'POST':
-        token = request.form.get('calendly_api_token', '').strip()
-        uri = request.form.get('calendly_user_uri', '').strip()
-
-        # Basic validation: Check if URI looks like a Calendly user URI
-        if uri and not uri.startswith('https://api.calendly.com/users/'):
-            flash('Invalid Calendly User URI format. It should start with "https://api.calendly.com/users/".', 'danger')
-            # Re-render form with submitted values
-            # generate_csrf() is called implicitly by Flask-WTF for POST requests if the form has a csrf_token field.
-            # However, to be absolutely sure the template has it for re-rendering on error:
-            csrf_token_value_on_post_error = generate_csrf()
-            return render_template('calendly_settings.html', 
-                                   calendly_api_token=token, 
-                                   calendly_user_uri=uri,
-                                   csrf_token_value=csrf_token_value_on_post_error)
-
-        current_user.calendly_api_token = token if token else None
-        current_user.calendly_user_uri = uri if uri else None
-        
-        try:
-            db.session.commit()
-            flash('Calendly settings updated successfully!', 'success')
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Error updating Calendly settings for user {current_user.id}: {e}")
-            flash('An error occurred while saving your settings. Please try again.', 'danger')
-        
-        return redirect(url_for('main.manage_calendly_settings'))
-
-    # GET request
-    csrf_token_value = generate_csrf()
-    return render_template('calendly_settings.html', 
-                           calendly_api_token=current_user.calendly_api_token, 
-                           calendly_user_uri=current_user.calendly_user_uri,
-                           csrf_token_value=csrf_token_value)
-
-# Route for the pricing page
 @main.route('/pricing')
 def pricing_page():
     """Public pricing page."""
@@ -3437,7 +3393,15 @@ def user_settings():
                 return redirect(url_for('main.user_settings'))
         elif 'submit_api' in request.form:
             if api_form.validate_on_submit():
-                current_user.calendly_api_key = api_form.calendly_api_key.data
+                # Handle Calendly integration
+                if api_form.enable_calendly.data:
+                    current_user.calendly_api_token = api_form.calendly_api_key.data
+                    current_user.calendly_user_uri = api_form.calendly_user_uri.data
+                else:
+                    # Clear Calendly data if disabled
+                    current_user.calendly_api_token = None
+                    current_user.calendly_user_uri = None
+                
                 db.session.commit()
                 flash('Your API settings have been updated.', 'success')
                 return redirect(url_for('main.user_settings'))
@@ -3477,7 +3441,9 @@ def user_settings():
     clinic_form.clinic_percentage_agreement.data = current_user.clinic_percentage_agreement
     clinic_form.clinic_percentage_amount.data = current_user.clinic_percentage_amount
     
-    api_form.calendly_api_key.data = current_user.calendly_api_key
+    api_form.calendly_api_key.data = current_user.calendly_api_token
+    api_form.calendly_user_uri.data = current_user.calendly_user_uri
+    api_form.enable_calendly.data = bool(current_user.calendly_api_token or current_user.calendly_user_uri)
     
     financial_form.contribution_base.data = current_user.contribution_base
     

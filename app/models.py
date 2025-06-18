@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import JSON as SQLAlchemyJSON # Using generic SQLAlchemy JSON type
 from sqlalchemy import desc # Required for ordering in current_subscription query
 from typing import Optional, Tuple # Import Optional and Tuple for type hinting
+from .crypto_utils import encrypt_token, decrypt_token
 
 class Patient(db.Model):
     __tablename__ = 'patient'
@@ -206,7 +207,7 @@ class User(db.Model, UserMixin):
     last_name = db.Column(db.String(64), nullable=True)
     date_of_birth = db.Column(db.Date, nullable=True)
     sex = db.Column(db.String(16), nullable=True)  # 'Masculino', 'Femenino', 'Otro'
-    license_number = db.Column(db.String(32), nullable=True)
+    license_number = db.Column(db.String(64), nullable=True)
     
     # Clinic fields
     clinic_name = db.Column(db.String(150), nullable=True)
@@ -227,7 +228,8 @@ class User(db.Model, UserMixin):
     stripe_customer_id = db.Column(db.String(255), nullable=True, unique=True, index=True)
     
     # Calendly specific fields
-    calendly_api_key = db.Column(db.String(255), nullable=True)
+    calendly_api_key = db.Column(db.String(255), nullable=True)  # Legacy field - will be deprecated
+    calendly_api_token_encrypted = db.Column(db.Text, nullable=True)  # New encrypted field
     calendly_user_uri = db.Column(db.String(255), nullable=True)
     
     role = db.Column(db.String(20), default='physio')  # e.g., 'admin', 'physio'
@@ -244,6 +246,42 @@ class User(db.Model, UserMixin):
 
     data_processing_activities = db.relationship('DataProcessingActivity', backref='user', lazy=True)
     security_logs = db.relationship('SecurityLog', backref='user', lazy=True)
+
+    @property
+    def calendly_api_token(self):
+        """
+        Get the decrypted Calendly API token.
+        First tries the new encrypted field, then falls back to the legacy field.
+        """
+        # Try the new encrypted field first
+        if self.calendly_api_token_encrypted:
+            decrypted = decrypt_token(self.calendly_api_token_encrypted)
+            if decrypted:
+                return decrypted
+        
+        # Fall back to legacy field (for backward compatibility)
+        return self.calendly_api_key
+    
+    @calendly_api_token.setter
+    def calendly_api_token(self, value):
+        """
+        Set the Calendly API token by encrypting it and storing in the new field.
+        Also clears the legacy field for security.
+        """
+        if value:
+            encrypted = encrypt_token(value)
+            if encrypted:
+                self.calendly_api_token_encrypted = encrypted
+                # Clear the legacy field for security
+                self.calendly_api_key = None
+            else:
+                # If encryption fails, fall back to legacy field (not recommended)
+                self.calendly_api_key = value
+                self.calendly_api_token_encrypted = None
+        else:
+            # Clear both fields
+            self.calendly_api_token_encrypted = None
+            self.calendly_api_key = None
 
     @property
     def patient_usage_details(self) -> Tuple[int, Optional[int]]:

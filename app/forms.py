@@ -59,9 +59,25 @@ class ChangePasswordForm(FlaskForm):
     submit_password = SubmitField('Change Password')
 
 class ApiIntegrationsForm(FlaskForm):
+    # Integration checkboxes
+    enable_calendly = BooleanField('Enable Calendly Integration')
+    # Future integrations can be added here:
+    # enable_stripe = BooleanField('Enable Stripe Integration')
+    # enable_google_calendar = BooleanField('Enable Google Calendar Integration')
+    # enable_zoom = BooleanField('Enable Zoom Integration')
+    
+    # Calendly fields (will be shown/hidden based on checkbox)
     calendly_api_key = TextAreaField('Calendly API Key', 
                                      validators=[Optional()],
                                      render_kw={"rows": 3, "placeholder": "Paste your Calendly Personal Access Token here..."})
+    calendly_user_uri = StringField('Calendly User URI', 
+                                   validators=[Optional(), URL()],
+                                   render_kw={"placeholder": "https://api.calendly.com/users/your-user-id"})
+    
+    # Future API fields can be added here:
+    # stripe_secret_key = StringField('Stripe Secret Key', validators=[Optional()])
+    # google_calendar_credentials = TextAreaField('Google Calendar Credentials', validators=[Optional()])
+    
     submit = SubmitField('Save API Keys')
 
 # Renamed from FixedCostForm
