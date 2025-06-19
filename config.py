@@ -1,6 +1,7 @@
 # config.py
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 # Get the absolute path to the directory containing this file
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -32,3 +33,9 @@ class Config:
 
     # Stripe Secret Key
     STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+    
+    # Session configuration
+    PERMANENT_SESSION_LIFETIME = timedelta(days=30)  # Sessions last 30 days
+    SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'

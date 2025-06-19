@@ -20,7 +20,7 @@ login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.login_message_category = 'info'
-login_manager.session_protection = 'strong'
+login_manager.session_protection = 'basic'
 
 # Initialize CSRF protection
 csrf = CSRFProtect()
@@ -36,6 +36,11 @@ migrate = Migrate()
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # Configure session
+    app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
     # This function needs to be defined before being passed to babel.init_app
     def get_user_locale():
