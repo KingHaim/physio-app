@@ -674,9 +674,9 @@ def appointments():
 
     # Filter patients based on user role for the modal
     if current_user.is_admin:
-        patients = Patient.query.filter_by(status='Active').order_by(Patient.name).all()
+        patients = Patient.query.filter_by(status='Active').order_by(Patient._name).all()
     elif current_user.role == 'physio':
-        patients = Patient.query.filter_by(user_id=current_user.id, status='Active').order_by(Patient.name).all()
+        patients = Patient.query.filter_by(user_id=current_user.id, status='Active').order_by(Patient._name).all()
     else: # Should not happen due to @physio_required, but as a fallback
         patients = []
 
@@ -1001,7 +1001,7 @@ def patients_list():
     if status_filter != 'all':
         query = query.filter(Patient.status == status_filter)
 
-    patients = query.order_by(Patient.name).all()
+    patients = query.order_by(Patient._name).all()
 
     return render_template('patients_list.html',
                            patients=patients,
@@ -1122,9 +1122,9 @@ def match_booking_to_patient(booking_id):
 
     # GET request:
     if current_user.is_admin:
-        patients = Patient.query.order_by(Patient.name).all()
+        patients = Patient.query.order_by(Patient._name).all()
     else:
-        patients = Patient.query.filter_by(user_id=current_user.id).order_by(Patient.name).all()
+        patients = Patient.query.filter_by(user_id=current_user.id).order_by(Patient._name).all()
     
     return render_template('match_calendly_booking.html',
                            booking=booking,
@@ -3233,9 +3233,9 @@ def calendar_page():
     """Renders the main calendar page."""
     # Fetch ALL patients for the new appointment modal
     if current_user.is_admin:
-        patients = Patient.query.order_by(Patient.name).all() # Removed status filter
+        patients = Patient.query.order_by(Patient._name).all() # Removed status filter
     else: # Physio role (guaranteed by @physio_required)
-        patients = Patient.query.filter_by(user_id=current_user.id).order_by(Patient.name).all() # Removed status filter
+        patients = Patient.query.filter_by(user_id=current_user.id).order_by(Patient._name).all() # Removed status filter
     
     return render_template('calendar.html', title="Calendar", patients=patients)
 

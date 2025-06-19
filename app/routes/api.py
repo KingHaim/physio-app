@@ -11,6 +11,7 @@ import traceback
 import stripe
 from flask import url_for
 from generate_patient_report import format_treatment_history
+from app.crypto_utils import decrypt_text
 
 api = Blueprint('api', __name__)
 
@@ -198,7 +199,7 @@ def find_matching_patient(name, email):
     first_name = name.split()[0].lower()
     potential_matches = Patient.query.filter(
         Patient.user_id == current_user.id,
-        func.lower(Patient.name).like(f"{first_name}%")
+        func.lower(Patient._name).like(f"{first_name}%")
     ).all()
     
     if len(potential_matches) == 1:
@@ -218,7 +219,7 @@ def search_patients():
     patients = Patient.query.filter(
         Patient.user_id == current_user.id,
         or_(
-            Patient.name.ilike(f'%{query}%'),
+            Patient._name.ilike(f'%{query}%'),
             Patient.contact.ilike(f'%{query}%')
         )
     ).limit(10).all()
@@ -911,15 +912,15 @@ def recently_inactive_patients():
 def top_patients_by_revenue():
     try:
         data = db.session.query(
-            Patient.name,
+            Patient._name,
             func.sum(Treatment.fee_charged).label('total_revenue')
         ).join(Treatment, Patient.id == Treatment.patient_id) \
          .filter(Patient.user_id == current_user.id, Treatment.fee_charged.isnot(None)) \
-         .group_by(Patient.name) \
+         .group_by(Patient._name) \
          .order_by(func.sum(Treatment.fee_charged).desc()) \
          .limit(10).all()
         
-        results = [{'name': name, 'revenue': float(total_revenue or 0)} for name, total_revenue in data]
+        results = [{'name': decrypt_text(name) if name else 'Unknown', 'revenue': float(total_revenue or 0)} for name, total_revenue in data]
         return jsonify(results)
     except Exception as e:
         current_app.logger.error(f"Error fetching top-patients-by-revenue for user {current_user.id}: {e}\n{traceback.format_exc()}")
