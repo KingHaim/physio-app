@@ -85,8 +85,9 @@ def test_database_queries():
         # Test that we can query by encrypted column
         try:
             # This should work now that we've fixed the queries
-            patients = Patient.query.order_by(Patient._name).limit(5).all()
-            print(f"✅ Successfully queried {len(patients)} patients using Patient._name")
+            patients = Patient.query.limit(5).all()
+            patients.sort(key=lambda p: p.name.lower() if p.name else '')
+            print(f"✅ Successfully queried {len(patients)} patients and sorted by name")
         except Exception as e:
             print(f"❌ Query failed: {e}")
             return False

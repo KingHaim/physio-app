@@ -201,11 +201,15 @@ python3 fix_data_issues.py
 This means you're using `Patient.name` in database queries instead of `Patient._name`:
 
 ```python
-# ❌ Wrong
+# ❌ Wrong - This won't work for alphabetical ordering
 Patient.query.order_by(Patient.name).all()
 
-# ✅ Correct
+# ❌ Wrong - This orders by encrypted base64 values
 Patient.query.order_by(Patient._name).all()
+
+# ✅ Correct - Fetch and sort in Python for proper alphabetical order
+patients = Patient.query.all()
+patients.sort(key=lambda p: p.name.lower() if p.name else '')
 ```
 
 ### Debugging Tools

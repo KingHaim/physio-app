@@ -674,9 +674,11 @@ def appointments():
 
     # Filter patients based on user role for the modal
     if current_user.is_admin:
-        patients = Patient.query.filter_by(status='Active').order_by(Patient._name).all()
+        patients = Patient.query.filter_by(status='Active').all()
+        patients.sort(key=lambda p: p.name.lower() if p.name else '')
     elif current_user.role == 'physio':
-        patients = Patient.query.filter_by(user_id=current_user.id, status='Active').order_by(Patient._name).all()
+        patients = Patient.query.filter_by(user_id=current_user.id, status='Active').all()
+        patients.sort(key=lambda p: p.name.lower() if p.name else '')
     else: # Should not happen due to @physio_required, but as a fallback
         patients = []
 
@@ -1001,7 +1003,10 @@ def patients_list():
     if status_filter != 'all':
         query = query.filter(Patient.status == status_filter)
 
-    patients = query.order_by(Patient._name).all()
+    # Fetch all patients and sort by decrypted name in Python
+    # This ensures proper alphabetical ordering of the actual names
+    patients = query.all()
+    patients.sort(key=lambda p: p.name.lower() if p.name else '')
 
     return render_template('patients_list.html',
                            patients=patients,
@@ -1122,9 +1127,11 @@ def match_booking_to_patient(booking_id):
 
     # GET request:
     if current_user.is_admin:
-        patients = Patient.query.order_by(Patient._name).all()
+        patients = Patient.query.all()
+        patients.sort(key=lambda p: p.name.lower() if p.name else '')
     else:
-        patients = Patient.query.filter_by(user_id=current_user.id).order_by(Patient._name).all()
+        patients = Patient.query.filter_by(user_id=current_user.id).all()
+        patients.sort(key=lambda p: p.name.lower() if p.name else '')
     
     return render_template('match_calendly_booking.html',
                            booking=booking,
@@ -3233,9 +3240,11 @@ def calendar_page():
     """Renders the main calendar page."""
     # Fetch ALL patients for the new appointment modal
     if current_user.is_admin:
-        patients = Patient.query.order_by(Patient._name).all() # Removed status filter
+        patients = Patient.query.all() # Removed status filter
+        patients.sort(key=lambda p: p.name.lower() if p.name else '')
     else: # Physio role (guaranteed by @physio_required)
-        patients = Patient.query.filter_by(user_id=current_user.id).order_by(Patient._name).all() # Removed status filter
+        patients = Patient.query.filter_by(user_id=current_user.id).all() # Removed status filter
+        patients.sort(key=lambda p: p.name.lower() if p.name else '')
     
     return render_template('calendar.html', title="Calendar", patients=patients)
 
