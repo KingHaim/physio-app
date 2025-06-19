@@ -67,18 +67,36 @@ def decrypt_text(encrypted_text: str) -> str:
         if not cipher:
             return None
             
-        # Decode from base64
-        encrypted_bytes = base64.b64decode(encrypted_text.encode())
-        
-        # Decrypt the text
-        decrypted_data = cipher.decrypt(encrypted_bytes)
-        
-        # Return as string
-        return decrypted_data.decode()
+        # Check if the text looks like it might be encrypted
+        # Fernet tokens are always base64-encoded and have a specific format
+        if not isinstance(encrypted_text, str):
+            return None
+            
+        # Skip if it's clearly not encrypted (too short or doesn't look like base64)
+        if len(encrypted_text) < 20:  # Fernet tokens are much longer
+            return encrypted_text  # Return as-is if it's likely plain text
+            
+        # Try to decode from base64
+        try:
+            encrypted_bytes = base64.b64decode(encrypted_text.encode())
+        except (base64.binascii.Error, ValueError) as e:
+            # If base64 decoding fails, it's probably plain text
+            current_app.logger.debug(f"Base64 decode failed, treating as plain text: {str(e)}")
+            return encrypted_text  # Return as-is if it's likely plain text
+            
+        # Try to decrypt
+        try:
+            decrypted_data = cipher.decrypt(encrypted_bytes)
+            return decrypted_data.decode()
+        except Exception as e:
+            # If decryption fails, it might be plain text that was stored
+            current_app.logger.debug(f"Decryption failed, treating as plain text: {str(e)}")
+            return encrypted_text  # Return as-is if it's likely plain text
         
     except Exception as e:
-        current_app.logger.error(f"Error decrypting text: {str(e)}")
-        return None
+        current_app.logger.error(f"Error in decrypt_text: {str(e)}")
+        # Return the original text if decryption fails completely
+        return encrypted_text if encrypted_text else None
 
 def encrypt_token(token):
     """
