@@ -226,7 +226,9 @@ def search_patients():
     return jsonify([{
         'id': p.id,
         'name': p.name,
-        'contact': p.contact
+        'contact': p.contact,
+        'diagnosis': p.diagnosis,
+        'status': p.status
     } for p in patients])
 
 @api.route('/calendly/match-booking', methods=['POST'])

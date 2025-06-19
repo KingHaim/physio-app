@@ -3,6 +3,83 @@ from cryptography.fernet import Fernet
 import base64
 from flask import current_app
 
+def get_fernet_cipher():
+    """
+    Get a Fernet cipher instance using the environment key.
+    
+    Returns:
+        Fernet: The cipher instance, or None if key is not available
+    """
+    try:
+        fernet_key = os.environ.get('FERNET_SECRET_KEY')
+        if not fernet_key:
+            current_app.logger.error("FERNET_SECRET_KEY not found in environment variables")
+            return None
+            
+        return Fernet(fernet_key.encode())
+    except Exception as e:
+        current_app.logger.error(f"Error creating Fernet cipher: {str(e)}")
+        return None
+
+def encrypt_text(text: str) -> str:
+    """
+    Encrypt sensitive text data using Fernet encryption.
+    
+    Args:
+        text (str): The plain text to encrypt
+        
+    Returns:
+        str: The encrypted text as a base64 string, or None if encryption fails
+    """
+    try:
+        if not text:
+            return None
+            
+        cipher = get_fernet_cipher()
+        if not cipher:
+            return None
+            
+        # Encrypt the text
+        encrypted_data = cipher.encrypt(text.encode())
+        
+        # Return as base64 string
+        return base64.b64encode(encrypted_data).decode()
+        
+    except Exception as e:
+        current_app.logger.error(f"Error encrypting text: {str(e)}")
+        return None
+
+def decrypt_text(encrypted_text: str) -> str:
+    """
+    Decrypt sensitive text data using Fernet decryption.
+    
+    Args:
+        encrypted_text (str): The encrypted text as a base64 string
+        
+    Returns:
+        str: The decrypted text, or None if decryption fails
+    """
+    try:
+        if not encrypted_text:
+            return None
+            
+        cipher = get_fernet_cipher()
+        if not cipher:
+            return None
+            
+        # Decode from base64
+        encrypted_bytes = base64.b64decode(encrypted_text.encode())
+        
+        # Decrypt the text
+        decrypted_data = cipher.decrypt(encrypted_bytes)
+        
+        # Return as string
+        return decrypted_data.decode()
+        
+    except Exception as e:
+        current_app.logger.error(f"Error decrypting text: {str(e)}")
+        return None
+
 def encrypt_token(token):
     """
     Encrypt a Calendly API token using Fernet encryption.

@@ -2625,6 +2625,111 @@ def delete_patient(id):
 
     return redirect(url_for('main.patients_list'))
 
+@main.route('/patient/<int:id>/merge', methods=['POST'])
+@login_required
+@physio_required
+def merge_patient(id):
+    """Merge a patient with another patient profile."""
+    try:
+        data = request.get_json()
+        target_patient_id = data.get('target_patient_id')
+        
+        if not target_patient_id:
+            return jsonify({'success': False, 'error': 'Target patient ID is required'}), 400
+        
+        # Get the source and target patients
+        source_patient = Patient.query.get_or_404(id)
+        target_patient = Patient.query.get_or_404(target_patient_id)
+        
+        # Access control - ensure user can access both patients
+        if not current_user.is_admin:
+            if source_patient.user_id != current_user.id or target_patient.user_id != current_user.id:
+                return jsonify({'success': False, 'error': 'You do not have permission to merge these patients'}), 403
+        
+        # Prevent merging a patient with itself
+        if source_patient.id == target_patient.id:
+            return jsonify({'success': False, 'error': 'Cannot merge a patient with itself'}), 400
+        
+        # Store source patient name for notes
+        source_patient_name = source_patient.name
+        
+        # Use direct SQL updates to avoid relationship issues
+        # Merge treatments
+        treatments_updated = Treatment.query.filter_by(patient_id=source_patient.id).update({
+            'patient_id': target_patient.id,
+            'updated_at': datetime.utcnow()
+        })
+        
+        # Merge reports
+        reports_updated = PatientReport.query.filter_by(patient_id=source_patient.id).update({
+            'patient_id': target_patient.id
+        })
+        
+        # Merge recurring appointments
+        appointments_updated = RecurringAppointment.query.filter_by(patient_id=source_patient.id).update({
+            'patient_id': target_patient.id
+        })
+        
+        # Merge consents
+        consents_updated = UserConsent.query.filter_by(patient_id=source_patient.id).update({
+            'patient_id': target_patient.id
+        })
+        
+        # Update Calendly bookings
+        bookings_updated = UnmatchedCalendlyBooking.query.filter_by(matched_patient_id=source_patient.id).update({
+            'matched_patient_id': target_patient.id
+        })
+        
+        # Handle portal user account - if source has one and target doesn't, transfer it
+        portal_account_transferred = False
+        if source_patient.portal_user_account and not target_patient.portal_user_account:
+            target_patient.portal_user_id = source_patient.portal_user_id
+            source_patient.portal_user_id = None
+            portal_account_transferred = True
+        elif source_patient.portal_user_account and target_patient.portal_user_account:
+            # Both have portal accounts - delete the source one
+            db.session.delete(source_patient.portal_user_account)
+            source_patient.portal_user_id = None
+        
+        # Merge patient data - prefer target patient's data, but merge notes
+        if source_patient.notes and target_patient.notes:
+            target_patient.notes = f"{target_patient.notes}\n\n--- Merged from {source_patient_name} ---\n{source_patient.notes}"
+        elif source_patient.notes and not target_patient.notes:
+            target_patient.notes = f"Merged from {source_patient_name}:\n{source_patient.notes}"
+        
+        # Update target patient's updated_at timestamp
+        target_patient.updated_at = datetime.utcnow()
+        
+        # Delete the source patient
+        db.session.delete(source_patient)
+        
+        db.session.commit()
+        
+        # Log the merge operation
+        print(f"Successfully merged patient {source_patient_name} (ID: {id}) into {target_patient.name} (ID: {target_patient.id})")
+        print(f"Items transferred: {treatments_updated} treatments, {reports_updated} reports, {appointments_updated} appointments, {consents_updated} consents, {bookings_updated} bookings")
+        if portal_account_transferred:
+            print("Portal account transferred")
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Successfully merged {source_patient_name} into {target_patient.name}',
+            'target_patient_id': target_patient.id,
+            'details': {
+                'treatments_transferred': treatments_updated,
+                'reports_transferred': reports_updated,
+                'appointments_transferred': appointments_updated,
+                'consents_transferred': consents_updated,
+                'bookings_transferred': bookings_updated,
+                'portal_account_transferred': portal_account_transferred
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error merging patients {id} -> {target_patient_id}: {e}")
+        return jsonify({'success': False, 'error': f'An error occurred while merging patients: {str(e)}'}), 500
+
 # --- Patient Dashboard Route ---
 @main.route('/patient/dashboard')
 @login_required

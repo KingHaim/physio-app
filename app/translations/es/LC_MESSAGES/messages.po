@@ -751,6 +751,98 @@ msgstr "No, Continuar Editando"
 msgid "Yes, Cancel"
 msgstr "Sí, Cancelar"
 
+#: app/templates/edit_patient.html:133
+msgid "Merge Patient"
+msgstr "Fusionar Paciente"
+
+#: app/templates/edit_patient.html:200
+msgid "This will merge the current patient ("
+msgstr "Esto fusionará el paciente actual ("
+
+#: app/templates/edit_patient.html:200
+msgid ") with another patient profile. All treatments, reports, and data will be transferred to the target patient, and this patient will be deleted."
+msgstr ") con otro perfil de paciente. Todos los tratamientos, informes y datos se transferirán al paciente objetivo, y este paciente será eliminado."
+
+#: app/templates/edit_patient.html:205
+msgid "Search for target patient to merge with:"
+msgstr "Buscar paciente objetivo para fusionar:"
+
+#: app/templates/edit_patient.html:208
+msgid "Enter patient name or contact information..."
+msgstr "Introduce nombre del paciente o información de contacto..."
+
+#: app/templates/edit_patient.html:210
+msgid "Start typing to search for patients"
+msgstr "Empieza a escribir para buscar pacientes"
+
+#: app/templates/edit_patient.html:214
+msgid "Search Results:"
+msgstr "Resultados de búsqueda:"
+
+#: app/templates/edit_patient.html:222
+msgid "Selected Target Patient:"
+msgstr "Paciente Objetivo Seleccionado:"
+
+#: app/templates/edit_patient.html:235
+msgid "Confirm Merge"
+msgstr "Confirmar Fusión"
+
+#: app/templates/edit_patient.html:235
+msgid "Please select a target patient first"
+msgstr "Por favor, selecciona un paciente objetivo primero"
+
+#: app/templates/edit_patient.html:235
+msgid "Are you sure you want to merge this patient? This action cannot be undone and will delete the current patient profile."
+msgstr "¿Estás seguro de que quieres fusionar este paciente? Esta acción no se puede deshacer y eliminará el perfil del paciente actual."
+
+#: app/templates/edit_patient.html:235
+msgid "Patient merged successfully!"
+msgstr "¡Paciente fusionado exitosamente!"
+
+#: app/templates/edit_patient.html:235
+msgid "Error:"
+msgstr "Error:"
+
+#: app/templates/edit_patient.html:235
+msgid "An error occurred while merging patients"
+msgstr "Ocurrió un error al fusionar pacientes"
+
+#: app/templates/edit_patient.html:235
+msgid "No contact info"
+msgstr "Sin información de contacto"
+
+#: app/templates/edit_patient.html:235
+msgid "No diagnosis"
+msgstr "Sin diagnóstico"
+
+#: app/templates/edit_patient.html:235
+msgid "Select"
+msgstr "Seleccionar"
+
+#: app/templates/edit_patient.html:235
+msgid "No patients found"
+msgstr "No se encontraron pacientes"
+
+#: app/templates/edit_patient.html:235
+msgid "Error searching patients"
+msgstr "Error al buscar pacientes"
+
+#: app/templates/edit_patient.html:235
+msgid "Not provided"
+msgstr "No proporcionado"
+
+#: app/templates/edit_patient.html:235
+msgid "Name"
+msgstr "Nombre"
+
+#: app/templates/edit_patient.html:235
+msgid "Contact"
+msgstr "Contacto"
+
+#: app/templates/edit_patient.html:235
+msgid "ID"
+msgstr "ID"
+
 #: app/templates/financials.html:3 app/templates/financials.html:8
 msgid "Financial Report"
 msgstr "Informe Financiero"

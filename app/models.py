@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import JSON as SQLAlchemyJSON # Using generic SQLAlchemy JSON type
 from sqlalchemy import desc # Required for ordering in current_subscription query
 from typing import Optional, Tuple # Import Optional and Tuple for type hinting
-from .crypto_utils import encrypt_token, decrypt_token
+from .crypto_utils import encrypt_token, decrypt_token, encrypt_text, decrypt_text
 
 class Patient(db.Model):
     __tablename__ = 'patient'
@@ -19,20 +19,23 @@ class Patient(db.Model):
         nullable=True, 
         unique=True
     )
-    name = db.Column(db.String(100), nullable=False)
+    # Encrypted sensitive fields - database columns with underscore prefix
+    _name = db.Column("name", db.String(100), nullable=False)
+    _email = db.Column("email", db.String(100))
+    _phone = db.Column("phone", db.String(20))
+    _notes = db.Column("notes", db.Text)
+    
+    # Non-sensitive fields remain as-is
     date_of_birth = db.Column(db.Date)
     contact = db.Column(db.String(100))
     diagnosis = db.Column(db.String(200))
     treatment_plan = db.Column(db.Text)
-    notes = db.Column(db.Text)
     status = db.Column(db.String(20), default='Active')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     treatments = db.relationship('Treatment', backref='patient', lazy=True)
     
-    # New fields for extended contact and address information
-    email = db.Column(db.String(100))
-    phone = db.Column(db.String(20))
+    # New fields for extended contact and address information (non-sensitive)
     address_line1 = db.Column(db.String(100))
     address_line2 = db.Column(db.String(100))
     city = db.Column(db.String(50))
@@ -40,13 +43,75 @@ class Patient(db.Model):
     preferred_location = db.Column(db.String(50), default='Clinic')  # Clinic or Home Visit
 
     consents = db.relationship('UserConsent', backref='patient', lazy=True)
+    
+    # Property getters and setters for encrypted fields
+    @property
+    def name(self):
+        """Get decrypted patient name"""
+        if self._name:
+            return decrypt_text(self._name)
+        return None
+
+    @name.setter
+    def name(self, value):
+        """Set encrypted patient name"""
+        if value:
+            self._name = encrypt_text(value)
+        else:
+            self._name = None
+
+    @property
+    def email(self):
+        """Get decrypted patient email"""
+        if self._email:
+            return decrypt_text(self._email)
+        return None
+
+    @email.setter
+    def email(self, value):
+        """Set encrypted patient email"""
+        if value:
+            self._email = encrypt_text(value)
+        else:
+            self._email = None
+
+    @property
+    def phone(self):
+        """Get decrypted patient phone"""
+        if self._phone:
+            return decrypt_text(self._phone)
+        return None
+
+    @phone.setter
+    def phone(self, value):
+        """Set encrypted patient phone"""
+        if value:
+            self._phone = encrypt_text(value)
+        else:
+            self._phone = None
+
+    @property
+    def notes(self):
+        """Get decrypted patient notes"""
+        if self._notes:
+            return decrypt_text(self._notes)
+        return None
+
+    @notes.setter
+    def notes(self, value):
+        """Set encrypted patient notes"""
+        if value:
+            self._notes = encrypt_text(value)
+        else:
+            self._notes = None
 
 class Treatment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
     treatment_type = db.Column(db.String(100), nullable=False)
     assessment = db.Column(db.Text)
-    notes = db.Column(db.Text)
+    # Encrypted sensitive field
+    _notes = db.Column("notes", db.Text)
     status = db.Column(db.String(50), default='Scheduled')
     provider = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -72,6 +137,22 @@ class Treatment(db.Model):
 
     clinic_share = db.Column(db.Float)
     therapist_share = db.Column(db.Float)
+    
+    # Property getter and setter for encrypted notes field
+    @property
+    def notes(self):
+        """Get decrypted treatment notes"""
+        if self._notes:
+            return decrypt_text(self._notes)
+        return None
+
+    @notes.setter
+    def notes(self, value):
+        """Set encrypted treatment notes"""
+        if value:
+            self._notes = encrypt_text(value)
+        else:
+            self._notes = None
 
 class TriggerPoint(db.Model):
     id = db.Column(db.Integer, primary_key=True)

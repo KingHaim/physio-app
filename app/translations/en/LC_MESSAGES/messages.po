@@ -747,6 +747,98 @@ msgstr ""
 msgid "Yes, Cancel"
 msgstr ""
 
+#: app/templates/edit_patient.html:133
+msgid "Merge Patient"
+msgstr ""
+
+#: app/templates/edit_patient.html:200
+msgid "This will merge the current patient ("
+msgstr ""
+
+#: app/templates/edit_patient.html:200
+msgid ") with another patient profile. All treatments, reports, and data will be transferred to the target patient, and this patient will be deleted."
+msgstr ""
+
+#: app/templates/edit_patient.html:205
+msgid "Search for target patient to merge with:"
+msgstr ""
+
+#: app/templates/edit_patient.html:208
+msgid "Enter patient name or contact information..."
+msgstr ""
+
+#: app/templates/edit_patient.html:210
+msgid "Start typing to search for patients"
+msgstr ""
+
+#: app/templates/edit_patient.html:214
+msgid "Search Results:"
+msgstr ""
+
+#: app/templates/edit_patient.html:222
+msgid "Selected Target Patient:"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "Confirm Merge"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "Please select a target patient first"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "Are you sure you want to merge this patient? This action cannot be undone and will delete the current patient profile."
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "Patient merged successfully!"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "Error:"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "An error occurred while merging patients"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "No contact info"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "No diagnosis"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "Select"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "No patients found"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "Error searching patients"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "Not provided"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "Name"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "Contact"
+msgstr ""
+
+#: app/templates/edit_patient.html:235
+msgid "ID"
+msgstr ""
+
 #: app/templates/financials.html:3 app/templates/financials.html:8
 msgid "Financial Report"
 msgstr ""

@@ -129,6 +129,9 @@
                         <!-- Form Actions -->
                         <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                             <div>
+                                <button type="button" class="btn btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#mergePatientModal" data-patient-id="{{ patient.id }}">
+                                    <i class="bi bi-arrow-left-right"></i> {{ _('Merge Patient') }}
+                                </button>
                                 <button type="button" class="btn btn-outline-danger me-2" data-bs-toggle="modal" data-bs-target="#confirmDelete">
                                     <i class="bi bi-trash"></i> {{ _('Delete Patient') }}
                                 </button>
@@ -188,6 +191,57 @@
     </div>
 </div>
 
+<!-- Merge Patient Modal -->
+<div class="modal fade" id="mergePatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('Merge Patient') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    {{ _('This will merge the current patient (') }}<strong>{{ patient.name }}</strong>{{ _(') with another patient profile. All treatments, reports, and data will be transferred to the target patient, and this patient will be deleted.') }}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="targetPatientSearch" class="form-label">{{ _('Search for target patient to merge with:') }}</label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="targetPatientSearch" 
+                           placeholder="{{ _('Enter patient name or contact information...') }}">
+                    <div class="form-text">{{ _('Start typing to search for patients') }}</div>
+                </div>
+                
+                <div id="searchResults" class="mb-3" style="display: none;">
+                    <h6>{{ _('Search Results:') }}</h6>
+                    <div class="list-group" id="patientSearchResults">
+                        <!-- Search results will be populated here -->
+                    </div>
+                </div>
+                
+                <div id="selectedTarget" class="mb-3" style="display: none;">
+                    <h6>{{ _('Selected Target Patient:') }}</h6>
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="targetPatientInfo">
+                                <!-- Selected patient info will be shown here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                <button type="button" class="btn btn-warning" id="confirmMergeBtn" disabled>
+                    <i class="bi bi-arrow-left-right"></i> {{ _('Confirm Merge') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% block scripts %}
 <script>
     // Form validation and handling
@@ -228,6 +282,147 @@
     const dateOfBirthInput = document.getElementById('date_of_birth');
     const today = new Date().toISOString().split('T')[0];
     dateOfBirthInput.setAttribute('max', today);
+
+    // Merge Patient functionality
+    let selectedTargetPatientId = null;
+    let searchTimeout = null;
+
+    // Search for patients
+    document.getElementById('targetPatientSearch').addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+        const searchResults = document.getElementById('searchResults');
+        const patientSearchResults = document.getElementById('patientSearchResults');
+        
+        // Clear previous timeout
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        
+        if (searchTerm.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+        
+        // Debounce search
+        searchTimeout = setTimeout(() => {
+            fetch('/api/patients/search?q=' + encodeURIComponent(searchTerm))
+                .then(response => response.json())
+                .then(patients => {
+                    // Filter out the current patient
+                    const mergeButton = document.querySelector('[data-patient-id]');
+                    const currentPatientId = parseInt(mergeButton.getAttribute('data-patient-id'));
+                    patients = patients.filter(p => p.id != currentPatientId);
+                    
+                    if (patients.length > 0) {
+                        patientSearchResults.innerHTML = '';
+                        patients.forEach(patient => {
+                            const item = document.createElement('div');
+                            item.className = 'list-group-item list-group-item-action';
+                            
+                            const contactInfo = patient.contact || 'No contact info';
+                            const diagnosisInfo = patient.diagnosis || 'No diagnosis';
+                            
+                            item.innerHTML = 
+                                '<div class="d-flex justify-content-between align-items-center">' +
+                                    '<div>' +
+                                        '<strong>' + patient.name + '</strong><br>' +
+                                        '<small class="text-muted">' +
+                                            contactInfo + ' | ' +
+                                            diagnosisInfo + ' | ' +
+                                            patient.status +
+                                        '</small>' +
+                                    '</div>' +
+                                    '<button class="btn btn-sm btn-outline-primary" onclick="selectTargetPatient(' + patient.id + ', \'' + patient.name.replace(/'/g, '\\\'') + '\', \'' + contactInfo.replace(/'/g, '\\\'') + '\', \'' + diagnosisInfo.replace(/'/g, '\\\'') + '\', \'' + patient.status + '\')">' +
+                                        'Select' +
+                                    '</button>' +
+                                '</div>';
+                            patientSearchResults.appendChild(item);
+                        });
+                        searchResults.style.display = 'block';
+                    } else {
+                        patientSearchResults.innerHTML = '<div class="list-group-item text-muted">No patients found</div>';
+                        searchResults.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error searching patients:', error);
+                    patientSearchResults.innerHTML = '<div class="list-group-item text-danger">Error searching patients</div>';
+                    searchResults.style.display = 'block';
+                });
+        }, 300);
+    });
+
+    // Select target patient
+    function selectTargetPatient(id, name, contact, diagnosis, status) {
+        selectedTargetPatientId = id;
+        
+        // Hide search results
+        document.getElementById('searchResults').style.display = 'none';
+        
+        // Show selected target info
+        const selectedTarget = document.getElementById('selectedTarget');
+        const targetPatientInfo = document.getElementById('targetPatientInfo');
+        
+        targetPatientInfo.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>{{ _('Name') }}:</strong> ${name}<br>
+                    <strong>{{ _('Contact') }}:</strong> ${contact || '{{ _("Not provided") }}'}<br>
+                    <strong>{{ _('Status') }}:</strong> <span class="badge bg-${status === 'Active' ? 'success' : status === 'Inactive' ? 'secondary' : 'info'}">${status}</span>
+                </div>
+                <div class="col-md-6">
+                    <strong>{{ _('Diagnosis') }}:</strong> ${diagnosis || '{{ _("Not provided") }}'}<br>
+                    <strong>{{ _('ID') }}:</strong> ${id}
+                </div>
+            </div>
+        `;
+        
+        selectedTarget.style.display = 'block';
+        
+        // Enable confirm button
+        document.getElementById('confirmMergeBtn').disabled = false;
+        
+        // Clear search input
+        document.getElementById('targetPatientSearch').value = '';
+    }
+
+    // Confirm merge
+    document.getElementById('confirmMergeBtn').addEventListener('click', function() {
+        if (!selectedTargetPatientId) {
+            alert('Please select a target patient first');
+            return;
+        }
+        
+        if (confirm('Are you sure you want to merge this patient? This action cannot be undone and will delete the current patient profile.')) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const mergeButton = document.querySelector('[data-patient-id]');
+            const currentPatientId = mergeButton.getAttribute('data-patient-id');
+            
+            fetch('/patient/' + currentPatientId + '/merge', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    target_patient_id: selectedTargetPatientId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Patient merged successfully!');
+                    window.location.href = '/patient/' + selectedTargetPatientId;
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error merging patients:', error);
+                alert('An error occurred while merging patients');
+            });
+        }
+    });
 </script>
 {% endblock %}
 {% endblock %}
