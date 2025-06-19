@@ -125,7 +125,6 @@ def sync_calendly_events():
                     if not existing_treatment:
                         new_treatment = Treatment(
                             patient_id=patient.id,
-                            practitioner_id=current_user.id,
                             created_at=start_time,
                             treatment_type=event_type_name,
                             status="Scheduled",
@@ -189,14 +188,14 @@ def sync_calendly_events():
 def find_matching_patient(name, email):
     """Try to find a matching patient using name and email, scoped to the current user."""
     # First try exact email match for the current user
-    patient = Patient.query.filter_by(contact=email, practitioner_id=current_user.id).first()
+    patient = Patient.query.filter_by(contact=email, user_id=current_user.id).first()
     if patient:
         return patient
     
     # Try name matching (first name only) for the current user
     first_name = name.split()[0].lower()
     potential_matches = Patient.query.filter(
-        Patient.practitioner_id == current_user.id,
+        Patient.user_id == current_user.id,
         func.lower(Patient.name).like(f"{first_name}%")
     ).all()
     
@@ -215,7 +214,7 @@ def search_patients():
         return jsonify([])
     
     patients = Patient.query.filter(
-        Patient.practitioner_id == current_user.id,
+        Patient.user_id == current_user.id,
         or_(
             Patient.name.ilike(f'%{query}%'),
             Patient.contact.ilike(f'%{query}%')
@@ -240,7 +239,7 @@ def match_calendly_booking():
             return jsonify({'success': False, 'error': 'Missing booking_id or patient_id'}), 400
         
         booking = UnmatchedCalendlyBooking.query.filter_by(id=booking_id, user_id=current_user.id).first_or_404('Booking not found or not authorized')
-        patient = Patient.query.filter_by(id=patient_id, practitioner_id=current_user.id).first_or_404('Patient not found or not authorized')
+        patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first_or_404('Patient not found or not authorized')
         
         booking.status = 'Matched'
         booking.matched_patient_id = patient_id
@@ -257,8 +256,7 @@ def match_calendly_booking():
                 treatment_type=booking.event_type,
                 status="Scheduled",
                 notes=f"Linked to Calendly booking. Matched by admin user.",
-                calendly_invitee_uri=booking.calendly_invitee_id,
-                practitioner_id=current_user.id
+                calendly_invitee_uri=booking.calendly_invitee_id
             )
             db.session.add(treatment)
         
@@ -289,7 +287,7 @@ def create_patient_from_booking():
         
         existing_patient = Patient.query.filter_by(
             contact=booking.email,
-            practitioner_id=current_user.id
+            user_id=current_user.id
         ).first()
         
         if existing_patient:
@@ -303,7 +301,7 @@ def create_patient_from_booking():
                 treatment_plan="To be determined",
                 notes=f"Patient created from Calendly booking on {datetime.now().strftime('%Y-%m-%d')}",
                 status="Active",
-                practitioner_id=current_user.id
+                user_id=current_user.id
             )
             db.session.add(patient)
             db.session.flush()
@@ -477,7 +475,7 @@ def update_patient_status(patient_id):
         if not status or status not in ['Active', 'Inactive', 'Completed', 'Pending Review']:
             return jsonify({'success': False, 'error': 'Invalid status'}), 400
         
-        patient = Patient.query.filter_by(id=patient_id, practitioner_id=current_user.id).first_or_404()
+        patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first_or_404()
         patient.status = status
         db.session.commit()
         
@@ -502,7 +500,7 @@ def bulk_update_patient_status():
             return jsonify({'success': False, 'error': 'No patients selected'}), 400
         
         updated_count = Patient.query.filter(
-            Patient.practitioner_id == current_user.id,
+            Patient.user_id == current_user.id,
             Patient.id.in_(patient_ids)
         ).update({'status': status}, synchronize_session=False)
         
@@ -524,11 +522,11 @@ def create_treatment():
     patient_id = data.get('patient_id')
     
     # Ensure patient belongs to the current user
-    patient = Patient.query.filter_by(id=patient_id, practitioner_id=current_user.id).first_or_404()
+    patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first_or_404()
 
     treatment = Treatment(
         patient_id=patient_id,
-        practitioner_id=current_user.id,
+        created_at=datetime.now(),
         treatment_type=data.get('treatment_type'),
         pain_level=data.get('pain_level')
     )
@@ -543,7 +541,7 @@ def create_treatment():
 def delete_report(id):
     try:
         report = PatientReport.query.get_or_404(id)
-        patient = Patient.query.filter_by(id=report.patient_id, practitioner_id=current_user.id).first_or_404()
+        patient = Patient.query.filter_by(id=report.patient_id, user_id=current_user.id).first_or_404()
 
         db.session.delete(report)
         db.session.commit()
@@ -674,7 +672,10 @@ def set_treatment_payment_method(id):
     try:
         data = request.get_json()
         payment_method = data.get('payment_method')
-        treatment = Treatment.query.filter_by(id=id, practitioner_id=current_user.id).first_or_404()
+        treatment = Treatment.query.join(Patient).filter(
+            Treatment.id == id,
+            Patient.user_id == current_user.id
+        ).first_or_404()
         treatment.payment_method = payment_method
         db.session.commit()
         return jsonify({'success': True})
@@ -688,7 +689,10 @@ def set_treatment_fee(id):
     try:
         data = request.get_json()
         fee_value = float(data['fee'])
-        treatment = Treatment.query.filter_by(id=id, practitioner_id=current_user.id).first_or_404()
+        treatment = Treatment.query.join(Patient).filter(
+            Treatment.id == id,
+            Patient.user_id == current_user.id
+        ).first_or_404()
         treatment.fee_charged = fee_value
         # Calculate clinic and therapist share
         clinic_percentage = current_user.clinic_percentage_amount or 0
@@ -710,7 +714,10 @@ def set_treatment_location(id):
     try:
         data = request.get_json()
         location_value = data.get('location')
-        treatment = Treatment.query.filter_by(id=id, practitioner_id=current_user.id).first_or_404()
+        treatment = Treatment.query.join(Patient).filter(
+            Treatment.id == id,
+            Patient.user_id == current_user.id
+        ).first_or_404()
         treatment.location = location_value
         # Auto-fee logic can be added here
         db.session.commit()
