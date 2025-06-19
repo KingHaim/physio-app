@@ -216,6 +216,7 @@
                         <!-- Integration Checkboxes -->
                         <div class="mb-4">
                             <h5 class="mb-3">Available Integrations</h5>
+                            <p class="text-muted mb-3">Select which integrations you'd like to enable. All integrations are disabled by default for security.</p>
                             <div class="form-check mb-3">
                                 {{ api_form.enable_calendly(class="form-check-input", id="enable_calendly") }}
                                 {{ api_form.enable_calendly.label(class="form-check-label", for="enable_calendly") }}
@@ -374,11 +375,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Set initial state
+    // Set initial state - ensure it's hidden by default unless explicitly checked
     toggleCalendlyConfig();
     
     // Add event listener for checkbox changes
     calendlyCheckbox.addEventListener('change', toggleCalendlyConfig);
+    
+    // Log the initial state for debugging
+    console.log('Calendly integration enabled:', calendlyCheckbox.checked);
 });
 </script>
 

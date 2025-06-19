@@ -3395,10 +3395,11 @@ def user_settings():
             if api_form.validate_on_submit():
                 # Handle Calendly integration
                 if api_form.enable_calendly.data:
+                    # User wants Calendly enabled - save the data
                     current_user.calendly_api_token = api_form.calendly_api_key.data
                     current_user.calendly_user_uri = api_form.calendly_user_uri.data
                 else:
-                    # Clear Calendly data if disabled
+                    # User wants Calendly disabled - clear all Calendly data
                     current_user.calendly_api_token = None
                     current_user.calendly_user_uri = None
                 
@@ -3443,7 +3444,8 @@ def user_settings():
     
     api_form.calendly_api_key.data = current_user.calendly_api_token
     api_form.calendly_user_uri.data = current_user.calendly_user_uri
-    api_form.enable_calendly.data = bool(current_user.calendly_api_token or current_user.calendly_user_uri)
+    # Only check the box if user has BOTH token and URI configured (indicating they've set it up before)
+    api_form.enable_calendly.data = bool(current_user.calendly_api_token and current_user.calendly_user_uri)
     
     financial_form.contribution_base.data = current_user.contribution_base
     
