@@ -115,14 +115,22 @@ def sync_calendly_events():
                 
                 created_new_treatment = False
                 if patient:
-                    # Patient exists, check if treatment already exists for this patient and start_time
+                    # First check if a treatment with this Calendly invitee URI already exists
                     existing_treatment = Treatment.query.filter_by(
-                        patient_id=patient.id,
-                        created_at=start_time
-                        # Consider adding calendly_invitee_uri if it was reliably unique before
+                        calendly_invitee_uri=invitee_uri
                     ).first()
                     
-                    if not existing_treatment:
+                    if existing_treatment:
+                        # If it exists but for a different patient, update the patient_id
+                        if existing_treatment.patient_id != patient.id:
+                            existing_treatment.patient_id = patient.id
+                            existing_treatment.notes += f"\nUpdated patient assignment on {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}"
+                        current_app.logger.info(f"Treatment already exists with invitee URI {invitee_uri}. Updated patient if needed.")
+                        if existing_unmatched_booking and existing_unmatched_booking.status == 'Pending':
+                            existing_unmatched_booking.status = 'Matched'
+                            existing_unmatched_booking.matched_patient_id = patient.id
+                    else:
+                        # Only create a new treatment if one doesn't exist with this invitee URI
                         new_treatment = Treatment(
                             patient_id=patient.id,
                             created_at=start_time,
@@ -138,12 +146,6 @@ def sync_calendly_events():
                         if existing_unmatched_booking: # If it was pending and now we created a treatment
                             existing_unmatched_booking.status = 'Matched'
                             existing_unmatched_booking.matched_patient_id = patient.id
-                    else:
-                        current_app.logger.info(f"Treatment already exists for patient {patient.id} at {start_time}. User {current_user.id}, Calendly event {event_uuid}")
-                        # If treatment exists, ensure any PENDING unmatched booking is marked Matched
-                        if existing_unmatched_booking and existing_unmatched_booking.status == 'Pending':
-                             existing_unmatched_booking.status = 'Matched'
-                             existing_unmatched_booking.matched_patient_id = patient.id
 
                 else: # No matching patient found, create/update UnmatchedCalendlyBooking
                     if not existing_unmatched_booking:
@@ -244,12 +246,18 @@ def match_calendly_booking():
         booking.status = 'Matched'
         booking.matched_patient_id = patient_id
         
+        # First check if a treatment with this Calendly invitee URI already exists
         existing_treatment = Treatment.query.filter_by(
-            created_at=booking.start_time,
-            patient_id=patient_id
+            calendly_invitee_uri=booking.calendly_invitee_id
         ).first()
         
-        if not existing_treatment:
+        if existing_treatment:
+            # If it exists but for a different patient, update the patient_id
+            if existing_treatment.patient_id != patient.id:
+                existing_treatment.patient_id = patient.id
+                existing_treatment.notes += f"\nUpdated patient assignment on {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}"
+        else:
+            # Only create a new treatment if one doesn't exist with this invitee URI
             treatment = Treatment(
                 patient_id=patient.id,
                 created_at=booking.start_time,
