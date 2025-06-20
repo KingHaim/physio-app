@@ -34,6 +34,9 @@ class Config:
     # Stripe Secret Key
     STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
     
+    # Sentry DSN for error monitoring
+    SENTRY_DSN = os.environ.get('SENTRY_DSN')
+    
     # Session configuration
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)  # Sessions last 30 days
     SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS

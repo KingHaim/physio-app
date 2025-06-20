@@ -532,6 +532,7 @@ class SecurityLog(db.Model):
     ip_address = db.Column(db.String(45), nullable=True)
     user_agent = db.Column(db.String(200), nullable=True)
     details = db.Column(db.Text, nullable=True)
+    success = db.Column(db.Boolean, default=True)  # Added for operation success/failure
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class SecurityBreach(db.Model):

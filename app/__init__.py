@@ -13,6 +13,10 @@ import logging
 import stripe # Import stripe
 from logging.handlers import RotatingFileHandler
 
+# Sentry SDK for error monitoring
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
+
 db = SQLAlchemy()
 
 # Initialize login manager
@@ -33,6 +37,97 @@ from app import models
 
 migrate = Migrate()
 
+def setup_logging(app):
+    """Configure advanced logging with file rotation and request logging"""
+    # Create logs directory if it doesn't exist
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+
+    # Configure file handler with rotation
+    file_handler = RotatingFileHandler(
+        'logs/physiotracker.log', 
+        maxBytes=10240, 
+        backupCount=10
+    )
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s [%(levelname)s] in %(module)s: %(message)s'
+    ))
+    file_handler.setLevel(logging.INFO)
+
+    # Add file handler to app logger
+    app.logger.addHandler(file_handler)
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('PhysioTracker startup log initialized.')
+
+    # Request logging middleware
+    @app.before_request
+    def log_request_info():
+        """Log all incoming requests for monitoring"""
+        # Skip logging for static files and health checks
+        if request.path.startswith('/static/') or request.path == '/health':
+            return
+            
+        # Get user info if authenticated
+        user_info = "anonymous"
+        from flask_login import current_user
+        if current_user.is_authenticated:
+            user_info = f"user_id:{current_user.id}"
+        
+        # Log request details
+        app.logger.info(
+            f"Request: {request.remote_addr} - {user_info} - "
+            f"{request.method} {request.path} - "
+            f"User-Agent: {request.headers.get('User-Agent', 'Unknown')}"
+        )
+        
+        # Log sensitive endpoints with extra detail
+        sensitive_endpoints = [
+            '/auth/login', '/auth/register', '/auth/reset_password',
+            '/api/', '/webhooks/', '/admin/'
+        ]
+        
+        if any(endpoint in request.path for endpoint in sensitive_endpoints):
+            app.logger.warning(
+                f"SENSITIVE ACCESS: {request.remote_addr} - {user_info} - "
+                f"{request.method} {request.path}"
+            )
+
+def setup_sentry(app):
+    """Configure Sentry for error monitoring"""
+    # Get Sentry DSN from config or environment
+    sentry_dsn = app.config.get('SENTRY_DSN') or os.environ.get('SENTRY_DSN')
+    
+    if sentry_dsn:
+        sentry_sdk.init(
+            dsn=sentry_dsn,
+            integrations=[FlaskIntegration()],
+            traces_sample_rate=0.2,  # Sample 20% of transactions
+            send_default_pii=True,  # Include user context
+            environment=app.config.get('FLASK_ENV', 'development'),
+            before_send=lambda event, hint: before_sentry_send(event, hint, app)
+        )
+        app.logger.info("Sentry error monitoring initialized.")
+    else:
+        app.logger.warning("Sentry DSN not configured. Error monitoring disabled.")
+
+def before_sentry_send(event, hint, app):
+    """Filter sensitive data before sending to Sentry"""
+    # Remove sensitive headers
+    if 'request' in event and 'headers' in event['request']:
+        sensitive_headers = ['authorization', 'cookie', 'x-api-key']
+        for header in sensitive_headers:
+            if header in event['request']['headers']:
+                event['request']['headers'][header] = '[REDACTED]'
+    
+    # Add custom context
+    from flask_login import current_user
+    if current_user.is_authenticated:
+        event.setdefault('user', {})
+        event['user']['id'] = current_user.id
+        event['user']['email'] = current_user.email
+    
+    return event
+
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -41,6 +136,10 @@ def create_app(config_class=Config):
     app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+    # Setup logging and monitoring
+    setup_logging(app)
+    setup_sentry(app)
 
     # This function needs to be defined before being passed to babel.init_app
     def get_user_locale():

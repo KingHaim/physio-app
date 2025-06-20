@@ -2,7 +2,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response, current_app, session, send_file, abort
 from datetime import datetime, timedelta, date, time
 from calendar import monthrange, day_name
-from sqlalchemy import func, extract, or_, case, cast, Float, exc
+from sqlalchemy import func, extract, or_, case, cast, Float, exc, text
 from app.models import (
     db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, 
     PatientReport, RecurringAppointment, User, PracticeReport, Plan, 
@@ -155,6 +155,43 @@ def get_relative_date_string(target_date):
 def root():
     """Public marketing landing page."""
     return render_template('landing.html')
+
+@main.route('/health')
+def health_check():
+    """Health check endpoint for monitoring systems."""
+    try:
+        from sqlalchemy import text
+        # Basic database connectivity check
+        db.session.execute(text('SELECT 1'))
+        
+        # Get basic app stats
+        from app.models import User, Patient, Treatment
+        
+        stats = {
+            'status': 'healthy',
+            'timestamp': datetime.utcnow().isoformat(),
+            'database': 'connected',
+            'total_users': User.query.count(),
+            'total_patients': Patient.query.count(),
+            'total_treatments': Treatment.query.count(),
+            'version': '1.0.0'  # You can update this as needed
+        }
+        
+        return jsonify(stats), 200
+    except Exception as e:
+        current_app.logger.error(f"Health check failed: {str(e)}")
+        return jsonify({
+            'status': 'unhealthy',
+            'timestamp': datetime.utcnow().isoformat(),
+            'error': str(e)
+        }), 500
+
+@main.route('/monitoring')
+@login_required
+@admin_required
+def monitoring_dashboard():
+    """Monitoring dashboard for system administrators."""
+    return render_template('monitoring.html')
 
 @main.route('/index')
 @login_required
