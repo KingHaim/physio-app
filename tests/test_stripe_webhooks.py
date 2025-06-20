@@ -88,6 +88,7 @@ def test_stripe_webhook_subscription_created(mock_construct_event, client, app):
         # Create test user and plan with unique emails and customer IDs
         unique_email = f"testuser_{uuid.uuid4().hex[:8]}@example.com"
         unique_customer_id = f"cus_test_{uuid.uuid4().hex[:8]}"
+        unique_subscription_id = f"sub_test_{uuid.uuid4().hex[:8]}"
         user = User(username=f'testuser_{uuid.uuid4().hex[:8]}', email=unique_email)
         user.stripe_customer_id = unique_customer_id
         db.session.add(user)
@@ -114,7 +115,7 @@ def test_stripe_webhook_subscription_created(mock_construct_event, client, app):
             "type": "customer.subscription.created",
             "data": {
                 "object": {
-                    "id": "sub_test_123",
+                    "id": unique_subscription_id,
                     "customer": unique_customer_id,
                     "status": "active",
                     "current_period_end": 1234567890,
@@ -152,6 +153,7 @@ def test_stripe_webhook_subscription_deleted(mock_construct_event, client, app):
         # Create test user and subscription with unique email and customer ID
         unique_email = f"testuser_{uuid.uuid4().hex[:8]}@example.com"
         unique_customer_id = f"cus_test_{uuid.uuid4().hex[:8]}"
+        unique_subscription_id = f"sub_test_{uuid.uuid4().hex[:8]}"
         user = User(username=f'testuser_{uuid.uuid4().hex[:8]}', email=unique_email)
         user.stripe_customer_id = unique_customer_id
         db.session.add(user)
@@ -175,7 +177,7 @@ def test_stripe_webhook_subscription_deleted(mock_construct_event, client, app):
         subscription = UserSubscription(
             user_id=user.id,
             plan_id=plan.id,  # Add the plan_id
-            stripe_subscription_id='sub_test_123',
+            stripe_subscription_id=unique_subscription_id,
             status='active'
         )
         db.session.add(subscription)
@@ -187,7 +189,7 @@ def test_stripe_webhook_subscription_deleted(mock_construct_event, client, app):
             "type": "customer.subscription.deleted",
             "data": {
                 "object": {
-                    "id": "sub_test_123",
+                    "id": unique_subscription_id,
                     "customer": unique_customer_id,
                     "status": "canceled"
                 }

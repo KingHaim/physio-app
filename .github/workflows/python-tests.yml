@@ -45,6 +45,10 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
+      - name: Run database migrations
+        run: |
+          python -m flask db upgrade
+
       - name: Run Tests with debug output
         run: |
           ls -R

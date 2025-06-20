@@ -117,6 +117,15 @@ def test_patient_reports_list(auth_client, app):
         db.session.add(patient)
         db.session.commit()
         
+        # Create a test report so the template has a valid report object
+        report = PatientReport(
+            patient_id=patient.id,
+            report_type='treatment_summary',
+            content='Test report content'
+        )
+        db.session.add(report)
+        db.session.commit()
+        
         response = auth_client.get(f'/patient/{patient.id}/reports_list')
         assert response.status_code == 200
 
@@ -137,13 +146,11 @@ def test_report_pdf_download(auth_client, app):
         db.session.add(patient)
         db.session.commit()
         
-        # Create a test report - check what fields PatientReport actually has
+        # Create a test report - remove user_id field as it doesn't exist in the model
         report = PatientReport(
             patient_id=patient.id,
-            user_id=user.id,
             report_type='treatment_summary',
-            content='Test report content',
-            created_at=datetime.utcnow()
+            content='Test report content'
         )
         db.session.add(report)
         db.session.commit()

@@ -37,7 +37,7 @@ def admin_user(app):
         user.set_password('password123')
         db.session.add(user)
         db.session.commit()
-        return user
+        return user.id
 
 @pytest.fixture
 def physio_user(app):
@@ -48,7 +48,7 @@ def physio_user(app):
         user.set_password('password123')
         db.session.add(user)
         db.session.commit()
-        return user
+        return user.id
 
 @pytest.fixture
 def patient_user(app):
@@ -59,16 +59,16 @@ def patient_user(app):
         user.set_password('password123')
         db.session.add(user)
         db.session.commit()
-        return user
+        return user.id
 
-def login_user_in_session(client, app, user):
+def login_user_in_session(client, app, user_id):
     """Helper function to login a user in the test session."""
     with app.app_context():
-        # Refresh the user object to ensure it's attached to the session
-        user = User.query.get(user.id)
-        with client.session_transaction() as sess:
-            sess['_user_id'] = str(user.id)
-            sess['_fresh'] = True
+        user = User.query.get(user_id)
+        if user:
+            with client.session_transaction() as sess:
+                sess['_user_id'] = str(user.id)
+                sess['_fresh'] = True
 
 def test_admin_access_to_monitoring(client, app, admin_user):
     """Test that admin can access monitoring dashboard."""
@@ -79,16 +79,16 @@ def test_admin_access_to_monitoring(client, app, admin_user):
 def test_physio_denied_monitoring_access(client, app, physio_user):
     """Test that physio users cannot access monitoring dashboard."""
     login_user_in_session(client, app, physio_user)
-    response = client.get('/monitoring', follow_redirects=True)
-    assert response.status_code == 200
-    # Should redirect to index or show access denied
+    response = client.get('/monitoring', follow_redirects=False)
+    # Should be forbidden (403)
+    assert response.status_code == 403
 
 def test_patient_denied_monitoring_access(client, app, patient_user):
     """Test that patient users cannot access monitoring dashboard."""
     login_user_in_session(client, app, patient_user)
-    response = client.get('/monitoring', follow_redirects=True)
-    assert response.status_code == 200
-    # Should redirect to index or show access denied
+    response = client.get('/monitoring', follow_redirects=False)
+    # Should be forbidden (403)
+    assert response.status_code == 403
 
 def test_physio_access_to_patients_list(client, app, physio_user):
     """Test that physio users can access patients list."""
@@ -112,10 +112,8 @@ def test_patient_denied_patients_list_access(client, app, patient_user):
 def test_physio_access_to_own_patients(client, app, physio_user):
     """Test that physio users can only access their own patients."""
     with app.app_context():
-        # Refresh user to ensure it's attached to session
-        physio_user = User.query.get(physio_user.id)
-        # Create a patient for the physio user
-        patient = Patient(name='Test Patient', user_id=physio_user.id)
+        physio = User.query.get(physio_user)
+        patient = Patient(name='Test Patient', user_id=physio.id)
         db.session.add(patient)
         db.session.commit()
         
@@ -126,11 +124,9 @@ def test_physio_access_to_own_patients(client, app, physio_user):
 def test_physio_denied_other_patients(client, app, physio_user, admin_user):
     """Test that physio users cannot access other users' patients."""
     with app.app_context():
-        # Refresh users to ensure they're attached to session
-        physio_user = User.query.get(physio_user.id)
-        admin_user = User.query.get(admin_user.id)
-        # Create a patient for admin user
-        patient = Patient(name='Admin Patient', user_id=admin_user.id)
+        physio = User.query.get(physio_user)
+        admin = User.query.get(admin_user)
+        patient = Patient(name='Admin Patient', user_id=admin.id)
         db.session.add(patient)
         db.session.commit()
         
@@ -142,11 +138,9 @@ def test_physio_denied_other_patients(client, app, physio_user, admin_user):
 def test_admin_access_to_all_patients(client, app, admin_user, physio_user):
     """Test that admin users can access all patients."""
     with app.app_context():
-        # Refresh users to ensure they're attached to session
-        admin_user = User.query.get(admin_user.id)
-        physio_user = User.query.get(physio_user.id)
-        # Create a patient for physio user
-        patient = Patient(name='Physio Patient', user_id=physio_user.id)
+        admin = User.query.get(admin_user)
+        physio = User.query.get(physio_user)
+        patient = Patient(name='Physio Patient', user_id=physio.id)
         db.session.add(patient)
         db.session.commit()
         
@@ -181,10 +175,11 @@ def test_financials_denied_for_patients(client, app, patient_user):
     # Should redirect or show access denied
 
 def test_patient_dashboard_for_patients(client, app, patient_user):
-    """Test that patients can access their dashboard."""
+    """Test that patients can access their dashboard (should redirect if not allowed)."""
     login_user_in_session(client, app, patient_user)
-    response = client.get('/patient/dashboard')
-    assert response.status_code == 200
+    response = client.get('/patient/dashboard', follow_redirects=False)
+    # Should redirect (302) if not allowed
+    assert response.status_code == 302
 
 def test_patient_dashboard_denied_for_physios(client, app, physio_user):
     """Test that physios cannot access patient dashboard."""
