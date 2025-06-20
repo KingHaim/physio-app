@@ -283,3 +283,6 @@ def get_locale_display_name(locale_identifier):
     }
     return display_names.get(str(locale_identifier), str(locale_identifier))
 # ---------------------------------------------------------
+
+# Create the app instance
+app = create_app()
