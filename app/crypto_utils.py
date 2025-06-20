@@ -2,6 +2,7 @@ import os
 from cryptography.fernet import Fernet
 import base64
 from flask import current_app
+import re
 
 def get_fernet_cipher():
     """
@@ -72,25 +73,28 @@ def decrypt_text(encrypted_text: str) -> str:
         if not isinstance(encrypted_text, str):
             return None
             
-        # Skip if it's clearly not encrypted (too short or doesn't look like base64)
+        # Quick check: if it's too short, it's definitely not encrypted
         if len(encrypted_text) < 20:  # Fernet tokens are much longer
             return encrypted_text  # Return as-is if it's likely plain text
+            
+        # Quick check: if it doesn't look like base64, it's probably plain text
+        base64_pattern = re.compile(r'^[A-Za-z0-9+/]*={0,2}$')
+        if not base64_pattern.match(encrypted_text):
+            return encrypted_text  # Return as-is if it doesn't look like base64
             
         # Try to decode from base64
         try:
             encrypted_bytes = base64.b64decode(encrypted_text.encode())
-        except (base64.binascii.Error, ValueError) as e:
+        except (base64.binascii.Error, ValueError):
             # If base64 decoding fails, it's probably plain text
-            current_app.logger.debug(f"Base64 decode failed, treating as plain text: {str(e)}")
             return encrypted_text  # Return as-is if it's likely plain text
             
         # Try to decrypt
         try:
             decrypted_data = cipher.decrypt(encrypted_bytes)
             return decrypted_data.decode()
-        except Exception as e:
+        except Exception:
             # If decryption fails, it might be plain text that was stored
-            current_app.logger.debug(f"Decryption failed, treating as plain text: {str(e)}")
             return encrypted_text  # Return as-is if it's likely plain text
         
     except Exception as e:
