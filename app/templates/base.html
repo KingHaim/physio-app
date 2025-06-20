@@ -561,7 +561,6 @@
                             </a>
                         </li>
                     </ul>
-                    <!--
                     <div class="mt-3">
                         <div class="btn-group dropup">
                             <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -574,7 +573,6 @@
                             </ul>
                         </div>
                     </div>
-                    -->
                 </div>
             </div>
 
@@ -728,6 +726,21 @@
                     }
                 }, true); // Use capture phase to catch clicks anywhere
             }
+
+            // Language selection functionality
+            document.querySelectorAll('.lang-option').forEach(function(item) {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const lang = this.getAttribute('data-lang');
+                    fetch(`/set_language/${lang}`)
+                        .then(() => {
+                            window.location.reload();
+                        })
+                        .catch(error => {
+                            console.error('Error changing language:', error);
+                        });
+                });
+            });
         });
     </script>
     <script src="{{ url_for('static', filename='js/voice-notes.js') }}"></script>
