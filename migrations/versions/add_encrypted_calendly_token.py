@@ -1,7 +1,7 @@
 """Add encrypted Calendly API token field
 
 Revision ID: add_encrypted_calendly_token
-Revises: 
+Revises: 001_initial_schema
 Create Date: 2025-06-18 16:55:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_encrypted_calendly_token'
-down_revision = None
+down_revision = '001_initial_schema'
 branch_labels = None
 depends_on = None
 

@@ -1,7 +1,7 @@
 """Update password_hash field length
 
 Revision ID: update_password_hash_length
-Revises: 03fc6caf29de
+Revises: add_encrypted_calendly_token
 Create Date: 2025-01-20 23:15:00.000000
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'update_password_hash_length'
-down_revision = '03fc6caf29de'
+down_revision = 'add_encrypted_calendly_token'
 branch_labels = None
 depends_on = None
 
