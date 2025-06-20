@@ -316,6 +316,13 @@ class User(db.Model, UserMixin):
     role = db.Column(db.String(20), default='physio')  # e.g., 'admin', 'physio'
     language = db.Column(db.String(5), default='en') # Add language preference field
     
+    # Consent fields
+    consent_given = db.Column(db.Boolean, default=False)
+    consent_date = db.Column(db.DateTime, nullable=True)
+    
+    # Soft delete
+    is_deleted = db.Column(db.Boolean, default=False)
+    
     # Specify the foreign key to resolve ambiguity
     patients = db.relationship('Patient', foreign_keys='[Patient.user_id]', backref='practitioner', lazy='dynamic')
     

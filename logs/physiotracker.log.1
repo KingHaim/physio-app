@@ -1,9 +1,108 @@
-2025-06-20 11:24:08,619 [ERROR] in utils: Error with context: {'error_type': 'ValueError', 'error_message': 'This is a test error', 'timestamp': '2025-06-20T09:24:08.619128', 'endpoint': None, 'method': None, 'user_id': None, 'ip_address': None, 'user_agent': None, 'additional_context': {'test': True, 'function': 'test_error_logging'}}
-2025-06-20 11:24:08,632 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-20 11:24:08,632 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-20 11:24:08,632 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-20 11:24:08,632 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-20 11:24:08,635 [INFO] in __init__: Flask app created and logging configured.
-2025-06-20 11:24:08,635 [INFO] in __init__: Flask app created and logging configured.
-2025-06-20 11:24:08,636 [INFO] in __init__: Stripe API Key configured.
-2025-06-20 11:24:08,636 [INFO] in __init__: Stripe API Key configured.
+2025-06-20 15:13:59,485 [ERROR] in app: Exception on /privacy [GET]
+Traceback (most recent call last):
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/app/routes/legal.py", line 7, in privacy
+    return render_template("legal/privacy_policy.html")
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/flask/templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/flask/templating.py", line 131, in _render
+    rv = template.render(context)
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/app/templates/legal/privacy_policy.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/app/templates/base.html", line 583, in top-level template code
+    {% block content %}{% endblock %}
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/app/templates/legal/privacy_policy.html", line 10, in block 'content'
+    <p class="text-muted">Last updated: June 20, 2025</p>
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/jinja2/utils.py", line 92, in from_obj
+    if hasattr(obj, "jinja_pass_arg"):
+jinja2.exceptions.UndefinedError: 'moment' is undefined
+2025-06-20 15:14:31,587 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-20 15:14:31,587 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-20 15:14:31,593 [INFO] in __init__: Flask app created and logging configured.
+2025-06-20 15:14:31,593 [INFO] in __init__: Stripe API Key configured.
+2025-06-20 15:14:33,564 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-20 15:14:33,564 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-20 15:14:33,564 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-20 15:14:33,564 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-20 15:14:33,564 [INFO] in __init__: Flask app created and logging configured.
+2025-06-20 15:14:33,564 [INFO] in __init__: Flask app created and logging configured.
+2025-06-20 15:14:33,565 [INFO] in __init__: Stripe API Key configured.
+2025-06-20 15:14:33,565 [INFO] in __init__: Stripe API Key configured.
+2025-06-20 15:14:34,513 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /privacy - User-Agent: curl/7.84.0
+2025-06-20 15:14:34,518 [ERROR] in app: Exception on /privacy [GET]
+Traceback (most recent call last):
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/app/routes/legal.py", line 7, in privacy
+    return render_template("legal/privacy_policy.html")
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/flask/templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/flask/templating.py", line 131, in _render
+    rv = template.render(context)
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/app/templates/legal/privacy_policy.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/app/templates/base.html", line 583, in top-level template code
+    {% block content %}{% endblock %}
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/app/templates/legal/privacy_policy.html", line 10, in block 'content'
+    <p class="text-muted">Last updated: June 20, 2025</p>
+  File "/Users/haimganancia/Desktop/PROYECTOS/physio-app/venv/lib/python3.9/site-packages/jinja2/utils.py", line 92, in from_obj
+    if hasattr(obj, "jinja_pass_arg"):
+jinja2.exceptions.UndefinedError: 'moment' is undefined
+2025-06-20 15:14:34,973 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-20 15:14:34,973 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-20 15:14:34,976 [INFO] in __init__: Flask app created and logging configured.
+2025-06-20 15:14:34,976 [INFO] in __init__: Stripe API Key configured.
+2025-06-20 15:14:35,863 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-20 15:14:35,863 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-20 15:14:35,864 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-20 15:14:35,864 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-20 15:14:35,865 [INFO] in __init__: Flask app created and logging configured.
+2025-06-20 15:14:35,865 [INFO] in __init__: Flask app created and logging configured.
+2025-06-20 15:14:35,865 [INFO] in __init__: Stripe API Key configured.
+2025-06-20 15:14:35,865 [INFO] in __init__: Stripe API Key configured.
+2025-06-20 15:14:56,684 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-20 15:14:56,685 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-20 15:14:56,687 [INFO] in __init__: Flask app created and logging configured.
+2025-06-20 15:14:56,687 [INFO] in __init__: Stripe API Key configured.
+2025-06-20 15:14:57,449 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-20 15:14:57,449 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-20 15:14:57,450 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-20 15:14:57,450 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-20 15:14:57,450 [INFO] in __init__: Flask app created and logging configured.
+2025-06-20 15:14:57,450 [INFO] in __init__: Flask app created and logging configured.
+2025-06-20 15:14:57,450 [INFO] in __init__: Stripe API Key configured.
+2025-06-20 15:14:57,450 [INFO] in __init__: Stripe API Key configured.
+2025-06-20 15:14:59,008 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-20 15:14:59,008 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-20 15:14:59,011 [INFO] in __init__: Flask app created and logging configured.
+2025-06-20 15:14:59,012 [INFO] in __init__: Stripe API Key configured.
+2025-06-20 15:14:59,755 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-20 15:14:59,755 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-20 15:14:59,756 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-20 15:14:59,756 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-20 15:14:59,757 [INFO] in __init__: Flask app created and logging configured.
+2025-06-20 15:14:59,757 [INFO] in __init__: Flask app created and logging configured.
+2025-06-20 15:14:59,758 [INFO] in __init__: Stripe API Key configured.
+2025-06-20 15:14:59,758 [INFO] in __init__: Stripe API Key configured.
+2025-06-20 15:15:02,019 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /privacy - User-Agent: curl/7.84.0

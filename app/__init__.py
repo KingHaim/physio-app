@@ -215,6 +215,12 @@ def create_app(config_class=Config):
     from app.routes.webhooks import webhook_bp
     app.register_blueprint(webhook_bp)
 
+    from app.routes.user_data import user_data as user_data_blueprint
+    app.register_blueprint(user_data_blueprint)
+
+    from app.routes.legal import legal as legal_blueprint
+    app.register_blueprint(legal_blueprint)
+
     # Create all tables
     # with app.app_context():
     #     db.create_all()

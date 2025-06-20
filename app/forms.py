@@ -8,6 +8,7 @@ class RegistrationForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email(), Length(max=120)])
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    consent_checkbox = BooleanField('I agree to the Privacy Policy and Terms of Service', validators=[DataRequired()])
     # For now, plan selection is handled on the backend, defaulting to 'free'
     # We could add a RadioField here later if we want users to select a plan at registration
     # plan = RadioField('Choose Your Plan', choices=[('free', 'Free Plan'), ('pro', 'Pro Plan ($19.99/month)')], default='free')

@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_user, logout_user, current_user, login_required
 from app.models import User, db
 from app.forms import RegistrationForm, LoginForm
+from datetime import datetime
 
 # If the above import fails, try this alternative:
 # from werkzeug.utils import url_parse
@@ -73,6 +74,11 @@ def register():
         # Create new user
         user = User(username=username, email=email)
         user.set_password(password)
+        
+        # Set consent information
+        if form.consent_checkbox.data:
+            user.consent_given = True
+            user.consent_date = datetime.utcnow()
         
         # Make the first registered user an admin ONLY if no other users exist
         if User.query.count() == 0:

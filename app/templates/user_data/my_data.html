@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}My Data{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>My Personal Data</h2>
+    <table class="table table-bordered mt-4">
+        <tbody>
+        {% for key, value in user_info.items() %}
+            <tr>
+                <th>{{ key.replace('_', ' ').title() }}</th>
+                <td>{{ value if value else '-' }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <div class="mt-4">
+        <a href="{{ url_for('user_data.export_data') }}" class="btn btn-outline-primary">Export as JSON</a>
+        <form method="POST" action="{{ url_for('user_data.delete_account') }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete your account? This cannot be undone.');">
+            <button type="submit" class="btn btn-danger">Delete My Account</button>
+        </form>
+    </div>
+</div>
+{% endblock %} 

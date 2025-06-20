@@ -711,8 +711,8 @@ body {
         <div class="footer-links">
             <a href="{{ url_for('main.pricing_page') }}" class="footer-link">Pricing</a>
             <a href="#about" class="footer-link">About</a>
-            <a href="#" class="footer-link">Privacy</a>
-            <a href="#" class="footer-link">Terms</a>
+            <a href="{{ url_for('legal.privacy') }}" class="footer-link">Privacy</a>
+            <a href="{{ url_for('legal.terms') }}" class="footer-link">Terms</a>
             <a href="#" class="footer-link">Contact</a>
         </div>
         <p style="opacity: 0.7; margin: 0;">&copy; 2024 TRXCK. All rights reserved.</p>
