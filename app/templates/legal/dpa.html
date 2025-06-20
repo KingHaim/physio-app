@@ -8,26 +8,35 @@
         <div class="col-lg-10">
             <h1 class="mb-4">Data Processing Agreement (DPA)</h1>
             <p class="text-muted">Last updated: June 20, 2025</p>
-            <form method="POST" class="mb-4 p-3 border rounded bg-light">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label for="clinic_name" class="form-label">Clinic Name</label>
-                        <input type="text" class="form-control" id="clinic_name" name="clinic_name" value="{{ clinic_name }}" placeholder="e.g. Marbella Physio Center">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="clinic_address" class="form-label">Clinic Address</label>
-                        <input type="text" class="form-control" id="clinic_address" name="clinic_address" value="{{ clinic_address }}" placeholder="e.g. Calle Falsa 123, Marbella">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="clinic_rep" class="form-label">Clinic Representative</label>
-                        <input type="text" class="form-control" id="clinic_rep" name="clinic_rep" value="{{ clinic_rep }}" placeholder="e.g. Dr. Ana López">
-                    </div>
+            
+            <!-- Clinic Information Form -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📋 Clinic Information</h5>
                 </div>
-                <div class="mt-3 d-flex align-items-center">
-                    <button type="submit" class="btn btn-primary me-3">Update DPA</button>
-                    <span class="text-muted small">Need help? <a href="mailto:legal@trxck.com">Contact us</a></span>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="clinic_name" class="form-label fw-bold">Clinic Name</label>
+                                <input type="text" class="form-control" id="clinic_name" name="clinic_name" value="{{ clinic_name }}" placeholder="e.g. Marbella Physio Center">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="clinic_address" class="form-label fw-bold">Clinic Address</label>
+                                <input type="text" class="form-control" id="clinic_address" name="clinic_address" value="{{ clinic_address }}" placeholder="e.g. Calle Falsa 123, Marbella">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="clinic_rep" class="form-label fw-bold">Clinic Representative</label>
+                                <input type="text" class="form-control" id="clinic_rep" name="clinic_rep" value="{{ clinic_rep }}" placeholder="e.g. Dr. Ana López">
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">Update DPA</button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
+            
             <div class="card">
                 <div class="card-body">
                     <h2>1. Parties</h2>
@@ -101,6 +110,11 @@
                     <p><strong>For privacy-related questions and data protection queries:</strong><br>
                     Contact: <a href="mailto:privacy@trxck.com">privacy@trxck.com</a><br>
                     Address: Calle Resinera 74, Estepona, Málaga, Spain</p>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-chat-dots me-2"></i>
+                        <strong>Need help?</strong> Email us at <a href="mailto:privacy@trxck.com">privacy@trxck.com</a> for assistance with this DPA or any data protection questions.
+                    </div>
                     <h2>15. Digital Agreement</h2>
                     <div class="border rounded p-3 bg-light">
                         <div class="form-check mb-3">
