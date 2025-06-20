@@ -39,3 +39,7 @@ class Config:
     SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    
+    # CSRF configuration
+    WTF_CSRF_TIME_LIMIT = 3600  # CSRF tokens valid for 1 hour (3600 seconds)
+    WTF_CSRF_SSL_STRICT = False  # Allow HTTP in development
