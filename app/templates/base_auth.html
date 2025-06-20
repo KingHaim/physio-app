@@ -69,6 +69,23 @@
     </div>
     
     {% block content %}{% endblock %}
+    
+    <!-- Footer with Legal Links -->
+    <footer class="mt-5 py-4 text-center">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <p class="text-muted mb-2">
+                        <a href="{{ url_for('legal.privacy') }}" class="text-decoration-none me-3">Privacy Policy</a>
+                        <a href="{{ url_for('legal.terms') }}" class="text-decoration-none me-3">Terms & Conditions</a>
+                        <a href="{{ url_for('legal.dpa') }}" class="text-decoration-none">Data Processing Agreement</a>
+                    </p>
+                    <p class="text-muted small">&copy; 2024 TRXCK. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
     <div class="d-flex justify-content-center mt-4">
         <div class="btn-group" role="group">
             {% for lang in supported_locales %}
