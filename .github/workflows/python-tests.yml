@@ -26,6 +26,7 @@ jobs:
       SECRET_KEY: test-secret-key-for-ci
       STRIPE_SECRET_KEY: sk_test_dummy
       STRIPE_WEBHOOK_SECRET: whsec_test_dummy
+      FERNET_SECRET_KEY: ${{ secrets.FERNET_SECRET_KEY }}
 
     steps:
       - uses: actions/checkout@v3
