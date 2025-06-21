@@ -19,3 +19,4 @@ run_with_api_key.sh
 
 # Ignore SQL dumps
 *.sql
+logs/physiotracker.log.*
