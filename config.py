@@ -22,6 +22,14 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", f"sqlite:///{os.path.join(basedir, 'instance', 'physio.db')}")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    # Database connection pool settings
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': 10,
+        'pool_recycle': 300,
+        'pool_pre_ping': True,
+        'max_overflow': 20
+    }
+    
     # Calendly API configuration
     CALENDLY_API_TOKEN = os.environ.get('CALENDLY_API_TOKEN', '')
 
@@ -46,3 +54,23 @@ class Config:
     # CSRF configuration
     WTF_CSRF_TIME_LIMIT = 3600  # CSRF tokens valid for 1 hour (3600 seconds)
     WTF_CSRF_SSL_STRICT = False  # Allow HTTP in development
+
+
+class TestConfig(Config):
+    """Configuration for testing environment."""
+    TESTING = True
+    WTF_CSRF_ENABLED = False
+    
+    # Optimized database settings for testing
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': 1,  # Minimal pool size for tests
+        'pool_recycle': 300,
+        'pool_pre_ping': True,
+        'max_overflow': 0,  # No overflow connections
+        'pool_reset_on_return': 'commit'  # Reset connections after use
+    }
+    
+    # Use a test database if specified
+    TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+    if TEST_DATABASE_URL:
+        SQLALCHEMY_DATABASE_URI = TEST_DATABASE_URL

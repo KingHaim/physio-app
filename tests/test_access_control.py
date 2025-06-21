@@ -28,6 +28,15 @@ def client(app):
     """A test client for the app."""
     return app.test_client()
 
+def login_user_in_session(client, app, user_id):
+    """Helper function to login a user in the test session."""
+    with app.app_context():
+        user = User.query.get(user_id)
+        if user:
+            with client.session_transaction() as sess:
+                sess['_user_id'] = str(user.id)
+                sess['_fresh'] = True
+
 @pytest.fixture
 def admin_user(app):
     """Create an admin user."""
@@ -60,15 +69,6 @@ def patient_user(app):
         db.session.add(user)
         db.session.commit()
         return user.id
-
-def login_user_in_session(client, app, user_id):
-    """Helper function to login a user in the test session."""
-    with app.app_context():
-        user = User.query.get(user_id)
-        if user:
-            with client.session_transaction() as sess:
-                sess['_user_id'] = str(user.id)
-                sess['_fresh'] = True
 
 def test_admin_access_to_monitoring(client, app, admin_user):
     """Test that admin can access monitoring dashboard."""

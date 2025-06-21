@@ -1,106 +1,108 @@
-2025-06-21 01:36:31,198 [INFO] in __init__: Request: 127.0.0.1 - user_id:116 - GET /financials - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:31,432 [INFO] in __init__: Request: 127.0.0.1 - user_id:116 - GET /patient/dashboard - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:31,774 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:31,776 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
-2025-06-21 01:36:32,862 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:32,862 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:32,864 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:32,864 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:32,865 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:32,865 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:32,869 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:32,869 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:35,483 [INFO] in __init__: Request: 127.0.0.1 - user_id:117 - GET /patient/dashboard - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:35,483 [INFO] in __init__: Request: 127.0.0.1 - user_id:117 - GET /patient/dashboard - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:36,959 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:36,959 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:36,959 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:36,960 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:36,960 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:36,960 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:36,961 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:36,961 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:36,961 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:36,961 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:36,961 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:36,961 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:39,944 [INFO] in __init__: Request: 127.0.0.1 - user_id:118 - GET /patient/dashboard - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:39,944 [INFO] in __init__: Request: 127.0.0.1 - user_id:118 - GET /patient/dashboard - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:39,944 [INFO] in __init__: Request: 127.0.0.1 - user_id:118 - GET /patient/dashboard - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:40,272 [INFO] in __init__: Request: 127.0.0.1 - user_id:118 - GET /index - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:40,272 [INFO] in __init__: Request: 127.0.0.1 - user_id:118 - GET /index - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:40,272 [INFO] in __init__: Request: 127.0.0.1 - user_id:118 - GET /index - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:42,497 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:42,497 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:42,497 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:42,497 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:42,499 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:42,499 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:42,499 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:42,499 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:42,501 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:42,501 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:42,501 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:42,501 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:42,505 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:42,505 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:42,505 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:42,505 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:44,526 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /patients - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:44,526 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /patients - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:44,526 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /patients - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:44,526 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /patients - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:44,532 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:44,532 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:44,532 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:44,532 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:44,534 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
-2025-06-21 01:36:44,534 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
-2025-06-21 01:36:44,534 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
-2025-06-21 01:36:44,534 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
-2025-06-21 01:36:45,618 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:45,618 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:45,618 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:45,618 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:45,618 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:45,620 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:45,620 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:45,620 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:45,620 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:45,620 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:45,623 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:45,623 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:45,623 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:45,623 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:45,623 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:45,627 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:45,627 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:45,627 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:45,627 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:45,627 [INFO] in __init__: Stripe API Key configured.
-2025-06-21 01:36:47,828 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:47,828 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:47,828 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:47,828 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:47,828 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
-2025-06-21 01:36:47,830 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
-2025-06-21 01:36:47,830 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
-2025-06-21 01:36:47,830 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
-2025-06-21 01:36:47,830 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
-2025-06-21 01:36:47,830 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
-2025-06-21 01:36:49,074 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:49,074 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:49,074 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:49,074 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:49,074 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:49,074 [INFO] in __init__: PhysioTracker startup log initialized.
-2025-06-21 01:36:49,076 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:49,076 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:49,076 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:49,076 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:49,076 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:49,076 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
-2025-06-21 01:36:49,078 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:49,078 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:49,078 [INFO] in __init__: Flask app created and logging configured.
-2025-06-21 01:36:49,078 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:00,975 [INFO] in __init__: Request: 127.0.0.1 - user_id:187 - GET /patient/97 - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:02,952 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:02,952 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:02,954 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:02,954 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:02,957 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:02,957 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:02,958 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:02,958 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:07,445 [INFO] in __init__: Request: 127.0.0.1 - user_id:189 - GET /patient/98 - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:07,445 [INFO] in __init__: Request: 127.0.0.1 - user_id:189 - GET /patient/98 - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:10,001 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:10,001 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:10,001 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:10,003 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:10,003 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:10,003 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:10,005 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:10,005 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:10,005 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:10,007 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:10,007 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:10,007 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:13,729 [INFO] in __init__: Request: 127.0.0.1 - user_id:191 - GET /analytics - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:13,729 [INFO] in __init__: Request: 127.0.0.1 - user_id:191 - GET /analytics - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:13,729 [INFO] in __init__: Request: 127.0.0.1 - user_id:191 - GET /analytics - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:16,309 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:16,309 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:16,309 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:16,309 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:16,311 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:16,311 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:16,311 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:16,311 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:16,312 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:16,312 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:16,312 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:16,312 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:16,313 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:16,313 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:16,313 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:16,313 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:19,702 [INFO] in __init__: Request: 127.0.0.1 - user_id:192 - GET /analytics - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:19,702 [INFO] in __init__: Request: 127.0.0.1 - user_id:192 - GET /analytics - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:19,702 [INFO] in __init__: Request: 127.0.0.1 - user_id:192 - GET /analytics - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:19,702 [INFO] in __init__: Request: 127.0.0.1 - user_id:192 - GET /analytics - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:20,062 [INFO] in __init__: Request: 127.0.0.1 - user_id:192 - GET /patient/dashboard - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:20,062 [INFO] in __init__: Request: 127.0.0.1 - user_id:192 - GET /patient/dashboard - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:20,062 [INFO] in __init__: Request: 127.0.0.1 - user_id:192 - GET /patient/dashboard - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:20,062 [INFO] in __init__: Request: 127.0.0.1 - user_id:192 - GET /patient/dashboard - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:20,443 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:20,443 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:20,443 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:20,443 [INFO] in __init__: Request: 127.0.0.1 - anonymous - GET /auth/login - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:20,445 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
+2025-06-22 01:41:20,445 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
+2025-06-22 01:41:20,445 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
+2025-06-22 01:41:20,445 [WARNING] in __init__: SENSITIVE ACCESS: 127.0.0.1 - anonymous - GET /auth/login
+2025-06-22 01:41:21,814 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:21,814 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:21,814 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:21,814 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:21,814 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:21,815 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:21,815 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:21,815 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:21,815 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:21,815 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:21,816 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:21,816 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:21,816 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:21,816 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:21,816 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:21,817 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:21,817 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:21,817 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:21,817 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:21,817 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:25,459 [INFO] in __init__: Request: 127.0.0.1 - user_id:193 - GET /financials - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:25,459 [INFO] in __init__: Request: 127.0.0.1 - user_id:193 - GET /financials - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:25,459 [INFO] in __init__: Request: 127.0.0.1 - user_id:193 - GET /financials - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:25,459 [INFO] in __init__: Request: 127.0.0.1 - user_id:193 - GET /financials - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:25,459 [INFO] in __init__: Request: 127.0.0.1 - user_id:193 - GET /financials - User-Agent: Werkzeug/3.1.3
+2025-06-22 01:41:27,907 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:27,907 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:27,907 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:27,907 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:27,907 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:27,907 [INFO] in __init__: PhysioTracker startup log initialized.
+2025-06-22 01:41:27,908 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:27,908 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:27,908 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:27,908 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:27,908 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:27,908 [WARNING] in __init__: Sentry DSN not configured. Error monitoring disabled.
+2025-06-22 01:41:27,910 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:27,910 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:27,910 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:27,910 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:27,910 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:27,910 [INFO] in __init__: Flask app created and logging configured.
+2025-06-22 01:41:27,911 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:27,911 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:27,911 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:27,911 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:27,911 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:27,911 [INFO] in __init__: Stripe API Key configured.
+2025-06-22 01:41:31,489 [INFO] in __init__: Request: 127.0.0.1 - user_id:194 - GET /financials - User-Agent: Werkzeug/3.1.3

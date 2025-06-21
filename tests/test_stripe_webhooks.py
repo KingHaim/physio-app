@@ -8,30 +8,6 @@ import uuid
 from unittest.mock import patch, MagicMock
 
 @pytest.fixture
-def app():
-    """Create and configure a new app instance for each test."""
-    app = create_app()
-    app.config['TESTING'] = True
-    app.config['WTF_CSRF_ENABLED'] = False
-    app.config['STRIPE_WEBHOOK_SECRET'] = 'whsec_test_secret'
-    
-    with app.app_context():
-        db.create_all()
-        yield app
-        db.session.remove()
-        # Use a more graceful cleanup approach
-        try:
-            db.drop_all()
-        except Exception:
-            # If drop_all fails, just close the session
-            db.session.close()
-
-@pytest.fixture
-def client(app):
-    """A test client for the app."""
-    return app.test_client()
-
-@pytest.fixture
 def sample_webhook_payload():
     """Sample webhook payload for testing."""
     return {
@@ -214,14 +190,8 @@ def test_stripe_webhook_subscription_deleted(mock_construct_event, client, app):
 
 def test_stripe_webhook_invalid_signature(client):
     """Test webhook with invalid signature."""
-    with patch('stripe.Webhook.construct_event') as mock_construct_event:
-        mock_construct_event.side_effect = stripe.error.SignatureVerificationError(
-            "Invalid signature", "sig_header"
-        )
-        
-        response = client.post('/webhooks/stripe',
-                              data=json.dumps({}),
-                              headers={'Stripe-Signature': 'invalid_signature'},
-                              content_type='application/json')
-        
-        assert response.status_code == 400 
+    response = client.post('/webhooks/stripe',
+                          data=json.dumps({"test": "data"}),
+                          headers={'Stripe-Signature': 'invalid_signature'},
+                          content_type='application/json')
+    assert response.status_code == 400 
