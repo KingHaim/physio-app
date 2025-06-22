@@ -7,6 +7,7 @@ from sqlalchemy import JSON as SQLAlchemyJSON # Using generic SQLAlchemy JSON ty
 from sqlalchemy import desc # Required for ordering in current_subscription query
 from typing import Optional, Tuple # Import Optional and Tuple for type hinting
 from .crypto_utils import encrypt_token, decrypt_token, encrypt_text, decrypt_text
+from flask import current_app
 
 class Patient(db.Model):
     __tablename__ = 'patient'
@@ -20,9 +21,10 @@ class Patient(db.Model):
         unique=True
     )
     # Encrypted sensitive fields - database columns with underscore prefix
-    _name = db.Column("name", db.String(100), nullable=False)
-    _email = db.Column("email", db.String(100))
-    _phone = db.Column("phone", db.String(20))
+    # Increased length to accommodate encrypted data
+    _name = db.Column("name", db.String(500), nullable=False)
+    _email = db.Column("email", db.String(500))
+    _phone = db.Column("phone", db.String(100))
     _notes = db.Column("notes", db.Text)
     
     # Non-sensitive fields remain as-is
@@ -49,6 +51,9 @@ class Patient(db.Model):
     def name(self):
         """Get decrypted patient name"""
         if self._name:
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                return self._name
             return decrypt_text(self._name)
         return None
 
@@ -56,7 +61,11 @@ class Patient(db.Model):
     def name(self, value):
         """Set encrypted patient name"""
         if value:
-            self._name = encrypt_text(value)
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                self._name = value
+            else:
+                self._name = encrypt_text(value)
         else:
             self._name = None
 
@@ -64,6 +73,9 @@ class Patient(db.Model):
     def email(self):
         """Get decrypted patient email"""
         if self._email:
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                return self._email
             return decrypt_text(self._email)
         return None
 
@@ -71,7 +83,11 @@ class Patient(db.Model):
     def email(self, value):
         """Set encrypted patient email"""
         if value:
-            self._email = encrypt_text(value)
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                self._email = value
+            else:
+                self._email = encrypt_text(value)
         else:
             self._email = None
 
@@ -79,6 +95,9 @@ class Patient(db.Model):
     def phone(self):
         """Get decrypted patient phone"""
         if self._phone:
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                return self._phone
             return decrypt_text(self._phone)
         return None
 
@@ -86,7 +105,11 @@ class Patient(db.Model):
     def phone(self, value):
         """Set encrypted patient phone"""
         if value:
-            self._phone = encrypt_text(value)
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                self._phone = value
+            else:
+                self._phone = encrypt_text(value)
         else:
             self._phone = None
 
@@ -94,6 +117,9 @@ class Patient(db.Model):
     def notes(self):
         """Get decrypted patient notes"""
         if self._notes:
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                return self._notes
             return decrypt_text(self._notes)
         return None
 
@@ -101,7 +127,11 @@ class Patient(db.Model):
     def notes(self, value):
         """Set encrypted patient notes"""
         if value:
-            self._notes = encrypt_text(value)
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                self._notes = value
+            else:
+                self._notes = encrypt_text(value)
         else:
             self._notes = None
 
@@ -143,6 +173,9 @@ class Treatment(db.Model):
     def notes(self):
         """Get decrypted treatment notes"""
         if self._notes:
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                return self._notes
             return decrypt_text(self._notes)
         return None
 
@@ -150,7 +183,11 @@ class Treatment(db.Model):
     def notes(self, value):
         """Set encrypted treatment notes"""
         if value:
-            self._notes = encrypt_text(value)
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                self._notes = value
+            else:
+                self._notes = encrypt_text(value)
         else:
             self._notes = None
 

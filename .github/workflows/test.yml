@@ -50,20 +50,33 @@ jobs:
         run: |
           echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_physio" >> $GITHUB_ENV
           echo "TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_physio" >> $GITHUB_ENV
-          echo "SECRET_KEY=test-secret-key-for-github-actions" >> $GITHUB_ENV
-          echo "FERNET_SECRET_KEY=test-fernet-key-for-github-actions-32-chars" >> $GITHUB_ENV
-          echo "TESTING=True" >> $GITHUB_ENV
+          echo "SECRET_KEY=test-secret-key-for-ci" >> $GITHUB_ENV
+          echo "FERNET_SECRET_KEY=test-fernet-key-for-ci-32-chars-long" >> $GITHUB_ENV
+          echo "STRIPE_SECRET_KEY=sk_test_dummy" >> $GITHUB_ENV
+          echo "STRIPE_WEBHOOK_SECRET=whsec_dummy" >> $GITHUB_ENV
+          echo "FLASK_ENV=testing" >> $GITHUB_ENV
 
-      - name: Run database migrations
+      - name: Wait for PostgreSQL
         run: |
-          python run_migrations.py
+          while ! pg_isready -h localhost -p 5432 -U postgres; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+
+      - name: Fix database migration
+        run: |
+          echo "🔧 Arreglando migración de base de datos..."
+          python fix_migration_github_actions.py
 
       - name: Run tests
         run: |
-          python -m pytest -v --tb=short --maxfail=10
+          echo "🧪 Ejecutando tests..."
+          python -m pytest tests/ -v --tb=short --maxfail=10
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_physio
           TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_physio
-          SECRET_KEY: test-secret-key-for-github-actions
-          FERNET_SECRET_KEY: test-fernet-key-for-github-actions-32-chars
-          TESTING: True
+          SECRET_KEY: test-secret-key-for-ci
+          FERNET_SECRET_KEY: test-fernet-key-for-ci-32-chars-long
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_WEBHOOK_SECRET: whsec_dummy
+          FLASK_ENV: testing

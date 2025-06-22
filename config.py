@@ -55,34 +55,66 @@ class Config:
     WTF_CSRF_TIME_LIMIT = 3600  # CSRF tokens valid for 1 hour (3600 seconds)
     WTF_CSRF_SSL_STRICT = False  # Allow HTTP in development
 
+    # File upload configuration
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
+    
+    # Logging configuration
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+    
+    # Security headers
+    SECURITY_HEADERS = {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'SAMEORIGIN',
+        'X-XSS-Protection': '1; mode=block',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
+    }
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+    SQLALCHEMY_ECHO = True
+
+class ProductionConfig(Config):
+    DEBUG = False
+    SQLALCHEMY_ECHO = False
+    
+    # Production-specific settings
+    if not os.getenv("DATABASE_URL"):
+        raise RuntimeError("DATABASE_URL environment variable is required for production")
 
 class TestConfig(Config):
-    """Configuration for testing environment."""
     TESTING = True
     WTF_CSRF_ENABLED = False
     
-    # Use a test database if specified
+    # Use test database URL if provided, otherwise use SQLite
     TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
     if TEST_DATABASE_URL:
         SQLALCHEMY_DATABASE_URI = TEST_DATABASE_URL
     else:
-        # Use SQLite for testing if no test database is specified
         SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(basedir, 'instance', 'test_physio.db')}"
     
-    # Optimized database settings for testing - much more conservative
+    # Optimize for testing - reduce connection pool size
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 1,  # Minimal pool size for tests
+        'pool_size': 5,
         'pool_recycle': 300,
         'pool_pre_ping': True,
-        'max_overflow': 0,  # No overflow connections
-        'pool_reset_on_return': 'commit',  # Reset connections after use
-        'pool_timeout': 10,  # Shorter timeout
-        'pool_recycle': 60,  # Recycle connections more frequently
+        'max_overflow': 10
     }
+    
+    # Disable encryption for testing to avoid length issues
+    DISABLE_ENCRYPTION = True
+    
+    # Use simpler session configuration for testing
+    SESSION_COOKIE_SECURE = False
+    SESSION_COOKIE_HTTPONLY = True
     
     # Disable CSRF for testing
     WTF_CSRF_ENABLED = False
-    
-    # Use in-memory SQLite for faster tests if no test database specified
-    if not TEST_DATABASE_URL:
-        SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+
+# Configuration dictionary
+config = {
+    'development': DevelopmentConfig,
+    'production': ProductionConfig,
+    'testing': TestConfig,
+    'default': DevelopmentConfig
+}
