@@ -19,7 +19,7 @@ class Config:
         raise RuntimeError("FERNET_SECRET_KEY environment variable is required for data encryption")
     
     # Use absolute path for database
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", f"sqlite:///{os.path.join(basedir, 'instance', 'physio.db')}")
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///" + os.path.join(basedir, 'instance', 'physio.db'))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Database connection pool settings
@@ -46,17 +46,17 @@ class Config:
     SENTRY_DSN = os.environ.get('SENTRY_DSN')
     
     # Session configuration
-    PERMANENT_SESSION_LIFETIME = timedelta(days=30)  # Sessions last 30 days
-    SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+    PERMANENT_SESSION_LIFETIME = timedelta(days=30)
+    SESSION_COOKIE_SECURE = False
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     
     # CSRF configuration
-    WTF_CSRF_TIME_LIMIT = 3600  # CSRF tokens valid for 1 hour (3600 seconds)
-    WTF_CSRF_SSL_STRICT = False  # Allow HTTP in development
+    WTF_CSRF_TIME_LIMIT = 3600
+    WTF_CSRF_SSL_STRICT = False
 
     # File upload configuration
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024
     UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
     
     # Logging configuration
@@ -91,7 +91,7 @@ class TestConfig(Config):
     if TEST_DATABASE_URL:
         SQLALCHEMY_DATABASE_URI = TEST_DATABASE_URL
     else:
-        SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(basedir, 'instance', 'test_physio.db')}"
+        SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, 'instance', 'test_physio.db')
     
     # Optimize for testing - reduce connection pool size
     SQLALCHEMY_ENGINE_OPTIONS = {
