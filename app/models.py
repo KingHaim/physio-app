@@ -342,6 +342,15 @@ class User(db.Model, UserMixin):
     clinic_percentage_agreement = db.Column(db.Boolean, default=False)
     clinic_percentage_amount = db.Column(db.Float, nullable=True)
     
+    # Fiscal configuration fields
+    tax_year = db.Column(db.Integer, default=2025)
+    tax_brackets = db.Column(SQLAlchemyJSON, nullable=True)  # Store tax brackets as JSON
+    autonomo_contribution_rate = db.Column(db.Float, default=0.314)
+    tax_rate = db.Column(db.Float, default=0.19)
+    clinic_fee_rate = db.Column(db.Float, default=0.30)
+    currency_symbol = db.Column(db.String(5), default='€')
+    revenue_currency_symbol = db.Column(db.String(5), default='£')
+    
     # Stripe Customer ID
     stripe_customer_id = db.Column(db.String(255), nullable=True, unique=True, index=True)
     

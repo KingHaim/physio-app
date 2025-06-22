@@ -2,23 +2,24 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, TextAreaField, PasswordField, DecimalField, SelectField, BooleanField
 from wtforms.validators import DataRequired, Optional, Length, Email, URL, EqualTo, NumberRange
 from wtforms.fields import DateField
+from flask_babel import lazy_gettext as _l
 
 class RegistrationForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired(), Length(min=3, max=64)])
-    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=120)])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
-    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    consent_checkbox = BooleanField('I agree to the <a href="/privacy" target="_blank">Privacy Policy</a> and <a href="/terms" target="_blank">Terms & Conditions</a>', validators=[DataRequired()])
+    username = StringField(_l('Username'), validators=[DataRequired(), Length(min=3, max=64)])
+    email = StringField(_l('Email'), validators=[DataRequired(), Email(), Length(max=120)])
+    password = PasswordField(_l('Password'), validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField(_l('Confirm Password'), validators=[DataRequired(), EqualTo('password')])
+    consent_checkbox = BooleanField(_l('I agree to the <a href="/privacy" target="_blank">Privacy Policy</a> and <a href="/terms" target="_blank">Terms & Conditions</a>'), validators=[DataRequired()])
     # For now, plan selection is handled on the backend, defaulting to 'free'
     # We could add a RadioField here later if we want users to select a plan at registration
     # plan = RadioField('Choose Your Plan', choices=[('free', 'Free Plan'), ('pro', 'Pro Plan ($19.99/month)')], default='free')
-    submit = SubmitField('Register')
+    submit = SubmitField(_l('Register'))
 
 class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    remember_me = BooleanField('Remember Me')
-    submit = SubmitField('Sign In')
+    email = StringField(_l('Email'), validators=[DataRequired(), Email()])
+    password = PasswordField(_l('Password'), validators=[DataRequired()])
+    remember_me = BooleanField(_l('Remember Me'))
+    submit = SubmitField(_l('Sign In'))
 
 class ClinicForm(FlaskForm):
     clinic_name = StringField('Clinic Name', validators=[DataRequired(), Length(max=150)])

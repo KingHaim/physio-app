@@ -367,6 +367,15 @@ def generate_patient_report(id):
         if not treatments_query:
             return jsonify({'success': False, 'message': 'No treatments found for this patient.'}), 400
 
+        # Get the requested language from the request body
+        data = request.get_json() or {}
+        requested_language = data.get('language', 'en')  # Default to English if not specified
+        
+        # Validate language
+        supported_languages = ['en', 'es', 'fr', 'it']
+        if requested_language not in supported_languages:
+            return jsonify({'success': False, 'message': f'Unsupported language. Supported languages: {", ".join(supported_languages)}'}), 400
+
         # Convert Patient object to dict for format_treatment_history
         patient_dict = {
             'id': patient.id,
@@ -401,6 +410,16 @@ def generate_patient_report(id):
 
         # Build the prompt for the AI
         prompt = format_treatment_history(patient_dict, treatments)
+        
+        # Add language instruction to the prompt
+        language_instructions = {
+            'en': 'Please generate this report in English.',
+            'es': 'Por favor, genera este informe en español.',
+            'fr': 'Veuillez générer ce rapport en français.',
+            'it': 'Si prega di generare questo rapporto in italiano.'
+        }
+        
+        prompt_with_language = f"{prompt}\n\n{language_instructions.get(requested_language, language_instructions['en'])}"
 
         # Call DeepSeek
         import os, requests
@@ -418,7 +437,7 @@ def generate_patient_report(id):
                 "model": "deepseek-chat",
                 "messages": [
                     {"role": "system", "content": "You are a professional physiotherapist with expertise in creating detailed, evidence-based treatment progress reports. You use precise physiotherapy terminology while ensuring your reports remain clear and accessible."},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": prompt_with_language}
                 ],
                 "temperature": 0.3,
                 "max_tokens": 4000

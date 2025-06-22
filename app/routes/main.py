@@ -1043,32 +1043,35 @@ def search():
 def patients_list():
     search = request.args.get('search', '')
     status_filter = request.args.get('status', 'all')
-
-    # Get patient usage details
+    
+    # Get patient usage details for the current user
     current_patients_count = 0
     patient_plan_limit = None
     if current_user.is_authenticated: # Should always be true due to @login_required
         current_patients_count, patient_plan_limit = current_user.patient_usage_details
 
-    # query = Patient.query # Old query
     # Query only patients belonging to the current user
     query = Patient.query.filter_by(user_id=current_user.id)
 
-    if search:
-        query = query.filter(
-            or_(
-                Patient.name.ilike(f'%{search}%'),
-                Patient.diagnosis.ilike(f'%{search}%'),
-                Patient.notes.ilike(f'%{search}%')
-            )
-        )
-
+    # Apply status filter if specified
     if status_filter != 'all':
         query = query.filter(Patient.status == status_filter)
 
-    # Fetch all patients and sort by decrypted name in Python
-    # This ensures proper alphabetical ordering of the actual names
+    # Get all patients first
     patients = query.all()
+    
+    # Apply search filter in Python (since Patient.name is a property)
+    if search:
+        search_lower = search.lower()
+        patients = [
+            p for p in patients 
+            if (p.name and search_lower in p.name.lower()) or
+               (p.diagnosis and search_lower in p.diagnosis.lower()) or
+               (p.notes and search_lower in p.notes.lower())
+        ]
+
+    # Sort by decrypted name in Python
+    # This ensures proper alphabetical ordering of the actual names
     patients.sort(key=lambda p: p.name.lower() if p.name else '')
 
     return render_template('patients_list.html',
@@ -1787,11 +1790,15 @@ def analytics():
             func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
             func.sum(Treatment.fee_charged).label('monthly_total')
         ).join(Patient).filter(Patient.user_id == current_user.id, Treatment.fee_charged.isnot(None)).group_by('month')
+        
+        # Use dynamic clinic name from user settings
+        clinic_name_filter = current_user.clinic_name or 'CostaSpine Clinic' # Fallback for safety
+        
         costaspine_revenue_base_query = db.session.query(
             func.sum(Treatment.fee_charged).label('total_costaspine_revenue')
         ).join(Patient).filter(
             Patient.user_id == current_user.id,
-            Treatment.location == 'CostaSpine Clinic',
+            Treatment.location == clinic_name_filter, # Use dynamic clinic name
             Treatment.fee_charged.isnot(None)
         )
         autonomo_base_query = db.session.query(
@@ -1799,7 +1806,7 @@ def analytics():
             func.to_char(Treatment.created_at, 'YYYY').label('year'),
             func.sum(Treatment.fee_charged).label('monthly_total_revenue'),
             func.sum(
-                case((Treatment.location == 'CostaSpine Clinic', Treatment.fee_charged), else_=0)
+                case((Treatment.location == clinic_name_filter, Treatment.fee_charged), else_=0) # Use dynamic clinic name
             ).label('monthly_costaspine_revenue')
         ).join(Patient).filter(
             Patient.user_id == current_user.id,
@@ -1829,7 +1836,10 @@ def analytics():
         Treatment.created_at <= end_of_week_dt
     )
     costaspine_revenue_weekly_data = costaspine_revenue_weekly_query.scalar() or 0
-    costaspine_service_fee_weekly = costaspine_revenue_weekly_data * 0.30
+    
+    # Use dynamic percentage from user settings
+    clinic_percentage = current_user.clinic_percentage_amount or 30.0 # Fallback
+    costaspine_service_fee_weekly = costaspine_revenue_weekly_data * (clinic_percentage / 100.0)
     
     total_autonomo_contribution = 0
     monthly_data_autonomo = autonomo_base_query.all()
@@ -1839,7 +1849,7 @@ def analytics():
         current_brackets = TAX_BRACKETS_2025 
         revenue = month_data.monthly_total_revenue or 0
         cs_revenue = month_data.monthly_costaspine_revenue or 0
-        costaspine_fee = cs_revenue * 0.30
+        costaspine_fee = cs_revenue * (clinic_percentage / 100.0) # Use dynamic percentage
         net_revenue_before_contrib = revenue - costaspine_fee - MONTHLY_FIXED_EXPENSES 
         bracket_info = find_bracket(net_revenue_before_contrib, current_brackets)
         min_base = bracket_info.get('base', 0) if bracket_info else 0
@@ -1859,6 +1869,8 @@ def analytics():
                           costaspine_revenue=costaspine_revenue_data, # Keep total revenue for modal/other use
                           costaspine_service_fee_weekly=costaspine_service_fee_weekly, # Pass weekly fee for the card
                           total_autonomo_contribution=total_autonomo_contribution,
+                          clinic_name=current_user.clinic_name or 'Clinic', # Pass clinic name to template
+                          clinic_percentage=clinic_percentage, # Pass percentage to template
                           # Chart data is no longer passed here
                           ai_report_html=ai_report_html, 
                           ai_report_generated_at=ai_report_generated_at
@@ -1868,15 +1880,17 @@ def analytics():
 @login_required
 @physio_required # <<< ADD DECORATOR
 def get_costaspine_fee_data():
-    """Returns the date, fee, and patient name for all treatments at CostaSpine Clinic with a fee."""
+    """Returns the date, fee, and patient name for all treatments at the user's clinic with a fee."""
     try:
+        clinic_name_filter = current_user.clinic_name or 'CostaSpine Clinic' # Fallback
+        
         fee_data = db.session.query(
             Treatment.created_at,
             Treatment.fee_charged,
             Patient.name
         ).join(Patient, Treatment.patient_id == Patient.id) \
          .filter(
-            Treatment.location == 'CostaSpine Clinic',
+            Treatment.location == clinic_name_filter, # Use dynamic clinic name
             Treatment.fee_charged.isnot(None)
         ).order_by(Treatment.created_at).all()
         
@@ -2353,13 +2367,28 @@ def financials():
         quarterly_data['annual']['fixed_expenses'] += total_fixed_monthly_expenses
         quarterly_data['annual']['net'] = quarterly_data['annual']['revenue'] - quarterly_data['annual']['costaspine_fee'] - quarterly_data['annual']['tax'] - quarterly_data['annual']['fixed_expenses']
 
+    clinic_name = current_user.clinic_name or _('Clinic')
+    clinic_fee_rate = current_user.clinic_fee_rate if current_user.clinic_fee_rate is not None else 0.30
+    clinic_fee_label = f"{clinic_name} Fee ({int(clinic_fee_rate*100)}%)"
+    metrics_labels = {
+        'revenue': _('Total Revenue'),
+        'costaspine_revenue': _(f'{clinic_name} Revenue'),
+        'costaspine_fee': _(clinic_fee_label),
+        'fixed_expenses': _('Total Fixed Expenses (€)'),
+        'tax': _('Est. Autónomo Contribution (€)'),
+        'net': _('Est. Net Revenue (Final)')
+    }
+    
     return render_template(
         'financials.html',
         data=quarterly_data,
         monthly_breakdown=monthly_data,
         selected_year=selected_year,
         available_years=sorted(list(set(available_years)), reverse=True),
-        tax_year=2025
+        tax_year=2025,
+        clinic_name=clinic_name,
+        clinic_fee_label=clinic_fee_label,
+        metrics_labels=metrics_labels
     )
 
 # --- Review Missing Payments Route ---
@@ -3475,53 +3504,97 @@ def get_calendar_appointments():
 def bulk_delete_patients():
     data = request.get_json()
     patient_ids = data.get('patient_ids', [])
+    
+    # Add logging for debugging
+    current_app.logger.info(f"Bulk delete request received for patient IDs: {patient_ids}")
+    current_app.logger.info(f"Current user ID: {current_user.id}")
 
     if not patient_ids:
+        current_app.logger.warning("No patient IDs provided in request")
         return jsonify({'status': 'error', 'message': 'No patient IDs provided'}), 400
 
     deleted_count = 0
     errors = []
+    successful_deletions = []
 
     for patient_id in patient_ids:
         try:
+            current_app.logger.info(f"Attempting to delete patient ID: {patient_id}")
             patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
+            
             if patient:
-                # Before deleting the patient, ensure related records are handled.
-                # Option 1: If cascade delete is set up in models, db.session.delete(patient) is enough.
-                # Option 2: Manually delete related records if cascade is not set.
-                # Example: Treatment.query.filter_by(patient_id=patient.id).delete()
-                #          PatientReport.query.filter_by(patient_id=patient.id).delete()
-                # For now, assuming cascade or manual deletion of related records is handled elsewhere or not needed.
+                current_app.logger.info(f"Found patient: {patient.name} (ID: {patient.id})")
                 
+                # Delete related records first to avoid foreign key constraint issues
+                # Delete treatments
+                treatments_deleted = Treatment.query.filter_by(patient_id=patient.id).delete()
+                current_app.logger.info(f"Deleted {treatments_deleted} treatments for patient {patient.id}")
+                
+                # Delete patient reports
+                reports_deleted = PatientReport.query.filter_by(patient_id=patient.id).delete()
+                current_app.logger.info(f"Deleted {reports_deleted} reports for patient {patient.id}")
+                
+                # Delete user consents
+                consents_deleted = UserConsent.query.filter_by(patient_id=patient.id).delete()
+                current_app.logger.info(f"Deleted {consents_deleted} consents for patient {patient.id}")
+                
+                # Delete unmatched calendly bookings
+                bookings_deleted = UnmatchedCalendlyBooking.query.filter_by(matched_patient_id=patient.id).delete()
+                current_app.logger.info(f"Deleted {bookings_deleted} bookings for patient {patient.id}")
+                
+                # Now delete the patient
                 db.session.delete(patient)
                 deleted_count += 1
+                successful_deletions.append(patient_id)
+                current_app.logger.info(f"Successfully marked patient {patient.id} for deletion")
             else:
-                errors.append(f"Patient with ID {patient_id} not found or not accessible.")
+                error_msg = f"Patient with ID {patient_id} not found or not accessible."
+                current_app.logger.warning(error_msg)
+                errors.append(error_msg)
         except Exception as e:
-            errors.append(f"Error deleting patient ID {patient_id}: {str(e)}")
-            db.session.rollback() # Rollback on error for this specific patient
+            error_msg = f"Error deleting patient ID {patient_id}: {str(e)}"
+            current_app.logger.error(error_msg)
+            errors.append(error_msg)
+            # Don't rollback here, continue with other patients
 
-    if not errors:
-        try:
+    current_app.logger.info(f"Deletion loop completed. Deleted: {deleted_count}, Errors: {len(errors)}")
+
+    # Try to commit all successful deletions
+    try:
+        if deleted_count > 0:
             db.session.commit()
-            return jsonify({'status': 'success', 'message': f'{deleted_count} patients deleted successfully.'}), 200
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'status': 'error', 'message': f'Failed to commit deletions: {str(e)}'}), 500
-    else:
-        # If there were errors, no changes are committed overall unless partial success is desired.
-        # For now, let's assume all-or-nothing for the commit of successful deletions if errors occurred for others.
-        # If some deletions were successful before an error, and you still want to commit them,
-        # you'd need to adjust the logic (e.g., commit after each successful deletion or after the loop if some were successful).
-        # However, a rollback was already called for individual errors.
-        # This part might need refinement based on desired transactional behavior.
-        # For simplicity, if any error occurred, we assume we don't commit the ones that might have been staged.
-        # A more robust approach would be to collect all patients to delete, then attempt deletion in one transaction.
-        db.session.rollback() # Ensure rollback if there were any errors during the loop
+            current_app.logger.info(f"Successfully committed deletion of {deleted_count} patients")
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Failed to commit deletions: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': 'Some patients could not be deleted.',
+            'message': f'Failed to commit deletions: {str(e)}'
+        }), 500
+
+    # Return appropriate response based on results
+    if deleted_count > 0 and not errors:
+        # All deletions successful
+        current_app.logger.info("All deletions successful")
+        return jsonify({
+            'status': 'success',
+            'message': f'{deleted_count} patients deleted successfully.'
+        }), 200
+    elif deleted_count > 0 and errors:
+        # Partial success
+        current_app.logger.info(f"Partial success: {deleted_count} deleted, {len(errors)} errors")
+        return jsonify({
+            'status': 'partial_success',
+            'message': f'{deleted_count} patients deleted successfully. {len(errors)} patients could not be deleted.',
             'deleted_count': deleted_count,
+            'errors': errors
+        }), 200
+    else:
+        # No deletions successful
+        current_app.logger.warning(f"No deletions successful. Errors: {errors}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Could not delete selected patients.',
             'errors': errors
         }), 400
 
@@ -3856,4 +3929,42 @@ def format_month(month_str):
         return datetime.strptime(month_str, "%Y-%m").strftime("%B %Y")
     except Exception:
         return month_str
+
+@main.route('/api/analytics/inactive-patients') # Renamed endpoint
+@login_required
+@physio_required
+def get_inactive_patients_data():
+    """
+    Returns count and list of patients who have not had a treatment in the last 90 days.
+    """
+    try:
+        ninety_days_ago = datetime.utcnow() - timedelta(days=90)
+
+        # Get all active patients for this user
+        active_patients = Patient.query.filter(
+            Patient.user_id == current_user.id,
+            Patient.status == 'Active'
+        ).all()
+
+        inactive_patients = []
+        
+        for patient in active_patients:
+            # Get the last treatment for this patient
+            last_treatment = Treatment.query.filter(
+                Treatment.patient_id == patient.id
+            ).order_by(Treatment.created_at.desc()).first()
+            
+            # Check if patient has no treatment or last treatment was > 90 days ago
+            if not last_treatment or last_treatment.created_at < ninety_days_ago:
+                inactive_patients.append({
+                    'id': patient.id,
+                    'name': patient.name  # This will use the property getter
+                })
+
+        count = len(inactive_patients)
+
+        return jsonify({'count': count, 'patients': inactive_patients})
+    except Exception as e:
+        current_app.logger.error(f"Error in get_inactive_patients_data: {e}")
+        return jsonify({"error": "Failed to fetch inactive patient data"}), 500
 

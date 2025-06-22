@@ -148,8 +148,8 @@
             <h1 class="mb-3">{{ patient.name }}</h1>
             <div class="patient-info mb-3">
                 <p class="mb-1"><strong>{{ _('Date of Birth:') }}</strong> {{ patient.date_of_birth.strftime('%Y-%m-%d') if patient.date_of_birth else _('Not provided') }}</p>
-                <p class="mb-1"><strong>{{ _('Contact:') }}</strong> {{ patient.contact }}</p>
-                <p class="mb-1"><strong>{{ _('Status:') }}</strong> <span class="badge bg-{{ 'primary' if patient.status == 'Active' else 'secondary' }}">{{ patient.status }}</span></p>
+                <p class="mb-1"><strong>{{ _('Contact:') }}</strong> {{ patient.contact or _('Not provided') }}</p>
+                <p class="mb-1"><strong>{{ _('Status:') }}</strong> <span class="badge bg-{{ 'primary' if patient.status == 'Active' else 'secondary' }}">{{ _(patient.status) }}</span></p>
             </div>
         </div>
         <div class="col-md-4 text-md-end">
@@ -217,11 +217,11 @@
                                         <div class="d-flex w-100 justify-content-between">
                                             <h6 class="mb-1">
                                                 {{ rule.treatment_type }} 
-                                                - {{ rule.recurrence_type|replace('-', ' ')|title }}
+                                                - {{ _(rule.recurrence_type|replace('-', ' ')|title) }}
                                             </h6>
                                             <small>
                                                 <span class="badge bg-{{ 'success' if rule.is_active else 'secondary' }}">
-                                                    {{ 'Active' if rule.is_active else 'Inactive' }}
+                                                    {{ _('Active') if rule.is_active else _('Inactive') }}
                                                 </span>
                                             </small>
                                         </div>
@@ -332,14 +332,14 @@
                                                     <td>{{ treatment.treatment_type or 'N/A' }}</td>
                                                     <td>
                                                         <span class="badge {% if treatment.status == 'Completed' %}bg-primary{% elif treatment.status == 'Scheduled' %}bg-info text-dark{% elif treatment.status == 'Cancelled' %}bg-danger{% else %}bg-secondary{% endif %} status-badge" id="status-{{ treatment.id }}">
-                                                            {{ treatment.status or 'N/A' }}
+                                                            {{ _(treatment.status) if treatment.status else 'N/A' }}
                                                         </span>
                                                     </td>
                                                     <td>{{ treatment.pain_level if treatment.pain_level is not none else 'N/A' }}/10</td>
                                                     <td class="fee-column">
                                                         <div class="input-group input-group-sm">
-                                                            <input type="number" class="form-control form-control-sm fee-input" id="fee-input-{{ treatment.id }}" value="{{ treatment.fee_charged if treatment.fee_charged is not none else '' }}" placeholder="Fee" step="0.01" style="width: 70px;">
-                                                            <button class="btn btn-outline-secondary btn-sm set-fee-btn" data-treatment-id="{{ treatment.id }}" type="button" title="Set Fee">
+                                                            <input type="number" class="form-control form-control-sm fee-input" id="fee-input-{{ treatment.id }}" value="{{ treatment.fee_charged if treatment.fee_charged is not none else '' }}" placeholder="{{ _('Fee') }}" step="0.01" style="width: 70px;">
+                                                            <button class="btn btn-outline-secondary btn-sm set-fee-btn" data-treatment-id="{{ treatment.id }}" type="button" title="{{ _('Set Fee') }}">
                                                                 <i class="bi bi-check-lg"></i>
                                                             </button>
                                                         </div>
@@ -348,15 +348,15 @@
                                                     <td class="payment-column">
                                                         <span id="payment-status-{{ treatment.id }}" class="d-block mb-1">
                                                             {% if treatment.payment_method %}
-                                                                Paid - {{ treatment.payment_method }}
+                                                                {{ _('Paid - %(method)s', method=_(treatment.payment_method)) }}
                                                             {% else %}
-                                                                Unpaid
+                                                                {{ _('Unpaid') }}
                                                             {% endif %}
                                                         </span>
                                                         {% if not treatment.payment_method %}
                                                         <div class="btn-group btn-group-sm payment-buttons" id="payment-buttons-{{ treatment.id }}">
-                                                            <button class="btn btn-outline-success btn-sm set-payment-btn" data-treatment-id="{{ treatment.id }}" data-method="Cash">Cash</button>
-                                                            <button class="btn btn-outline-primary btn-sm set-payment-btn" data-treatment-id="{{ treatment.id }}" data-method="Card">Card</button>
+                                                            <button class="btn btn-outline-success btn-sm set-payment-btn" data-treatment-id="{{ treatment.id }}" data-method="Cash">{{ _('Cash') }}</button>
+                                                            <button class="btn btn-outline-primary btn-sm set-payment-btn" data-treatment-id="{{ treatment.id }}" data-method="Card">{{ _('Card') }}</button>
                                                         </div>
                                                         {% endif %}
                                                         <small id="payment-update-status-{{ treatment.id }}" class="text-muted d-block mt-1"></small>
@@ -364,10 +364,10 @@
                                                     <td>
                                                         <div class="btn-group">
                                                             <a href="{{ url_for('main.view_treatment', id=treatment.id) }}" class="btn btn-sm btn-primary">
-                                                                <i class="bi bi-eye"></i> View
+                                                                <i class="bi bi-eye"></i> {{ _('View') }}
                                                             </a>
                                                             <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-sm btn-secondary">
-                                                                <i class="bi bi-pencil"></i> Edit
+                                                                <i class="bi bi-pencil"></i> {{ _('Edit') }}
                                                             </a>
                                                         </div>
                                                     </td>
@@ -379,7 +379,7 @@
                                 </div>
                             {% else %}
                                 <div class="alert alert-info">
-                                    <i class="bi bi-info-circle"></i> No treatments found for this patient.
+                                    <i class="bi bi-info-circle"></i> {{ _('No treatments found for this patient.') }}
                                 </div>
                             {% endif %}
                         </div>
@@ -446,7 +446,7 @@
                                                     <div class="modal-content">
                                                         <div class="modal-header">
                                                             <h5 class="modal-title" id="consentModalLabel{{ consent.id }}">{{ _('Consent Details') }}</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
                                                         </div>
                                                         <div class="modal-body">
                                                             <dl class="row">
@@ -512,7 +512,7 @@
                                         <a href="{{ url_for('main.patient_reports_list', patient_id=patient.id) }}?report_id={{ report.id }}" 
                                            class="list-group-item list-group-item-action">
                                             <div class="d-flex w-100 justify-content-between">
-                                                <h6 class="mb-1">{{ report.report_type }}</h6>
+                                                <h6 class="mb-1">{{ _(report.report_type) }}</h6>
                                                 <small>{{ report.generated_date.strftime('%Y-%m-%d %H:%M') }}</small>
                                             </div>
                                             <small>{{ _('Click to view this report') }}</small>
@@ -535,22 +535,22 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="treatmentDetailModalLabel">Treatment Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="treatmentDetailModalLabel">{{ _('Treatment Details') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <p><strong>Date:</strong> <span id="treatmentDate"></span></p>
-                        <p><strong>Description:</strong> <span id="treatmentDescription"></span></p>
+                        <p><strong>{{ _('Date:') }}</strong> <span id="treatmentDate"></span></p>
+                        <p><strong>{{ _('Description:') }}</strong> <span id="treatmentDescription"></span></p>
                     </div>
                     <div class="col-md-6">
-                        <p><strong>Pain Level:</strong> <span id="treatmentPainLevel"></span></p>
+                        <p><strong>{{ _('Pain Level:') }}</strong> <span id="treatmentPainLevel"></span></p>
                     </div>
                 </div>
                 <div class="row mt-3">
                     <div class="col-12">
-                        <h6>Progress Notes</h6>
+                        <h6>{{ _('Progress Notes') }}</h6>
                         <div class="p-3 bg-light rounded">
                             <p id="treatmentNotes" class="mb-0"></p>
                         </div>
@@ -559,9 +559,9 @@
             </div>
             <div class="modal-footer">
                 <a id="editTreatmentBtn" href="#" class="btn btn-primary">
-                    <i class="bi bi-pencil"></i> Edit Treatment
+                    <i class="bi bi-pencil"></i> {{ _('Edit Treatment') }}
                 </a>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
             </div>
         </div>
     </div>
@@ -573,40 +573,40 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="newTreatmentModalLabel">Add Treatment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="newTreatmentModalLabel">{{ _('Add Treatment') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
             </div>
             <div class="modal-body">
                 <form id="treatmentForm">
                     <div class="mb-3">
-                        <label for="treatment_type" class="form-label">Description</label>
+                        <label for="treatment_type" class="form-label">{{ _('Description') }}</label>
                         <input type="text" class="form-control" id="treatment_type" name="treatment_type">
                     </div>
                     <div class="mb-3">
-                        <label for="date" class="form-label">Date</label>
+                        <label for="date" class="form-label">{{ _('Date') }}</label>
                         <input type="hidden" id="date" name="date">
                     </div>
                     <div class="mb-3">
-                        <label for="pain_level" class="form-label">Pain Level (0-10)</label>
+                        <label for="pain_level" class="form-label">{{ _('Pain Level (0-10)') }}</label>
                         <input type="number" class="form-control" id="pain_level" name="pain_level" min="0" max="10">
-                        <small class="text-muted">Optional: Leave blank if not applicable</small>
+                        <small class="text-muted">{{ _('Optional: Leave blank if not applicable') }}</small>
                     </div>
                     <div class="mb-3">
-                        <label for="movement_restriction" class="form-label">Movement Restriction</label>
+                        <label for="movement_restriction" class="form-label">{{ _('Movement Restriction') }}</label>
                         <textarea class="form-control" id="movement_restriction" name="movement_restriction" rows="3"></textarea>
                     </div>
                     
                     <!-- Body Chart Section -->
                     <div class="mb-3">
-                        <label class="form-label">Body Chart</label>
+                        <label class="form-label">{{ _('Body Chart') }}</label>
                         <div class="card">
                             <div class="card-header">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0">Add Trigger Points</h6>
+                                    <h6 class="mb-0">{{ _('Add Trigger Points') }}</h6>
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <button type="button" class="btn btn-outline-danger active" data-point-type="active">Active</button>
-                                        <button type="button" class="btn btn-outline-warning" data-point-type="latent">Latent</button>
-                                        <button type="button" class="btn btn-outline-info" data-point-type="satellite">Satellite</button>
+                                        <button type="button" class="btn btn-outline-danger active" data-point-type="active">{{ _('Active') }}</button>
+                                        <button type="button" class="btn btn-outline-warning" data-point-type="latent">{{ _('Latent') }}</button>
+                                        <button type="button" class="btn btn-outline-info" data-point-type="satellite">{{ _('Satellite') }}</button>
                                     </div>
                                 </div>
                             </div>
@@ -617,19 +617,19 @@
                                         <g id="addTriggerPoints"></g>
                                     </svg>
                                 </div>
-                                <div class="text-muted small mt-2">Click on the body map to add trigger points</div>
+                                <div class="text-muted small mt-2">{{ _('Click on the body map to add trigger points') }}</div>
                                 
                                 <!-- Trigger Points Table -->
                                 <div class="mt-3">
-                                    <h6>Trigger Points</h6>
+                                    <h6>{{ _('Trigger Points') }}</h6>
                                     <div class="table-responsive">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>Type</th>
-                                                    <th>Muscle</th>
-                                                    <th>Intensity</th>
-                                                    <th>Actions</th>
+                                                    <th>{{ _('Type') }}</th>
+                                                    <th>{{ _('Muscle') }}</th>
+                                                    <th>{{ _('Intensity') }}</th>
+                                                    <th>{{ _('Actions') }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="addPointsTableBody">
@@ -646,29 +646,29 @@
                     <input type="hidden" id="addTriggerPointsData" name="trigger_points_data" value="[]">
                     
                     <div class="mb-3">
-                        <label for="assessment" class="form-label">Assessment</label>
+                        <label for="assessment" class="form-label">{{ _('Assessment') }}</label>
                         <textarea class="form-control" id="assessment" name="assessment" rows="3"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="notes" class="form-label">Progress Notes</label>
+                        <label for="notes" class="form-label">{{ _('Progress Notes') }}</label>
                         <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="status" class="form-label">Status</label>
+                        <label for="status" class="form-label">{{ _('Status') }}</label>
                         <select class="form-select" id="status" name="status">
-                            <option value="" disabled selected>Select status</option>
-                            <option value="Scheduled">Scheduled</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Cancelled">Cancelled</option>
+                            <option value="" disabled selected>{{ _('Select status') }}</option>
+                            <option value="Scheduled">{{ _('Scheduled') }}</option>
+                            <option value="In Progress">{{ _('In Progress') }}</option>
+                            <option value="Completed">{{ _('Completed') }}</option>
+                            <option value="Cancelled">{{ _('Cancelled') }}</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="treatment_type" class="form-label">Treatment Type</label>
+                        <label for="treatment_type" class="form-label">{{ _('Treatment Type') }}</label>
                         <input type="text" class="form-control" id="treatment_type" name="treatment_type" required>
                     </div>
                     <div class="mb-3">
-                        <label for="provider" class="form-label">Provider</label>
+                        <label for="provider" class="form-label">{{ _('Provider') }}</label>
                         <input type="text" class="form-control" id="provider" name="provider">
                     </div>
 
@@ -725,11 +725,11 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">Add Treatment</button>
+                    <button type="submit" class="btn btn-primary">{{ _('Add Treatment') }}</button>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
             </div>
         </div>
     </div>
@@ -740,15 +740,15 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exercisePrescriptionModalLabel">AI Generated Exercise Prescription</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title" id="exercisePrescriptionModalLabel">{{ _('AI Generated Exercise Prescription') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
       </div>
       <div class="modal-body" id="exercisePrescriptionBody">
         {# Prescription content will be loaded here #}
-        <p>Generating exercise prescription...</p>
+        <p>{{ _('Generating exercise prescription...') }}</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
         {# Optional: Add a print button later #}
         {# <button type="button" class="btn btn-primary" onclick="window.print();">Print</button> #}
       </div>
@@ -802,6 +802,61 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Language Selection Modal for AI Report -->
+<div class="modal fade" id="languageSelectionModal" tabindex="-1" aria-labelledby="languageSelectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="languageSelectionModalLabel">{{ _('Select Report Language') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">{{ _('Choose the language for your AI-generated patient report:') }}</p>
+        <div class="row">
+          <div class="col-6 mb-2">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="reportLanguage" id="langEnglish" value="en" checked>
+              <label class="form-check-label" for="langEnglish">
+                <i class="bi bi-flag"></i> English
+              </label>
+            </div>
+          </div>
+          <div class="col-6 mb-2">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="reportLanguage" id="langSpanish" value="es">
+              <label class="form-check-label" for="langSpanish">
+                <i class="bi bi-flag"></i> Español
+              </label>
+            </div>
+          </div>
+          <div class="col-6 mb-2">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="reportLanguage" id="langFrench" value="fr">
+              <label class="form-check-label" for="langFrench">
+                <i class="bi bi-flag"></i> Français
+              </label>
+            </div>
+          </div>
+          <div class="col-6 mb-2">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="reportLanguage" id="langItalian" value="it">
+              <label class="form-check-label" for="langItalian">
+                <i class="bi bi-flag"></i> Italiano
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+        <button type="button" class="btn btn-primary" id="generateReportWithLanguage">
+          <i class="bi bi-file-earmark-text"></i> {{ _('Generate Report') }}
+        </button>
       </div>
     </div>
   </div>
@@ -942,6 +997,12 @@ function getCurrentLang() {
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+  // Add a guard to prevent this script from running multiple times
+  if (document.body.hasAttribute('data-patient-detail-script-loaded')) {
+      return;
+  }
+  document.body.setAttribute('data-patient-detail-script-loaded', 'true');
+
   // Verify CSRF token is available
   if (!csrfToken) {
     console.error('CSRF token not found!');
@@ -991,35 +1052,62 @@ function getCurrentLang() {
     });
   });
 
+  let isGenerating = false; // Add a flag to prevent multiple submissions
   var generateBtn = document.getElementById('generateReportBtn');
   if (generateBtn) {
     generateBtn.addEventListener('click', function() {
-      generateBtn.disabled = true;
-      generateBtn.textContent = 'Generando...';
+      // Show the language selection modal instead of generating directly
+      const languageModal = new bootstrap.Modal(document.getElementById('languageSelectionModal'));
+      languageModal.show();
+    });
+  }
+
+  // Handle the generate report button in the modal
+  var generateReportWithLanguageBtn = document.getElementById('generateReportWithLanguage');
+  if (generateReportWithLanguageBtn) {
+    generateReportWithLanguageBtn.onclick = function() {
+      if (isGenerating) {
+        return; // Prevent multiple clicks
+      }
+
+      const selectedLanguage = document.querySelector('input[name="reportLanguage"]:checked').value;
+      const languageModal = bootstrap.Modal.getInstance(document.getElementById('languageSelectionModal'));
+      
+      isGenerating = true; // Set the flag
+      // Disable the button and show loading state
+      this.disabled = true;
+      this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> {{ _("Generating...") }}';
+      
       fetch(`/api/patient/{{ patient.id }}/generate-report`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRFToken': csrfToken
-        }
+        },
+        body: JSON.stringify({
+          language: selectedLanguage
+        })
       })
       .then(response => response.json())
       .then(data => {
-        generateBtn.disabled = false;
-        generateBtn.textContent = 'Generar Informe';
         if (data.success) {
-          alert('Informe generado correctamente.');
+          languageModal.hide();
+          alert('{{ _("Report generated successfully.") }}');
           window.location.reload();
         } else {
-          alert('Error al generar el informe: ' + (data.message || ''));
+          alert('{{ _("Error generating report:") }} ' + (data.message || ''));
         }
       })
       .catch(error => {
-        generateBtn.disabled = false;
-        generateBtn.textContent = 'Generar Informe';
-        alert('Error al generar el informe: ' + error.message);
+        alert('{{ _("Error generating report:") }} ' + error.message);
+      })
+      .finally(() => {
+        // Re-enable the button and reset the flag
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-file-earmark-text"></i> {{ _("Generate Report") }}';
+        isGenerating = false; 
       });
-    });
+    };
   }
 
   var generateExerciseBtn = document.getElementById('generateExerciseBtn');

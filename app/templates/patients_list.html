@@ -398,11 +398,11 @@
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
+            if (data.status === 'success' || data.status === 'partial_success') {
                 alert(data.message || '{{ _("Selected patients deleted successfully.") }}');
                 window.location.reload();
             } else {
-                alert('{{ _("Error: ") }}' + (data.error || '{{ _("Could not delete selected patients.") }}'));
+                alert('{{ _("Error: ") }}' + (data.message || '{{ _("Could not delete selected patients.") }}'));
             }
         })
         .catch(error => {

@@ -53,9 +53,9 @@
         <div class="col-md-3 mt-3"> 
             <div class="card shadow-sm stats-card bg-info text-white" id="costaspineFeeCard" style="cursor: pointer;">
                 <div class="card-body">
-                    <h5 class="card-title">{{ _('CostaSpine Fee (This Week)') }}</h5>
+                    <h5 class="card-title">{{ _('%(clinic_name)s Fee (This Week)', clinic_name=clinic_name) }}</h5>
                     <h2 class="display-5 mb-1">£{{ "{:,.2f}".format(costaspine_service_fee_weekly or 0) }}</h2>
-                    <small class="text-light">{{ _('Total Weekly CS Revenue:') }} £{{ "{:,.2f}".format(costaspine_revenue_weekly_data or 0) }}</small>
+                    <small class="text-light">{{ _('Total Weekly %(clinic_name)s Revenue:', clinic_name=clinic_name) }} £{{ "{:,.2f}".format(costaspine_revenue_weekly_data or 0) }}</small>
                 </div>
             </div>
         </div>
@@ -71,10 +71,10 @@
         </div>
         {# New Card for Recently Inactive Patients #}
         <div class="col-md-3 mt-3"> 
-            <div class="card shadow-sm stats-card" id="inactive-weekly-box" style="cursor: pointer;" title="{{ _('Click to see list') }}">
+            <div class="card shadow-sm stats-card" id="inactive-patients-box" style="cursor: pointer;" title="{{ _('Click to see list') }}">
                 <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-person-dash"></i> {{ _('Inactive This Week') }}</h5>
-                    <h2 class="display-4"><span id="inactive-weekly-count">...</span></h2>
+                    <h5 class="card-title"><i class="bi bi-person-dash"></i> {{ _('Inactive Patients (>90d)') }}</h5>
+                    <h2 class="display-4"><span id="inactive-patients-count">...</span></h2>
                 </div>
             </div>
         </div>
@@ -226,11 +226,11 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="costaspineFeeModalLabel"><i class="bi bi-calculator"></i> {{ _('CostaSpine Fee Breakdown (30%%)') }}</h5>
+        <h5 class="modal-title" id="costaspineFeeModalLabel"><i class="bi bi-calculator"></i> {{ _('%(clinic_name)s Fee Breakdown (%(percentage)s%%)', clinic_name=clinic_name, percentage=clinic_percentage) }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
       </div>
       <div class="modal-body">
-        <p>{{ _("Total fee calculated based on treatments logged at 'CostaSpine Clinic' location with a fee.") }}</p>
+        <p>{{ _("Total fee calculated based on treatments logged at '%(clinic_name)s' location with a fee.", clinic_name=clinic_name) }}</p>
         <table class="table">
           <tbody>
             <tr>
@@ -260,16 +260,19 @@
   </div>
 </div>
 
-<!-- Recently Inactive Patients Modal -->
+<!-- Modal for Inactive Patients -->
 <div class="modal fade" id="inactivePatientsModal" tabindex="-1" aria-labelledby="inactivePatientsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="inactivePatientsModalLabel"><i class="bi bi-list-ul"></i> {{ _('Patients Made Inactive This Week') }}</h5>
+        <h5 class="modal-title" id="inactivePatientsModalLabel"><i class="bi bi-person-dash"></i> {{ _('Inactive Patients (>90d)') }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
       </div>
-      <div class="modal-body" id="inactive-patients-list">
-        <p>{{ _('Loading...') }}</p> {# Placeholder content #}
+      <div class="modal-body">
+        <p>{{ _("The following active patients have not had a treatment logged in the last 90 days.") }}</p>
+        <ul id="inactivePatientsList" class="list-group">
+          <!-- Patient list will be populated by JS -->
+        </ul>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
@@ -419,14 +422,14 @@
 
     // Function to fetch and display recently inactive patients
     async function loadRecentlyInactivePatients() {
-        const inactiveCountEl = document.getElementById('inactive-weekly-count');
-        const inactiveListBox = document.getElementById('inactive-weekly-box');
-        const inactiveModalListEl = document.getElementById('inactive-patients-list');
+        const inactiveCountEl = document.getElementById('inactive-patients-count');
+        const inactiveListBox = document.getElementById('inactive-patients-box');
+        const inactiveModalListEl = document.getElementById('inactivePatientsList');
         const inactiveModal = new bootstrap.Modal(document.getElementById('inactivePatientsModal'));
         let inactivePatientData = []; // Store fetched data
 
         try {
-            const response = await fetch('/api/analytics/recently-inactive-patients');
+            const response = await fetch('/api/analytics/inactive-patients');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -690,12 +693,42 @@
         
         loadCostaSpineFeeData();
         
-        // Modal trigger for CostaSpine fee card
-        const feeCard = document.getElementById('costaspineFeeCard');
-        if (feeCard) {
-            const feeModal = new bootstrap.Modal(document.getElementById('costaspineFeeModal'));
-            feeCard.addEventListener('click', () => feeModal.show());
-        }
+        // --- Event Listener for the CostaSpine Fee Card ---
+        document.getElementById('costaspineFeeCard').addEventListener('click', function() {
+            // Show the modal
+            var feeModal = new bootstrap.Modal(document.getElementById('costaspineFeeModal'));
+            
+            // Fetch the detailed fee data from the new API endpoint
+            fetch('/api/analytics/costaspine-fee-data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        // Handle error
+                        console.error('Error fetching CostaSpine fee data:', data.error);
+                        // Update modal elements with error message
+                        const feeTotal = document.getElementById('feeTotal');
+                        const feeYear = document.getElementById('feeYear');
+                        const feeMonth = document.getElementById('feeMonth');
+                        const feeWeek = document.getElementById('feeWeek');
+                        
+                        if (feeTotal) feeTotal.textContent = data.error;
+                        if (feeYear) feeYear.textContent = data.error;
+                        if (feeMonth) feeMonth.textContent = data.error;
+                        if (feeWeek) feeWeek.textContent = data.error;
+                    } else {
+                        // Update modal elements with fetched data
+                        const feeTotal = document.getElementById('feeTotal');
+                        const feeYear = document.getElementById('feeYear');
+                        const feeMonth = document.getElementById('feeMonth');
+                        const feeWeek = document.getElementById('feeWeek');
+                        
+                        if (feeTotal) feeTotal.textContent = `£${(data.all_time || 0).toFixed(2)}`;
+                        if (feeYear) feeYear.textContent = `£${(data.this_year || 0).toFixed(2)}`;
+                        if (feeMonth) feeMonth.textContent = `£${(data.this_month || 0).toFixed(2)}`;
+                        if (feeWeek) feeWeek.textContent = `£${(data.this_week || 0).toFixed(2)}`;
+                    }
+                });
+        });
     });
 </script>
 {% endblock %} 

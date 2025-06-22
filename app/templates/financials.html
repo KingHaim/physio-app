@@ -38,12 +38,12 @@
                     </thead>
                     <tbody>
                         {% set metrics = [
-                            ('revenue', 'Total Revenue'),
-                            ('costaspine_revenue', 'CostaSpine Revenue'),
-                            ('costaspine_fee', 'CostaSpine Fee (30%)'),
-                            ('fixed_expenses', 'Total Fixed Expenses (€)'),
-                            ('tax', 'Est. Autónomo Contribution (€)'),
-                            ('net', 'Est. Net Revenue (Final)')
+                            ('revenue', metrics_labels['revenue']),
+                            ('costaspine_revenue', metrics_labels['costaspine_revenue']),
+                            ('costaspine_fee', metrics_labels['costaspine_fee']),
+                            ('fixed_expenses', metrics_labels['fixed_expenses']),
+                            ('tax', metrics_labels['tax']),
+                            ('net', metrics_labels['net'])
                         ] %}
                         {% set periods = ['q1', 'q2', 'q3', 'q4', 'annual'] %}
 
@@ -63,7 +63,7 @@
                 </table>
             </div>
             <small class="text-muted">
-                *Est. Net Revenue (Final) = Total Revenue - CostaSpine Fee - Total Fixed Expenses - Est. Autónomo Contribution.
+                *Est. Net Revenue (Final) = Total Revenue - {{ clinic_fee_label }} - Total Fixed Expenses - Est. Autónomo Contribution.
             </small>
         </div>
     </div>
@@ -120,7 +120,7 @@
                 </table>
             </div>
             <small class="text-muted">
-                 *'Net Revenue (before Contrib.)' = Monthly Revenue - CostaSpine Fee - Fixed Expenses. This value determines the Income Bracket. 'Final Net Revenue' = Net Revenue (before Contrib.) - Est. Monthly Contribution. All expenses and contributions are in EUR. Income brackets and minimum contribution bases shown are for the Spanish Autónomo system for {{ tax_year }}.
+                 *'Net Revenue (before Contrib.)' = Monthly Revenue - {{ clinic_fee_label }} - Fixed Expenses. This value determines the Income Bracket. 'Final Net Revenue' = Net Revenue (before Contrib.) - Est. Monthly Contribution. All expenses and contributions are in EUR. Income brackets and minimum contribution bases shown are for the Spanish Autónomo system for {{ tax_year }}.
             </small>
         </div>
     </div>
