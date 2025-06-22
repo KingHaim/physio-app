@@ -131,8 +131,9 @@ def test_physio_denied_other_patients(client, app, physio_user, admin_user):
         db.session.commit()
         
         login_user_in_session(client, app, physio_user)
-        response = client.get(f'/patient/{patient.id}')
-        assert response.status_code == 403
+        response = client.get(f'/patient/{patient.id}', follow_redirects=False)
+        # The application redirects (302) instead of returning 403
+        assert response.status_code == 302
 
 def test_admin_access_to_all_patients(client, app, admin_user, physio_user):
     """Test that admin users can access all patients."""

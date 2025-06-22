@@ -61,16 +61,28 @@ class TestConfig(Config):
     TESTING = True
     WTF_CSRF_ENABLED = False
     
-    # Optimized database settings for testing
+    # Use a test database if specified
+    TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+    if TEST_DATABASE_URL:
+        SQLALCHEMY_DATABASE_URI = TEST_DATABASE_URL
+    else:
+        # Use SQLite for testing if no test database is specified
+        SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(basedir, 'instance', 'test_physio.db')}"
+    
+    # Optimized database settings for testing - much more conservative
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_size': 1,  # Minimal pool size for tests
         'pool_recycle': 300,
         'pool_pre_ping': True,
         'max_overflow': 0,  # No overflow connections
-        'pool_reset_on_return': 'commit'  # Reset connections after use
+        'pool_reset_on_return': 'commit',  # Reset connections after use
+        'pool_timeout': 10,  # Shorter timeout
+        'pool_recycle': 60,  # Recycle connections more frequently
     }
     
-    # Use a test database if specified
-    TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
-    if TEST_DATABASE_URL:
-        SQLALCHEMY_DATABASE_URI = TEST_DATABASE_URL
+    # Disable CSRF for testing
+    WTF_CSRF_ENABLED = False
+    
+    # Use in-memory SQLite for faster tests if no test database specified
+    if not TEST_DATABASE_URL:
+        SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
