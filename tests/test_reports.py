@@ -71,8 +71,8 @@ def test_treatments_by_month_api(auth_client, app):
             db.session.add(user)
             db.session.commit()
 
-        # Create test data
-        patient = Patient(name=f'Test_Patient_{uuid.uuid4().hex[:6]}', user_id=user.id)
+        # Create test data with shorter name
+        patient = Patient(name=f'Patient_{uuid.uuid4().hex[:4]}', user_id=user.id)
         db.session.add(patient)
         db.session.commit()
 
@@ -104,7 +104,7 @@ def test_patient_reports_list(auth_client, app):
             db.session.add(user)
             db.session.commit()
 
-        patient = Patient(name=f'Test_Patient_{uuid.uuid4().hex[:6]}', user_id=user.id)
+        patient = Patient(name=f'Patient_{uuid.uuid4().hex[:4]}', user_id=user.id)
         db.session.add(patient)
         db.session.commit()
 
@@ -133,7 +133,7 @@ def test_report_pdf_download(auth_client, app):
             db.session.add(user)
             db.session.commit()
 
-        patient = Patient(name=f'Test_Patient_{uuid.uuid4().hex[:6]}', user_id=user.id)
+        patient = Patient(name=f'Patient_{uuid.uuid4().hex[:4]}', user_id=user.id)
         db.session.add(patient)
         db.session.commit()
 

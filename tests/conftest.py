@@ -14,6 +14,10 @@ def app():
     app.config.from_object(TestConfig)
     app.config['STRIPE_WEBHOOK_SECRET'] = 'whsec_test_secret'
     
+    # Create all tables for the test session
+    with app.app_context():
+        db.create_all()
+    
     return app
 
 
@@ -100,7 +104,7 @@ def sample_patient(app, sample_user):
     """Create a sample patient for testing."""
     with app.app_context():
         patient = Patient(
-            name=f'Patient_{uuid.uuid4().hex[:6]}',
+            name=f'Patient_{uuid.uuid4().hex[:4]}',
             user_id=sample_user.id
         )
         db.session.add(patient)

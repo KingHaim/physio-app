@@ -113,7 +113,7 @@ def test_physio_access_to_own_patients(client, app, physio_user):
     """Test that physio users can access their own patients."""
     with app.app_context():
         physio = User.query.get(physio_user)
-        patient = Patient(name=f'Patient_{uuid.uuid4().hex[:6]}', user_id=physio.id)
+        patient = Patient(name=f'Patient_{uuid.uuid4().hex[:4]}', user_id=physio.id)
         db.session.add(patient)
         db.session.commit()
         
@@ -126,7 +126,7 @@ def test_physio_denied_other_patients(client, app, physio_user, admin_user):
     with app.app_context():
         physio = User.query.get(physio_user)
         admin = User.query.get(admin_user)
-        patient = Patient(name=f'Admin_Patient_{uuid.uuid4().hex[:6]}', user_id=admin.id)
+        patient = Patient(name=f'Admin_Patient_{uuid.uuid4().hex[:4]}', user_id=admin.id)
         db.session.add(patient)
         db.session.commit()
         
@@ -139,7 +139,7 @@ def test_admin_access_to_all_patients(client, app, admin_user, physio_user):
     with app.app_context():
         admin = User.query.get(admin_user)
         physio = User.query.get(physio_user)
-        patient = Patient(name=f'Physio_Patient_{uuid.uuid4().hex[:6]}', user_id=physio.id)
+        patient = Patient(name=f'Physio_Patient_{uuid.uuid4().hex[:4]}', user_id=physio.id)
         db.session.add(patient)
         db.session.commit()
         
