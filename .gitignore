@@ -12,6 +12,7 @@ physio/
 env/
 ENV/
 *.log
+logs/
 fixed_key.txt
 working_endpoint.txt
 *_backup_*.db
