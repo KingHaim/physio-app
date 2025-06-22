@@ -24,6 +24,7 @@ try:
     cursor.execute("SELECT id FROM user WHERE username=? OR email=?", (username, email))
     existing_user = cursor.fetchone()
     
+    
     if existing_user:
         # Update existing user
         cursor.execute(
