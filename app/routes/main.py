@@ -2245,22 +2245,33 @@ def financials():
              year = int(selected_year)
              available_years = [year]
 
+    # --- Check clinic configuration ---
+    has_clinic_configured = bool(current_user.clinic_name and current_user.clinic_name.strip())
+    clinic_fee_enabled = current_user.clinic_percentage_agreement or False
+    
     # --- Obtener gastos fijos del usuario autenticado ---
     user_fixed_costs = FixedCost.query.filter_by(user_id=current_user.id).all()
     total_fixed_monthly_expenses = sum(fc.monthly_amount for fc in user_fixed_costs)
 
     # --- Initialize data structures ---
     quarterly_data = {
-        'q1': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
-        'q2': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
-        'q3': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
-        'q4': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
-        'annual': {'revenue': 0, 'costaspine_revenue': 0, 'costaspine_fee': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0}
+        'q1': {'revenue': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
+        'q2': {'revenue': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
+        'q3': {'revenue': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
+        'q4': {'revenue': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
+        'annual': {'revenue': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0}
     }
+    
+    # Add clinic fields only if clinic is configured
+    if has_clinic_configured:
+        for period in ['q1', 'q2', 'q3', 'q4', 'annual']:
+            quarterly_data[period]['costaspine_revenue'] = 0
+            if clinic_fee_enabled:
+                quarterly_data[period]['costaspine_fee'] = 0
     monthly_data = {} # Key will be month number (1-12)
 
     tax_rate = 0.19
-    costaspine_fee_rate = 0.30
+    clinic_fee_rate = current_user.clinic_fee_rate if current_user.clinic_fee_rate is not None else 0.30
     quarters_map = {1: 'q1', 2: 'q1', 3: 'q1',
                     4: 'q2', 5: 'q2', 6: 'q2',
                     7: 'q3', 8: 'q3', 9: 'q3',
@@ -2307,14 +2318,26 @@ def financials():
         for t in monthly_treatments:
             fee = t.fee_charged or 0
             m_revenue += fee
-            is_costaspine = t.location == 'CostaSpine Clinic'
-            is_card = t.payment_method == 'Card'
-            if is_costaspine:
-                m_costaspine_revenue += fee
-                m_costaspine_fee += fee * costaspine_fee_rate
-            if is_card:
+            
+            # Only process clinic data if clinic is configured
+            if has_clinic_configured:
+                clinic_name_filter = current_user.clinic_name or 'CostaSpine Clinic'
+                is_costaspine = t.location == clinic_name_filter
                 if is_costaspine:
-                    m_taxable_card_revenue += fee * (1 - costaspine_fee_rate)
+                    m_costaspine_revenue += fee
+                    if clinic_fee_enabled:
+                        m_costaspine_fee += fee * clinic_fee_rate
+            
+            # Calculate taxable card revenue
+            is_card = t.payment_method == 'Card'
+            if is_card:
+                if has_clinic_configured and clinic_fee_enabled:
+                    clinic_name_filter = current_user.clinic_name or 'CostaSpine Clinic'
+                    is_costaspine = t.location == clinic_name_filter
+                    if is_costaspine:
+                        m_taxable_card_revenue += fee * (1 - clinic_fee_rate)
+                    else:
+                        m_taxable_card_revenue += fee
                 else:
                     m_taxable_card_revenue += fee
 
@@ -2356,18 +2379,22 @@ def financials():
         }
 
         quarterly_data[q_key]['revenue'] += m_revenue
-        quarterly_data[q_key]['costaspine_revenue'] += m_costaspine_revenue
-        quarterly_data[q_key]['costaspine_fee'] += m_costaspine_fee
+        if has_clinic_configured:
+            quarterly_data[q_key]['costaspine_revenue'] += m_costaspine_revenue
+            if clinic_fee_enabled:
+                quarterly_data[q_key]['costaspine_fee'] += m_costaspine_fee
         quarterly_data[q_key]['tax'] += monthly_contribution
         quarterly_data[q_key]['fixed_expenses'] += total_fixed_monthly_expenses
-        quarterly_data[q_key]['net'] = quarterly_data[q_key]['revenue'] - quarterly_data[q_key]['costaspine_fee'] - quarterly_data[q_key]['tax'] - quarterly_data[q_key]['fixed_expenses']
+        quarterly_data[q_key]['net'] = quarterly_data[q_key]['revenue'] - (quarterly_data[q_key].get('costaspine_fee', 0)) - quarterly_data[q_key]['tax'] - quarterly_data[q_key]['fixed_expenses']
 
         quarterly_data['annual']['revenue'] += m_revenue
-        quarterly_data['annual']['costaspine_revenue'] += m_costaspine_revenue
-        quarterly_data['annual']['costaspine_fee'] += m_costaspine_fee
+        if has_clinic_configured:
+            quarterly_data['annual']['costaspine_revenue'] += m_costaspine_revenue
+            if clinic_fee_enabled:
+                quarterly_data['annual']['costaspine_fee'] += m_costaspine_fee
         quarterly_data['annual']['tax'] += monthly_contribution
         quarterly_data['annual']['fixed_expenses'] += total_fixed_monthly_expenses
-        quarterly_data['annual']['net'] = quarterly_data['annual']['revenue'] - quarterly_data['annual']['costaspine_fee'] - quarterly_data['annual']['tax'] - quarterly_data['annual']['fixed_expenses']
+        quarterly_data['annual']['net'] = quarterly_data['annual']['revenue'] - (quarterly_data['annual'].get('costaspine_fee', 0)) - quarterly_data['annual']['tax'] - quarterly_data['annual']['fixed_expenses']
 
     clinic_name = current_user.clinic_name or _('Clinic')
     clinic_fee_rate = current_user.clinic_fee_rate if current_user.clinic_fee_rate is not None else 0.30
@@ -2390,7 +2417,9 @@ def financials():
         tax_year=2025,
         clinic_name=clinic_name,
         clinic_fee_label=clinic_fee_label,
-        metrics_labels=metrics_labels
+        metrics_labels=metrics_labels,
+        has_clinic_configured=has_clinic_configured,
+        clinic_fee_enabled=clinic_fee_enabled
     )
 
 # --- Review Missing Payments Route ---
