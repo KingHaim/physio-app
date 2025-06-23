@@ -117,247 +117,281 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3">
-    <h1 class="h3 mb-3"><i class="bi bi-speedometer2"></i> {{ _('Dashboard') }}</h1> {# Increased mb slightly #}
-
-    <!-- Dashboard Header Banner -->
-    <div class="dashboard-header-banner">
-        <h4>{{ _('Welcome back, %(username)s!', username=(current_user.first_name or current_user.username)) }}</h4>
-        <p>{{ _('Here\'s an overview of your clinic\'s activity.') }}</p>
-        
-        {# Subscription Status Display - Always show current plan #}
-        <div class="subscription-status-text">
-            {% if current_plan_name == 'Free Plan' %}
-                <i class="bi bi-gift-fill text-primary me-1"></i> 
-            {% else %}
-                <i class="bi bi-award-fill text-success me-1"></i> 
-            {% endif %}
-            {{ _('Current Plan') }}: <strong>{{ current_plan_name }}</strong> 
-            {% if current_plan_name != 'Free Plan' %}
-                ({{ _('Status') }}: <span class="fw-semibold">{{ current_subscription_status }}</span>)
-                {% if current_subscription_ends_at %}
-                    - {% if current_subscription_status == 'Trialing' %}{{ _('Ends') }}{% else %}{{ _('Renews') }}{% endif %}: {{ current_subscription_ends_at.strftime('%d %b %Y') }}
-                {% endif %}
-            {% endif %}
-            {% if current_plan_name == 'Free Plan' %}
-                <a href="{{ url_for('main.manage_subscription') }}" class="ms-2 badge bg-success text-decoration-none">{{ _('Upgrade Plan') }}</a>
-            {% else %}
-                <a href="{{ url_for('main.my_account') }}" class="ms-2 badge bg-primary text-decoration-none">{{ _('Manage Plan') }}</a>
-            {% endif %}
-        </div>
-    </div>
+<div class="container-fluid px-4">
     
-    <!-- Key Metrics Panel (Stats Cards & Weekly Chart) -->
-    <div class="dashboard-metrics-panel">
-        <!-- Stats Cards -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card stats-card card-patients-capacity">
-                    <div class="card-body text-center">
-                        <h5 class="card-title mb-3">{{ _('Patient Capacity') }}</h5>
-                        {% if patient_plan_limit is not none %}
-                            <div style="max-width: 150px; max-height: 150px; margin: 0 auto;">
-                                <canvas id="patientCapacityChart" 
-                                        data-current-patients="{{ current_patients_count|int }}"
-                                        data-limit="{{ patient_plan_limit|int }}"></canvas>
-                            </div>
-                            <p class="card-text mt-2">
-                                <i class="bi bi-people"></i> 
-                                <span class="stats-text">
-                                    {{ current_patients_count }} / {{ patient_plan_limit }}
-                                    {% if current_patients_count >= patient_plan_limit %}
-                                        <br><strong class="text-danger">{{ _('Limit Reached!') }}</strong> 
-                                        <a href="{{ url_for('main.manage_subscription') }}" class="badge bg-warning text-dark text-decoration-none ms-1">{{ _('Upgrade') }}</a>
-                                    {% elif (patient_plan_limit - current_patients_count) <= 5 %}
-                                        <br><strong class="text-warning">{{ _('Nearing Limit') }}</strong>
-                                    {% endif %}
-                                </span>
-                            </p>
-                        {% else %}
-                            <h2 class="display-4">{{ current_patients_count }}</h2>
+    {% if show_welcome_flow %}
+    <div class="card border-primary mb-4 mt-4">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{{ _("🚀 Welcome to TRXCKER! Let's get you set up.") }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      <div class="card-body">
+        <p class="card-text">{{ _("To personalize your experience and unlock all features, please complete these first steps:") }}</p>
+        <div class="list-group">
+          <a href="{{ url_for('main.user_settings') }}" class="list-group-item list-group-item-action">
+            <strong>{{ _("Step 1: Complete Your Profile") }}</strong>
+            <br>
+            <small>{{ _("Add your name and professional details.") }}</small>
+          </a>
+          <a href="{{ url_for('main.user_settings') }}#api-integrations" class="list-group-item list-group-item-action">
+            <strong>{{ _("Step 2: Connect Your Tools (Optional)") }}</strong>
+            <br>
+            <small>{{ _("Integrate with Calendly to sync your appointments automatically.") }}</small>
+          </a>
+          <a href="{{ url_for('main.new_patient') }}" class="list-group-item list-group-item-action">
+            <strong>{{ _("Step 3: Add Your First Patient") }}</strong>
+            <br>
+            <small>{{ _("Start managing your patient records and treatments.") }}</small>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="container-fluid py-3">
+        <h1 class="h3 mb-3"><i class="bi bi-speedometer2"></i> {{ _('Dashboard') }}</h1> {# Increased mb slightly #}
+
+        <!-- Dashboard Header Banner -->
+        <div class="dashboard-header-banner">
+            {% if current_user.first_name %}
+            <h4>{{ _('Welcome back, %(username)s!', username=current_user.first_name) }}</h4>
+            {% endif %}
+            <p>{{ _('Here\'s an overview of your clinic\'s activity.') }}</p>
+            
+            {# Subscription Status Display - Always show current plan #}
+            <div class="subscription-status-text">
+                {% if current_plan_name == 'Free Plan' %}
+                    <i class="bi bi-gift-fill text-primary me-1"></i> 
+                {% else %}
+                    <i class="bi bi-award-fill text-success me-1"></i> 
+                {% endif %}
+                {{ _('Current Plan') }}: <strong>{{ current_plan_name }}</strong> 
+                {% if current_plan_name != 'Free Plan' %}
+                    ({{ _('Status') }}: <span class="fw-semibold">{{ current_subscription_status }}</span>)
+                    {% if current_subscription_ends_at %}
+                        - {% if current_subscription_status == 'Trialing' %}{{ _('Ends') }}{% else %}{{ _('Renews') }}{% endif %}: {{ current_subscription_ends_at.strftime('%d %b %Y') }}
+                    {% endif %}
+                {% endif %}
+                {% if current_plan_name == 'Free Plan' %}
+                    <a href="{{ url_for('main.manage_subscription') }}" class="ms-2 badge bg-success text-decoration-none">{{ _('Upgrade Plan') }}</a>
+                {% else %}
+                    <a href="{{ url_for('main.my_account') }}" class="ms-2 badge bg-primary text-decoration-none">{{ _('Manage Plan') }}</a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Key Metrics Panel (Stats Cards & Weekly Chart) -->
+        <div class="dashboard-metrics-panel">
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card stats-card card-patients-capacity">
+                        <div class="card-body text-center">
+                            <h5 class="card-title mb-3">{{ _('Patient Capacity') }}</h5>
+                            {% if patient_plan_limit is not none %}
+                                <div style="max-width: 150px; max-height: 150px; margin: 0 auto;">
+                                    <canvas id="patientCapacityChart" 
+                                            data-current-patients="{{ current_patients_count|int }}"
+                                            data-limit="{{ patient_plan_limit|int }}"></canvas>
+                                </div>
+                                <p class="card-text mt-2">
+                                    <i class="bi bi-people"></i> 
+                                    <span class="stats-text">
+                                        {{ current_patients_count }} / {{ patient_plan_limit }}
+                                        {% if current_patients_count >= patient_plan_limit %}
+                                            <br><strong class="text-danger">{{ _('Limit Reached!') }}</strong> 
+                                            <a href="{{ url_for('main.manage_subscription') }}" class="badge bg-warning text-dark text-decoration-none ms-1">{{ _('Upgrade') }}</a>
+                                        {% elif (patient_plan_limit - current_patients_count) <= 5 %}
+                                            <br><strong class="text-warning">{{ _('Nearing Limit') }}</strong>
+                                        {% endif %}
+                                    </span>
+                                </p>
+                            {% else %}
+                                <h2 class="display-4">{{ current_patients_count }}</h2>
+                                <p class="card-text">
+                                    <i class="bi bi-infinity"></i> 
+                                    <span class="stats-text">{{ _('Unlimited Patients') }}</span>
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stats-card card-active-patients">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ _('Active Patients') }}</h5>
+                            <h2 class="display-4">{{ active_patients }}</h2>
                             <p class="card-text">
-                                <i class="bi bi-infinity"></i> 
-                                <span class="stats-text">{{ _('Unlimited Patients') }}</span>
+                                <i class="bi bi-person-check"></i> <span class="stats-text">{{ _('Currently under treatment') }}</span>
                             </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stats-card card-today-appts">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ _('Today\'s Appointments') }}</h5>
+                            <h2 class="display-4">{{ today_appointments }}</h2>
+                            <p class="card-text">
+                                <i class="bi bi-calendar-day"></i> <span class="stats-text">{{ _('Scheduled for today') }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stats-card card-pending-review">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ _('Pending Review') }}</h5>
+                            <h2 class="display-4">{{ pending_review_count }}</h2>
+                            <p class="card-text">
+                                <i class="bi bi-clipboard-check"></i> <span class="stats-text">{{ _('Patients needing review') }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Weekly Appointments Chart - TO BE REMOVED -->
+        </div> <!-- End of dashboard-metrics-panel -->
+        
+        <!-- Main Content Area -->
+        <div class="row mt-4"> {# Added mt-4 for spacing from charts/stats #}
+            <!-- Upcoming Appointments -->
+            <div class="col-lg-12 mb-4">
+                <div class="card dashboard-card h-100"> {# Added dashboard-card class #}
+                    <div class="card-header dashboard-card-header"> {# Added dashboard-card-header class #}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 card-title-icon"><i class="bi bi-calendar-week me-2"></i>{{ _('Upcoming Appointments') }}</h5>
+                            <a href="{{ url_for('main.appointments') }}" class="btn btn-sm btn-outline-primary">{{ _('View All') }}</a>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if upcoming_appointments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>{{ _('Patient') }}</th>
+                                        <th>{{ _('Date') }}</th>
+                                        <th>{{ _('Time') }}</th>
+                                        <th class="text-end">{{ _('Actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for appt in upcoming_appointments %}
+                                    <tr>
+                                        <td>
+                                            {# Check if treatment object exists before accessing patient #}
+                                            {% if appt.treatment and appt.treatment.patient %}
+                                            <a href="{{ url_for('main.patient_detail', id=appt.treatment.patient.id) }}" 
+                                               class="text-decoration-none text-dark fw-medium">
+                                               {{ appt.patient_name }}
+                                            </a>
+                                            {% else %}
+                                            <span class="text-muted">{{ appt.patient_name }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {# Use the relative_date calculated in the route #}
+                                            <span class="badge bg-{{ 'danger' if appt.relative_date == 'Today' else 'info' if appt.relative_date == 'Tomorrow' else 'secondary' }}">
+                                                {{ _(appt.relative_date) }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="text-dark">{{ appt.time }}</span>
+                                        </td>
+                                        <td class="text-end">
+                                            {% if appt.treatment %}
+                                            <a href="{{ url_for('main.view_treatment', id=appt.treatment.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('main.edit_treatment', id=appt.treatment.id) }}" 
+                                               class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2">{{ _('No upcoming appointments') }}</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAppointmentModal">
+                                <i class="bi bi-calendar-plus"></i> {{ _('Schedule Appointment') }}
+                            </button>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card stats-card card-active-patients">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ _('Active Patients') }}</h5>
-                        <h2 class="display-4">{{ active_patients }}</h2>
-                        <p class="card-text">
-                            <i class="bi bi-person-check"></i> <span class="stats-text">{{ _('Currently under treatment') }}</span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card stats-card card-today-appts">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ _('Today\'s Appointments') }}</h5>
-                        <h2 class="display-4">{{ today_appointments }}</h2>
-                        <p class="card-text">
-                            <i class="bi bi-calendar-day"></i> <span class="stats-text">{{ _('Scheduled for today') }}</span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card stats-card card-pending-review">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ _('Pending Review') }}</h5>
-                        <h2 class="display-4">{{ pending_review_count }}</h2>
-                        <p class="card-text">
-                            <i class="bi bi-clipboard-check"></i> <span class="stats-text">{{ _('Patients needing review') }}</span>
-                        </p>
-                    </div>
-                </div>
-            </div>
+
         </div>
-        
-        <!-- Weekly Appointments Chart - TO BE REMOVED -->
-    </div> <!-- End of dashboard-metrics-panel -->
-    
-    <!-- Main Content Area -->
-    <div class="row mt-4"> {# Added mt-4 for spacing from charts/stats #}
-        <!-- Upcoming Appointments -->
-        <div class="col-lg-12 mb-4">
-            <div class="card dashboard-card h-100"> {# Added dashboard-card class #}
-                <div class="card-header dashboard-card-header"> {# Added dashboard-card-header class #}
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 card-title-icon"><i class="bi bi-calendar-week me-2"></i>{{ _('Upcoming Appointments') }}</h5>
-                        <a href="{{ url_for('main.appointments') }}" class="btn btn-sm btn-outline-primary">{{ _('View All') }}</a>
-                    </div>
+    </div>
+
+    <!-- New Appointment Modal -->
+    <div class="modal fade" id="newAppointmentModal" tabindex="-1" aria-labelledby="newAppointmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newAppointmentModalLabel">{{ _('New Appointment') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
                 </div>
-                <div class="card-body p-0">
-                    {% if upcoming_appointments %}
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>{{ _('Patient') }}</th>
-                                    <th>{{ _('Date') }}</th>
-                                    <th>{{ _('Time') }}</th>
-                                    <th class="text-end">{{ _('Actions') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for appt in upcoming_appointments %}
-                                <tr>
-                                    <td>
-                                        {# Check if treatment object exists before accessing patient #}
-                                        {% if appt.treatment and appt.treatment.patient %}
-                                        <a href="{{ url_for('main.patient_detail', id=appt.treatment.patient.id) }}" 
-                                           class="text-decoration-none text-dark fw-medium">
-                                           {{ appt.patient_name }}
-                                        </a>
-                                        {% else %}
-                                        <span class="text-muted">{{ appt.patient_name }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {# Use the relative_date calculated in the route #}
-                                        <span class="badge bg-{{ 'danger' if appt.relative_date == 'Today' else 'info' if appt.relative_date == 'Tomorrow' else 'secondary' }}">
-                                            {{ _(appt.relative_date) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="text-dark">{{ appt.time }}</span>
-                                    </td>
-                                    <td class="text-end">
-                                        {% if appt.treatment %}
-                                        <a href="{{ url_for('main.view_treatment', id=appt.treatment.id) }}" 
-                                           class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <a href="{{ url_for('main.edit_treatment', id=appt.treatment.id) }}" 
-                                           class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        {% endif %}
-                                    </td>
-                                </tr>
+                <div class="modal-body">
+                    <form id="newAppointmentForm">
+                        <input type="hidden" id="csrf_token" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="mb-3">
+                            <label for="appointmentPatient" class="form-label">{{ _('Patient') }}</label>
+                            <select class="form-select" id="appointmentPatient" name="patient_id" required>
+                                <option value="" selected disabled>{{ _('Select Patient...') }}</option>
+                                {% for patient in current_user.patients %}
+                                    <option value="{{ patient.id }}">{{ patient.name }}</option>
                                 {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
-                        <p class="text-muted mt-2">{{ _('No upcoming appointments') }}</p>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAppointmentModal">
-                            <i class="bi bi-calendar-plus"></i> {{ _('Schedule Appointment') }}
-                        </button>
-                    </div>
-                    {% endif %}
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="appointmentDate" class="form-label">{{ _('Date') }}</label>
+                                <input type="date" class="form-control" id="appointmentDate" name="date" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="appointmentTime" class="form-label">{{ _('Time') }}</label>
+                                <input type="time" class="form-control" id="appointmentTime" name="time" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="appointmentTreatmentType" class="form-label">{{ _('Treatment Type') }}</label>
+                            <input type="text" class="form-control" id="appointmentTreatmentType" name="treatment_type" placeholder="{{ _('e.g., Initial Assessment, Follow-up') }}" required>
+                        </div>
+                         <div class="mb-3">
+                            <label for="appointmentLocation" class="form-label">{{ _('Location') }}</label>
+                            <select class="form-select" id="appointmentLocation" name="location">
+                                <option value="CostaSpine Clinic" selected>{{ _('CostaSpine Clinic') }}</option>
+                                <option value="Home Visit">{{ _('Home Visit') }}</option>
+                                <option value="Online">{{ _('Online') }}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="appointmentNotes" class="form-label">{{ _('Notes (Optional)') }}</label>
+                            <textarea class="form-control" id="appointmentNotes" name="notes" rows="3"></textarea>
+                        </div>
+                        <!-- Hidden field for status, default to Scheduled -->
+                        <input type="hidden" id="appointmentStatus" name="status" value="Scheduled">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+                    <button type="submit" class="btn btn-primary" form="newAppointmentForm">{{ _('Create Appointment') }}</button>
                 </div>
             </div>
         </div>
-
     </div>
+    <!-- End New Appointment Modal -->
 </div>
-
-<!-- New Appointment Modal -->
-<div class="modal fade" id="newAppointmentModal" tabindex="-1" aria-labelledby="newAppointmentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="newAppointmentModalLabel">{{ _('New Appointment') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
-            </div>
-            <div class="modal-body">
-                <form id="newAppointmentForm">
-                    <input type="hidden" id="csrf_token" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <div class="mb-3">
-                        <label for="appointmentPatient" class="form-label">{{ _('Patient') }}</label>
-                        <select class="form-select" id="appointmentPatient" name="patient_id" required>
-                            <option value="" selected disabled>{{ _('Select Patient...') }}</option>
-                            {% for patient in current_user.patients %}
-                                <option value="{{ patient.id }}">{{ patient.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="appointmentDate" class="form-label">{{ _('Date') }}</label>
-                            <input type="date" class="form-control" id="appointmentDate" name="date" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="appointmentTime" class="form-label">{{ _('Time') }}</label>
-                            <input type="time" class="form-control" id="appointmentTime" name="time" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="appointmentTreatmentType" class="form-label">{{ _('Treatment Type') }}</label>
-                        <input type="text" class="form-control" id="appointmentTreatmentType" name="treatment_type" placeholder="{{ _('e.g., Initial Assessment, Follow-up') }}" required>
-                    </div>
-                     <div class="mb-3">
-                        <label for="appointmentLocation" class="form-label">{{ _('Location') }}</label>
-                        <select class="form-select" id="appointmentLocation" name="location">
-                            <option value="CostaSpine Clinic" selected>{{ _('CostaSpine Clinic') }}</option>
-                            <option value="Home Visit">{{ _('Home Visit') }}</option>
-                            <option value="Online">{{ _('Online') }}</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="appointmentNotes" class="form-label">{{ _('Notes (Optional)') }}</label>
-                        <textarea class="form-control" id="appointmentNotes" name="notes" rows="3"></textarea>
-                    </div>
-                    <!-- Hidden field for status, default to Scheduled -->
-                    <input type="hidden" id="appointmentStatus" name="status" value="Scheduled">
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
-                <button type="submit" class="btn btn-primary" form="newAppointmentForm">{{ _('Create Appointment') }}</button>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- End New Appointment Modal -->
 {% endblock %}
 
 {% block scripts %}

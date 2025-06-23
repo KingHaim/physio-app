@@ -195,3 +195,58 @@ def test_stripe_webhook_invalid_signature(client):
                           headers={'Stripe-Signature': 'invalid_signature'},
                           content_type='application/json')
     assert response.status_code == 400 
+
+def test_handle_checkout_session_completed_new_user(app, db_session, monkeypatch):
+    with app.app_context():
+        # --- existing code ---
+        unique_email = f"new_stripe_user_{uuid.uuid4().hex[:8]}@example.com"
+        
+        # Mock the event object
+        event = {
+            'type': 'checkout.session.completed',
+            'data': {
+                'object': {
+                    'id': 'cs_test_123',
+                    'customer': 'cus_test_123',
+                    'subscription': 'sub_test_123',
+                    'client_reference_id': None, # New user, no existing ID
+                    'customer_details': {
+                        'email': unique_email
+                    }
+                }
+            }
+        }
+        
+        # --- existing code ---
+        
+        # Assertions
+        user = User.query.filter_by(email=unique_email).first()
+        assert user is not None
+        assert user.stripe_customer_id == 'cus_test_123'
+        
+        sub = UserSubscription.query.filter_by(user_id=user.id).first()
+        assert sub is not None
+        assert sub.stripe_subscription_id == 'sub_test_123'
+
+def test_handle_checkout_session_completed_existing_user(app, db_session, monkeypatch):
+    with app.app_context():
+        # --- existing code ---
+        unique_email = f"existing_stripe_user_{uuid.uuid4().hex[:8]}@example.com"
+        user = User(username=unique_email, email=unique_email)
+        user.set_password('password')
+        db_session.add(user)
+        db_session.commit()
+        
+        # Mock the event object
+        # --- existing code ---
+        
+        # Call the webhook handler
+        handle_checkout_session_completed(event['data']['object'])
+        
+        # Assertions
+        updated_user = User.query.get(user.id)
+        assert updated_user.stripe_customer_id == 'cus_test_456'
+        
+        sub = UserSubscription.query.filter_by(user_id=user.id).first()
+        assert sub is not None
+        assert sub.stripe_subscription_id == 'sub_test_456' 

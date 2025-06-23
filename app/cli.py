@@ -33,51 +33,48 @@ def register_commands(app):
         click.echo(f"Maintenance complete: {treatment_count} treatments updated, {patient_count} patients marked inactive.")
 
     @click.command('create-admin')
-    @click.argument('username')
+    @with_appcontext
     @click.argument('email')
     @click.argument('password')
-    @with_appcontext
-    def create_admin(username, email, password):
-        """Create an admin user."""
-        user = User(username=username, email=email, is_admin=True)
+    def create_admin(email, password):
+        """Creates a new admin user."""
+        if User.query.filter_by(email=email).first():
+            click.echo(f'User with email {email} already exists.')
+            return
+        
+        user = User(username=email, email=email, is_admin=True)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
-        click.echo(f'Admin user {username} created successfully.')
+        click.echo(f'Admin user with email {email} created successfully.')
 
     @click.command('create-user')
-    @click.argument('username')
+    @with_appcontext
     @click.argument('email')
     @click.argument('password')
     @click.option('--admin', is_flag=True, help='Make the user an admin.')
-    @with_appcontext
-    def create_user_command(username, email, password, admin):
-        """Create a new user."""
-        if User.query.filter_by(username=username).first():
-            click.echo(f'User {username} already exists.')
-            return
+    def create_user_command(email, password, admin):
+        """Creates a new user."""
         if User.query.filter_by(email=email).first():
-            click.echo(f'Email {email} already registered.')
+            click.echo(f'User with email {email} already exists.')
             return
 
-        user = User(username=username, email=email, is_admin=admin)
+        # Create new user
+        user = User(username=email, email=email, is_admin=admin)
         user.set_password(password)
+        
         db.session.add(user)
         db.session.commit()
-        click.echo(f'User {username} created successfully. Admin: {admin}')
+        click.echo(f'User with email {email} created successfully. Admin: {admin}')
 
     @click.command('list-users')
     @with_appcontext
     def list_users_command():
-        """List all users."""
+        """Lists all users."""
         users = User.query.all()
-        if not users:
-            click.echo("No users found.")
-            return
-        click.echo("Users:")
         for user in users:
-            admin_status = "(Admin)" if user.is_admin else ""
-            click.echo(f"- ID: {user.id}, Username: {user.username}, Email: {user.email} {admin_status}")
+            admin_status = "[Admin]" if user.is_admin else ""
+            click.echo(f"- ID: {user.id}, Email: {user.email} {admin_status}")
 
     @click.command('generate-past-appointments')
     @with_appcontext

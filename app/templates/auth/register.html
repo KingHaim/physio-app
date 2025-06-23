@@ -9,7 +9,7 @@
             <div class="card shadow-sm mt-5">
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
-                        <h2 class="h3 mb-3">TRXCK</h2>
+                        <h2 class="h3 mb-3">TRXCKER</h2>
                         <p class="text-muted">{{ _('Create a new account') }}</p>
                     </div>
                     
@@ -22,22 +22,13 @@
                     {% endwith %}
 
                     <form method="POST" action="{{ url_for('auth.register') }}">
-                        {{ form.hidden_tag() }} {# CSRF token #}
-                        <div class="mb-3">
-                            {{ form.username.label(class="form-label") }}
-                            {{ form.username(class="form-control", autofocus=true) }}
-                            {% if form.username.errors %}
-                                {% for error in form.username.errors %}
-                                    <div class="text-danger small">{{ error }}</div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
+                        {{ form.csrf_token }}
                         <div class="mb-3">
                             {{ form.email.label(class="form-label") }}
                             {{ form.email(class="form-control") }}
                             {% if form.email.errors %}
                                 {% for error in form.email.errors %}
-                                    <div class="text-danger small">{{ error }}</div>
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
                                 {% endfor %}
                             {% endif %}
                         </div>

@@ -34,15 +34,15 @@ def auth_client(client, app):
     with app.app_context():
         # Create a test admin user
         unique_email = f"admin_{uuid.uuid4().hex[:8]}@example.com"
-        user = User(username=f'admin_{uuid.uuid4().hex[:8]}', email=unique_email, is_admin=True)
-        user.set_password('password123')
+        user = User(username=unique_email, email=unique_email, is_admin=True)
+        user.set_password('password')
         db.session.add(user)
         db.session.commit()
         
         # Login the user
         response = client.post('/auth/login', data={
             'email': unique_email,
-            'password': 'password123'
+            'password': 'password'
         }, follow_redirects=True)
         
         yield client
@@ -89,8 +89,8 @@ def sample_user(app):
     """Create a sample user for testing."""
     with app.app_context():
         unique_email = f"user_{uuid.uuid4().hex[:8]}@example.com"
-        user = User(username=f'user_{uuid.uuid4().hex[:8]}', email=unique_email)
-        user.set_password('password123')
+        user = User(username=unique_email, email=unique_email)
+        user.set_password('password')
         db.session.add(user)
         db.session.commit()
         

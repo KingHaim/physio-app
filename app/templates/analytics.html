@@ -3,6 +3,11 @@
 {% block title %}{{ _('Analytics') }}{% endblock %}
 
 {% block content %}
+<!-- Hidden translation elements for JavaScript -->
+<div id="no-revenue-data-text" style="display: none;">{{ _('No patient revenue data available.') }}</div>
+<div id="error-loading-data-text" style="display: none;">{{ _('Error loading data.') }}</div>
+<div id="no-practice-report-text" style="display: none;">{{ _('No practice report generated yet. Click \'Generate New Report\' to create one.') }}</div>
+
 <div class="container-fluid py-4">
     <h1 class="h3 mb-4"><i class="bi bi-graph-up"></i> {{ _('Practice Analytics') }}</h1>
     
@@ -400,7 +405,7 @@
             listElement.innerHTML = ''; // Clear loading state
 
             if (data.length === 0) {
-                listElement.innerHTML = `<li class="list-group-item text-muted">${"{{ _('No patient revenue data available.') }}"}</li>`;
+                listElement.innerHTML = `<li class="list-group-item text-muted">${document.getElementById('no-revenue-data-text').textContent}</li>`;
             } else {
                 data.forEach(patient => {
                     const listItem = document.createElement('li');
@@ -416,7 +421,7 @@
             }
         } catch (error) {
             console.error('Error loading top patients by revenue:', error);
-            listElement.innerHTML = `<li class="list-group-item text-danger">${"{{ _('Error loading data.') }}"}</li>`;
+            listElement.innerHTML = `<li class="list-group-item text-danger">${document.getElementById('error-loading-data-text').textContent}</li>`;
         }
     }
 

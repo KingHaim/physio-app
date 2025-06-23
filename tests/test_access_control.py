@@ -42,8 +42,8 @@ def admin_user(app):
     """Create an admin user."""
     with app.app_context():
         unique_email = f"admin_{uuid.uuid4().hex[:8]}@example.com"
-        user = User(username=f'admin_{uuid.uuid4().hex[:8]}', email=unique_email, is_admin=True, role='admin')
-        user.set_password('password123')
+        user = User(username=unique_email, email=unique_email, is_admin=True, role='admin')
+        user.set_password('password')
         db.session.add(user)
         db.session.commit()
         return user.id
@@ -53,8 +53,8 @@ def physio_user(app):
     """Create a physio user."""
     with app.app_context():
         unique_email = f"physio_{uuid.uuid4().hex[:8]}@example.com"
-        user = User(username=f'physio_{uuid.uuid4().hex[:8]}', email=unique_email, role='physio')
-        user.set_password('password123')
+        user = User(username=unique_email, email=unique_email, role='physio')
+        user.set_password('password')
         db.session.add(user)
         db.session.commit()
         return user.id
@@ -64,8 +64,8 @@ def patient_user(app):
     """Create a patient user."""
     with app.app_context():
         unique_email = f"patient_{uuid.uuid4().hex[:8]}@example.com"
-        user = User(username=f'patient_{uuid.uuid4().hex[:8]}', email=unique_email, role='patient')
-        user.set_password('password123')
+        user = User(username=unique_email, email=unique_email, role='patient')
+        user.set_password('password')
         db.session.add(user)
         db.session.commit()
         return user.id
@@ -196,3 +196,21 @@ def test_unauthenticated_access_redirects(client):
     response = client.get('/patients', follow_redirects=True)
     assert response.status_code == 200
     # Should redirect to login page 
+
+def test_access_control(client, app, db_session):
+    with app.app_context():
+        # Create users with different roles
+        unique_email_admin = f"admin_{uuid.uuid4().hex[:8]}@example.com"
+        admin_user = User(username=unique_email_admin, email=unique_email_admin, is_admin=True, role='admin')
+        admin_user.set_password('password')
+        
+        unique_email_physio = f"physio_{uuid.uuid4().hex[:8]}@example.com"
+        physio_user = User(username=unique_email_physio, email=unique_email_physio, role='physio')
+        physio_user.set_password('password')
+
+        unique_email_patient = f"patient_{uuid.uuid4().hex[:8]}@example.com"
+        patient_user = User(username=unique_email_patient, email=unique_email_patient, role='patient')
+        patient_user.set_password('password')
+
+        db.session.add_all([admin_user, physio_user, patient_user])
+        db.session.commit() 

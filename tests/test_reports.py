@@ -158,4 +158,72 @@ def test_report_pdf_download(auth_client, app):
 
         response = auth_client.get(f'/report/{report.id}/pdf')
         # Should return PDF or redirect to PDF generation
-        assert response.status_code in [200, 302] 
+        assert response.status_code in [200, 302]
+
+def test_generate_report_with_data(client, app, db_session, regular_user):
+    with app.app_context():
+        # Login the user
+        login_user(regular_user)
+        
+        # Create a patient for the user
+        patient_name = "John Doe"
+        patient = Patient(user_id=regular_user.id)
+        patient.name = patient_name
+        db_session.add(patient)
+        db_session.commit()
+
+def test_generate_report_no_data(client, app, regular_user):
+    with app.app_context():
+        login_user(regular_user)
+
+        response = client.post(f'/patient/{regular_user.id}/reports_list', data={'report_type': 'summary'})
+        
+        assert response.status_code == 302 # Should redirect
+        
+        with client.session_transaction() as session:
+            flashed_messages = dict(session['_flashes'])
+            assert "No data available to generate a report." in flashed_messages.get('warning', [])
+
+def test_view_report_unauthorized(client, app, db_session, regular_user):
+    with app.app_context():
+        # Create a report for a different user
+        other_user_email = f"other_{uuid.uuid4().hex[:8]}@example.com"
+        other_user = User(username=other_user_email, email=other_user_email)
+        other_user.set_password('password')
+        db_session.add(other_user)
+        db_session.commit()
+        
+        patient = Patient(user_id=other_user.id)
+        patient.name = "Jane Doe"
+        db_session.add(patient)
+        db_session.commit()
+        
+        report = PatientReport(patient_id=patient.id, content="Some report content")
+        db_session.add(report)
+        db_session.commit()
+        
+        # Login as regular_user
+        login_user(regular_user)
+        
+        # Try to access the report
+        response = client.get(f'/report/{report.id}/pdf')
+        assert response.status_code == 403 # Forbidden
+
+def test_download_report_pdf(client, app, db_session, regular_user):
+    with app.app_context():
+        login_user(regular_user)
+        
+        patient = Patient(user_id=regular_user.id)
+        patient.name = "Test Patient"
+        db_session.add(patient)
+        db_session.commit()
+        
+        report = PatientReport(patient_id=patient.id, content="<h1>Test Report</h1><p>This is a test.</p>")
+        db_session.add(report)
+        db_session.commit()
+
+        response = client.get(f'/report/{report.id}/pdf')
+        
+        assert response.status_code == 200
+        assert response.headers['Content-Type'] == 'application/pdf'
+        assert 'attachment' in response.headers['Content-Disposition'] 

@@ -1,4 +1,4 @@
-name: TRXCK Tests
+name: TRXCKER Tests
 
 on: [push, pull_request]
 

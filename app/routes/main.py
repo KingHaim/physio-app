@@ -28,7 +28,7 @@ from flask_wtf.csrf import generate_csrf
 import stripe
 from app.forms import (
     UpdateEmailForm, ChangePasswordForm, UserProfileForm, ClinicForm,
-    ApiIntegrationsForm, FinancialSettingsForm, UserConsentForm
+    ApiIntegrationsForm, FinancialSettingsForm, UserConsentForm, LoginForm, RegistrationForm
 )
 from functools import wraps
 from flask_babel import _
@@ -154,7 +154,9 @@ def get_relative_date_string(target_date):
 @main.route('/')
 def root():
     """Public marketing landing page."""
-    return render_template('landing.html')
+    login_form = LoginForm()
+    register_form = RegistrationForm()
+    return render_template('landing.html', login_form=login_form, register_form=register_form)
 
 @main.route('/health')
 def health_check():

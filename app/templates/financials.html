@@ -14,7 +14,6 @@
                 <option value="{{ year }}" {% if year == selected_year|int %}selected{% endif %}>{{ year }}</option> {# Ensure comparison is int #}
                 {% endfor %}
             </select>
-            {# <button type="submit" class="btn btn-sm btn-primary">View</button> #}
         </form>
     </div>
 
@@ -37,33 +36,51 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% set metrics = [
-                            ('revenue', metrics_labels['revenue']),
-                            ('costaspine_revenue', metrics_labels['costaspine_revenue']),
-                            ('costaspine_fee', metrics_labels['costaspine_fee']),
-                            ('fixed_expenses', metrics_labels['fixed_expenses']),
-                            ('tax', metrics_labels['tax']),
-                            ('net', metrics_labels['net'])
-                        ] %}
-                        {% set periods = ['q1', 'q2', 'q3', 'q4', 'annual'] %}
-
-                        {% for key, label in metrics %}
                         <tr>
-                            <td><strong>{{ label }}</strong></td>
-                            {% for period in periods %}
-                                {% set value = data[period][key] %}
-                                {# Apply different styling for negative net revenue #}
-                                <td class="{% if key == 'net' and value < 0 %}text-danger{% elif key == 'revenue' %}fw-bold{% endif %} text-nowrap">
-                                    {% if key in ['fixed_expenses', 'tax'] %}€{% else %}£{% endif %}{{ "{:,.2f}".format(value or 0) }}
-                                </td>
+                            <td><strong>{{ metrics_labels['revenue'] }}</strong></td>
+                            {% for period in ['q1', 'q2', 'q3', 'q4', 'annual'] %}
+                                <td class="fw-bold text-nowrap">£{{ "{:,.2f}".format(data[period]['revenue'] or 0) }}</td>
                             {% endfor %}
                         </tr>
-                        {% endfor %}
+                        {% if has_clinic_configured %}
+                        <tr>
+                            <td><strong>{{ metrics_labels['costaspine_revenue'] }}</strong></td>
+                            {% for period in ['q1', 'q2', 'q3', 'q4', 'annual'] %}
+                                <td class="text-nowrap">£{{ "{:,.2f}".format(data[period]['costaspine_revenue'] or 0) }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% if clinic_fee_enabled %}
+                        <tr>
+                            <td><strong>{{ metrics_labels['costaspine_fee'] }}</strong></td>
+                            {% for period in ['q1', 'q2', 'q3', 'q4', 'annual'] %}
+                                <td class="text-nowrap">£{{ "{:,.2f}".format(data[period]['costaspine_fee'] or 0) }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endif %}
+                        {% endif %}
+                        <tr>
+                            <td><strong>{{ metrics_labels['fixed_expenses'] }}</strong></td>
+                            {% for period in ['q1', 'q2', 'q3', 'q4', 'annual'] %}
+                                <td class="text-nowrap">€{{ "{:,.2f}".format(data[period]['fixed_expenses'] or 0) }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td><strong>{{ metrics_labels['tax'] }}</strong></td>
+                            {% for period in ['q1', 'q2', 'q3', 'q4', 'annual'] %}
+                                <td class="text-nowrap">€{{ "{:,.2f}".format(data[period]['tax'] or 0) }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td><strong>{{ metrics_labels['net'] }}</strong></td>
+                            {% for period in ['q1', 'q2', 'q3', 'q4', 'annual'] %}
+                                <td class="text-nowrap {% if data[period]['net'] < 0 %}text-danger{% endif %}">€{{ "{:,.2f}".format(data[period]['net'] or 0) }}</td>
+                            {% endfor %}
+                        </tr>
                     </tbody>
                 </table>
             </div>
             <small class="text-muted">
-                *Est. Net Revenue (Final) = Total Revenue - {{ clinic_fee_label }} - Total Fixed Expenses - Est. Autónomo Contribution.
+                *Est. Net Revenue (Final) = Total Revenue{% if has_clinic_configured and clinic_fee_enabled %} - {{ clinic_fee_label }}{% endif %} - Total Fixed Expenses - Est. Autónomo Contribution.
             </small>
         </div>
     </div>
@@ -120,7 +137,7 @@
                 </table>
             </div>
             <small class="text-muted">
-                 *'Net Revenue (before Contrib.)' = Monthly Revenue - {{ clinic_fee_label }} - Fixed Expenses. This value determines the Income Bracket. 'Final Net Revenue' = Net Revenue (before Contrib.) - Est. Monthly Contribution. All expenses and contributions are in EUR. Income brackets and minimum contribution bases shown are for the Spanish Autónomo system for {{ tax_year }}.
+                 *'Net Revenue (before Contrib.)' = Monthly Revenue{% if has_clinic_configured and clinic_fee_enabled %} - {{ clinic_fee_label }}{% endif %} - Fixed Expenses. This value determines the Income Bracket. 'Final Net Revenue' = Net Revenue (before Contrib.) - Est. Monthly Contribution. All expenses and contributions are in EUR. Income brackets and minimum contribution bases shown are for the Spanish Autónomo system for {{ tax_year }}.
             </small>
         </div>
     </div>

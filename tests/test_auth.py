@@ -73,46 +73,27 @@ def test_login_invalid_credentials(client):
     assert response.status_code == 200
     # Should stay on login page or show error
 
-def test_register_new_user(client, app):
-    """Test user registration."""
+def test_registration(client, app):
+    # Test successful registration
     with app.app_context():
-        initial_user_count = User.query.count()
-        
         unique_email = f"newuser_{uuid.uuid4().hex[:8]}@example.com"
-        unique_username = f"newuser_{uuid.uuid4().hex[:8]}"
-        
         response = client.post('/auth/register', data={
-            'username': unique_username,
             'email': unique_email,
-            'password': 'password123',
-            'confirm_password': 'password123',
-            'consent_checkbox': True
+            'password': 'newpassword',
+            'confirm_password': 'newpassword',
+            'consent_checkbox': 'y'
         }, follow_redirects=True)
-        
         assert response.status_code == 200
-        assert User.query.count() == initial_user_count + 1
+        assert b'Registration successful!' in response.data
 
-def test_register_duplicate_email(client, app):
-    """Test registration with duplicate email."""
-    with app.app_context():
-        # Create initial user with unique email
-        unique_email = f"existing_{uuid.uuid4().hex[:8]}@example.com"
-        user = User(username=f'existinguser_{uuid.uuid4().hex[:8]}', email=unique_email)
-        user.set_password('password123')
-        db.session.add(user)
-        db.session.commit()
-        
-        # Try to register with same email
+        # Test registration with existing email
         response = client.post('/auth/register', data={
-            'username': f'newuser_{uuid.uuid4().hex[:8]}',
             'email': unique_email,
-            'password': 'password123',
-            'confirm_password': 'password123',
-            'consent_checkbox': True
+            'password': 'anotherpassword',
+            'confirm_password': 'anotherpassword',
+            'consent_checkbox': 'y'
         }, follow_redirects=True)
-        
-        assert response.status_code == 200
-        # Should show error message
+        assert b'Email already registered' in response.data
 
 def test_logout_route(client):
     """Test logout functionality."""

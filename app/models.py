@@ -151,7 +151,7 @@ class Treatment(db.Model):
     
     # New fields
     pain_level = db.Column(db.Integer)
-    movement_restriction = db.Column(db.String(50))
+    movement_restriction = db.Column(db.String(255))
     evaluation_data = db.Column(db.JSON)
     
     # Fields for analytics and form
@@ -161,7 +161,7 @@ class Treatment(db.Model):
     payment_method = db.Column(db.String(50))
     
     # Field for Calendly integration
-    calendly_invitee_uri = db.Column(db.String(255), nullable=True, unique=True, index=True)
+    calendly_invitee_uri = db.Column(db.String(255), nullable=True, index=True)
     
     trigger_points = db.relationship('TriggerPoint', backref='treatment', lazy=True)
 
@@ -315,7 +315,7 @@ class UserSubscription(db.Model):
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, index=True)
+    username = db.Column(db.String(64), nullable=True) # No longer unique or indexed
     email = db.Column(db.String(120), unique=True, index=True, nullable=False)
     password_hash = db.Column(db.String(255))
     is_admin = db.Column(db.Boolean, default=False)

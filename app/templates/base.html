@@ -5,26 +5,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>TRXCK - {% block title %}{% endblock %}</title>
+    <title>TRXCKER - {% block title %}{% endblock %}</title>
     <!-- Bootstrap 5 and Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- Add this line for Calendly styling -->
     <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
     
     {% block styles %}
     <style>
         :root {
-            --primary-color: #2980b9;
-            --secondary-color: #2980b9;
-            --accent-color: #e74c3c;
-            --sidebar-width: 250px; /* Define sidebar width */
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #60a5fa;
+            --secondary-color: #3b82f6;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --bg-light: #f9fafb;
+            --bg-section: #ffffff;
+            --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            --gradient-secondary: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            --sidebar-width: 250px; /* Back to a comfortable width */
+            --border-radius: 12px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-        
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            /* REMOVED global padding-left: var(--sidebar-width); */
-            /* Ensure body takes full height if needed, though flex layout often handles this */
-            /* min-height: 100vh; */ 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+            overflow-x: hidden;
         }
 
         .sidebar {
@@ -78,6 +104,10 @@
              /* Ensure it can grow */
              flex-grow: 1;
              min-height: 100vh; /* Ensure it takes at least full screen height */
+             margin-left: var(--sidebar-width); /* Push content to the right of sidebar */
+             width: calc(100% - var(--sidebar-width)); /* Constrain width to fit viewport */
+             max-width: calc(100vw - var(--sidebar-width)); /* Prevent overflow */
+             overflow-x: auto; /* Allow horizontal scroll if needed */
         }
         
         .card {
@@ -118,11 +148,11 @@
         }
         
         .btn-primary:hover {
-            background-color: #1a6ea8;
+            background-color: var(--primary-dark);
         }
         
         .table-hover tbody tr:hover {
-            background-color: rgba(41, 128, 185, 0.1);
+            background-color: rgba(37, 99, 235, 0.1);
         }
 
         .status-badge {
@@ -132,7 +162,7 @@
         }
 
         .status-active {
-            background-color: #2980b9;
+            background-color: var(--primary-color);
             color: white;
         }
 
@@ -205,7 +235,7 @@
 
         /* Update any other status-related colors */
         .status-indicator.status-active {
-            background-color: #2980b9;
+            background-color: var(--primary-color);
         }
 
         .status-indicator.status-completed {
@@ -214,188 +244,55 @@
 
         .sidebar-footer {
             margin-top: auto; /* Push footer to the bottom */
-            padding: 15px 20px;
+            padding: 20px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
+
         .user-info {
             color: white;
-            font-size: 0.9rem;
+            margin-bottom: 10px;
         }
-        
+
         .user-name {
+            font-weight: 600;
             display: block;
-            font-weight: 500;
-            margin-bottom: 5px;
         }
-        
-        .logout-link {
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
+
+        .user-role {
             font-size: 0.8rem;
+            opacity: 0.8;
         }
-        
+
+        .logout-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+            padding: 8px 20px !important;
+            margin: 2px 0 !important;
+            border-radius: 5px !important;
+            transition: all 0.3s ease !important;
+        }
+
         .logout-link:hover {
-            color: white;
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
         }
 
-        /* Update badge colors */
-        .badge.bg-primary {
-            background-color: #2980b9 !important;
-        }
-
-        /* Additional color updates */
-        .status-active {
-            background-color: #2980b9;
-            color: white;
-        }
-        
-        .status-indicator.status-active {
-            background-color: #2980b9;
-        }
-        
-        .table-hover tbody tr:hover {
-            background-color: rgba(41, 128, 185, 0.1); /* Lighter version of #2980b9 */
-        }
-        
-        /* Update all button colors */
-        .btn-outline-primary {
-            color: #2980b9;
-            border-color: #2980b9;
-        }
-        
-        .btn-outline-primary:hover {
-            background-color: #2980b9;
-            border-color: #2980b9;
-            color: white;
-        }
-        
-        /* Update all badge colors */
-        .badge.bg-primary, 
-        .btn-primary,
-        .bg-primary {
-            background-color: #2980b9 !important;
-            border-color: #2980b9 !important;
-        }
-        
-        /* Update links */
-        a {
-            color: #2980b9;
-        }
-        
-        a:hover {
-            color: #1a6ea8;
-        }
-
-        /* Fix view mode buttons and all other button variants */
-        .btn-outline-secondary {
-            color: #6c757d;
-            border-color: #6c757d;
-        }
-
-        .btn-outline-secondary:hover {
-            background-color: #6c757d;
-            border-color: #6c757d;
-            color: white;
-        }
-
-        /* Ensure all primary-related elements use the turquoise color */
-        .btn-primary, 
-        .btn-primary:focus,
-        .btn-primary:active,
-        .btn-primary:not(:disabled):not(.disabled):active {
-            background-color: #2980b9 !important;
-            border-color: #2980b9 !important;
-        }
-
-        /* Fix any text-primary classes */
-        .text-primary {
-            color: #2980b9 !important;
-        }
-
-        /* Fix any bg-primary classes */
-        .bg-primary {
-            background-color: #2980b9 !important;
-        }
-
-        /* Fix any border-primary classes */
-        .border-primary {
-            border-color: #2980b9 !important;
-        }
-
-        /* Style for the sidebar toggle button (initially hidden on large screens) */
-        .sidebar-toggle {
-            display: none; /* Hide by default */
-            position: fixed; /* Keep it fixed for easy access */
-            top: 10px;
-            left: 10px;
-            z-index: 1050; /* Ensure it's above other content */
-            background-color: rgba(41, 128, 185, 0.8);
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
-
-        /* Responsive adjustments for small screens */
-        @media (max-width: 991.98px) { /* Bootstrap lg breakpoint */
+        /* Responsive design for mobile */
+        @media (max-width: 768px) {
             .sidebar {
-                position: fixed !important; /* Override column display */
-                left: calc(-1 * var(--sidebar-width)) !important; /* Start off-screen */
-                width: var(--sidebar-width) !important; /* Set fixed width */
-                z-index: 1040 !important; /* Below toggle */
-                transition: left 0.3s ease-in-out !important;
-                height: 100vh !important; /* Full height */
-                /* Ensure Bootstrap columns don't interfere */
-                top: 0 !important;
-                bottom: 0 !important;
-            }
-
-            .sidebar.show {
-                left: 0 !important; /* Slide in */
-                box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important; 
-                z-index: 1051 !important; /* Above toggle */
-            }
-
-            .content {
-                margin-left: 0 !important; /* Full width content */
-                padding: 20px !important; /* Add padding */
-                padding-top: 60px !important; /* Account for toggle */
-                min-height: 100vh; /* Ensure content area fills height */
-            }
-
-            .sidebar-toggle {
-                display: block !important; /* Show toggle button */
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
             }
             
-            body.sidebar-open::after {
-                 content: '';
-                 position: fixed;
-                 top: 0;
-                 left: 0;
-                 right: 0;
-                 bottom: 0;
-                 background-color: rgba(0, 0, 0, 0.5);
-                 z-index: 1030; /* Below sidebar */
+            .sidebar.show {
+                transform: translateX(0);
             }
-        }
-        
-        /* Styles for large screens to ensure padding and margin */
-        @media (min-width: 992px) {
-             .content {
-                 margin-left: var(--sidebar-width);
-                 width: calc(100% - var(--sidebar-width)); /* Explicitly set width */
-                 padding: 20px !important; /* Re-ensure padding */
-                 min-height: 100vh; /* Ensure content area fills height */
+            
+            .content {
+                margin-left: 0; /* Remove margin on mobile so content takes full width */
+                width: 100%; /* Full width on mobile */
+                max-width: 100vw; /* Full viewport width */
+                padding: 10px;
             }
-            .sidebar {
-                /* Ensure body doesn't have the padding on large screens either */
-                padding-left: 0; 
-            }
-        }
-
-        @media (max-width: 575.98px) { 
-            /* Specific styles for xs screens can go here if needed in the future */
         }
     </style>
     {% endblock styles %}
@@ -428,7 +325,7 @@
         <div class="row g-0"> {# Remove gutters for seamless edge #}
             <div class="sidebar" id="sidebar"> {# REMOVED Bootstrap columns col-12 col-lg-2 #}
                 <div class="sidebar-header">
-                    <h3>TRXCK</h3>
+                    <h3>TRXCKER</h3>
                 </div>
                 
                 <ul class="nav flex-column">
@@ -544,7 +441,7 @@
                 <div class="sidebar-footer">
                     <div class="user-info">
                         {% if current_user and current_user.is_authenticated %}
-                            <span class="user-name">{{ current_user.username }}</span>
+                            <span class="user-name">{{ current_user.email }}</span>
                             {# Example: Display user role or email #}
                             {# <small class="user-role text-muted">{{ current_user.role }}</small> #}
                         {% else %}
@@ -587,7 +484,7 @@
                             <a href="{{ url_for('legal.privacy') }}" class="text-muted text-decoration-none me-3">Privacy Policy</a>
                             <a href="{{ url_for('legal.terms') }}" class="text-muted text-decoration-none me-3">Terms & Conditions</a>
                             <a href="{{ url_for('legal.dpa') }}" class="text-muted text-decoration-none me-3">Data Processing Agreement</a>
-                            <span>&copy; 2025 TRXCK. All rights reserved.</span>
+                            <span>&copy; 2025 TRXCKER. All rights reserved.</span>
                         </small>
                     </div>
                 </footer>

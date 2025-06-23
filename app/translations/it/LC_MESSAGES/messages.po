@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-06-22 22:57+0200\n"
+"POT-Creation-Date: 2025-06-23 01:46+0200\n"
 "PO-Revision-Date: 2025-06-07 13:26+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: it\n"
@@ -18,137 +18,173 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: app/routes/main.py:3102
+#: app/routes/main.py:2355
+msgid "Clinic"
+msgstr ""
+
+#: app/routes/main.py:2359
+#, fuzzy
+msgid "Total Revenue"
+msgstr "Entrate"
+
+#: app/routes/main.py:2362
+msgid "Total Fixed Expenses (€)"
+msgstr ""
+
+#: app/routes/main.py:2363
+#, fuzzy
+msgid "Est. Autónomo Contribution (€)"
+msgstr "Contra.Autonomo stimato totale (€)"
+
+#: app/routes/main.py:2364
+msgid "Est. Net Revenue (Final)"
+msgstr ""
+
+#: app/routes/main.py:3105
 msgid "You do not have permission to access this page."
 msgstr "Non hai il permesso di accedere a questa pagina."
 
-#: app/templates/analytics.html:3 app/templates/base.html:488
+#: app/templates/analytics.html:3 app/templates/base.html:385
 #: app/templates/pricing.html:216
 msgid "Analytics"
 msgstr "Analisi"
 
 #: app/templates/analytics.html:7
+msgid "No patient revenue data available."
+msgstr ""
+
+#: app/templates/analytics.html:8
+msgid "Error loading data."
+msgstr "Errore nel caricamento dei dati."
+
+#: app/templates/analytics.html:9
+msgid ""
+"No practice report generated yet. Click 'Generate New Report' to create "
+"one."
+msgstr "Nessun rapporto di pratica generato ancora. Clicca su 'Genera Nuovo Rapporto' per crearne uno."
+
+#: app/templates/analytics.html:12
 msgid "Practice Analytics"
 msgstr "Analisi clinica"
 
-#: app/templates/analytics.html:14 app/templates/monitoring.html:70
+#: app/templates/analytics.html:19 app/templates/monitoring.html:70
 msgid "Total Patients"
 msgstr "Pazienti totali"
 
-#: app/templates/analytics.html:22 app/templates/index.html:189
+#: app/templates/analytics.html:27 app/templates/index.html:222
 msgid "Active Patients"
 msgstr "Pazienti attivi"
 
-#: app/templates/analytics.html:30
+#: app/templates/analytics.html:35
 msgid "Total Treatments"
 msgstr "Trattamenti totali"
 
-#: app/templates/analytics.html:38
+#: app/templates/analytics.html:43
 msgid "Avg. Monthly Revenue"
 msgstr "Reddito medio mensile"
 
-#: app/templates/analytics.html:47
+#: app/templates/analytics.html:52
 msgid "Avg. Treatments/Patient"
 msgstr "Trattamenti medi/pazienti"
 
-#: app/templates/analytics.html:56
+#: app/templates/analytics.html:61
 #, fuzzy, python-format
 msgid "%(clinic_name)s Fee (This Week)"
 msgstr "Costaspine Tasso (questa settimana)"
 
-#: app/templates/analytics.html:58
+#: app/templates/analytics.html:63
 #, fuzzy, python-format
 msgid "Total Weekly %(clinic_name)s Revenue:"
 msgstr "Reddito settimanale CS:"
 
-#: app/templates/analytics.html:66
+#: app/templates/analytics.html:71
 msgid "Est. Total Autónomo Contr. (€)"
 msgstr "Contra.Autonomo stimato totale (€)"
 
-#: app/templates/analytics.html:68
+#: app/templates/analytics.html:73
 msgid "Sum of estimated monthly contributions (€)"
 msgstr "Somma dei contributi mensili stimati (€)"
 
-#: app/templates/analytics.html:74
+#: app/templates/analytics.html:79
 msgid "Click to see list"
 msgstr "Fai clic per vedere l'elenco"
 
-#: app/templates/analytics.html:76 app/templates/analytics.html:268
+#: app/templates/analytics.html:81 app/templates/analytics.html:273
 #, fuzzy
 msgid "Inactive Patients (>90d)"
 msgstr "Pazienti attivi"
 
-#: app/templates/analytics.html:88
+#: app/templates/analytics.html:93
 msgid "Treatments by Month"
 msgstr "Trattamenti al mese"
 
-#: app/templates/analytics.html:92 app/templates/analytics.html:103
-#: app/templates/analytics.html:118 app/templates/analytics.html:129
-#: app/templates/analytics.html:144 app/templates/analytics.html:155
-#: app/templates/analytics.html:166
+#: app/templates/analytics.html:97 app/templates/analytics.html:108
+#: app/templates/analytics.html:123 app/templates/analytics.html:134
+#: app/templates/analytics.html:149 app/templates/analytics.html:160
+#: app/templates/analytics.html:171
 msgid "No data available to display."
 msgstr "Non ci sono dati disponibili da mostrare."
 
-#: app/templates/analytics.html:99
+#: app/templates/analytics.html:104
 msgid "New Patients by Month"
 msgstr "Nuovi pazienti al mese"
 
-#: app/templates/analytics.html:114
+#: app/templates/analytics.html:119
 msgid "Revenue by Visit Type"
 msgstr "Visita il reddito del tipo"
 
-#: app/templates/analytics.html:125
+#: app/templates/analytics.html:130
 msgid "Revenue by Location (Top 10)"
 msgstr "Reddito di posizione (top 10)"
 
-#: app/templates/analytics.html:140
+#: app/templates/analytics.html:145
 msgid "Common Diagnoses"
 msgstr "Diagnosi comuni"
 
-#: app/templates/analytics.html:151
+#: app/templates/analytics.html:156
 msgid "Patient Status Distribution"
 msgstr "Distribuzione dello stato del paziente"
 
-#: app/templates/analytics.html:162
+#: app/templates/analytics.html:167
 msgid "Payment Method Distribution"
 msgstr "Distribuzione dei metodi di pagamento"
 
-#: app/templates/analytics.html:177
+#: app/templates/analytics.html:182
 msgid "Top Patients by Revenue"
 msgstr "Pazienti con reddito più alto"
 
-#: app/templates/analytics.html:181 app/templates/analytics.html:238
-#: app/templates/analytics.html:242 app/templates/analytics.html:246
-#: app/templates/analytics.html:250 app/templates/analytics.html:391
+#: app/templates/analytics.html:186 app/templates/analytics.html:243
+#: app/templates/analytics.html:247 app/templates/analytics.html:251
+#: app/templates/analytics.html:255 app/templates/analytics.html:396
 msgid "Loading..."
 msgstr "Carica ..."
 
-#: app/templates/analytics.html:193
+#: app/templates/analytics.html:198
 msgid "AI Practice Insights"
 msgstr "Clinic Perspectives (AI)"
 
-#: app/templates/analytics.html:198
+#: app/templates/analytics.html:203
 msgid "Generate New Report"
 msgstr "Generare un nuovo rapporto"
 
-#: app/templates/analytics.html:212
+#: app/templates/analytics.html:217
 msgid "Report generated on:"
 msgstr "Report generato il:"
 
-#: app/templates/analytics.html:215
+#: app/templates/analytics.html:220
 msgid "Using DeepSeek AI based on current practice data."
 msgstr "Utilizzando DeepSeek AI basato sui dati attuali della pratica."
 
-#: app/templates/analytics.html:229
+#: app/templates/analytics.html:234
 #, python-format
 msgid "%(clinic_name)s Fee Breakdown (%(percentage)s%%)"
 msgstr ""
 
-#: app/templates/analytics.html:230 app/templates/analytics.html:257
-#: app/templates/analytics.html:269 app/templates/analytics.html:278
+#: app/templates/analytics.html:235 app/templates/analytics.html:262
+#: app/templates/analytics.html:274 app/templates/analytics.html:283
 #: app/templates/calendar.html:51 app/templates/calendar.html:96
-#: app/templates/calendly_review.html:65 app/templates/index.html:309
-#: app/templates/index.html:354 app/templates/my_account.html:158
+#: app/templates/calendly_review.html:65 app/templates/index.html:342
+#: app/templates/index.html:387 app/templates/my_account.html:158
 #: app/templates/my_account.html:187 app/templates/patient_detail.html:141
 #: app/templates/patient_detail.html:449 app/templates/patient_detail.html:476
 #: app/templates/patient_detail.html:539 app/templates/patient_detail.html:564
@@ -158,7 +194,7 @@ msgstr ""
 msgid "Close"
 msgstr "Chiudi"
 
-#: app/templates/analytics.html:233
+#: app/templates/analytics.html:238
 #, fuzzy, python-format
 msgid ""
 "Total fee calculated based on treatments logged at '%(clinic_name)s' "
@@ -167,69 +203,61 @@ msgstr ""
 "Tariffa totale calcolata basata sui trattamenti registrati presso la sede"
 " 'CostaSpine Clinic' con una tariffa."
 
-#: app/templates/analytics.html:237
+#: app/templates/analytics.html:242
 msgid "Total (All Time):"
 msgstr "Totale (Tutto il Tempo):"
 
-#: app/templates/analytics.html:241
+#: app/templates/analytics.html:246
 msgid "This Year:"
 msgstr "Quest'Anno:"
 
-#: app/templates/analytics.html:245
+#: app/templates/analytics.html:250
 msgid "This Month:"
 msgstr "Questo Mese:"
 
-#: app/templates/analytics.html:249
+#: app/templates/analytics.html:254
 msgid "This Week:"
 msgstr "Questa Settimana:"
 
-#: app/templates/analytics.html:254
+#: app/templates/analytics.html:259
 msgid "Calculations are based on treatment dates."
 msgstr "I calcoli sono basati sulle date dei trattamenti."
 
-#: app/templates/analytics.html:272
+#: app/templates/analytics.html:277
 msgid ""
 "The following active patients have not had a treatment logged in the last"
 " 90 days."
 msgstr ""
 
-#: app/templates/analytics.html:403
-msgid "No patient revenue data available."
-msgstr ""
-
-#: app/templates/analytics.html:419
-msgid "Error loading data."
-msgstr "Errore durante il caricamento dei dati."
-
-#: app/templates/analytics.html:439 app/templates/analytics.html:466
+#: app/templates/analytics.html:444 app/templates/analytics.html:471
 msgid "Error"
 msgstr "Errore"
 
-#: app/templates/analytics.html:447
+#: app/templates/analytics.html:452
 msgid "No patients became inactive in the last 7 days."
 msgstr "Nessun paziente è diventato inattivo negli ultimi 7 giorni."
 
-#: app/templates/analytics.html:467
+#: app/templates/analytics.html:472
 msgid "Could not load patient list."
 msgstr "Impossibile caricare l'elenco dei pazienti."
 
-#: app/templates/analytics.html:520 app/templates/patient_detail.html:183
+#: app/templates/analytics.html:525 app/templates/patient_detail.html:183
 msgid "Treatments"
 msgstr "Trattamenti"
 
-#: app/templates/analytics.html:538
+#: app/templates/analytics.html:543
 msgid "New Patients"
 msgstr "Nuovi Pazienti"
 
-#: app/templates/analytics.html:556 app/templates/analytics.html:573
+#: app/templates/analytics.html:561 app/templates/analytics.html:578
 msgid "Revenue"
 msgstr "Entrate"
 
-#: app/templates/analytics.html:590 app/templates/analytics.html:637
+#: app/templates/analytics.html:595 app/templates/analytics.html:642
 msgid "Count"
 msgstr "Conteggio"
 
-#: app/templates/analytics.html:618 app/templates/edit_patient.html:61
+#: app/templates/analytics.html:623 app/templates/edit_patient.html:61
 #: app/templates/my_account.html:79 app/templates/my_account.html:84
 #: app/templates/patient_detail.html:224 app/templates/patient_detail.html:422
 #: app/templates/patient_detail.html:465 app/templates/patient_detail.html:607
@@ -237,23 +265,23 @@ msgstr "Conteggio"
 msgid "Active"
 msgstr "Attivo"
 
-#: app/templates/analytics.html:618 app/templates/edit_patient.html:64
+#: app/templates/analytics.html:623 app/templates/edit_patient.html:64
 #: app/templates/patient_detail.html:224 app/templates/patients_list.html:20
 msgid "Inactive"
 msgstr "Inattivo"
 
-#: app/templates/analytics.html:680
+#: app/templates/analytics.html:685
 msgid "No data"
 msgstr "Nessun dato"
 
 #: app/templates/appointments.html:4 app/templates/appointments.html:61
-#: app/templates/base.html:447 app/templates/index.html:442
-#: app/templates/index.html:482
+#: app/templates/base.html:344 app/templates/index.html:476
+#: app/templates/index.html:516
 msgid "Appointments"
 msgstr "Appuntamenti"
 
 #: app/templates/appointments.html:63 app/templates/calendar.html:50
-#: app/templates/index.html:308
+#: app/templates/index.html:341
 msgid "New Appointment"
 msgstr "Nuovo Appuntamento"
 
@@ -302,13 +330,13 @@ msgid "Calendar"
 msgstr "Calendario"
 
 #: app/templates/appointments.html:122 app/templates/calendar.html:71
-#: app/templates/index.html:243 app/templates/index.html:329
+#: app/templates/index.html:276 app/templates/index.html:362
 msgid "Time"
 msgstr "Ora"
 
 #: app/templates/appointments.html:123 app/templates/appointments.html:192
-#: app/templates/calendar.html:57 app/templates/index.html:241
-#: app/templates/index.html:315 app/templates/review_calendly_bookings.html:86
+#: app/templates/calendar.html:57 app/templates/index.html:274
+#: app/templates/index.html:348 app/templates/review_calendly_bookings.html:86
 msgid "Patient"
 msgstr "Paziente"
 
@@ -323,7 +351,7 @@ msgid "Duration"
 msgstr "Durata"
 
 #: app/templates/appointments.html:126 app/templates/edit_patient.html:58
-#: app/templates/edit_patient.html:371 app/templates/index.html:137
+#: app/templates/edit_patient.html:371 app/templates/index.html:170
 #: app/templates/patient_detail.html:317 app/templates/patient_detail.html:410
 #: app/templates/patient_detail.html:462 app/templates/patient_detail.html:657
 #: app/templates/patients_list.html:102
@@ -337,7 +365,7 @@ msgid "Notes"
 msgstr ""
 
 #: app/templates/appointments.html:128 app/templates/calendly_review.html:25
-#: app/templates/index.html:244 app/templates/patient_detail.html:321
+#: app/templates/index.html:277 app/templates/patient_detail.html:321
 #: app/templates/patient_detail.html:412 app/templates/patient_detail.html:632
 #: app/templates/review_calendly_bookings.html:37
 #: app/templates/review_calendly_bookings.html:89
@@ -395,112 +423,112 @@ msgstr "Annulla"
 msgid "Schedule"
 msgstr "Pianifica"
 
-#: app/templates/base.html:437 app/templates/index.html:4
-#: app/templates/index.html:121
+#: app/templates/base.html:334 app/templates/index.html:4
+#: app/templates/index.html:152
 msgid "Dashboard"
 msgstr "Dashboard"
 
-#: app/templates/base.html:442 app/templates/index.html:404
+#: app/templates/base.html:339 app/templates/index.html:438
 msgid "Patients"
 msgstr "Pazienti"
 
-#: app/templates/base.html:462
+#: app/templates/base.html:359
 msgid "Management"
 msgstr "Gestione"
 
-#: app/templates/base.html:468 app/templates/index.html:211
+#: app/templates/base.html:365 app/templates/index.html:244
 #: app/templates/patients_list.html:22
 msgid "Pending Review"
 msgstr "In Attesa di Revisione"
 
-#: app/templates/base.html:477
+#: app/templates/base.html:374
 msgid "Review Payments"
 msgstr "Rivedi Pagamenti"
 
-#: app/templates/base.html:484 app/templates/patient_detail.html:193
+#: app/templates/base.html:381 app/templates/patient_detail.html:193
 #: app/templates/patient_detail.html:503
 msgid "Reports"
 msgstr "Report"
 
-#: app/templates/base.html:493
+#: app/templates/base.html:390
 msgid "Finances"
 msgstr "Finanze"
 
-#: app/templates/base.html:500
+#: app/templates/base.html:397
 msgid "Settings"
 msgstr "Impostazioni"
 
-#: app/templates/base.html:504
+#: app/templates/base.html:401
 #, fuzzy
 msgid "User Settings"
 msgstr "Impostazioni Utente"
 
-#: app/templates/base.html:527
+#: app/templates/base.html:424
 msgid "My Dashboard"
 msgstr "La Mia Dashboard"
 
-#: app/templates/base.html:533
+#: app/templates/base.html:430
 msgid "Account"
 msgstr "Account"
 
-#: app/templates/base.html:536
+#: app/templates/base.html:433
 msgid "My Profile"
 msgstr "Il Mio Profilo"
 
-#: app/templates/base.html:558 app/templates/my_account.html:3
+#: app/templates/base.html:455 app/templates/my_account.html:3
 #: app/templates/my_account.html:43
 msgid "My Account"
 msgstr "Il Mio Account"
 
-#: app/templates/base.html:563
+#: app/templates/base.html:460
 msgid "Logout"
 msgstr "Esci"
 
-#: app/templates/auth/login.html:3 app/templates/base.html:569
+#: app/templates/auth/login.html:3 app/templates/base.html:466
 msgid "Login"
 msgstr "Accesso"
 
-#: app/templates/calendar.html:59 app/templates/index.html:317
+#: app/templates/calendar.html:59 app/templates/index.html:350
 msgid "Select Patient..."
 msgstr "Seleziona Paziente..."
 
-#: app/templates/calendar.html:67 app/templates/index.html:242
-#: app/templates/index.html:325 app/templates/patient_detail.html:315
+#: app/templates/calendar.html:67 app/templates/index.html:275
+#: app/templates/index.html:358 app/templates/patient_detail.html:315
 #: app/templates/patient_detail.html:586 app/templates/treatment_detail.html:19
 msgid "Date"
 msgstr "Data"
 
-#: app/templates/calendar.html:76 app/templates/index.html:334
+#: app/templates/calendar.html:76 app/templates/index.html:367
 #: app/templates/patient_detail.html:667
 msgid "Treatment Type"
 msgstr "Tipo di Trattamento"
 
-#: app/templates/calendar.html:77 app/templates/index.html:335
+#: app/templates/calendar.html:77 app/templates/index.html:368
 msgid "e.g., Initial Assessment, Follow-up"
 msgstr "es., Valutazione Iniziale, Follow-up"
 
-#: app/templates/calendar.html:80 app/templates/index.html:338
+#: app/templates/calendar.html:80 app/templates/index.html:371
 #: app/templates/review_payments.html:23
 msgid "Location"
 msgstr "Posizione"
 
-#: app/templates/calendar.html:82 app/templates/index.html:340
+#: app/templates/calendar.html:82 app/templates/index.html:373
 msgid "CostaSpine Clinic"
 msgstr "Clinica CostaSpine"
 
-#: app/templates/calendar.html:83 app/templates/index.html:341
+#: app/templates/calendar.html:83 app/templates/index.html:374
 msgid "Home Visit"
 msgstr "Visita Domiciliare"
 
-#: app/templates/calendar.html:84 app/templates/index.html:342
+#: app/templates/calendar.html:84 app/templates/index.html:375
 msgid "Online"
 msgstr "Online"
 
-#: app/templates/calendar.html:88 app/templates/index.html:346
+#: app/templates/calendar.html:88 app/templates/index.html:379
 msgid "Notes (Optional)"
 msgstr "Note (Opzionale)"
 
-#: app/templates/calendar.html:97 app/templates/index.html:355
+#: app/templates/calendar.html:97 app/templates/index.html:388
 msgid "Create Appointment"
 msgstr "Crea Appuntamento"
 
@@ -823,131 +851,150 @@ msgid "Annual Total"
 msgstr "Totale Annuale"
 
 #: app/templates/index.html:125
+msgid "🚀 Welcome to TRXCKER! Let's get you set up."
+msgstr "🚀 Benvenuto in TRXCKER! Prepariamoci a iniziare."
+
+#: app/templates/index.html:129
+msgid ""
+"To personalize your experience and unlock all features, please complete "
+"these first steps:"
+msgstr ""
+"Per personalizzare la tua esperienza e sbloccare tutte le funzionalità, "
+"completa questi primi passaggi:"
+
+#: app/templates/index.html:132
+msgid "Step 1: Complete Your Profile"
+msgstr "Passaggio 1: Completa il tuo profilo"
+
+#: app/templates/index.html:134
+msgid "Add your name and professional details."
+msgstr ""
+
+#: app/templates/index.html:137
+msgid "Step 2: Connect Your Tools (Optional)"
+msgstr "Passaggio 2: Collega i tuoi strumenti (Opzionale)"
+
+#: app/templates/index.html:139
+msgid "Integrate with Calendly to sync your appointments automatically."
+msgstr ""
+
+#: app/templates/index.html:142
+msgid "Step 3: Add Your First Patient"
+msgstr "Passaggio 3: Aggiungi il tuo primo paziente"
+
+#: app/templates/index.html:144
+msgid "Start managing your patient records and treatments."
+msgstr "Inizia a gestire le cartelle cliniche e i trattamenti dei tuoi pazienti."
+
+#: app/templates/index.html:157
 #, python-format
 msgid "Welcome back, %(username)s!"
 msgstr "Bentornato, %(username)s!"
 
-#: app/templates/index.html:126
+#: app/templates/index.html:159
 msgid "Here's an overview of your clinic's activity."
 msgstr "Ecco una panoramica dell'attività della tua clinica."
 
-#: app/templates/index.html:135 app/templates/pricing.html:309
+#: app/templates/index.html:168 app/templates/pricing.html:309
 #: app/templates/pricing.html:396
 msgid "Current Plan"
 msgstr "Piano Attuale"
 
-#: app/templates/index.html:139
+#: app/templates/index.html:172
 msgid "Ends"
 msgstr "Termina"
 
-#: app/templates/index.html:139
+#: app/templates/index.html:172
 msgid "Renews"
 msgstr "Rinnova"
 
-#: app/templates/index.html:143
+#: app/templates/index.html:176
 msgid "Upgrade Plan"
 msgstr "Aggiorna Piano"
 
-#: app/templates/index.html:145
+#: app/templates/index.html:178
 msgid "Manage Plan"
 msgstr "Gestisci Piano"
 
-#: app/templates/index.html:157
+#: app/templates/index.html:190
 msgid "Patient Capacity"
 msgstr "Capacità Pazienti"
 
-#: app/templates/index.html:169 app/templates/patients_list.html:43
+#: app/templates/index.html:202 app/templates/patients_list.html:43
 msgid "Limit Reached!"
 msgstr "Limite Raggiunto!"
 
-#: app/templates/index.html:170 app/templates/patients_list.html:44
+#: app/templates/index.html:203 app/templates/patients_list.html:44
 msgid "Upgrade"
 msgstr "Aggiorna"
 
-#: app/templates/index.html:172 app/templates/patients_list.html:46
+#: app/templates/index.html:205 app/templates/patients_list.html:46
 msgid "Nearing Limit"
 msgstr "Limite quasi raggiunto"
 
-#: app/templates/index.html:180
+#: app/templates/index.html:213
 msgid "Unlimited Patients"
 msgstr "Pazienti Illimitati"
 
-#: app/templates/index.html:192
+#: app/templates/index.html:225
 msgid "Currently under treatment"
 msgstr "Attualmente in trattamento"
 
-#: app/templates/index.html:200
+#: app/templates/index.html:233
 msgid "Today's Appointments"
 msgstr "Appuntamenti di Oggi"
 
-#: app/templates/index.html:203
+#: app/templates/index.html:236
 msgid "Scheduled for today"
 msgstr "Programmati per oggi"
 
-#: app/templates/index.html:214
+#: app/templates/index.html:247
 msgid "Patients needing review"
 msgstr "Pazienti che necessitano revisione"
 
-#: app/templates/index.html:231
+#: app/templates/index.html:264
 msgid "Upcoming Appointments"
 msgstr "Prossimi Appuntamenti"
 
-#: app/templates/index.html:232
+#: app/templates/index.html:265
 msgid "View All"
 msgstr "Visualizza Tutti"
 
-#: app/templates/index.html:290
+#: app/templates/index.html:323
 msgid "No upcoming appointments"
 msgstr "Nessun appuntamento in programma"
 
-#: app/templates/index.html:292
+#: app/templates/index.html:325
 msgid "Schedule Appointment"
 msgstr "Programma Appuntamento"
 
-#: app/templates/index.html:385
+#: app/templates/index.html:419
 msgid "Current Patients"
 msgstr "Pazienti Attuali"
 
-#: app/templates/index.html:386
+#: app/templates/index.html:420
 msgid "Remaining Capacity"
 msgstr "Capacità Rimanente"
 
-#: app/templates/index.html:404
+#: app/templates/index.html:438
 msgid "Limit"
 msgstr "Limite"
 
-#: app/templates/index.html:404
+#: app/templates/index.html:438
 msgid "Over!"
 msgstr "Superato!"
 
-#: app/templates/index.html:505
+#: app/templates/index.html:539
 msgid "Error fetching results."
 msgstr "Errore nel recupero dei risultati."
 
-#: app/templates/index.html:517
+#: app/templates/index.html:551
 msgid "No patients found."
 msgstr "Nessun paziente trovato."
 
-#: app/templates/index.html:521
+#: app/templates/index.html:555
 msgid "An error occurred."
 msgstr "Si è verificato un errore."
-
-#: app/templates/landing.html:518
-#, fuzzy
-msgid "Pricing"
-msgstr "Prezzi"
-
-#: app/templates/landing.html:694
-msgid "Free while in beta"
-msgstr "Gratuito durante la beta"
-
-#: app/templates/landing.html:694
-msgid "plans from"
-msgstr "piani da"
-
-#: app/templates/landing.html:694 app/templates/pricing.html:315
-msgid "month"
-msgstr "mese"
 
 #: app/templates/monitoring.html:3 app/templates/monitoring.html:10
 msgid "System Monitoring"
@@ -1998,6 +2045,10 @@ msgstr "Hai un abbonamento a pagamento"
 msgid "No credit card required"
 msgstr "Nessuna carta di credito richiesta"
 
+#: app/templates/pricing.html:315
+msgid "month"
+msgstr "mese"
+
 #: app/templates/pricing.html:361
 msgid "Everything in Basic, plus:"
 msgstr ""
@@ -2191,11 +2242,11 @@ msgstr "Registrati"
 msgid "Create a new account"
 msgstr "Crea Paziente"
 
-#: app/templates/auth/register.html:79
+#: app/templates/auth/register.html:70
 msgid "Already have an account?"
 msgstr "Hai già un account?"
 
-#: app/templates/auth/register.html:79
+#: app/templates/auth/register.html:70
 msgid "Sign In"
 msgstr "Accedi"
 
@@ -2775,4 +2826,13 @@ msgstr ""
 
 #~ msgid "Patients Made Inactive This Week"
 #~ msgstr "Pazienti Resi Inattivi Questa Settimana"
+
+#~ msgid "Pricing"
+#~ msgstr "Prezzi"
+
+#~ msgid "Free while in beta"
+#~ msgstr "Gratuito durante la beta"
+
+#~ msgid "plans from"
+#~ msgstr "piani da"
 

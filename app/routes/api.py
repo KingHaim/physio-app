@@ -137,7 +137,7 @@ def sync_calendly_events():
                             created_at=start_time,
                             treatment_type=event_type_name,
                             status="Scheduled",
-                            notes=f"Booked via Calendly. Synced by {current_user.username}. Duration: {int((end_time - start_time).total_seconds() / 60)} min.",
+                            notes=f"Booked via Calendly. Synced by {current_user.email}. Duration: {int((end_time - start_time).total_seconds() / 60)} min.",
                             calendly_invitee_uri=invitee_uuid_for_booking  # Store just the UUID
                         )
                         db.session.add(new_treatment)

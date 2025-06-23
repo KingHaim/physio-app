@@ -58,21 +58,16 @@ def register():
     
     form = RegistrationForm()
     if form.validate_on_submit():
-        username = form.username.data
         email = form.email.data
         password = form.password.data
         
-        # Check if username or email already exists
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists', 'danger')
-            return render_template('auth/register.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES']) 
-
+        # Check if email already exists
         if User.query.filter_by(email=email).first():
             flash('Email already registered', 'danger')
             return render_template('auth/register.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
         
         # Create new user
-        user = User(username=username, email=email)
+        user = User(username=email, email=email)
         user.set_password(password)
         
         # Set consent information

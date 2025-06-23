@@ -5,7 +5,6 @@ from wtforms.fields import DateField
 from flask_babel import lazy_gettext as _l
 
 class RegistrationForm(FlaskForm):
-    username = StringField(_l('Username'), validators=[DataRequired(), Length(min=3, max=64)])
     email = StringField(_l('Email'), validators=[DataRequired(), Email(), Length(max=120)])
     password = PasswordField(_l('Password'), validators=[DataRequired(), Length(min=6)])
     confirm_password = PasswordField(_l('Confirm Password'), validators=[DataRequired(), EqualTo('password')])
@@ -36,7 +35,6 @@ class ClinicForm(FlaskForm):
 
 # We can add other forms here later, for example, a UserProfileForm
 class UserProfileForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=64)])
     email = StringField('Email', validators=[DataRequired(), Email(), Length(max=120)])
     first_name = StringField('First Name', validators=[Optional(), Length(max=64)])
     last_name = StringField('Last Name', validators=[Optional(), Length(max=64)])
