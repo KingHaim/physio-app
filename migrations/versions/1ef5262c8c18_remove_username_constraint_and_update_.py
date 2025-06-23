@@ -29,6 +29,13 @@ def upgrade():
     """))
     constraint_exists = result.scalar() > 0
     
+    # Check if the index already exists
+    index_result = connection.execute(text("""
+        SELECT COUNT(*) FROM pg_indexes 
+        WHERE indexname = 'ix_treatment_calendly_invitee_uri'
+    """))
+    index_exists = index_result.scalar() > 0
+    
     with op.batch_alter_table('patient', schema=None) as batch_op:
         batch_op.alter_column('phone',
                existing_type=sa.VARCHAR(length=200),
@@ -71,7 +78,9 @@ def upgrade():
                existing_type=sa.TEXT(),
                type_=sa.String(length=255),
                existing_nullable=True)
-        batch_op.create_index(batch_op.f('ix_treatment_calendly_invitee_uri'), ['calendly_invitee_uri'], unique=False)
+        # Only create the index if it doesn't exist
+        if not index_exists:
+            batch_op.create_index(batch_op.f('ix_treatment_calendly_invitee_uri'), ['calendly_invitee_uri'], unique=False)
 
     with op.batch_alter_table('unmatched_calendly_booking', schema=None) as batch_op:
         batch_op.create_foreign_key(None, 'user', ['user_id'], ['id'])

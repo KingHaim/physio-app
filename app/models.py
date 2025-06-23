@@ -369,6 +369,9 @@ class User(db.Model, UserMixin):
     # Soft delete
     is_deleted = db.Column(db.Boolean, default=False)
     
+    # Special access field for unlimited access without admin privileges
+    has_unlimited_access = db.Column(db.Boolean, default=False)
+    
     # Specify the foreign key to resolve ambiguity
     patients = db.relationship('Patient', foreign_keys='[Patient.user_id]', backref='practitioner', lazy='dynamic')
     
@@ -423,8 +426,8 @@ class User(db.Model, UserMixin):
         # Ensure Patient model is accessible here, it should be as it's defined in the same file.
         current_patient_count = Patient.query.filter_by(user_id=self.id).count()
         
-        # Admin users have unlimited access
-        if self.is_admin:
+        # Admin users and users with unlimited access have unlimited access
+        if self.is_admin or self.has_unlimited_access:
             return current_patient_count, None
             
         limit = 10  # Default Free Plan limit of 10 patients
@@ -500,7 +503,7 @@ class User(db.Model, UserMixin):
 
     def has_reached_patient_limit(self) -> bool:
         """Checks if the user has reached their patient limit based on their plan."""
-        if self.is_admin:
+        if self.is_admin or self.has_unlimited_access:
             return False
 
         plan = self.active_plan
