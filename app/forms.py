@@ -35,7 +35,7 @@ class ClinicForm(FlaskForm):
 
 # We can add other forms here later, for example, a UserProfileForm
 class UserProfileForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=120)])
+    email = StringField('Email', validators=[Optional(), Email(), Length(max=120)])
     first_name = StringField('First Name', validators=[Optional(), Length(max=64)])
     last_name = StringField('Last Name', validators=[Optional(), Length(max=64)])
     date_of_birth = DateField('Date of Birth', format='%Y-%m-%d', validators=[Optional()])
