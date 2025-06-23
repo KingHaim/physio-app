@@ -3619,26 +3619,15 @@ def user_settings():
     
     if request.method == 'POST':
         if 'submit' in request.form:
-            print(f"DEBUG: User form data: {user_form.data}")
-            print(f"DEBUG: Form errors: {user_form.errors}")
-            print(f"DEBUG: Form validation result: {user_form.validate_on_submit()}")
-            print(f"DEBUG: Date of birth data: {user_form.date_of_birth.data}")
-            print(f"DEBUG: License number data: {user_form.license_number.data}")
             if user_form.validate_on_submit():
-                print(f"DEBUG: Before update - DOB: {current_user.date_of_birth}, License: {current_user.license_number}")
                 current_user.first_name = user_form.first_name.data
                 current_user.last_name = user_form.last_name.data
                 current_user.date_of_birth = user_form.date_of_birth.data
                 current_user.sex = user_form.sex.data
                 current_user.license_number = user_form.license_number.data
-                print(f"DEBUG: After assignment - DOB: {current_user.date_of_birth}, License: {current_user.license_number}")
                 db.session.commit()
-                print(f"DEBUG: After commit - DOB: {current_user.date_of_birth}, License: {current_user.license_number}")
                 flash('Your profile has been updated.', 'success')
                 return redirect(url_for('main.user_settings'))
-            else:
-                print(f"DEBUG: Form validation failed with errors: {user_form.errors}")
-                flash('Please correct the form errors and try again.', 'error')
         elif 'submit_clinic' in request.form:
             if clinic_form.validate_on_submit():
                 current_user.clinic_name = clinic_form.clinic_name.data
@@ -3688,6 +3677,7 @@ def user_settings():
                 return redirect(url_for('main.user_settings'))
     
     # Pre-populate forms with existing data
+    user_form.email.data = current_user.email
     user_form.first_name.data = current_user.first_name
     user_form.last_name.data = current_user.last_name
     user_form.date_of_birth.data = current_user.date_of_birth
