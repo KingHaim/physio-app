@@ -3,6 +3,8 @@ import os
 import sys
 import json
 import sqlite3
+import psycopg2
+import psycopg2.extras
 import requests
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -12,30 +14,54 @@ load_dotenv()
 
 # Configuration
 DB_PATH = 'instance/physio.db'
+DATABASE_URL = os.environ.get('DATABASE_URL')
 API_ENDPOINT = os.environ.get('DEEPSEEK_API_ENDPOINT', 'https://api.deepseek.com/v1/chat/completions')
 API_KEY = os.environ.get('DEEPSEEK_API_KEY', '')
 
+def get_db_connection():
+    """Get database connection - PostgreSQL if DATABASE_URL is set, otherwise SQLite."""
+    if DATABASE_URL:
+        # PostgreSQL connection for production
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.autocommit = False
+        return conn, 'postgresql'
+    else:
+        # SQLite connection for local development
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn, 'sqlite'
+
 def get_patient_data(patient_id):
     """Get patient data from the database."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    conn, db_type = get_db_connection()
     
-    # Get patient information
-    cursor.execute("SELECT * FROM patient WHERE id = ?", (patient_id,))
+    if db_type == 'postgresql':
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        placeholder = '%s'
+    else:
+        cursor = conn.cursor()
+        placeholder = '?'
+    
+    # Get patient information along with user details
+    cursor.execute(f"""
+        SELECT p.*, u.first_name, u.last_name, u.license_number, u.clinic_name
+        FROM patient p
+        JOIN "user" u ON p.user_id = u.id
+        WHERE p.id = {placeholder}
+    """, (patient_id,))
     patient = cursor.fetchone()
     
     if not patient:
         print(f"Error: Patient with ID {patient_id} not found.")
         conn.close()
-        return None, None
+        return None, None, None
     
     # Get all treatments for this patient
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT t.*, p.name as patient_name, p.diagnosis, p.treatment_plan
         FROM treatment t
         JOIN patient p ON t.patient_id = p.id
-        WHERE t.patient_id = ?
+        WHERE t.patient_id = {placeholder}
         ORDER BY t.created_at
     """, (patient_id,))
     
@@ -44,15 +70,19 @@ def get_patient_data(patient_id):
     # Get trigger points for all treatments
     treatments_with_points = []
     for treatment in treatments:
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT * FROM trigger_point
-            WHERE treatment_id = ?
+            WHERE treatment_id = {placeholder}
         """, (treatment['id'],))
         trigger_points = cursor.fetchall()
         
         # Convert treatment row to dict
-        treatment_dict = {key: treatment[key] for key in treatment.keys()}
-        treatment_dict['trigger_points'] = [dict(tp) for tp in trigger_points]
+        if db_type == 'postgresql':
+            treatment_dict = dict(treatment)
+            treatment_dict['trigger_points'] = [dict(tp) for tp in trigger_points]
+        else:
+            treatment_dict = {key: treatment[key] for key in treatment.keys()}
+            treatment_dict['trigger_points'] = [dict(tp) for tp in trigger_points]
         treatments_with_points.append(treatment_dict)
     
     # Print all treatments for debugging
@@ -66,18 +96,18 @@ def get_patient_data(patient_id):
     print(f"Today: {now}")
     
     # Double-check with a direct query
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT COUNT(*) as count FROM treatment
-        WHERE patient_id = ?
+        WHERE patient_id = {placeholder}
     """, (patient_id,))
     count = cursor.fetchone()['count']
     print(f"Direct query found {count} treatments for patient {patient_id}")
     
     # Get details for a few treatments
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT id, treatment_type, created_at, status
         FROM treatment
-        WHERE patient_id = ?
+        WHERE patient_id = {placeholder}
         ORDER BY created_at
     """, (patient_id,))
     
@@ -88,9 +118,18 @@ def get_patient_data(patient_id):
     conn.close()
     
     patient_dict = dict(patient)
-    return patient_dict, treatments_with_points
+    
+    # Extract user information for signature
+    user_info = {
+        'first_name': patient['first_name'],
+        'last_name': patient['last_name'],
+        'license_number': patient['license_number'],
+        'clinic_name': patient['clinic_name']
+    }
+    
+    return patient_dict, treatments_with_points, user_info
 
-def format_treatment_history(patient, treatments):
+def format_treatment_history(patient, treatments, user_info):
     """Format treatment history for the DeepSeek prompt."""
     # Extract initial and latest pain levels if available
     initial_pain = None
@@ -210,8 +249,9 @@ def format_treatment_history(patient, treatments):
     
     ---
     
-    **Haim Ganancia, Physiotherapist**  
-    ICPFA 7595 Clinic  
+    **{user_info['first_name']} {user_info['last_name']}, Physiotherapist**  
+    {f"License: {user_info['license_number']}" if user_info['license_number'] else ""}  
+    {user_info['clinic_name'] if user_info['clinic_name'] else ""}  
     Report Date: {datetime.now().strftime('%Y-%m-%d')}
     """
     
@@ -222,7 +262,7 @@ def generate_report(patient_id):
     print(f"Generating report for patient {patient_id}...")
     
     # Get patient data
-    patient, treatments = get_patient_data(patient_id)
+    patient, treatments, user_info = get_patient_data(patient_id)
     
     if not patient:
         return False, "Patient not found"
@@ -231,7 +271,7 @@ def generate_report(patient_id):
         return False, "No treatments found for this patient"
     
     # Format treatment history
-    prompt = format_treatment_history(patient, treatments)
+    prompt = format_treatment_history(patient, treatments, user_info)
     
     # Check if API key is available
     if not API_KEY:
@@ -274,17 +314,28 @@ def generate_report(patient_id):
             report_content = report_content.replace(patient['name'], "Patient")
         
         # Save the report to the database
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
+        save_conn, save_db_type = get_db_connection()
         
-        cursor.execute("""
+        if save_db_type == 'postgresql':
+            save_cursor = save_conn.cursor()
+            save_placeholder = '%s'
+        else:
+            save_cursor = save_conn.cursor()
+            save_placeholder = '?'
+        
+        save_cursor.execute(f"""
             INSERT INTO patient_reports (patient_id, content, generated_date, report_type)
-            VALUES (?, ?, ?, ?)
+            VALUES ({save_placeholder}, {save_placeholder}, {save_placeholder}, {save_placeholder})
         """, (patient_id, report_content, datetime.now().isoformat(), "AI Generated (CLI)"))
         
-        report_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
+        if save_db_type == 'postgresql':
+            save_cursor.execute("SELECT lastval()")
+            report_id = save_cursor.fetchone()[0]
+        else:
+            report_id = save_cursor.lastrowid
+            
+        save_conn.commit()
+        save_conn.close()
         
         # Save the report to a file
         report_filename = f"report_{patient_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
@@ -305,12 +356,18 @@ def delete_report(report_id):
     print(f"Deleting report with ID {report_id}...")
     
     # Connect to the database
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    conn, db_type = get_db_connection()
+    
+    if db_type == 'postgresql':
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        placeholder = '%s'
+    else:
+        cursor = conn.cursor()
+        placeholder = '?'
     
     try:
         # First check if the report exists
-        cursor.execute("SELECT id, patient_id FROM patient_reports WHERE id = ?", (report_id,))
+        cursor.execute(f"SELECT id, patient_id FROM patient_reports WHERE id = {placeholder}", (report_id,))
         report = cursor.fetchone()
         
         if not report:
@@ -318,10 +375,13 @@ def delete_report(report_id):
             return False, f"Report with ID {report_id} not found."
         
         # Get the patient ID for informational purposes
-        patient_id = report[1]
+        if db_type == 'postgresql':
+            patient_id = report['patient_id']
+        else:
+            patient_id = report[1]
         
         # Delete the report
-        cursor.execute("DELETE FROM patient_reports WHERE id = ?", (report_id,))
+        cursor.execute(f"DELETE FROM patient_reports WHERE id = {placeholder}", (report_id,))
         conn.commit()
         
         print(f"Report {report_id} for patient {patient_id} successfully deleted.")
@@ -401,12 +461,18 @@ def main():
             return 1
         
         # Connect to the database
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
+        conn, db_type = get_db_connection()
+        
+        if db_type == 'postgresql':
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            placeholder = '%s'
+        else:
+            cursor = conn.cursor()
+            placeholder = '?'
         
         try:
             # Get patient info for display
-            cursor.execute("SELECT name FROM patient WHERE id = ?", (patient_id,))
+            cursor.execute(f"SELECT name FROM patient WHERE id = {placeholder}", (patient_id,))
             patient = cursor.fetchone()
             
             if not patient:
@@ -415,27 +481,32 @@ def main():
                 return 1
             
             # List all reports for the patient
-            cursor.execute("""
+            cursor.execute(f"""
                 SELECT id, report_type, generated_date 
                 FROM patient_reports 
-                WHERE patient_id = ? 
+                WHERE patient_id = {placeholder}
                 ORDER BY generated_date DESC
             """, (patient_id,))
             
             reports = cursor.fetchall()
             
+            patient_name = patient['name'] if db_type == 'postgresql' else patient[0]
+            
             if not reports:
-                print(f"No reports found for patient {patient[0]} (ID: {patient_id}).")
+                print(f"No reports found for patient {patient_name} (ID: {patient_id}).")
                 conn.close()
                 return 0
             
-            print(f"\nReports for patient {patient[0]} (ID: {patient_id}):")
+            print(f"\nReports for patient {patient_name} (ID: {patient_id}):")
             print("-" * 80)
             print(f"{'ID':<5} | {'Type':<20} | {'Generated Date':<30}")
             print("-" * 80)
             
             for report in reports:
-                print(f"{report[0]:<5} | {report[1]:<20} | {report[2]:<30}")
+                if db_type == 'postgresql':
+                    print(f"{report['id']:<5} | {report['report_type']:<20} | {report['generated_date']:<30}")
+                else:
+                    print(f"{report[0]:<5} | {report[1]:<20} | {report[2]:<30}")
             
             conn.close()
         
