@@ -221,6 +221,9 @@ def create_app(config_class=Config):
     from app.routes.legal import legal as legal_blueprint
     app.register_blueprint(legal_blueprint)
 
+    from app.routes.locations import locations as locations_blueprint
+    app.register_blueprint(locations_blueprint)
+
     # Create all tables
     # with app.app_context():
     #     db.create_all()
@@ -232,8 +235,8 @@ def create_app(config_class=Config):
     app.jinja_env.filters['markdown'] = markdown_filter
 
     # Make csrf_token available in templates
-    # from flask_wtf.csrf import generate_csrf # This is fine, but already imported above
-    # app.jinja_env.globals['csrf_token'] = generate_csrf # THIS IS THE LINE OF INTEREST
+    from flask_wtf.csrf import generate_csrf
+    app.jinja_env.globals['csrf_token'] = generate_csrf
 
     # Register CLI commands
     from app.cli import register_commands

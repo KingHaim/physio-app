@@ -402,6 +402,11 @@
                                     </a>
                                 </li>
                                 <li class="nav-item">
+                                    <a class="nav-link {{ 'active' if request.endpoint == 'locations.manage_locations' else '' }}" href="{{ url_for('locations.manage_locations') }}">
+                                        <i class="bi bi-geo-alt"></i> {{ _('Manage Locations') }}
+                                    </a>
+                                </li>
+                                <li class="nav-item">
                                     <div class="btn-group dropup">
                                         <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="bi bi-translate"></i> {{ get_locale_display_name(get_locale()) or 'Language' }}

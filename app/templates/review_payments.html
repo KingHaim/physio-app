@@ -48,7 +48,7 @@
                                         {{ treatment.location }}
                                     {% else %}
                                          <div class="btn-group btn-group-sm" role="group">
-                                             <button class="btn btn-outline-info set-location-btn" data-treatment-id="{{ treatment.id }}" data-location-value="CostaSpine Clinic">
+                                             <button class="btn btn-outline-info set-location-btn" data-treatment-id="{{ treatment.id }}" data-location-value="{{ current_user.clinic_name }}">
                                                  <i class="bi bi-hospital"></i> CostaSpine
                                              </button>
                                              <button class="btn btn-outline-secondary set-location-btn" data-treatment-id="{{ treatment.id }}" data-location-value="Home Visit">

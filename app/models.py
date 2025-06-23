@@ -135,6 +135,33 @@ class Patient(db.Model):
         else:
             self._notes = None
 
+class Location(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(150), nullable=False)
+    address = db.Column(db.String(200), nullable=True)
+    phone = db.Column(db.String(30), nullable=True)
+    email = db.Column(db.String(120), nullable=True)
+    
+    # Fee structure per location
+    first_session_fee = db.Column(db.Float, nullable=True)
+    subsequent_session_fee = db.Column(db.Float, nullable=True)
+    fee_percentage = db.Column(db.Float, nullable=True)  # Clinic's share %
+    
+    # Location type
+    location_type = db.Column(db.String(50), default='Clinic')  # 'Clinic', 'Home Visit', 'External'
+    
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    treatments = db.relationship('Treatment', backref='treatment_location', lazy=True)
+    recurring_appointments = db.relationship('RecurringAppointment', backref='appointment_location', lazy=True)
+    
+    def __repr__(self):
+        return f'<Location {self.name}>'
+
+
 class Treatment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
@@ -155,7 +182,8 @@ class Treatment(db.Model):
     evaluation_data = db.Column(db.JSON)
     
     # Fields for analytics and form
-    location = db.Column(db.String(100))
+    location = db.Column(db.String(100))  # Legacy field for backward compatibility
+    location_id = db.Column(db.Integer, db.ForeignKey('location.id'), nullable=True)  # New structured location
     visit_type = db.Column(db.String(50))
     fee_charged = db.Column(db.Float)
     payment_method = db.Column(db.String(50))
@@ -167,6 +195,13 @@ class Treatment(db.Model):
 
     clinic_share = db.Column(db.Float)
     therapist_share = db.Column(db.Float)
+    
+    @property
+    def location_name(self):
+        """Get location name, preferring the structured location over legacy string"""
+        if self.treatment_location:
+            return self.treatment_location.name
+        return self.location
     
     # Property getter and setter for encrypted notes field
     @property
@@ -238,7 +273,8 @@ class RecurringAppointment(db.Model):
     time_of_day = db.Column(db.Time, nullable=False)
     treatment_type = db.Column(db.String(150), nullable=False, default='Standard Session')
     notes = db.Column(db.Text, nullable=True)
-    location = db.Column(db.String(100), nullable=True)
+    location = db.Column(db.String(100), nullable=True)  # Legacy field for backward compatibility
+    location_id = db.Column(db.Integer, db.ForeignKey('location.id'), nullable=True)  # New structured location
     provider = db.Column(db.String(100), nullable=True)
     fee_charged = db.Column(db.Float, nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
@@ -247,6 +283,13 @@ class RecurringAppointment(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     patient = db.relationship('Patient', backref=db.backref('recurring_appointments', lazy=True))
+
+    @property
+    def location_name(self):
+        """Get location name, preferring the structured location over legacy string"""
+        if self.appointment_location:
+            return self.appointment_location.name
+        return self.location
 
     def __repr__(self):
         return f'<RecurringAppointment {self.id} for Patient {self.patient_id} ({self.recurrence_type})>'
@@ -377,6 +420,9 @@ class User(db.Model, UserMixin):
     
     patient_record = db.relationship('Patient', backref=db.backref('portal_user_account', uselist=False), foreign_keys='[Patient.portal_user_id]', uselist=False) # Link to a Patient record if this User is a patient portal user
     unmatched_calendly_bookings = db.relationship('UnmatchedCalendlyBooking', backref='user', lazy='dynamic') # Added relationship
+    
+    # Location management
+    locations = db.relationship('Location', backref='user', lazy='dynamic')
     
     # Subscription relationship
     subscriptions = db.relationship('UserSubscription', backref='user', lazy='dynamic', order_by=UserSubscription.created_at.desc())

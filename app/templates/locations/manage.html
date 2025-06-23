@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Manage Locations') }} - TRXCKER{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">📍 {{ _('Manage Locations') }}</h1>
+                <a href="{{ url_for('locations.add_location') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> {{ _('Add New Location') }}
+                </a>
+            </div>
+
+            {% if locations %}
+                <div class="row">
+                    {% for location in locations %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">{{ location.name }}</h5>
+                                    <span class="badge bg-{{ 'primary' if location.location_type == 'Clinic' else 'secondary' }}">
+                                        {{ _(location.location_type) }}
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    {% if location.address %}
+                                        <p class="card-text">
+                                            <i class="bi bi-geo-alt"></i> {{ location.address }}
+                                        </p>
+                                    {% endif %}
+                                    
+                                    {% if location.phone %}
+                                        <p class="card-text">
+                                            <i class="bi bi-telephone"></i> {{ location.phone }}
+                                        </p>
+                                    {% endif %}
+                                    
+                                    {% if location.email %}
+                                        <p class="card-text">
+                                            <i class="bi bi-envelope"></i> {{ location.email }}
+                                        </p>
+                                    {% endif %}
+
+                                    <hr>
+
+                                    {% if location.first_session_fee or location.subsequent_session_fee %}
+                                        <div class="mb-2">
+                                            <strong>{{ _('Fees') }}:</strong>
+                                            {% if location.first_session_fee %}
+                                                <br><small>{{ _('First Session') }}: €{{ "%.2f"|format(location.first_session_fee) }}</small>
+                                            {% endif %}
+                                            {% if location.subsequent_session_fee %}
+                                                <br><small>{{ _('Subsequent') }}: €{{ "%.2f"|format(location.subsequent_session_fee) }}</small>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if location.fee_percentage %}
+                                        <div class="mb-2">
+                                            <strong>{{ _('Clinic Share') }}:</strong> {{ location.fee_percentage }}%
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar-check"></i> {{ location.treatments|length }} {{ _('treatments') }}
+                                            <br>
+                                            <i class="bi bi-arrow-repeat"></i> {{ location.recurring_appointments|length }} {{ _('recurring appointments') }}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="btn-group w-100" role="group">
+                                        <a href="{{ url_for('locations.edit_location', location_id=location.id) }}" 
+                                           class="btn btn-outline-primary">
+                                            <i class="bi bi-pencil"></i> {{ _('Edit') }}
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-outline-danger" 
+                                                onclick="confirmDelete('{{ location.name }}', {{ location.id }})">
+                                            <i class="bi bi-trash"></i> {{ _('Delete') }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-geo-alt display-1 text-muted"></i>
+                    <h3 class="mt-3">{{ _('No Locations Yet') }}</h3>
+                    <p class="text-muted">{{ _('Add your first location to get started with organized treatment management.') }}</p>
+                    <a href="{{ url_for('locations.add_location') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> {{ _('Add Your First Location') }}
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('Confirm Delete') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ _('Are you sure you want to delete the location') }} "<span id="locationName"></span>"?</p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    {{ _('If this location has treatments or appointments, it will be deactivated instead of deleted.') }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">{{ _('Delete Location') }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(locationName, locationId) {
+    document.getElementById('locationName').textContent = locationName;
+    document.getElementById('deleteForm').action = `/locations/${locationId}/delete`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+</script>
+{% endblock %} 

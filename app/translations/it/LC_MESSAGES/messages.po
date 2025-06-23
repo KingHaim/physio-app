@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-06-23 01:46+0200\n"
+"POT-Creation-Date: 2025-06-23 15:58+0200\n"
 "PO-Revision-Date: 2025-06-07 13:26+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: it\n"
@@ -18,29 +18,336 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: app/routes/main.py:2355
-msgid "Clinic"
+#: app/forms.py:8 app/forms.py:18 app/forms.py:27 app/forms.py:51
+#: app/forms.py:64 app/templates/calendly_review.html:22
+#: app/templates/pricing.html:223 app/templates/pricing.html:340
+#: app/templates/review_calendly_bookings.html:34
+msgid "Email"
+msgstr "Email"
+
+#: app/forms.py:9 app/forms.py:19 app/templates/new_patient.html:58
+msgid "Password"
+msgstr "Password"
+
+#: app/forms.py:10
+#, fuzzy
+msgid "Confirm Password"
+msgstr "Nuova Password"
+
+#: app/forms.py:11
+msgid ""
+"I agree to the <a href=\"/privacy\" target=\"_blank\">Privacy Policy</a> "
+"and <a href=\"/terms\" target=\"_blank\">Terms & Conditions</a>"
 msgstr ""
 
-#: app/routes/main.py:2359
+#: app/forms.py:15 app/templates/auth/register.html:3
+msgid "Register"
+msgstr "Registrati"
+
+#: app/forms.py:20
+msgid "Remember Me"
+msgstr ""
+
+#: app/forms.py:21 app/templates/auth/register.html:70
+msgid "Sign In"
+msgstr "Accedi"
+
+#: app/forms.py:24
+msgid "Location Name"
+msgstr "Nome Posizione"
+
+#: app/forms.py:25
+msgid "Address"
+msgstr "Indirizzo"
+
+#: app/forms.py:26 app/forms.py:39
+msgid "Phone Number"
+msgstr "Numero di Telefono"
+
+#: app/forms.py:28
+msgid "Location Type"
+msgstr "Tipo di Posizione"
+
+#: app/forms.py:29 app/routes/main.py:2401
+msgid "Clinic"
+msgstr "Clinica"
+
+#: app/forms.py:29 app/templates/calendar.html:83 app/templates/index.html:374
+msgid "Home Visit"
+msgstr "Visita Domiciliare"
+
+#: app/forms.py:29
+msgid "External Location"
+msgstr "Posizione Esterna"
+
+#: app/forms.py:31 app/forms.py:43
+msgid "First Session Fee (€)"
+msgstr "Tariffa Prima Sessione (€)"
+
+#: app/forms.py:32 app/forms.py:44
+msgid "Subsequent Session Fee (€)"
+msgstr "Tariffa Sessioni Successive (€)"
+
+#: app/forms.py:33
+msgid "Clinic Fee Percentage (%)"
+msgstr "Percentuale Tariffa Clinica (%)"
+
+#: app/forms.py:34
+msgid "Save Location"
+msgstr "Salva Posizione"
+
+#: app/forms.py:37
+#, fuzzy
+msgid "Clinic Name"
+msgstr "Clinica"
+
+#: app/forms.py:38
+#, fuzzy
+msgid "Clinic Address"
+msgstr "Indirizzo IP"
+
+#: app/forms.py:40
+#, fuzzy
+msgid "Clinic Email"
+msgstr "Email di Accesso"
+
+#: app/forms.py:41
+msgid "Website"
+msgstr ""
+
+#: app/forms.py:42 app/templates/patient_detail.html:582
+#: app/templates/treatment_detail.html:42 app/templates/user_settings.html:301
+msgid "Description"
+msgstr "Descrizione"
+
+#: app/forms.py:45
+msgid "Percentage Agreement"
+msgstr ""
+
+#: app/forms.py:46 app/templates/user_settings.html:193
+#, fuzzy
+msgid "Clinic Share (%)"
+msgstr "Quota Clinica (%)"
+
+#: app/forms.py:47
+#, fuzzy
+msgid "Save Clinic Information"
+msgstr "Salva Informazioni Clinica"
+
+#: app/forms.py:52
+#, fuzzy
+msgid "First Name"
+msgstr "Nome"
+
+#: app/forms.py:53
+#, fuzzy
+msgid "Last Name"
+msgstr "Cognome"
+
+#: app/forms.py:54 app/templates/edit_patient.html:37
+#: app/templates/new_patient.html:23
+msgid "Date of Birth"
+msgstr "Data di Nascita"
+
+#: app/forms.py:55
+msgid "Sex"
+msgstr "Sesso"
+
+#: app/forms.py:55
+#, fuzzy
+msgid "Male"
+msgstr "Maschio"
+
+#: app/forms.py:55
+#, fuzzy
+msgid "Female"
+msgstr "Femmina"
+
+#: app/forms.py:55 app/forms.py:119
+#, fuzzy
+msgid "Other"
+msgstr "Altro"
+
+#: app/forms.py:56
+#, fuzzy
+msgid "License Number"
+msgstr "Numero di Licenza"
+
+#: app/forms.py:57 app/forms.py:68
+#, fuzzy
+msgid "Current Password"
+msgstr "Nuova Password"
+
+#: app/forms.py:58 app/forms.py:69 app/templates/edit_patient.html:122
+msgid "New Password"
+msgstr "Nuova Password"
+
+#: app/forms.py:59 app/forms.py:70
+#, fuzzy
+msgid "Confirm New Password"
+msgstr "Nuova Password"
+
+#: app/forms.py:60 app/forms.py:71
+#, fuzzy
+msgid "New passwords must match."
+msgstr "Nuova Password"
+
+#: app/forms.py:61
+#, fuzzy
+msgid "Update Profile"
+msgstr "Profilo Utente"
+
+#: app/forms.py:65 app/templates/my_account.html:195
+msgid "Update Email"
+msgstr "Aggiorna Email"
+
+#: app/forms.py:72 app/templates/my_account.html:212
+#, fuzzy
+msgid "Change Password"
+msgstr "Cambia Password"
+
+#: app/forms.py:76
+msgid "Enable Calendly Integration"
+msgstr "Abilita Integrazione Calendly"
+
+#: app/forms.py:83
+#, fuzzy
+msgid "Calendly API Key"
+msgstr "Chiave API Calendly"
+
+#: app/forms.py:85
+msgid "Paste your Calendly Personal Access Token here..."
+msgstr "Incolla qui il tuo Token di Accesso Personale Calendly..."
+
+#: app/forms.py:86
+msgid "Calendly User URI"
+msgstr "URI Utente Calendly"
+
+#: app/forms.py:94 app/templates/user_settings.html:265
+#, fuzzy
+msgid "Save API Keys"
+msgstr "Salva Chiavi API"
+
+#: app/forms.py:99
+#, fuzzy
+msgid "Set Your Fixed Autónomo Contribution Base (€)"
+msgstr "Imposta la Tua Base di Contribuzione Fissa da Autonomo (€)"
+
+#: app/forms.py:102
+msgid "Leave blank to use automatic calculation based on income brackets."
+msgstr "Lascia vuoto per utilizzare il calcolo automatico basato sulle fasce di reddito."
+
+#: app/forms.py:103
+msgid "Save Contribution Base"
+msgstr "Salva Base di Contribuzione"
+
+#: app/forms.py:106
+#, fuzzy
+msgid "Cost Description"
+msgstr "Descrizione del Costo"
+
+#: app/forms.py:107 app/templates/user_settings.html:302
+msgid "Monthly Amount (€)"
+msgstr "Importo Mensile (€)"
+
+#: app/forms.py:110
+#, fuzzy
+msgid "Add Fixed Cost"
+msgstr "Aggiungi Costo Fisso"
+
+#: app/forms.py:113 app/templates/patient_detail.html:409
+#: app/templates/patient_detail.html:453
+msgid "Purpose"
+msgstr "Scopo"
+
+#: app/forms.py:114
+#, fuzzy
+msgid "Select Purpose"
+msgstr "Seleziona Scopo"
+
+#: app/forms.py:115 app/templates/appointments.html:209
+msgid "Treatment"
+msgstr "Trattamento"
+
+#: app/forms.py:116
+msgid "Data Processing"
+msgstr "Elaborazione Dati"
+
+#: app/forms.py:117
+#, fuzzy
+msgid "Marketing Communications"
+msgstr "Comunicazioni Marketing"
+
+#: app/forms.py:118
+#, fuzzy
+msgid "Research Participation"
+msgstr "Partecipazione alla Ricerca"
+
+#: app/forms.py:121 app/templates/patient_detail.html:411
+msgid "Expiry Date"
+msgstr "Data di Scadenza"
+
+#: app/forms.py:122 app/templates/edit_patient.html:96
+#: app/templates/new_patient.html:43
+msgid "Additional Notes"
+msgstr "Note Aggiuntive"
+
+#: app/forms.py:123
+#, fuzzy
+msgid "Record Consent"
+msgstr "Registra Consenso"
+
+#: app/routes/locations.py:39
+#, python-format
+msgid "Location \"%(name)s\" has been added successfully!"
+msgstr "La posizione \"%(name)s\" è stata aggiunta con successo!"
+
+#: app/routes/locations.py:42
+msgid "Add Location"
+msgstr "Aggiungi Posizione"
+
+#: app/routes/locations.py:63
+#, python-format
+msgid "Location \"%(name)s\" has been updated successfully!"
+msgstr "La posizione \"%(name)s\" è stata aggiornata con successo!"
+
+#: app/routes/locations.py:66
+msgid "Edit Location"
+msgstr "Modifica Posizione"
+
+#: app/routes/locations.py:82
+#, python-format
+msgid ""
+"Location \"%(name)s\" has been deactivated (it has %(treatments)d "
+"treatments and %(appointments)d appointments)."
+msgstr ""
+"La posizione \"%(name)s\" è stata disattivata (ha %(treatments)d "
+"trattamenti e %(appointments)d appuntamenti)."
+
+#: app/routes/locations.py:88
+#, python-format
+msgid "Location \"%(name)s\" has been deleted successfully!"
+msgstr "La posizione \"%(name)s\" è stata eliminata con successo!"
+
+#: app/routes/main.py:2405
 #, fuzzy
 msgid "Total Revenue"
 msgstr "Entrate"
 
-#: app/routes/main.py:2362
+#: app/routes/main.py:2408
 msgid "Total Fixed Expenses (€)"
 msgstr ""
 
-#: app/routes/main.py:2363
+#: app/routes/main.py:2409
 #, fuzzy
 msgid "Est. Autónomo Contribution (€)"
 msgstr "Contra.Autonomo stimato totale (€)"
 
-#: app/routes/main.py:2364
+#: app/routes/main.py:2410
 msgid "Est. Net Revenue (Final)"
 msgstr ""
 
-#: app/routes/main.py:3105
+#: app/routes/main.py:3153
 msgid "You do not have permission to access this page."
 msgstr "Non hai il permesso di accedere a questa pagina."
 
@@ -61,7 +368,9 @@ msgstr "Errore nel caricamento dei dati."
 msgid ""
 "No practice report generated yet. Click 'Generate New Report' to create "
 "one."
-msgstr "Nessun rapporto di pratica generato ancora. Clicca su 'Genera Nuovo Rapporto' per crearne uno."
+msgstr ""
+"Nessun rapporto di pratica generato ancora. Clicca su 'Genera Nuovo "
+"Rapporto' per crearne uno."
 
 #: app/templates/analytics.html:12
 msgid "Practice Analytics"
@@ -369,7 +678,7 @@ msgstr ""
 #: app/templates/patient_detail.html:412 app/templates/patient_detail.html:632
 #: app/templates/review_calendly_bookings.html:37
 #: app/templates/review_calendly_bookings.html:89
-#: app/templates/review_payments.html:25
+#: app/templates/review_payments.html:25 app/templates/user_settings.html:303
 msgid "Actions"
 msgstr "Azioni"
 
@@ -393,10 +702,6 @@ msgstr "Valutazione Iniziale"
 msgid "Follow-up"
 msgstr "Controllo"
 
-#: app/templates/appointments.html:209
-msgid "Treatment"
-msgstr "Trattamento"
-
 #: app/templates/appointments.html:210
 msgid "Review"
 msgstr "Revisione"
@@ -415,7 +720,8 @@ msgstr "1 ora"
 
 #: app/templates/appointments.html:228 app/templates/edit_patient.html:139
 #: app/templates/edit_patient.html:167 app/templates/edit_patient.html:236
-#: app/templates/new_patient.html:66 app/templates/patient_detail.html:856
+#: app/templates/locations/manage.html:121 app/templates/new_patient.html:66
+#: app/templates/patient_detail.html:856
 msgid "Cancel"
 msgstr "Annulla"
 
@@ -458,33 +764,38 @@ msgstr "Finanze"
 msgid "Settings"
 msgstr "Impostazioni"
 
-#: app/templates/base.html:401
-#, fuzzy
+#: app/templates/base.html:401 app/templates/user_settings.html:2
+#: app/templates/user_settings.html:7
 msgid "User Settings"
 msgstr "Impostazioni Utente"
 
-#: app/templates/base.html:424
+#: app/templates/base.html:406 app/templates/locations/manage.html:3
+#: app/templates/locations/manage.html:10
+msgid "Manage Locations"
+msgstr "Gestisci Posizioni"
+
+#: app/templates/base.html:429
 msgid "My Dashboard"
 msgstr "La Mia Dashboard"
 
-#: app/templates/base.html:430
+#: app/templates/base.html:435
 msgid "Account"
 msgstr "Account"
 
-#: app/templates/base.html:433
+#: app/templates/base.html:438
 msgid "My Profile"
 msgstr "Il Mio Profilo"
 
-#: app/templates/base.html:455 app/templates/my_account.html:3
+#: app/templates/base.html:460 app/templates/my_account.html:3
 #: app/templates/my_account.html:43
 msgid "My Account"
 msgstr "Il Mio Account"
 
-#: app/templates/base.html:460
+#: app/templates/base.html:465
 msgid "Logout"
 msgstr "Esci"
 
-#: app/templates/auth/login.html:3 app/templates/base.html:466
+#: app/templates/auth/login.html:3 app/templates/base.html:471
 msgid "Login"
 msgstr "Accesso"
 
@@ -512,14 +823,6 @@ msgstr "es., Valutazione Iniziale, Follow-up"
 msgid "Location"
 msgstr "Posizione"
 
-#: app/templates/calendar.html:82 app/templates/index.html:373
-msgid "CostaSpine Clinic"
-msgstr "Clinica CostaSpine"
-
-#: app/templates/calendar.html:83 app/templates/index.html:374
-msgid "Home Visit"
-msgstr "Visita Domiciliare"
-
 #: app/templates/calendar.html:84 app/templates/index.html:375
 msgid "Online"
 msgstr "Online"
@@ -545,12 +848,6 @@ msgstr "Prenotazioni non Abbinate"
 #: app/templates/review_calendly_bookings.html:33
 msgid "Name"
 msgstr "Nome"
-
-#: app/templates/calendly_review.html:22 app/templates/pricing.html:223
-#: app/templates/pricing.html:340
-#: app/templates/review_calendly_bookings.html:34
-msgid "Email"
-msgstr "Email"
 
 #: app/templates/calendly_review.html:23
 msgid "Appointment Type"
@@ -619,8 +916,8 @@ msgstr "Paziente creato con successo!"
 msgid "Error creating patient:"
 msgstr "Errore nella creazione del paziente:"
 
-#: app/templates/edit_patient.html:4 app/templates/patient_detail.html:235
-#: app/templates/patient_detail.html:370
+#: app/templates/edit_patient.html:4 app/templates/locations/manage.html:78
+#: app/templates/patient_detail.html:235 app/templates/patient_detail.html:370
 msgid "Edit"
 msgstr "Modifica"
 
@@ -632,17 +929,14 @@ msgstr "Modifica Dettagli Paziente"
 msgid "Back to Patient"
 msgstr "Torna al Paziente"
 
-#: app/templates/edit_patient.html:25
+#: app/templates/edit_patient.html:25 app/templates/user_settings.html:15
+#: app/templates/user_settings.html:34
 msgid "Personal Information"
 msgstr "Informazioni Personali"
 
 #: app/templates/edit_patient.html:27 app/templates/new_patient.html:18
 msgid "Full Name"
 msgstr "Nome Completo"
-
-#: app/templates/edit_patient.html:37 app/templates/new_patient.html:23
-msgid "Date of Birth"
-msgstr "Data di Nascita"
 
 #: app/templates/edit_patient.html:47 app/templates/new_patient.html:28
 msgid "Contact Information"
@@ -675,10 +969,6 @@ msgstr "Piano di Trattamento"
 msgid "Outline the proposed treatment strategy"
 msgstr "Delineate la strategia di trattamento proposta"
 
-#: app/templates/edit_patient.html:96 app/templates/new_patient.html:43
-msgid "Additional Notes"
-msgstr "Note Aggiuntive"
-
 #: app/templates/edit_patient.html:101
 msgid "Any additional information or observations"
 msgstr "Qualsiasi informazione aggiuntiva o osservazione"
@@ -703,10 +993,6 @@ msgstr "Email di Accesso"
 msgid "Enter an email and password below to create a login."
 msgstr "Inserisci un'email e una password qui sotto per creare un accesso."
 
-#: app/templates/edit_patient.html:122
-msgid "New Password"
-msgstr "Nuova Password"
-
 #: app/templates/edit_patient.html:124
 msgid "Leave blank to keep current password"
 msgstr "Lascia vuoto per mantenere la password attuale"
@@ -724,11 +1010,12 @@ msgstr "Nuovo Paziente"
 msgid "Delete Patient"
 msgstr "Elimina Paziente"
 
-#: app/templates/edit_patient.html:143
+#: app/templates/edit_patient.html:143 app/templates/user_settings.html:88
+#: app/templates/user_settings.html:202 app/templates/user_settings.html:289
 msgid "Save Changes"
 msgstr "Salva Modifiche"
 
-#: app/templates/edit_patient.html:158
+#: app/templates/edit_patient.html:158 app/templates/locations/manage.html:110
 msgid "Confirm Delete"
 msgstr "Conferma Eliminazione"
 
@@ -822,31 +1109,31 @@ msgstr "Report Finanziario"
 msgid "Select Year:"
 msgstr "Seleziona Anno:"
 
-#: app/templates/financials.html:24
+#: app/templates/financials.html:23
 msgid "Yearly Financial Summary:"
 msgstr "Riepilogo Finanziario Annuale:"
 
-#: app/templates/financials.html:31
+#: app/templates/financials.html:30
 msgid "Metric"
 msgstr ""
 
-#: app/templates/financials.html:32
+#: app/templates/financials.html:31
 msgid "Q1 (Jan-Mar)"
 msgstr ""
 
-#: app/templates/financials.html:33
+#: app/templates/financials.html:32
 msgid "Q2 (Apr-Jun)"
 msgstr ""
 
-#: app/templates/financials.html:34
+#: app/templates/financials.html:33
 msgid "Q3 (Jul-Sep)"
 msgstr ""
 
-#: app/templates/financials.html:35
+#: app/templates/financials.html:34
 msgid "Q4 (Oct-Dec)"
 msgstr ""
 
-#: app/templates/financials.html:36
+#: app/templates/financials.html:35
 msgid "Annual Total"
 msgstr "Totale Annuale"
 
@@ -1229,15 +1516,6 @@ msgstr "Sì, Annulla Abbonamento"
 msgid "User Profile"
 msgstr "Profilo Utente"
 
-#: app/templates/my_account.html:195
-msgid "Update Email"
-msgstr "Aggiorna Email"
-
-#: app/templates/my_account.html:212
-#, fuzzy
-msgid "Change Password"
-msgstr "Cambia Password"
-
 #: app/templates/my_account.html:250
 msgid "Details about past invoices and payment methods will be displayed here."
 msgstr ""
@@ -1263,10 +1541,6 @@ msgid ""
 msgstr ""
 "Inserisci un'email e una password se vuoi che il paziente possa accedere "
 "e visualizzare le sue prescrizioni di esercizi."
-
-#: app/templates/new_patient.html:58
-msgid "Password"
-msgstr "Password"
 
 #: app/templates/new_patient.html:59
 msgid "Set initial password"
@@ -1371,7 +1645,8 @@ msgstr "Tariffa:"
 msgid "Are you sure you want to delete this recurring rule?"
 msgstr "Sei sicuro di voler eliminare questa regola ricorrente?"
 
-#: app/templates/patient_detail.html:237 app/templates/patient_detail.html:430
+#: app/templates/locations/manage.html:83 app/templates/patient_detail.html:237
+#: app/templates/patient_detail.html:430
 msgid "Delete"
 msgstr "Elimina"
 
@@ -1390,10 +1665,6 @@ msgstr "Azioni di Gruppo per Selezionati"
 #: app/templates/patient_detail.html:289
 msgid "Set Location"
 msgstr "Imposta Luogo"
-
-#: app/templates/patient_detail.html:290
-msgid "Set Loc: CostaSpine"
-msgstr "Imposta Luogo: CostaSpine"
 
 #: app/templates/patient_detail.html:291
 msgid "Set Loc: Home Visit"
@@ -1476,14 +1747,6 @@ msgstr "Aggiungi Nuovo Consenso"
 msgid "Date Given"
 msgstr "Data di Rilascio"
 
-#: app/templates/patient_detail.html:409 app/templates/patient_detail.html:453
-msgid "Purpose"
-msgstr "Scopo"
-
-#: app/templates/patient_detail.html:411
-msgid "Expiry Date"
-msgstr "Data di Scadenza"
-
 #: app/templates/patient_detail.html:424 app/templates/patient_detail.html:467
 msgid "Expired"
 msgstr "Scaduto"
@@ -1565,10 +1828,6 @@ msgstr "Note di Progresso"
 #, fuzzy
 msgid "Edit Treatment"
 msgstr "Salva Trattamento"
-
-#: app/templates/patient_detail.html:582 app/templates/treatment_detail.html:42
-msgid "Description"
-msgstr "Descrizione"
 
 #: app/templates/patient_detail.html:590
 msgid "Pain Level (0-10)"
@@ -2221,6 +2480,92 @@ msgstr "Dolore:"
 msgid "Current"
 msgstr "Attuale"
 
+#: app/templates/user_settings.html:18 app/templates/user_settings.html:98
+#, fuzzy
+msgid "Clinic Information"
+msgstr "Informazioni di Contatto"
+
+#: app/templates/user_settings.html:21 app/templates/user_settings.html:212
+#, fuzzy
+msgid "API Integrations"
+msgstr "Informazioni di Base"
+
+#: app/templates/user_settings.html:24
+#, fuzzy
+msgid "Financial Settings"
+msgstr "Report Finanziario"
+
+#: app/templates/user_settings.html:218
+msgid "Available Integrations"
+msgstr "Integrazioni Disponibili"
+
+#: app/templates/user_settings.html:219
+msgid ""
+"Select which integrations you would like to enable. All integrations are "
+"disabled by default for security."
+msgstr "Seleziona quali integrazioni vorresti abilitare. Tutte le integrazioni sono disabilitate per impostazione predefinita per sicurezza."
+
+#: app/templates/user_settings.html:224
+msgid "Sync appointments and bookings from Calendly"
+msgstr "Sincronizza appuntamenti e prenotazioni da Calendly"
+
+#: app/templates/user_settings.html:233
+#, fuzzy
+msgid "Calendly Configuration"
+msgstr "Configurazione Calendly"
+
+#: app/templates/user_settings.html:245
+msgid "Find your Personal Access Token in your"
+msgstr "Trova il tuo Token di Accesso Personale nella tua"
+
+#: app/templates/user_settings.html:247
+msgid "Calendly API & Webhooks page"
+msgstr "pagina API e Webhooks di Calendly"
+
+#: app/templates/user_settings.html:256
+msgid "Your Calendly User URI is needed to fetch your specific events. Format: https://api.calendly.com/users/your-user-id"
+msgstr "Il tuo URI Utente Calendly è necessario per recuperare i tuoi eventi specifici. Formato: https://api.calendly.com/users/il-tuo-id-utente"
+
+#: app/templates/user_settings.html:273
+msgid "Autónomo Contribution Base"
+msgstr "Base di Contribuzione Autonomo"
+
+#: app/templates/user_settings.html:290
+msgid "Manage Fixed Costs"
+msgstr "Gestisci Costi Fissi"
+
+#: app/templates/user_settings.html:292
+msgid "Existing Costs"
+msgstr "Costi Esistenti"
+
+#: app/templates/user_settings.html:295
+msgid "Description"
+msgstr "Descrizione"
+
+#: app/templates/user_settings.html:297
+msgid "Actions"
+msgstr "Azioni"
+
+#: app/templates/user_settings.html:305
+msgid "Are you sure you want to delete this cost?"
+msgstr "Sei sicuro di voler eliminare questo costo?"
+
+#: app/templates/user_settings.html:307
+msgid "Delete Cost"
+msgstr "Elimina Costo"
+
+#: app/templates/user_settings.html:316
+msgid "No fixed costs added yet."
+msgstr "Nessun costo fisso aggiunto ancora."
+
+#: app/templates/user_settings.html:319
+msgid "Add New Fixed Cost"
+msgstr "Aggiungi Nuovo Costo Fisso"
+
+#: app/templates/user_settings.html:344
+msgid "Add"
+msgstr "Aggiungi"
+
 #: app/templates/auth/login.html:13
 msgid "Sign in to your account"
 msgstr "Accedi al tuo account"
@@ -2233,10 +2578,6 @@ msgstr "Non sei un membro?"
 msgid "Register here for free"
 msgstr "Registrati qui gratuitamente"
 
-#: app/templates/auth/register.html:3
-msgid "Register"
-msgstr "Registrati"
-
 #: app/templates/auth/register.html:13
 #, fuzzy
 msgid "Create a new account"
@@ -2246,9 +2587,87 @@ msgstr "Crea Paziente"
 msgid "Already have an account?"
 msgstr "Hai già un account?"
 
-#: app/templates/auth/register.html:70
-msgid "Sign In"
-msgstr "Accedi"
+#: app/templates/locations/form.html:70
+msgid "Fee Structure"
+msgstr ""
+
+#: app/templates/locations/form.html:71
+msgid "Set default fees for this location. These can be overridden per treatment."
+msgstr ""
+
+#: app/templates/locations/form.html:111
+msgid "Percentage of fees that go to the clinic (if applicable)"
+msgstr ""
+
+#: app/templates/locations/form.html:116
+#, fuzzy
+msgid "Back to Locations"
+msgstr "Torna al Paziente"
+
+#: app/templates/locations/manage.html:12
+#, fuzzy
+msgid "Add New Location"
+msgstr "Imposta Luogo"
+
+#: app/templates/locations/manage.html:50
+#, fuzzy
+msgid "Fees"
+msgstr "Tariffa"
+
+#: app/templates/locations/manage.html:52
+msgid "First Session"
+msgstr ""
+
+#: app/templates/locations/manage.html:55
+#, fuzzy
+msgid "Subsequent"
+msgstr "Gestione"
+
+#: app/templates/locations/manage.html:62
+msgid "Clinic Share"
+msgstr ""
+
+#: app/templates/locations/manage.html:68
+#, fuzzy
+msgid "treatments"
+msgstr "Trattamenti"
+
+#: app/templates/locations/manage.html:70
+#, fuzzy
+msgid "recurring appointments"
+msgstr "Appuntamenti Ricorrenti"
+
+#: app/templates/locations/manage.html:94
+#, fuzzy
+msgid "No Locations Yet"
+msgstr "Posizione"
+
+#: app/templates/locations/manage.html:95
+msgid ""
+"Add your first location to get started with organized treatment "
+"management."
+msgstr ""
+
+#: app/templates/locations/manage.html:97
+#, fuzzy
+msgid "Add Your First Location"
+msgstr "Passaggio 3: Aggiungi il tuo primo paziente"
+
+#: app/templates/locations/manage.html:114
+#, fuzzy
+msgid "Are you sure you want to delete the location"
+msgstr "Sei sicuro di voler eliminare"
+
+#: app/templates/locations/manage.html:117
+msgid ""
+"If this location has treatments or appointments, it will be deactivated "
+"instead of deleted."
+msgstr ""
+
+#: app/templates/locations/manage.html:124
+#, fuzzy
+msgid "Delete Location"
+msgstr "Imposta Luogo"
 
 #: venv/lib/python3.9/site-packages/click/_termui_impl.py:556
 #, python-brace-format
@@ -2835,4 +3254,10 @@ msgstr ""
 
 #~ msgid "plans from"
 #~ msgstr "piani da"
+
+#~ msgid "CostaSpine Clinic"
+#~ msgstr "Clinica CostaSpine"
+
+#~ msgid "Set Loc: CostaSpine"
+#~ msgstr "Imposta Luogo: CostaSpine"
 
