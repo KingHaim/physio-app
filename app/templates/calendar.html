@@ -79,7 +79,7 @@
                      <div class="mb-3">
                         <label for="appointmentLocation" class="form-label">{{ _('Location') }}</label>
                         <select class="form-select" id="appointmentLocation" name="location">
-                            <option value="CostaSpine Clinic" selected>{{ _('CostaSpine Clinic') }}</option>
+                            <option value="{{ current_user.clinic_name }}" selected>{{ current_user.clinic_name }}</option>
                             <option value="Home Visit">{{ _('Home Visit') }}</option>
                             <option value="Online">{{ _('Online') }}</option>
                         </select>
@@ -171,7 +171,7 @@
                     // Reset other fields
                     document.getElementById('appointmentPatient').value = '';
                     document.getElementById('appointmentTreatmentType').value = '';
-                    document.getElementById('appointmentLocation').value = 'CostaSpine Clinic';
+                    document.getElementById('appointmentLocation').value = '{{ current_user.clinic_name }}';
                     document.getElementById('appointmentNotes').value = '';
 
                     var newAppointmentModal = new bootstrap.Modal(document.getElementById('newAppointmentModal'));

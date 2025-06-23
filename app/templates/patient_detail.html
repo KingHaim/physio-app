@@ -287,7 +287,7 @@
                                 <div class="row gx-2 gy-2">
                                     <div class="col-auto">
                                         <div class="btn-group btn-group-sm" role="group" aria-label="{{ _('Set Location') }}">
-                                            <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="location" data-value="CostaSpine Clinic">{{ _('Set Loc: CostaSpine') }}</button>
+                                            <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="location" data-value="{{ current_user.clinic_name }}">Set Loc: {{ current_user.clinic_name }}</button>
                                             <button type="button" class="btn btn-outline-secondary bulk-action-btn" data-field="location" data-value="Home Visit">{{ _('Set Loc: Home Visit') }}</button>
                                         </div>
                                     </div>

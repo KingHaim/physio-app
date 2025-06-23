@@ -410,8 +410,8 @@ def add_treatment(patient_id):
             location = 'Home Visit' # Default for Calendly sync
             print(f"DEBUG: Defaulting location to 'Home Visit' due to Calendly sync for patient {patient_id}")
         else:
-            location = 'CostaSpine Clinic' # Default for manual entry without explicit selection
-            print(f"DEBUG: Defaulting location to 'CostaSpine Clinic' for patient {patient_id}")
+            location = current_user.clinic_name or 'CostaSpine Clinic' # Default for manual entry without explicit selection
+            print(f"DEBUG: Defaulting location to '{location}' for patient {patient_id}")
     else:
          print(f"DEBUG: Using provided location: {location} for patient {patient_id}")
     # --- End Location Logic ---
@@ -2144,8 +2144,9 @@ def bulk_update_treatments():
     if field_to_update not in ['location', 'payment_method']:
         return jsonify({'success': False, 'message': 'Invalid field specified. Can only update "location" or "payment_method".'}), 400
         
-    # Basic validation for known values (can be expanded)
-    if field_to_update == 'location' and new_value not in ['CostaSpine Clinic', 'Home Visit']:
+            # Basic validation for known values (can be expanded)
+        valid_locations = [current_user.clinic_name or 'CostaSpine Clinic', 'Home Visit']
+        if field_to_update == 'location' and new_value not in valid_locations:
         return jsonify({'success': False, 'message': 'Invalid location value.'}), 400
     if field_to_update == 'payment_method' and new_value not in ['Cash', 'Card']:
          return jsonify({'success': False, 'message': 'Invalid payment_method value.'}), 400

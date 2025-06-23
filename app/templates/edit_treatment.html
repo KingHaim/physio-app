@@ -471,7 +471,7 @@
                 if (selectedCard) {
                     selectedCard.classList.add('selected'); 
 
-                    if (initialLocation === 'CostaSpine Clinic') {
+                    if (initialLocation === '{{ current_user.clinic_name }}') {
                         costaspineOptionsDiv.style.display = 'block';
                         feeInput.readOnly = true; 
                         feeInput.placeholder = 'Select visit type above';
@@ -523,7 +523,7 @@
                 const selectedLocation = this.dataset.location;
                 hiddenLocationInput.value = selectedLocation;
 
-                if (selectedLocation === 'CostaSpine Clinic') {
+                if (selectedLocation === '{{ current_user.clinic_name }}') {
                     costaspineOptionsDiv.style.display = 'block';
                     costaspineRadios.forEach(radio => radio.checked = false);
                     feeInput.value = ''; 

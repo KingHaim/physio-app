@@ -305,7 +305,7 @@
                 const selectedLocation = this.dataset.location;
                 hiddenLocationInput.value = selectedLocation;
 
-                if (selectedLocation === 'CostaSpine Clinic') {
+                if (selectedLocation === '{{ current_user.clinic_name }}') {
                     costaspineOptionsDiv.style.display = 'block';
                     costaspineRadios.forEach(radio => radio.checked = false);
                     feeInput.value = '';
