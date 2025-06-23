@@ -217,7 +217,7 @@ def index():
     current_subscription_ends_at = None
     patient_plan_limit = None
     current_patients_count = Patient.query.filter_by(user_id=current_user.id).count()
-    active_patients = Patient.query.filter_by(user_id=current_user.id, status='active').count()
+    active_patients = Patient.query.filter_by(user_id=current_user.id, status='Active').count()
     
     # Calcular citas de hoy
     today = datetime.utcnow().date()
