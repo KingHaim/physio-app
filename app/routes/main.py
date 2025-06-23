@@ -2144,9 +2144,9 @@ def bulk_update_treatments():
     if field_to_update not in ['location', 'payment_method']:
         return jsonify({'success': False, 'message': 'Invalid field specified. Can only update "location" or "payment_method".'}), 400
         
-            # Basic validation for known values (can be expanded)
-        valid_locations = [current_user.clinic_name or 'CostaSpine Clinic', 'Home Visit']
-        if field_to_update == 'location' and new_value not in valid_locations:
+    # Basic validation for known values (can be expanded)
+    valid_locations = [current_user.clinic_name or 'CostaSpine Clinic', 'Home Visit']
+    if field_to_update == 'location' and new_value not in valid_locations:
         return jsonify({'success': False, 'message': 'Invalid location value.'}), 400
     if field_to_update == 'payment_method' and new_value not in ['Cash', 'Card']:
          return jsonify({'success': False, 'message': 'Invalid payment_method value.'}), 400
@@ -2157,7 +2157,8 @@ def bulk_update_treatments():
         patient_id_for_check = None
 
         # --- Determine if auto-fee logic applies ---
-        is_costaspine_auto_fee = (field_to_update == 'location' and new_value == 'CostaSpine Clinic')
+        clinic_name_for_fee = current_user.clinic_name or 'CostaSpine Clinic'
+        is_costaspine_auto_fee = (field_to_update == 'location' and new_value == clinic_name_for_fee)
 
         # --- Get patient ID and earliest treatment if auto-fee applies --- 
         if is_costaspine_auto_fee:
