@@ -3617,6 +3617,14 @@ def user_settings():
     # Get existing fixed costs
     fixed_costs = FixedCost.query.filter_by(user_id=current_user.id).all()
     
+    # Pre-populate forms with existing data BEFORE validation
+    user_form.email.data = current_user.email
+    user_form.first_name.data = current_user.first_name
+    user_form.last_name.data = current_user.last_name
+    user_form.date_of_birth.data = current_user.date_of_birth
+    user_form.sex.data = current_user.sex
+    user_form.license_number.data = current_user.license_number
+    
     if request.method == 'POST':
         if 'submit' in request.form:
             print(f"DEBUG: License number from form: '{user_form.license_number.data}'")
@@ -3685,14 +3693,7 @@ def user_settings():
                 flash('Fixed cost has been added.', 'success')
                 return redirect(url_for('main.user_settings'))
     
-    # Pre-populate forms with existing data
-    user_form.email.data = current_user.email
-    user_form.first_name.data = current_user.first_name
-    user_form.last_name.data = current_user.last_name
-    user_form.date_of_birth.data = current_user.date_of_birth
-    user_form.sex.data = current_user.sex
-    user_form.license_number.data = current_user.license_number
-    
+    # Pre-populate clinic forms with existing data
     clinic_form.clinic_name.data = current_user.clinic_name
     clinic_form.clinic_address.data = current_user.clinic_address
     clinic_form.clinic_phone.data = current_user.clinic_phone
