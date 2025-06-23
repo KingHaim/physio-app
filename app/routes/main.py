@@ -3619,13 +3619,22 @@ def user_settings():
     
     if request.method == 'POST':
         if 'submit' in request.form:
+            print(f"DEBUG: License number from form: '{user_form.license_number.data}'")
+            print(f"DEBUG: Current user license_number before: '{current_user.license_number}'")
+            print(f"DEBUG: Form validation result: {user_form.validate_on_submit()}")
+            if user_form.errors:
+                print(f"DEBUG: Form errors: {user_form.errors}")
+            
             if user_form.validate_on_submit():
+                print(f"DEBUG: Setting license_number to: '{user_form.license_number.data}'")
                 current_user.first_name = user_form.first_name.data
                 current_user.last_name = user_form.last_name.data
                 current_user.date_of_birth = user_form.date_of_birth.data
                 current_user.sex = user_form.sex.data
                 current_user.license_number = user_form.license_number.data
+                print(f"DEBUG: User license_number after assignment: '{current_user.license_number}'")
                 db.session.commit()
+                print(f"DEBUG: User license_number after commit: '{current_user.license_number}'")
                 flash('Your profile has been updated.', 'success')
                 return redirect(url_for('main.user_settings'))
         elif 'submit_clinic' in request.form:

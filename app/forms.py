@@ -40,7 +40,7 @@ class UserProfileForm(FlaskForm):
     last_name = StringField('Last Name', validators=[Optional(), Length(max=64)])
     date_of_birth = DateField('Date of Birth', format='%Y-%m-%d', validators=[Optional()])
     sex = SelectField('Sex', choices=[('Masculino', 'Masculino'), ('Femenino', 'Femenino'), ('Otro', 'Otro')], validators=[Optional()])
-    license_number = StringField('License Number', validators=[Optional(), Length(max=32)])
+    license_number = StringField('License Number', validators=[Optional(), Length(max=64)])
     current_password = PasswordField('Current Password', validators=[Optional(), Length(min=6)])
     new_password = PasswordField('New Password', validators=[Optional(), Length(min=6)])
     confirm_new_password = PasswordField('Confirm New Password', 
