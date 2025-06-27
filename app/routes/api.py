@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, current_app, request
 import requests
 from datetime import datetime, timedelta, date
 from app.models import Treatment, Treatment as Appointment, Patient, UnmatchedCalendlyBooking, PatientReport, Plan, User, UserSubscription
-from app import db
+from app import db, csrf
 from sqlalchemy.sql import func, or_
 import os
 import json
@@ -376,6 +376,14 @@ def generate_patient_report(id):
         if requested_language not in supported_languages:
             return jsonify({'success': False, 'message': f'Unsupported language. Supported languages: {", ".join(supported_languages)}'}), 400
 
+        # Language mappings for AI instructions
+        language_names = {
+            'en': 'English',
+            'es': 'Spanish',
+            'fr': 'French', 
+            'it': 'Italian'
+        }
+        
         # Convert Patient object to dict for format_treatment_history
         patient_dict = {
             'id': patient.id,
@@ -408,24 +416,31 @@ def generate_patient_report(id):
             }
             treatments.append(treatment_dict)
 
+        # Build user info dict with optional fields
+        user_info = {
+            'first_name': current_user.first_name,
+            'last_name': current_user.last_name,
+            'license_number': getattr(current_user, 'license_number', None),
+            'college_acronym': getattr(current_user, 'college_acronym', None),
+            'clinic_name': current_user.clinic_name
+        }
+
         # Build the prompt for the AI
-        prompt = format_treatment_history(patient_dict, treatments)
+        base_prompt = format_treatment_history(patient_dict, treatments, user_info)
         
         # Add language instruction to the prompt
-        language_instructions = {
-            'en': 'Please generate this report in English.',
-            'es': 'Por favor, genera este informe en español.',
-            'fr': 'Veuillez générer ce rapport en français.',
-            'it': 'Si prega di generare questo rapporto in italiano.'
-        }
+        language_instruction = f"\n\nIMPORTANT: Please generate this physiotherapy report entirely in {language_names[requested_language]}. Use professional physiotherapy terminology appropriate for {language_names[requested_language]}."
         
-        prompt_with_language = f"{prompt}\n\n{language_instructions.get(requested_language, language_instructions['en'])}"
+        prompt = base_prompt + language_instruction
 
         # Call DeepSeek
         import os, requests
         api_key = os.environ.get('DEEPSEEK_API_KEY')
         if not api_key:
             return jsonify({'success': False, 'message': 'DeepSeek API key not configured.'}), 500
+
+        # Modify system message to include language instruction
+        system_message = f"You are a professional physiotherapist with expertise in creating detailed, evidence-based treatment progress reports. You use precise physiotherapy terminology while ensuring your reports remain clear and accessible. You must write all reports in {language_names[requested_language]} using professional medical terminology appropriate for that language."
 
         response = requests.post(
             "https://api.deepseek.com/v1/chat/completions",
@@ -436,8 +451,8 @@ def generate_patient_report(id):
             json={
                 "model": "deepseek-chat",
                 "messages": [
-                    {"role": "system", "content": "You are a professional physiotherapist with expertise in creating detailed, evidence-based treatment progress reports. You use precise physiotherapy terminology while ensuring your reports remain clear and accessible."},
-                    {"role": "user", "content": prompt_with_language}
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": prompt}
                 ],
                 "temperature": 0.3,
                 "max_tokens": 4000
@@ -450,6 +465,30 @@ def generate_patient_report(id):
         result = response.json()
         report_content = result['choices'][0]['message']['content']
 
+        # Return the generated content for review instead of saving immediately
+        return jsonify({
+            'success': True,
+            'message': 'Report generated successfully',
+            'content': report_content,
+            'language': requested_language
+        })
+    except Exception as e:
+        current_app.logger.error(f"Exception in generate_patient_report: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@api.route('/patient/<int:id>/save-report', methods=['POST'])
+@login_required
+def save_patient_report(id):
+    try:
+        patient = Patient.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+        
+        # Get the edited content from the request
+        data = request.get_json() or {}
+        report_content = data.get('content', '')
+        
+        if not report_content:
+            return jsonify({'success': False, 'message': 'Report content is required.'}), 400
+        
         # Save the report as PatientReport
         report = PatientReport(
             patient_id=id,
@@ -462,12 +501,41 @@ def generate_patient_report(id):
 
         return jsonify({
             'success': True,
-            'message': 'Report generated successfully',
+            'message': 'Report saved successfully',
             'report_id': report.id
         })
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Exception in generate_patient_report: {str(e)}")
+        current_app.logger.error(f"Exception in save_patient_report: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@api.route('/report/<int:report_id>/update', methods=['PUT'])
+@login_required
+def update_report(report_id):
+    try:
+        report = PatientReport.query.get_or_404(report_id)
+        patient = Patient.query.filter_by(id=report.patient_id, user_id=current_user.id).first_or_404()
+        
+        # Get the edited content from the request
+        data = request.get_json() or {}
+        new_content = data.get('content', '')
+        
+        if not new_content:
+            return jsonify({'success': False, 'message': 'Report content is required.'}), 400
+        
+        # Update the report content
+        report.content = new_content
+        report.generated_date = datetime.now()  # Update the modification date
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Report updated successfully',
+            'report_id': report.id
+        })
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Exception in update_report: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @api.route('/patient/<int:id>/mark-past-as-completed', methods=['POST'])
@@ -595,6 +663,23 @@ def generate_exercise_prescription(id):
         if not treatments_query:
             return jsonify({'success': False, 'message': 'No treatments found for this patient.'}), 400
 
+        # Get the requested language from the request body
+        data = request.get_json() or {}
+        requested_language = data.get('language', 'en')  # Default to English if not specified
+        
+        # Validate language
+        supported_languages = ['en', 'es', 'fr', 'it']
+        if requested_language not in supported_languages:
+            return jsonify({'success': False, 'message': f'Unsupported language. Supported languages: {", ".join(supported_languages)}'}), 400
+
+        # Language mappings for AI instructions
+        language_names = {
+            'en': 'English',
+            'es': 'Spanish',
+            'fr': 'French', 
+            'it': 'Italian'
+        }
+
         # Convert Patient object to dict
         patient_dict = {
             'id': patient.id,
@@ -627,11 +712,13 @@ def generate_exercise_prescription(id):
             }
             treatments.append(treatment_dict)
 
-        # Prompt for exercise prescription
+        # Build the prompt for exercise prescription with language instruction
         prompt = f"""
-        You are a physiotherapist. Based on the following patient data and treatment history, generate a detailed home exercise program (in markdown) for the patient to continue their rehabilitation at home. 
+        You are a physiotherapist. Based on the following patient data and treatment history, generate a detailed home exercise program for the patient to continue their rehabilitation at home. 
         Focus on safety, progression, and clear instructions. Include 3-5 exercises, sets/reps, and any precautions. 
         Use patient-friendly language.
+
+        IMPORTANT: Please generate this exercise prescription entirely in {language_names[requested_language]}. Use professional physiotherapy terminology appropriate for {language_names[requested_language]}.
 
         # Patient Data
         - Diagnosis: {patient_dict['diagnosis']}
@@ -642,7 +729,7 @@ def generate_exercise_prescription(id):
         # Treatment History (summary)
         {', '.join([t['treatment_type'] for t in treatments if t['treatment_type']])}
 
-        # Please format the program with headings, bullet points, and clear sections.
+        # Please format the program with headings, bullet points, and clear sections in markdown format.
         """
 
         # Call DeepSeek
@@ -650,6 +737,9 @@ def generate_exercise_prescription(id):
         api_key = os.environ.get('DEEPSEEK_API_KEY')
         if not api_key:
             return jsonify({'success': False, 'message': 'DeepSeek API key not configured.'}), 500
+
+        # Modify system message to include language instruction
+        system_message = f"You are a professional physiotherapist with expertise in creating home exercise programs. You must write all exercise prescriptions in {language_names[requested_language]} using professional physiotherapy terminology appropriate for that language. Use patient-friendly language while maintaining clinical accuracy."
 
         response = requests.post(
             "https://api.deepseek.com/v1/chat/completions",
@@ -660,7 +750,7 @@ def generate_exercise_prescription(id):
             json={
                 "model": "deepseek-chat",
                 "messages": [
-                    {"role": "system", "content": "You are a professional physiotherapist with expertise in creating home exercise programs."},
+                    {"role": "system", "content": system_message},
                     {"role": "user", "content": prompt}
                 ],
                 "temperature": 0.3,
@@ -689,7 +779,8 @@ def generate_exercise_prescription(id):
         return jsonify({
             'success': True,
             'message': 'Exercise prescription generated successfully',
-            'report_id': report.id
+            'report_id': report.id,
+            'language': requested_language
         })
     except Exception as e:
         db.session.rollback()
@@ -1114,3 +1205,645 @@ def list_invoices():
     except Exception as e:
         current_app.logger.error(f"Error fetching invoices for user {current_user.id}: {e}")
         return jsonify({'success': False, 'message': 'Failed to retrieve invoices.'}), 500
+
+@api.route('/patient/<int:patient_id>/generate-clinical-analysis', methods=['POST'])
+@login_required
+@csrf.exempt
+def generate_patient_clinical_analysis(patient_id):
+    """Generate AI clinical analysis for a specific patient and save to their profile"""
+    try:
+        # Log the start of the analysis
+        current_app.logger.info(f"Starting clinical analysis for patient {patient_id} by user {current_user.id}")
+        
+        # Get the patient
+        patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
+        if not patient:
+            current_app.logger.warning(f"Patient {patient_id} not found for user {current_user.id}")
+            return jsonify({'success': False, 'error': 'Patient not found'}), 404
+        
+        current_app.logger.info(f"Found patient: {patient.name}, diagnosis: {patient.diagnosis}")
+        current_app.logger.info(f"Patient anamnesis length: {len(patient.anamnesis) if patient.anamnesis else 0}")
+        
+        # Collect all patient data for analysis
+        clinical_context = {
+            'chief_complaint': '',  # From anamnesis
+            'diagnosis': patient.diagnosis or '',
+            'pain_level': '',
+            'onset_date': '',
+            'mechanism': '',
+            'medical_history': {
+                'conditions': [],
+                'surgeries': [],
+                'medications': '',
+                'allergies': []
+            },
+            'functional_assessment': {
+                'pain_characteristics': [],
+                'functional_limitations': [],
+                'rom_assessment': '',
+                'strength_assessment': ''
+            },
+            'patient_demographics': {
+                'age': calculate_age_from_dob(patient.date_of_birth.strftime('%Y-%m-%d') if patient.date_of_birth else ''),
+                'gender': '',
+                'occupation': '',
+                'activity_level': ''
+            }
+        }
+        
+        # Parse anamnesis data if available
+        if patient.anamnesis:
+            try:
+                import json
+                # Try to parse as JSON first
+                anamnesis_data = json.loads(patient.anamnesis)
+                clinical_context.update({
+                    'chief_complaint': anamnesis_data.get('anamnesis_chief_complaint', ''),
+                    'pain_level': anamnesis_data.get('anamnesis_pain_scale', ''),
+                    'onset_date': anamnesis_data.get('anamnesis_onset_date', ''),
+                    'mechanism': anamnesis_data.get('anamnesis_mechanism', ''),
+                })
+                clinical_context['patient_demographics'].update({
+                    'gender': anamnesis_data.get('anamnesis_gender', ''),
+                    'occupation': anamnesis_data.get('anamnesis_occupation', ''),
+                    'activity_level': anamnesis_data.get('anamnesis_physical_activity', '')
+                })
+                clinical_context['medical_history'].update({
+                    'conditions': anamnesis_data.get('history_conditions', []),
+                    'surgeries': anamnesis_data.get('surgery_description', []),
+                    'medications': anamnesis_data.get('anamnesis_medications', ''),
+                    'allergies': anamnesis_data.get('allergies', [])
+                })
+                clinical_context['functional_assessment'].update({
+                    'pain_characteristics': anamnesis_data.get('pain_characteristics', []),
+                    'functional_limitations': anamnesis_data.get('functional_limitations', []),
+                    'rom_assessment': anamnesis_data.get('rom_area', ''),
+                    'strength_assessment': anamnesis_data.get('strength_muscle_group', '')
+                })
+                current_app.logger.info("Anamnesis parsed as JSON format")
+            except (json.JSONDecodeError, TypeError):
+                # If not JSON, treat as plain text and extract what we can
+                current_app.logger.info("Anamnesis is in plain text format, extracting information...")
+                anamnesis_text = patient.anamnesis.lower()
+                
+                # Extract chief complaint from the text
+                if 'motivo' in anamnesis_text or 'consulta' in anamnesis_text:
+                    lines = patient.anamnesis.split('\n')
+                    for line in lines:
+                        if 'motivo' in line.lower() and ':' in line:
+                            clinical_context['chief_complaint'] = line.split(':', 1)[1].strip()
+                            break
+                
+                # Extract pain level
+                import re
+                pain_match = re.search(r'(\d+)/10', anamnesis_text)
+                if pain_match:
+                    clinical_context['pain_level'] = pain_match.group(1)
+                
+                # Extract age if available
+                age_match = re.search(r'edad[:\s]*(\d+)', anamnesis_text)
+                if age_match:
+                    clinical_context['patient_demographics']['age'] = int(age_match.group(1))
+                
+                # Use the full anamnesis text as additional context
+                clinical_context['anamnesis_full_text'] = patient.anamnesis
+                
+                current_app.logger.info(f"Extracted from plain text - Chief complaint: {clinical_context['chief_complaint']}, Pain level: {clinical_context['pain_level']}")
+        else:
+            current_app.logger.warning("No anamnesis data found for patient")
+        
+        # Generate AI suggestions using the existing function
+        suggestions = generate_clinical_suggestions_ai(clinical_context)
+        
+        # Check if we have DeepSeek API configured to inform the user
+        deepseek_api_key = current_app.config.get('DEEPSEEK_API_KEY')
+        analysis_type = "AI-powered (DeepSeek)" if deepseek_api_key else "Rule-based (No AI key configured)"
+        
+        current_app.logger.info(f"Clinical analysis completed using: {analysis_type}")
+        
+        # Save suggestions to patient profile
+        import json
+        from datetime import datetime
+        
+        # Convert arrays to plain text strings for display
+        def format_suggestions_as_text(suggestions_list):
+            if not suggestions_list:
+                return ""
+            return "\n".join([f"• {item}" for item in suggestions_list])
+        
+        patient.ai_suggested_tests = format_suggestions_as_text(suggestions.get('tests', []))
+        patient.ai_red_flags = format_suggestions_as_text(suggestions.get('red_flags', []))
+        patient.ai_yellow_flags = format_suggestions_as_text(suggestions.get('yellow_flags', []))
+        patient.ai_clinical_notes = format_suggestions_as_text(suggestions.get('clinical_notes', []))
+        patient.ai_analysis_date = datetime.utcnow()
+        
+        db.session.commit()
+        
+        current_app.logger.info(f"Clinical analysis saved to patient {patient_id} profile")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Clinical analysis completed and saved to patient profile ({analysis_type})',
+            'suggestions': suggestions,
+            'analysis_type': analysis_type,
+            'analysis_date': patient.ai_analysis_date.strftime('%Y-%m-%d %H:%M:%S')
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error generating clinical analysis for patient {patient_id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Error generating clinical analysis: {str(e)}'
+        }), 500
+
+@api.route('/generate-ai-suggestions', methods=['POST'])
+@login_required
+def generate_ai_suggestions():
+    """Generate clinical suggestions using AI based on anamnesis data"""
+    try:
+        data = request.get_json()
+        anamnesis_data = data.get('anamnesis_data', {})
+        
+        # Prepare the clinical data for AI analysis
+        clinical_context = {
+            'chief_complaint': anamnesis_data.get('anamnesis_chief_complaint', ''),
+            'diagnosis': anamnesis_data.get('diagnosis', ''),
+            'pain_level': anamnesis_data.get('anamnesis_pain_scale', ''),
+            'onset_date': anamnesis_data.get('anamnesis_onset_date', ''),
+            'mechanism': anamnesis_data.get('anamnesis_mechanism', ''),
+            'medical_history': {
+                'conditions': anamnesis_data.get('history_conditions', []),
+                'surgeries': anamnesis_data.get('surgery_description', []),
+                'medications': anamnesis_data.get('anamnesis_medications', ''),
+                'allergies': anamnesis_data.get('allergies', [])
+            },
+            'functional_assessment': {
+                'pain_characteristics': anamnesis_data.get('pain_characteristics', []),
+                'functional_limitations': anamnesis_data.get('functional_limitations', []),
+                'rom_assessment': anamnesis_data.get('rom_area', ''),
+                'strength_assessment': anamnesis_data.get('strength_muscle_group', '')
+            },
+            'patient_demographics': {
+                'age': calculate_age_from_dob(anamnesis_data.get('date_of_birth', '')),
+                'gender': anamnesis_data.get('anamnesis_gender', ''),
+                'occupation': anamnesis_data.get('anamnesis_occupation', ''),
+                'activity_level': anamnesis_data.get('anamnesis_physical_activity', '')
+            }
+        }
+        
+        # Generate AI suggestions using DeepSeek or fallback
+        suggestions = generate_clinical_suggestions_ai(clinical_context)
+        
+        return jsonify({
+            'success': True,
+            'suggestions': suggestions
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error generating AI suggestions: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Error generating suggestions: {str(e)}'
+        }), 500
+
+def calculate_age_from_dob(dob_string):
+    """Calculate age from date of birth string"""
+    if not dob_string:
+        return None
+    try:
+        dob = datetime.strptime(dob_string, '%Y-%m-%d').date()
+        today = date.today()
+        return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+    except:
+        return None
+
+def generate_clinical_suggestions_ai(clinical_context):
+    """Generate clinical suggestions using DeepSeek AI based on clinical context data"""
+    try:
+        # Get user's preferred language (default to Spanish if not set)
+        user_language = getattr(current_user, 'language', 'es')
+        
+        # Define language instructions for the AI
+        language_instructions = {
+            'en': "Please respond in English.",
+            'es': "Por favor responde en español.",
+            'it': "Per favore rispondi in italiano.",
+            'fr': "Veuillez répondre en français.",
+            'de': "Bitte antworten Sie auf Deutsch.",
+            'pt': "Por favor responda em português."
+        }
+        
+        language_instruction = language_instructions.get(user_language, language_instructions['es'])
+        current_app.logger.info(f"Generating clinical analysis in language: {user_language}")
+        
+        deepseek_api_key = current_app.config.get('DEEPSEEK_API_KEY')
+        
+        if deepseek_api_key:
+            from openai import OpenAI
+            
+            # Initialize the OpenAI client with DeepSeek's API endpoint
+            client = OpenAI(
+                api_key=deepseek_api_key,
+                base_url="https://api.deepseek.com"
+            )
+            
+            current_app.logger.info("DeepSeek API client initialized for clinical suggestions")
+            
+            # Anonymize the clinical data for privacy compliance
+            anonymized_data = {
+                'chief_complaint': clinical_context.get('chief_complaint', ''),
+                'diagnosis': clinical_context.get('diagnosis', ''),
+                'pain_level': clinical_context.get('pain_level', ''),
+                'onset_timing': anonymize_date(clinical_context.get('onset_date', '')),
+                'mechanism': clinical_context.get('mechanism', ''),
+                'age_range': anonymize_age(clinical_context['patient_demographics'].get('age')),
+                'gender': clinical_context['patient_demographics'].get('gender', ''),
+                'occupation_type': anonymize_occupation(clinical_context['patient_demographics'].get('occupation', '')),
+                'activity_level': clinical_context['patient_demographics'].get('activity_level', ''),
+                'medical_conditions': clinical_context['medical_history'].get('conditions', []),
+                'surgery_types': anonymize_surgeries(clinical_context['medical_history'].get('surgeries', [])),
+                'medication_types': anonymize_medications(clinical_context['medical_history'].get('medications', '')),
+                'allergy_types': clinical_context['medical_history'].get('allergies', []),
+                'pain_characteristics': clinical_context['functional_assessment'].get('pain_characteristics', []),
+                'functional_limitations': clinical_context['functional_assessment'].get('functional_limitations', []),
+                'rom_area': clinical_context['functional_assessment'].get('rom_assessment', ''),
+                'strength_area': clinical_context['functional_assessment'].get('strength_assessment', '')
+            }
+            
+            current_app.logger.info(f"Anonymized data prepared - Diagnosis: {anonymized_data['diagnosis']}")
+            
+            # Prepare additional anamnesis section if available
+            additional_anamnesis = ""
+            if clinical_context.get('anamnesis_full_text'):
+                newline_char = "\n"
+                additional_anamnesis = f"ADDITIONAL CLINICAL NOTES FROM ANAMNESIS:{newline_char}{clinical_context.get('anamnesis_full_text', '')}"
+            
+            # Prepare the anonymized prompt for clinical analysis
+            prompt = f"""
+{language_instruction}
+
+As an experienced physiotherapist, analyze the following ANONYMIZED patient case and provide clinical recommendations:
+
+CLINICAL PRESENTATION:
+- Chief Complaint: {anonymized_data['chief_complaint']}
+- Primary Diagnosis: {anonymized_data['diagnosis']}
+- Pain Level: {anonymized_data['pain_level']}/10
+- Onset: {anonymized_data['onset_timing']} ({anonymized_data['mechanism']})
+- Age Range: {anonymized_data['age_range']}
+- Gender: {anonymized_data['gender']}
+- Occupation Type: {anonymized_data['occupation_type']}
+- Activity Level: {anonymized_data['activity_level']}
+
+MEDICAL HISTORY:
+- Previous Conditions: {', '.join(anonymized_data['medical_conditions']) if anonymized_data['medical_conditions'] else 'None reported'}
+- Previous Surgery Types: {', '.join(anonymized_data['surgery_types']) if anonymized_data['surgery_types'] else 'None reported'}
+- Medication Categories: {anonymized_data['medication_types'] or 'None reported'}
+- Allergy Types: {', '.join(anonymized_data['allergy_types']) if anonymized_data['allergy_types'] else 'None reported'}
+
+FUNCTIONAL ASSESSMENT:
+- Pain Characteristics: {', '.join(anonymized_data['pain_characteristics']) if anonymized_data['pain_characteristics'] else 'Not specified'}
+- Functional Limitations: {', '.join(anonymized_data['functional_limitations']) if anonymized_data['functional_limitations'] else 'Not specified'}
+- ROM Assessment Area: {anonymized_data['rom_area'] or 'Not specified'}
+- Strength Assessment Area: {anonymized_data['strength_area'] or 'Not specified'}
+
+{additional_anamnesis}
+
+Please provide your recommendations in JSON format with the following structure:
+{{
+    "tests": ["list of specific clinical tests to perform"],
+    "red_flags": ["list of serious warning signs to watch for"],
+    "yellow_flags": ["list of psychosocial factors to consider"],
+    "clinical_notes": ["list of additional clinical considerations and recommendations"]
+}}
+
+Focus on evidence-based recommendations specific to the presented condition. Include 3-5 items in each category when relevant.
+"""
+            
+            current_app.logger.info("Making API call to DeepSeek")
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": f"You are an expert physiotherapist providing clinical recommendations based on ANONYMIZED patient assessment data. Always respond with valid JSON. Never request or use any personally identifiable information. {language_instruction}"},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=1000,
+                temperature=0.3
+            )
+            
+            # Parse the AI response
+            ai_response = response.choices[0].message.content.strip()
+            current_app.logger.info(f"DeepSeek API response received: {ai_response[:100]}...")
+            
+            # Try to extract JSON from the response
+            import json
+            import re
+            
+            # Look for JSON within the response
+            json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+            if json_match:
+                suggestions_json = json.loads(json_match.group())
+                
+                # Log anonymized analysis for compliance tracking
+                current_app.logger.info(f"AI clinical analysis completed for anonymized case: {anonymized_data['diagnosis']} - Age: {anonymized_data['age_range']} - Pain: {anonymized_data['pain_level']}/10 - Language: {user_language}")
+                
+                return suggestions_json
+            else:
+                current_app.logger.warning("Failed to parse JSON from DeepSeek response, using fallback")
+                # Fallback if JSON parsing fails
+                return generate_fallback_suggestions(clinical_context, user_language)
+                
+        else:
+            current_app.logger.info("No DeepSeek API key configured, using fallback suggestions")
+            # Fallback to rule-based suggestions if no API key
+            return generate_fallback_suggestions(clinical_context, user_language)
+            
+    except Exception as e:
+        current_app.logger.error(f"Error with AI suggestions: {str(e)}")
+        current_app.logger.info("Using fallback suggestions due to error")
+        return generate_fallback_suggestions(clinical_context, getattr(current_user, 'language', 'es'))
+
+def anonymize_date(date_string):
+    """Convert specific dates to relative time periods"""
+    if not date_string:
+        return "Not specified"
+    
+    try:
+        from datetime import datetime, date
+        onset_date = datetime.strptime(date_string, '%Y-%m-%d').date()
+        today = date.today()
+        days_ago = (today - onset_date).days
+        
+        if days_ago < 7:
+            return "Within the last week"
+        elif days_ago < 30:
+            return "2-4 weeks ago"
+        elif days_ago < 90:
+            return "1-3 months ago"
+        elif days_ago < 365:
+            return "3-12 months ago"
+        else:
+            return "Over a year ago"
+    except:
+        return "Not specified"
+
+def anonymize_age(age):
+    """Convert specific age to age ranges"""
+    if not age:
+        return "Not specified"
+    
+    if age < 18:
+        return "Under 18"
+    elif age < 30:
+        return "18-29"
+    elif age < 45:
+        return "30-44"
+    elif age < 60:
+        return "45-59"
+    elif age < 75:
+        return "60-74"
+    else:
+        return "75+"
+
+def anonymize_occupation(occupation):
+    """Convert specific occupations to general categories"""
+    if not occupation:
+        return "Not specified"
+    
+    occupation_lower = occupation.lower()
+    
+    # Desk/office work
+    if any(word in occupation_lower for word in ['office', 'desk', 'computer', 'admin', 'manager', 'accountant', 'lawyer', 'engineer']):
+        return "Desk/office work"
+    
+    # Physical labor
+    elif any(word in occupation_lower for word in ['construction', 'mechanic', 'factory', 'warehouse', 'delivery', 'manual', 'laborer']):
+        return "Physical labor"
+    
+    # Healthcare
+    elif any(word in occupation_lower for word in ['nurse', 'doctor', 'healthcare', 'medical', 'physio', 'therapist']):
+        return "Healthcare worker"
+    
+    # Education
+    elif any(word in occupation_lower for word in ['teacher', 'professor', 'education', 'school']):
+        return "Education sector"
+    
+    # Service industry
+    elif any(word in occupation_lower for word in ['waiter', 'retail', 'customer', 'service', 'sales', 'chef', 'cook']):
+        return "Service industry"
+    
+    # Driving/transport
+    elif any(word in occupation_lower for word in ['driver', 'transport', 'taxi', 'truck', 'delivery']):
+        return "Transportation"
+    
+    # Retired
+    elif any(word in occupation_lower for word in ['retired', 'pension']):
+        return "Retired"
+    
+    # Student
+    elif any(word in occupation_lower for word in ['student', 'university', 'college']):
+        return "Student"
+    
+    else:
+        return "Other profession"
+
+def anonymize_surgeries(surgeries):
+    """Convert specific surgery descriptions to general categories"""
+    if not surgeries:
+        return []
+    
+    anonymized = []
+    for surgery in surgeries:
+        if not surgery:
+            continue
+            
+        surgery_lower = surgery.lower()
+        
+        if any(word in surgery_lower for word in ['knee', 'acl', 'meniscus', 'patella']):
+            anonymized.append("Knee surgery")
+        elif any(word in surgery_lower for word in ['shoulder', 'rotator', 'clavicle']):
+            anonymized.append("Shoulder surgery")
+        elif any(word in surgery_lower for word in ['hip', 'femur']):
+            anonymized.append("Hip surgery")
+        elif any(word in surgery_lower for word in ['spine', 'back', 'lumbar', 'cervical', 'disc']):
+            anonymized.append("Spinal surgery")
+        elif any(word in surgery_lower for word in ['ankle', 'foot']):
+            anonymized.append("Foot/ankle surgery")
+        elif any(word in surgery_lower for word in ['wrist', 'hand', 'finger']):
+            anonymized.append("Hand/wrist surgery")
+        elif any(word in surgery_lower for word in ['elbow']):
+            anonymized.append("Elbow surgery")
+        else:
+            anonymized.append("Other orthopedic surgery")
+    
+    return list(set(anonymized))  # Remove duplicates
+
+def anonymize_medications(medications):
+    """Convert specific medications to general categories"""
+    if not medications:
+        return "None reported"
+    
+    medications_lower = medications.lower()
+    categories = []
+    
+    if any(word in medications_lower for word in ['ibuprofen', 'naproxen', 'diclofenac', 'nsaid']):
+        categories.append("NSAIDs")
+    if any(word in medications_lower for word in ['paracetamol', 'acetaminophen', 'tylenol']):
+        categories.append("Analgesics")
+    if any(word in medications_lower for word in ['opioid', 'morphine', 'codeine', 'tramadol']):
+        categories.append("Opioid pain medications")
+    if any(word in medications_lower for word in ['muscle relaxant', 'baclofen', 'cyclobenzaprine']):
+        categories.append("Muscle relaxants")
+    if any(word in medications_lower for word in ['antidepressant', 'ssri', 'antianxiety']):
+        categories.append("Mood medications")
+    if any(word in medications_lower for word in ['blood pressure', 'hypertension', 'ace inhibitor']):
+        categories.append("Cardiovascular medications")
+    if any(word in medications_lower for word in ['diabetes', 'insulin', 'metformin']):
+        categories.append("Diabetes medications")
+    if any(word in medications_lower for word in ['supplement', 'vitamin', 'calcium', 'magnesium']):
+        categories.append("Supplements/vitamins")
+    
+    if not categories:
+        return "Other medications"
+    
+    return ", ".join(categories)
+
+def generate_fallback_suggestions(clinical_context, language='es'):
+    """Generate basic suggestions when AI is not available"""
+    
+    # Define multilingual suggestions
+    translations = {
+        'es': {
+            'shoulder_tests': [
+                "Test de impingement de Neer",
+                "Test de Hawkins-Kennedy",
+                "Test de la lata vacía (Jobe)",
+                "Signo de retraso de rotación externa"
+            ],
+            'knee_tests': [
+                "Test de Lachman (LCA)",
+                "Test de McMurray (menisco)",
+                "Test de aprensión rotuliana",
+                "Evaluación de sentadilla unipodal"
+            ],
+            'back_tests': [
+                "Test de elevación de pierna recta",
+                "Test de Slump",
+                "Tests de tensión neural",
+                "ROM de flexión/extensión lumbar"
+            ],
+            'red_flags': [
+                "Considerar patología relacionada con la edad (>50 años)",
+                "Dolor nocturno - descartar patología grave"
+            ],
+            'yellow_flags': [
+                "Considerar factores laborales y ergonomía"
+            ],
+            'clinical_notes': [
+                "Documentar mediciones basales para seguimiento",
+                "Considerar educación del paciente sobre manejo de la condición"
+            ]
+        },
+        'en': {
+            'shoulder_tests': [
+                "Neer impingement test",
+                "Hawkins-Kennedy test",
+                "Empty can test (Jobe test)",
+                "External rotation lag sign"
+            ],
+            'knee_tests': [
+                "Lachman test (ACL)",
+                "McMurray test (meniscus)",
+                "Patellar apprehension test",
+                "Single leg squat assessment"
+            ],
+            'back_tests': [
+                "Straight leg raise test",
+                "Slump test",
+                "Neural tension tests",
+                "Lumbar flexion/extension ROM"
+            ],
+            'red_flags': [
+                "Consider age-related pathology (>50 years)",
+                "Night pain - rule out serious pathology"
+            ],
+            'yellow_flags': [
+                "Consider work-related factors and ergonomics"
+            ],
+            'clinical_notes': [
+                "Document baseline measurements for progress tracking",
+                "Consider patient education on condition management"
+            ]
+        },
+        'it': {
+            'shoulder_tests': [
+                "Test di impingement di Neer",
+                "Test di Hawkins-Kennedy",
+                "Test della lattina vuota (Jobe)",
+                "Segno di ritardo di rotazione esterna"
+            ],
+            'knee_tests': [
+                "Test di Lachman (LCA)",
+                "Test di McMurray (menisco)",
+                "Test di apprensione rotulea",
+                "Valutazione squat monopodalico"
+            ],
+            'back_tests': [
+                "Test di sollevamento gamba tesa",
+                "Test di Slump",
+                "Test di tensione neurale",
+                "ROM flessione/estensione lombare"
+            ],
+            'red_flags': [
+                "Considerare patologia legata all'età (>50 anni)",
+                "Dolore notturno - escludere patologia grave"
+            ],
+            'yellow_flags': [
+                "Considerare fattori lavorativi ed ergonomia"
+            ],
+            'clinical_notes': [
+                "Documentare misurazioni basali per il monitoraggio",
+                "Considerare educazione del paziente sulla gestione della condizione"
+            ]
+        }
+    }
+    
+    # Default to Spanish if language not supported
+    lang_data = translations.get(language, translations['es'])
+    
+    suggestions = {
+        "tests": [],
+        "red_flags": [],
+        "yellow_flags": [],
+        "clinical_notes": []
+    }
+    
+    # Basic rule-based suggestions based on diagnosis and symptoms
+    diagnosis = clinical_context.get('diagnosis', '').lower()
+    chief_complaint = clinical_context.get('chief_complaint', '').lower()
+    
+    # Basic test recommendations
+    if 'shoulder' in diagnosis or 'shoulder' in chief_complaint or 'hombro' in diagnosis or 'hombro' in chief_complaint:
+        suggestions["tests"].extend(lang_data['shoulder_tests'])
+    
+    if 'knee' in diagnosis or 'knee' in chief_complaint or 'rodilla' in diagnosis or 'rodilla' in chief_complaint:
+        suggestions["tests"].extend(lang_data['knee_tests'])
+    
+    if any(word in diagnosis or word in chief_complaint for word in ['back', 'lumbar', 'espalda', 'lumbar']):
+        suggestions["tests"].extend(lang_data['back_tests'])
+    
+    # Red flags based on age and symptoms
+    age = clinical_context['patient_demographics'].get('age', 0)
+    if age and age > 50:
+        suggestions["red_flags"].append(lang_data['red_flags'][0])
+    
+    if any(phrase in chief_complaint for phrase in ['night pain', 'constant pain', 'dolor nocturno', 'dolor constante']):
+        suggestions["red_flags"].append(lang_data['red_flags'][1])
+    
+    # Yellow flags
+    if clinical_context['patient_demographics'].get('occupation'):
+        suggestions["yellow_flags"].append(lang_data['yellow_flags'][0])
+    
+    # Clinical notes
+    suggestions["clinical_notes"].extend(lang_data['clinical_notes'])
+    
+    return suggestions

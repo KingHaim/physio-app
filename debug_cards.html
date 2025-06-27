@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Work Cards</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .work-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid red; /* Debug border */
+        }
+
+        .work-card .card {
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .work-card.selected .card {
+            border-color: #0d6efd !important;
+            background-color: #f8f9fa !important;
+        }
+
+        .debug-info {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Debug Work Cards</h2>
+        
+        <div class="debug-info">
+            <h5>Debug Info:</h5>
+            <div id="debug-output">Waiting for interactions...</div>
+        </div>
+        
+        <button onclick="testDirectCall()" class="btn btn-primary mb-3">Test Direct Function Call</button>
+        
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="work-card" data-value="freelance">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-person-workspace fs-1 text-primary mb-3"></i>
+                            <h6 class="card-title">Freelancer</h6>
+                            <small class="text-muted">I work independently</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="work-card" data-value="clinic_employee">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-building fs-1 text-primary mb-3"></i>
+                            <h6 class="card-title">Clinic Employee</h6>
+                            <small class="text-muted">I work in a clinic</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="work-card" data-value="mixed">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-arrow-left-right fs-1 text-primary mb-3"></i>
+                            <h6 class="card-title">Both</h6>
+                            <small class="text-muted">I do both</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <input type="hidden" id="selected_work_type" value="">
+        <div><strong>Selected:</strong> <span id="display_value">None</span></div>
+    </div>
+
+    <script>
+        function log(message) {
+            console.log(message);
+            const debugOutput = document.getElementById('debug-output');
+            debugOutput.innerHTML += '<br>' + new Date().toLocaleTimeString() + ': ' + message;
+        }
+
+        function selectWorkType(value) {
+            log('selectWorkType called with: ' + value);
+            
+            // Remove selected from all cards
+            document.querySelectorAll('.work-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selected to clicked card
+            const selectedCard = document.querySelector('.work-card[data-value="' + value + '"]');
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+                log('Card with value ' + value + ' selected');
+            } else {
+                log('ERROR: Card with value ' + value + ' not found!');
+            }
+            
+            // Update hidden input
+            const hiddenInput = document.getElementById('selected_work_type');
+            if (hiddenInput) {
+                hiddenInput.value = value;
+                log('Hidden input updated to: ' + value);
+            }
+            
+            // Update display
+            const displayValue = document.getElementById('display_value');
+            if (displayValue) {
+                displayValue.textContent = value;
+                log('Display updated to: ' + value);
+            }
+        }
+
+        function testDirectCall() {
+            log('Testing direct function call...');
+            selectWorkType('freelance');
+        }
+
+        // Method 1: Direct onclick in HTML
+        log('Script loaded. Will try multiple methods...');
+
+        // Method 2: Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            log('DOM loaded. Adding event listeners...');
+            
+            const cards = document.querySelectorAll('.work-card');
+            log('Found ' + cards.length + ' work cards');
+            
+            cards.forEach((card, index) => {
+                const value = card.getAttribute('data-value');
+                log('Setting up card ' + index + ' with value: ' + value);
+                
+                card.addEventListener('click', function(e) {
+                    log('Card clicked via event listener: ' + value);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectWorkType(value);
+                });
+                
+                // Also add inline onclick as backup
+                card.setAttribute('onclick', 'selectWorkType("' + value + '")');
+                log('Added inline onclick to card: ' + value);
+            });
+            
+            log('All event listeners added');
+        });
+
+        // Method 3: Direct assignment
+        setTimeout(() => {
+            log('Adding direct event listeners after timeout...');
+            document.querySelectorAll('.work-card').forEach(card => {
+                const value = card.getAttribute('data-value');
+                card.onclick = function() {
+                    log('Card clicked via direct onclick: ' + value);
+                    selectWorkType(value);
+                };
+            });
+        }, 100);
+    </script>
+</body>
+</html> 

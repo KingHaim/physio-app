@@ -937,19 +937,14 @@
                         <!-- Step 2: Portal Access -->
                         <div class="step-content" id="step2">
                             <h5 class="mb-3">{{ _('Patient Portal Access (Optional)') }}</h5>
-                            <div class="alert alert-info mb-3">
-                                <i class="bi bi-info-circle"></i> 
-                                <strong>Este paso es completamente opcional.</strong> 
-                                Si no deseas que el paciente tenga acceso al portal, simplemente haz clic en "Crear Paciente" sin rellenar nada.
-                            </div>
                             <p class="text-muted">{{ _('Enter an email and password if you want the patient to be able to log in and view their exercise prescriptions.') }}</p>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="patient_email" class="form-label">{{ _('Login Email') }} <span class="text-muted">(Opcional)</span></label>
+                                    <label for="patient_email" class="form-label">{{ _('Login Email') }}</label>
                                     <input type="email" class="form-control" id="patient_email" name="patient_email" placeholder="patient.login@example.com">
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="patient_password" class="form-label">{{ _('Password') }} <span class="text-muted">(Solo si proporcionas email)</span></label>
+                                    <label for="patient_password" class="form-label">{{ _('Password') }}</label>
                                     <input type="password" class="form-control" id="patient_password" name="patient_password" placeholder="{{ _('Set initial password') }}">
                                     <small class="form-text text-muted">{{ _('Leave blank if login email is not provided.') }}</small>
                                 </div>
@@ -959,14 +954,9 @@
                                 <button type="button" class="btn btn-secondary" onclick="prevStep(1)">
                                     <i class="bi bi-arrow-left"></i> {{ _('Back: Patient Data & Anamnesis') }}
                                 </button>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-outline-secondary" onclick="skipPortalAccess()">
-                                        <i class="bi bi-skip-forward"></i> Saltar Portal
-                                    </button>
-                                    <button type="submit" class="btn btn-success" onclick="return validatePortalAccess()">
-                                        <i class="bi bi-check-circle"></i> {{ _('Create Patient') }}
-                                    </button>
-                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check-circle"></i> {{ _('Create Patient') }}
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -1061,39 +1051,40 @@
 
 <script>
 let currentStep = 1;
-let isSkippingPortal = false; // Variable global para controlar cuando saltamos el portal
 
 // ==== INTERACTIVE FUNCTIONS FOR SEXY ANAMNESIS ====
 
 // Quick diagnosis selection auto-fill
 function fillDiagnosisFromQuick() {
-    const quickSelect = document.getElementById('quick_diagnosis');
-    const diagnosisField = document.getElementById('diagnosis');
+    const selectedDiagnosis = document.getElementById('quick_diagnosis').value;
+    const chiefComplaintField = document.getElementById('anamnesis_chief_complaint');
     
-    if (quickSelect.value && diagnosisField) {
-        const diagnosisMap = {
-            'tendinopathy': 'Tendinopatía',
-            'grade2_sprain': 'Esguince Grado II',
-            'grade1_sprain': 'Esguince Grado I',
-            'muscle_strain': 'Distensión Muscular',
-            'joint_stiffness': 'Rigidez Articular',
-            'chronic_pain': 'Dolor Crónico',
-            'lower_back_pain': 'Lumbalgia',
-            'cervical_pain': 'Cervicalgia',
-            'herniated_disc': 'Hernia Discal',
-            'sciatica': 'Ciática',
-            'whiplash': 'Latigazo Cervical',
-            'runners_knee': 'Rodilla del Corredor',
-            'tennis_elbow': 'Codo de Tenista',
-            'shoulder_impingement': 'Síndrome de Pinzamiento del Hombro',
-            'acl_injury': 'Lesión del LCA',
-            'rotator_cuff': 'Lesión del Manguito Rotador',
-            'post_surgery_knee': 'Rehabilitación Post-Cirugía de Rodilla',
-            'post_surgery_shoulder': 'Rehabilitación Post-Cirugía de Hombro',
-            'post_surgery_hip': 'Rehabilitación Post-Cirugía de Cadera'
-        };
-        
-        diagnosisField.value = diagnosisMap[quickSelect.value] || quickSelect.value;
+    const diagnosisTexts = {
+        'tendinopathy': 'Dolor y rigidez en tendón. Dolor que empeora con actividad específica y mejora con reposo.',
+        'grade2_sprain': 'Esguince grado II con dolor moderado, inflamación y limitación funcional parcial.',
+        'grade1_sprain': 'Esguince grado I con dolor leve y mínima limitación funcional.',
+        'muscle_strain': 'Tensión muscular con dolor localizado y posible limitación de movimiento.',
+        'joint_stiffness': 'Rigidez articular con limitación de rango de movimiento, especialmente matutina.',
+        'chronic_pain': 'Dolor crónico persistente que afecta las actividades diarias.',
+        'lower_back_pain': 'Dolor lumbar que puede irradiar o no, con limitación funcional variable.',
+        'cervical_pain': 'Dolor cervical con posible irradiación, rigidez y limitación de movimiento.',
+        'herniated_disc': 'Hernia discal con posible irradiación neurológica y limitación funcional.',
+        'sciatica': 'Dolor irradiado por nervio ciático desde zona lumbar hasta pierna.',
+        'whiplash': 'Latigazo cervical tras traumatismo con dolor y rigidez cervical.',
+        'runners_knee': 'Dolor anterior de rodilla relacionado con actividad de carrera.',
+        'tennis_elbow': 'Epicondilitis lateral con dolor en cara externa del codo.',
+        'shoulder_impingement': 'Síndrome de pinzamiento con dolor al elevar el brazo.',
+        'acl_injury': 'Lesión de ligamento cruzado anterior con inestabilidad de rodilla.',
+        'rotator_cuff': 'Lesión del manguito rotador con dolor y debilidad en el hombro.',
+        'post_surgery_knee': 'Rehabilitación post-quirúrgica de rodilla para recuperar función.',
+        'post_surgery_shoulder': 'Rehabilitación post-quirúrgica de hombro para recuperar movilidad.',
+        'post_surgery_hip': 'Rehabilitación post-quirúrgica de cadera para recuperar marcha.'
+    };
+    
+    if (selectedDiagnosis && diagnosisTexts[selectedDiagnosis]) {
+        if (chiefComplaintField.value.trim() === '') {
+            chiefComplaintField.value = diagnosisTexts[selectedDiagnosis];
+        }
     }
 }
 
@@ -1187,12 +1178,6 @@ function toggleNoFamilyHistory(checkbox) {
 
 // Function to compile all anamnesis fields into one
 function compileAnamnesis() {
-    // Helper function to safely get element value
-    function safeGetValue(elementId) {
-        const element = document.getElementById(elementId);
-        return element ? element.value : '';
-    }
-    
     // Calculate age from date of birth
     function calculateAge(birthDate) {
         if (!birthDate) return '';
@@ -1210,6 +1195,14 @@ function compileAnamnesis() {
     function getSelectedCheckboxes(name) {
         const checkboxes = document.querySelectorAll(`input[name="${name}"]:checked`);
         return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    // Helper function to get multiple selected options
+    function getMultipleSelected(selectId) {
+        const select = document.getElementById(selectId);
+        if (!select || !select.multiple) return '';
+        const selected = Array.from(select.selectedOptions).map(option => option.text);
+        return selected.join(', ');
     }
 
     // Helper function to compile surgeries
@@ -1230,48 +1223,52 @@ function compileAnamnesis() {
 
     const anamnesisData = {
         personal_data: {
-            age: calculateAge(safeGetValue('date_of_birth')),
-            gender: safeGetValue('anamnesis_gender'),
-            occupation: safeGetValue('anamnesis_occupation'),
-            emergency_contact: safeGetValue('anamnesis_emergency_contact')
+            age: calculateAge(document.getElementById('date_of_birth').value),
+            gender: document.getElementById('anamnesis_gender').value,
+            occupation: document.getElementById('anamnesis_occupation').value,
+            emergency_contact: document.getElementById('anamnesis_emergency_contact').value
         },
         chief_complaint: {
-            main_complaint: safeGetValue('anamnesis_chief_complaint'),
-            onset_date: safeGetValue('anamnesis_onset_date'),
-            mechanism: safeGetValue('anamnesis_mechanism'),
-            onset_description: safeGetValue('anamnesis_onset_description')
+            main_complaint: document.getElementById('anamnesis_chief_complaint').value,
+            onset_date: document.getElementById('anamnesis_onset_date').value,
+            mechanism: document.getElementById('anamnesis_mechanism').value,
+            onset_description: document.getElementById('anamnesis_onset_description').value
         },
         medical_history: {
-            previous_conditions: safeGetValue('anamnesis_previous_conditions'),
+            previous_conditions: document.getElementById('anamnesis_previous_conditions').value,
             history_conditions: getSelectedCheckboxes('history_conditions'),
             surgeries: compileSurgeries(),
-            medications: safeGetValue('anamnesis_medications'),
-            allergies: safeGetValue('anamnesis_allergies'),
+            medications: document.getElementById('anamnesis_medications').value,
+            allergies: document.getElementById('anamnesis_allergies').value,
             allergy_types: getSelectedCheckboxes('allergies')
         },
         family_history: {
-            family_history: safeGetValue('anamnesis_family_history'),
+            family_history: document.getElementById('anamnesis_family_history').value,
             family_conditions: getSelectedCheckboxes('family_conditions')
         },
         lifestyle: {
-            physical_activity: safeGetValue('anamnesis_physical_activity'),
-            sleep_quality: safeGetValue('anamnesis_sleep_quality'),
-            work_posture: safeGetValue('anamnesis_work_posture'),
-            stress_level: safeGetValue('anamnesis_stress_level'),
-            diet_habits: safeGetValue('anamnesis_diet_habits')
+            physical_activity: document.getElementById('anamnesis_physical_activity').value,
+            activity_details: document.getElementById('activity_details').value,
+            sleep: document.getElementById('anamnesis_sleep').value,
+            work_posture: document.getElementById('anamnesis_work_posture').value,
+            stress_level: document.getElementById('anamnesis_stress_level').value,
+            lifestyle_habits: getSelectedCheckboxes('lifestyle_habits'),
+            diet_habits: document.getElementById('anamnesis_diet_habits').value
         },
         current_pain: {
-            pain_scale: safeGetValue('anamnesis_pain_scale'),
-            pain_type: safeGetValue('anamnesis_pain_type'),
-            pain_triggers: safeGetValue('anamnesis_pain_triggers'),
-            pain_relievers: safeGetValue('anamnesis_pain_relievers'),
-            pain_location: safeGetValue('anamnesis_pain_location')
+            pain_scale: document.getElementById('anamnesis_pain_scale').value,
+            pain_characteristics: getSelectedCheckboxes('pain_characteristics'),
+            pain_timing: getMultipleSelected('anamnesis_pain_timing'),
+            pain_location: document.getElementById('anamnesis_pain_location').value,
+            aggravating_factors: document.getElementById('anamnesis_aggravating_factors').value,
+            relieving_factors: document.getElementById('anamnesis_relieving_factors').value
         },
         functional_exam: {
-            functional_limitations: safeGetValue('anamnesis_functional_limitations'),
-            rom_limitations: safeGetValue('anamnesis_rom_limitations'),
-            strength_deficits: safeGetValue('anamnesis_strength_deficits'),
-            special_tests: safeGetValue('anamnesis_special_tests')
+            functional_limitations: getSelectedCheckboxes('functional_limitations'),
+            rom_assessment: document.getElementById('anamnesis_rom_assessment').value,
+            strength_assessment: document.getElementById('anamnesis_strength_assessment').value,
+            special_tests: document.getElementById('anamnesis_special_tests').value,
+            additional_notes: document.getElementById('anamnesis_additional_notes').value
         }
     };
 
@@ -1320,49 +1317,45 @@ function compileAnamnesis() {
         compiledText += '\n';
     }
     
-    if (anamnesisData.lifestyle.physical_activity || anamnesisData.lifestyle.sleep_quality || anamnesisData.lifestyle.work_posture || anamnesisData.lifestyle.stress_level || anamnesisData.lifestyle.diet_habits) {
+    if (anamnesisData.lifestyle.physical_activity || anamnesisData.lifestyle.activity_details || anamnesisData.lifestyle.sleep || anamnesisData.lifestyle.work_posture || anamnesisData.lifestyle.stress_level || anamnesisData.lifestyle.lifestyle_habits.length > 0 || anamnesisData.lifestyle.diet_habits) {
         compiledText += '=== ESTILO DE VIDA ===\n';
         if (anamnesisData.lifestyle.physical_activity) compiledText += `Actividad física: ${anamnesisData.lifestyle.physical_activity}\n`;
-        if (anamnesisData.lifestyle.sleep_quality) compiledText += `Calidad del sueño: ${anamnesisData.lifestyle.sleep_quality}\n`;
-        if (anamnesisData.lifestyle.work_posture) compiledText += `Postura de trabajo: ${anamnesisData.lifestyle.work_posture}\n`;
+        if (anamnesisData.lifestyle.activity_details) compiledText += `Detalles de actividad: ${anamnesisData.lifestyle.activity_details}\n`;
+        if (anamnesisData.lifestyle.sleep) compiledText += `Calidad del sueño: ${anamnesisData.lifestyle.sleep}\n`;
+        if (anamnesisData.lifestyle.work_posture) compiledText += `Entorno laboral: ${anamnesisData.lifestyle.work_posture}\n`;
         if (anamnesisData.lifestyle.stress_level) compiledText += `Nivel de estrés: ${anamnesisData.lifestyle.stress_level}/10\n`;
-        if (anamnesisData.lifestyle.diet_habits) compiledText += `Hábitos alimentarios: ${anamnesisData.lifestyle.diet_habits}\n`;
+        if (anamnesisData.lifestyle.lifestyle_habits.length > 0) {
+            compiledText += `Hábitos: ${anamnesisData.lifestyle.lifestyle_habits.join(', ')}\n`;
+        }
+        if (anamnesisData.lifestyle.diet_habits) compiledText += `Notas adicionales: ${anamnesisData.lifestyle.diet_habits}\n`;
         compiledText += '\n';
     }
     
-    if (anamnesisData.current_pain.pain_scale || anamnesisData.current_pain.pain_type || anamnesisData.current_pain.pain_triggers || anamnesisData.current_pain.pain_relievers || anamnesisData.current_pain.pain_location) {
+    if (anamnesisData.current_pain.pain_scale || anamnesisData.current_pain.pain_characteristics.length > 0 || anamnesisData.current_pain.pain_timing || anamnesisData.current_pain.pain_location || anamnesisData.current_pain.aggravating_factors || anamnesisData.current_pain.relieving_factors) {
         compiledText += '=== DOLOR ACTUAL ===\n';
         if (anamnesisData.current_pain.pain_scale) compiledText += `Escala de dolor: ${anamnesisData.current_pain.pain_scale}/10\n`;
-        if (anamnesisData.current_pain.pain_type) compiledText += `Tipo de dolor: ${anamnesisData.current_pain.pain_type}\n`;
+        if (anamnesisData.current_pain.pain_characteristics.length > 0) {
+            compiledText += `Características: ${anamnesisData.current_pain.pain_characteristics.join(', ')}\n`;
+        }
         if (anamnesisData.current_pain.pain_location) compiledText += `Localización: ${anamnesisData.current_pain.pain_location}\n`;
-        if (anamnesisData.current_pain.pain_triggers) compiledText += `Factores que empeoran: ${anamnesisData.current_pain.pain_triggers}\n`;
-        if (anamnesisData.current_pain.pain_relievers) compiledText += `Factores que mejoran: ${anamnesisData.current_pain.pain_relievers}\n`;
+        if (anamnesisData.current_pain.pain_timing) compiledText += `Momento del dolor: ${anamnesisData.current_pain.pain_timing}\n`;
+        if (anamnesisData.current_pain.aggravating_factors) compiledText += `Factores que empeoran: ${anamnesisData.current_pain.aggravating_factors}\n`;
+        if (anamnesisData.current_pain.relieving_factors) compiledText += `Factores que mejoran: ${anamnesisData.current_pain.relieving_factors}\n`;
         compiledText += '\n';
     }
     
-    if (anamnesisData.functional_exam.functional_limitations || anamnesisData.functional_exam.rom_limitations || anamnesisData.functional_exam.strength_deficits || anamnesisData.functional_exam.special_tests) {
+    if (anamnesisData.functional_exam.functional_limitations.length > 0 || anamnesisData.functional_exam.rom_assessment || anamnesisData.functional_exam.strength_assessment || anamnesisData.functional_exam.special_tests || anamnesisData.functional_exam.additional_notes) {
         compiledText += '=== EXPLORACIÓN FUNCIONAL ===\n';
-        if (anamnesisData.functional_exam.functional_limitations) compiledText += `Limitaciones funcionales: ${anamnesisData.functional_exam.functional_limitations}\n`;
-        if (anamnesisData.functional_exam.rom_limitations) compiledText += `Limitaciones ROM: ${anamnesisData.functional_exam.rom_limitations}\n`;
-        if (anamnesisData.functional_exam.strength_deficits) compiledText += `Déficits de fuerza: ${anamnesisData.functional_exam.strength_deficits}\n`;
+        if (anamnesisData.functional_exam.functional_limitations.length > 0) {
+            compiledText += `Limitaciones funcionales: ${anamnesisData.functional_exam.functional_limitations.join(', ')}\n`;
+        }
+        if (anamnesisData.functional_exam.rom_assessment) compiledText += `Evaluación ROM: ${anamnesisData.functional_exam.rom_assessment}\n`;
+        if (anamnesisData.functional_exam.strength_assessment) compiledText += `Evaluación de fuerza: ${anamnesisData.functional_exam.strength_assessment}\n`;
         if (anamnesisData.functional_exam.special_tests) compiledText += `Pruebas especiales: ${anamnesisData.functional_exam.special_tests}\n`;
-        compiledText += '\n';
+        if (anamnesisData.functional_exam.additional_notes) compiledText += `Hallazgos adicionales: ${anamnesisData.functional_exam.additional_notes}\n`;
     }
     
-    // If no sections were filled, at least add the chief complaint if it exists
-    if (!compiledText && anamnesisData.chief_complaint.main_complaint) {
-        compiledText = `=== MOTIVO DE CONSULTA ===\nMotivo principal: ${anamnesisData.chief_complaint.main_complaint}\n`;
-    }
-    
-    // Set the compiled anamnesis in the hidden field
-    const compiledField = document.getElementById('compiled_anamnesis');
-    if (compiledField) {
-        compiledField.value = compiledText;
-        console.log('DEBUG: Anamnesis compiled successfully. Length:', compiledText.length);
-    } else {
-        console.error('ERROR: compiled_anamnesis field not found!');
-    }
-    
+    document.getElementById('compiled_anamnesis').value = compiledText;
     return compiledText;
 }
 
@@ -1375,21 +1368,8 @@ function nextStep(step) {
         const contact = document.getElementById('contact').value.trim();
         const diagnosis = document.getElementById('diagnosis').value.trim();
         
-        // Debug: Log field values
-        console.log('Validation Debug:');
-        console.log('Name:', name, '(length:', name.length, ')');
-        console.log('DOB:', dob, '(length:', dob.length, ')');
-        console.log('Contact:', contact, '(length:', contact.length, ')');
-        console.log('Diagnosis:', diagnosis, '(length:', diagnosis.length, ')');
-        
-        let missingFields = [];
-        if (!name) missingFields.push('Nombre');
-        if (!dob) missingFields.push('Fecha de Nacimiento');
-        if (!contact) missingFields.push('Contacto');
-        if (!diagnosis) missingFields.push('Diagnóstico');
-        
-        if (missingFields.length > 0) {
-            alert('Faltan los siguientes campos obligatorios: ' + missingFields.join(', '));
+        if (!name || !dob || !contact || !diagnosis) {
+            alert('{{ _("Please fill in all required patient data fields (Name, Date of Birth, Contact, and Diagnosis).") }}');
             // Switch to the patient data tab
             const personalDataTab = new bootstrap.Tab(document.getElementById('personal-data-tab'));
             personalDataTab.show();
@@ -1434,12 +1414,6 @@ function prevStep(step) {
 
 // Form validation before submit
 document.getElementById('newPatientForm').addEventListener('submit', function(e) {
-    // If we're skipping portal, don't validate
-    if (window.isSkippingPortal) {
-        window.isSkippingPortal = false; // Reset flag
-        return true; // Allow submission
-    }
-    
     // Compile anamnesis one more time before submitting
     const compiledAnamnesis = compileAnamnesis();
     
@@ -1449,22 +1423,9 @@ document.getElementById('newPatientForm').addEventListener('submit', function(e)
     const contact = document.getElementById('contact').value.trim();
     const diagnosis = document.getElementById('diagnosis').value.trim();
     
-    // Debug: Log field values on submit
-    console.log('Submit Validation Debug:');
-    console.log('Name:', name, '(length:', name.length, ')');
-    console.log('DOB:', dob, '(length:', dob.length, ')');
-    console.log('Contact:', contact, '(length:', contact.length, ')');
-    console.log('Diagnosis:', diagnosis, '(length:', diagnosis.length, ')');
-    
-    let missingFields = [];
-    if (!name) missingFields.push('Nombre');
-    if (!dob) missingFields.push('Fecha de Nacimiento');
-    if (!contact) missingFields.push('Contacto');
-    if (!diagnosis) missingFields.push('Diagnóstico');
-    
-    if (missingFields.length > 0) {
+    if (!name || !dob || !contact || !diagnosis) {
         e.preventDefault();
-        alert('Faltan los siguientes campos obligatorios: ' + missingFields.join(', '));
+        alert('{{ _("Please fill in all required patient data fields before creating the patient record.") }}');
         prevStep(1);
         const personalDataTab = new bootstrap.Tab(document.getElementById('personal-data-tab'));
         personalDataTab.show();
@@ -1532,100 +1493,214 @@ function updateTabCompletion(tabId) {
     }
 }
 
-// Basic form functionality
-function addSurgery() {
-    const container = document.getElementById('surgeries-container');
-    if (!container) return;
-    
-    const newSurgery = document.createElement('div');
-    newSurgery.className = 'surgery-entry row mb-2';
-    newSurgery.innerHTML = 
-        '<div class="col-md-6">' +
-            '<input type="text" class="form-control" name="surgery_description[]" placeholder="Tipo de cirugía">' +
-        '</div>' +
-        '<div class="col-md-4">' +
-            '<input type="date" class="form-control" name="surgery_date[]">' +
-        '</div>' +
-        '<div class="col-md-2">' +
-            '<button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSurgery(this)">' +
-                '<i class="bi bi-trash"></i>' +
-            '</button>' +
-        '</div>';
-    container.appendChild(newSurgery);
-}
+// ==== SMART CLINICAL SUGGESTIONS SYSTEM ====
 
-function removeSurgery(button) {
-    button.closest('.surgery-entry').remove();
-}
+let currentSuggestions = [];
+let suggestionTimeouts = {};
 
-function fillDiagnosisFromQuick() {
-    const quickSelect = document.getElementById('quick_diagnosis');
-    const diagnosisField = document.getElementById('diagnosis');
-    
-    if (quickSelect.value && diagnosisField) {
-        const diagnosisMap = {
-            'tendinopathy': 'Tendinopatía',
-            'grade2_sprain': 'Esguince Grado II',
-            'grade1_sprain': 'Esguince Grado I',
-            'muscle_strain': 'Distensión Muscular',
-            'joint_stiffness': 'Rigidez Articular',
-            'chronic_pain': 'Dolor Crónico',
-            'lower_back_pain': 'Lumbalgia',
-            'cervical_pain': 'Cervicalgia',
-            'herniated_disc': 'Hernia Discal',
-            'sciatica': 'Ciática',
-            'whiplash': 'Latigazo Cervical',
-            'runners_knee': 'Rodilla del Corredor',
-            'tennis_elbow': 'Codo de Tenista',
-            'shoulder_impingement': 'Síndrome de Pinzamiento del Hombro',
-            'acl_injury': 'Lesión del LCA',
-            'rotator_cuff': 'Lesión del Manguito Rotador',
-            'post_surgery_knee': 'Rehabilitación Post-Cirugía de Rodilla',
-            'post_surgery_shoulder': 'Rehabilitación Post-Cirugía de Hombro',
-            'post_surgery_hip': 'Rehabilitación Post-Cirugía de Cadera'
-        };
+// Ensure welcome panel stays visible
+function ensureWelcomePanelVisible() {
+    const welcomePanel = document.getElementById('welcome-suggestions-panel');
+    if (welcomePanel) {
+        // Remove any classes that might hide it
+        welcomePanel.classList.remove('fade', 'd-none', 'hidden');
+        welcomePanel.style.display = '';
+        welcomePanel.style.visibility = 'visible';
+        welcomePanel.style.opacity = '1';
         
-        diagnosisField.value = diagnosisMap[quickSelect.value] || quickSelect.value;
+        // Prevent any click events that might dismiss it
+        welcomePanel.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        console.log('Welcome panel forced to be visible');
+    } else {
+        console.log('Welcome panel not found');
+    }
+    
+    // Also ensure it stays visible every 5 seconds
+    setInterval(() => {
+        const panel = document.getElementById('welcome-suggestions-panel');
+        if (panel && (panel.style.display === 'none' || !panel.offsetParent)) {
+            console.log('Re-showing welcome panel');
+            panel.style.display = '';
+            panel.style.visibility = 'visible';
+            panel.style.opacity = '1';
+        }
+    }, 5000);
+}
+
+// Initialize suggestion monitoring
+            document.body.appendChild(welcomePanel);
+        }
+    } else {
+        // Make sure it's visible
+        console.log('Welcome panel exists, ensuring visibility...');
+        welcomePanel.style.display = '';
+        welcomePanel.style.visibility = 'visible';
+        // Prevent Bootstrap from auto-closing
+        welcomePanel.classList.remove('fade');
+    }
+    
+    // Check if suggestions panel exists
+    let suggestionsPanel = document.getElementById('suggestions-panel');
+    if (!suggestionsPanel) {
+        console.log('Creating suggestions panel...');
+        suggestionsPanel = document.createElement('div');
+        suggestionsPanel.id = 'suggestions-panel';
+        suggestionsPanel.className = 'alert alert-info mt-3';
+        suggestionsPanel.style.display = 'none';
+        suggestionsPanel.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="bi bi-lightbulb-fill text-warning fs-4"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="alert-heading mb-2">
+                        <i class="bi bi-robot"></i> {{ _('Smart Clinical Suggestions') }}
+                    </h6>
+                    <div id="suggestions-content"></div>
+                </div>
+                <button type="button" class="btn-close" onclick="hideSuggestions()"></button>
+            </div>
+        `;
+        
+        // Insert after welcome panel or before tab content
+        const welcomePanelRef = document.getElementById('welcome-suggestions-panel');
+        const tabContent = document.getElementById('anamnesisTabContent');
+        
+        if (welcomePanelRef) {
+            welcomePanelRef.parentNode.insertBefore(suggestionsPanel, welcomePanelRef.nextSibling);
+        } else if (tabContent) {
+            tabContent.parentNode.insertBefore(suggestionsPanel, tabContent);
+        } else {
+            document.body.appendChild(suggestionsPanel);
+        }
+    } else {
+        console.log('Suggestions panel exists, ensuring proper state...');
+        // Make sure it has the content div
+        if (!document.getElementById('suggestions-content')) {
+            const contentDiv = document.createElement('div');
+            contentDiv.id = 'suggestions-content';
+            const parentDiv = suggestionsPanel.querySelector('.flex-grow-1');
+            if (parentDiv) {
+                parentDiv.appendChild(contentDiv);
+            }
+        }
+    }
+    
+    console.log('Panels creation/verification complete. Running debug...');
+    debugPanels();
+}
+
+// Simple test function for suggestions
+function testSuggestions() {
+    console.log('Testing suggestions system...');
+    
+    const panel = document.getElementById('suggestions-panel');
+    const content = document.getElementById('suggestions-content');
+    
+    if (!panel) {
+        alert('Error: suggestions-panel element not found! Creating it now...');
+        forceCreatePanels();
+        return;
+    }
+    
+    if (!content) {
+        alert('Error: suggestions-content element not found!');
+        return;
+    }
+    
+    // Show a test suggestion
+    content.innerHTML = `
+        <div class="mb-2">
+            <strong>🔵 Test de Sistema de Sugerencias</strong>
+        </div>
+        <p class="mb-2">¡El panel azul está funcionando correctamente! Prueba seleccionar un diagnóstico rápido.</p>
+        <button class="btn btn-sm btn-success me-2" onclick="hideSuggestions()">✅ Aplicar</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="hideSuggestions()">❌ Descartar</button>
+    `;
+    
+    panel.style.display = 'block';
+}
+
+// Simple debug function
+function debugPanels() {
+    console.log('=== DEBUG PANELS ===');
+    
+    const elements = ['welcome-suggestions-panel', 'suggestions-panel', 'suggestions-content'];
+    
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        console.log(`${id}:`, element ? 'FOUND' : 'NOT FOUND');
+        if (element) {
+            console.log(`  - Visible: ${element.offsetWidth > 0 && element.offsetHeight > 0}`);
+            console.log(`  - Style display: ${element.style.display}`);
+        }
+    });
+    
+    console.log('=== END DEBUG ===');
+}
+
+// Simple function to hide suggestions
+function hideSuggestions() {
+    const panel = document.getElementById('suggestions-panel');
+    if (panel) {
+        panel.style.display = 'none';
     }
 }
 
-// Portal access validation and management
-function validatePortalAccess() {
-    const email = document.getElementById('patient_email').value.trim();
-    const password = document.getElementById('patient_password').value.trim();
+// Force create panels function
+function forceCreatePanels() {
+    console.log('Force creating panels...');
     
-    // If email is provided but no password, show error
-    if (email && !password) {
-        alert('Si proporcionas un email para el portal, también debes proporcionar una contraseña.');
-        document.getElementById('patient_password').focus();
-        return false;
+    // Only create suggestions panel if it doesn't exist
+    let suggestionsPanel = document.getElementById('suggestions-panel');
+    if (!suggestionsPanel) {
+        console.log('Creating suggestions panel...');
+        suggestionsPanel = document.createElement('div');
+        suggestionsPanel.id = 'suggestions-panel';
+        suggestionsPanel.className = 'alert alert-info mt-3';
+        suggestionsPanel.style.display = 'none';
+        suggestionsPanel.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="bi bi-lightbulb-fill text-warning fs-4"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="alert-heading mb-2">
+                        <i class="bi bi-robot"></i> Sugerencias Clínicas Inteligentes
+                    </h6>
+                    <div id="suggestions-content"></div>
+                </div>
+                <button type="button" class="btn-close" onclick="hideSuggestions()"></button>
+            </div>
+        `;
+        
+        // Insert after the test buttons
+        const testButtons = document.querySelector('.mb-3:has(button[onclick="testSuggestions()"])');
+        if (testButtons) {
+            testButtons.parentNode.insertBefore(suggestionsPanel, testButtons.nextSibling);
+        } else {
+            const welcomePanel = document.getElementById('welcome-suggestions-panel');
+            if (welcomePanel) {
+                welcomePanel.parentNode.insertBefore(suggestionsPanel, welcomePanel.nextSibling);
+            }
+        }
+        console.log('Suggestions panel created successfully');
+    } else {
+        console.log('Suggestions panel already exists');
     }
     
-    // If password is provided but no email, show error
-    if (password && !email) {
-        alert('Si proporcionas una contraseña, también debes proporcionar un email para el portal.');
-        document.getElementById('patient_email').focus();
-        return false;
-    }
-    
-    // Everything is fine - either both provided or both empty
-    return true;
+    debugPanels();
 }
 
-function skipPortalAccess() {
-    // Clear portal fields
-    document.getElementById('patient_email').value = '';
-    document.getElementById('patient_password').value = '';
-    
-    // Compile anamnesis before submitting
-    compileAnamnesis();
-    
-    // Set flag to bypass validation
-    window.isSkippingPortal = true;
-    
-    // Submit the form
-    document.getElementById('newPatientForm').submit();
-}
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, initializing panels...');
+    ensureWelcomePanelVisible();
+    forceCreatePanels();
+});
 
 </script>
 {% endblock %}

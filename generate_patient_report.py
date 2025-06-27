@@ -210,6 +210,8 @@ def format_treatment_history(patient, treatments, user_info):
     
     As a professional physiotherapist, please generate a comprehensive physiotherapy treatment progress report based on the above information. The report should include:
     
+    IMPORTANT: Do NOT include any patient header information, patient names, diagnosis summary, report dates, or physiotherapist information at the beginning of the report. Start directly with the clinical content.
+    
     1. CLINICAL OVERVIEW: Brief introduction to the presenting condition based on the diagnosis
     
     2. CLINICAL ASSESSMENT:
@@ -249,11 +251,43 @@ def format_treatment_history(patient, treatments, user_info):
     
     ---
     
-    **{user_info['first_name']} {user_info['last_name']}, Physiotherapist**  
-    {f"License: {user_info['license_number']}" if user_info['license_number'] else ""}  
-    {user_info['clinic_name'] if user_info['clinic_name'] else ""}  
-    Report Date: {datetime.now().strftime('%Y-%m-%d')}
+    **Report prepared by:**
     """
+    
+    # Build practitioner signature section flexibly
+    practitioner_info = []
+    
+    # Add name if available
+    if user_info.get('first_name') or user_info.get('last_name'):
+        name_parts = []
+        if user_info.get('first_name'):
+            name_parts.append(user_info['first_name'])
+        if user_info.get('last_name'):
+            name_parts.append(user_info['last_name'])
+        practitioner_info.append(f"**{' '.join(name_parts)}, Physiotherapist**")
+    else:
+        practitioner_info.append("**Physiotherapist**")
+    
+    # Add professional registration if available
+    license_info = []
+    if user_info.get('license_number'):
+        license_info.append(f"License: {user_info['license_number']}")
+    if user_info.get('college_acronym'):
+        license_info.append(f"College: {user_info['college_acronym']}")
+    
+    if license_info:
+        practitioner_info.append(" | ".join(license_info))
+    
+    # Add clinic name if available
+    if user_info.get('clinic_name') and user_info['clinic_name'] != 'Independent Practice':
+        practitioner_info.append(user_info['clinic_name'])
+    
+    # Add report date
+    practitioner_info.append(f"Report Date: {datetime.now().strftime('%Y-%m-%d')}")
+    
+    # Join all available information
+    prompt += "\n".join(practitioner_info)
+    prompt += "\n"
     
     return prompt
 

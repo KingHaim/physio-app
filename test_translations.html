@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Translations - PhysioApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .work-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .work-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 8px rgba(0,123,255,0.2);
+            transform: translateY(-2px);
+        }
+        
+        .work-card.selected {
+            border-color: #007bff;
+            background-color: #f8f9ff;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+        }
+        
+        .work-card i {
+            font-size: 2.5rem;
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+        
+        .step-indicator {
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            display: inline-block;
+            font-size: 0.9rem;
+        }
+        
+        .step-indicator.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        #step3 input[type="radio"], #step3 .form-check { 
+            display: none !important; 
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Test Modal de Bienvenida con Traducciones</h2>
+        <button class="btn btn-primary" onclick="openModal()">Abrir Modal</button>
+    </div>
+
+    <!-- Welcome Modal -->
+    <div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="welcomeModalLabel">Configuración Inicial</h4>
+                    <button type="button" class="btn-close" id="closeWelcomeModal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Progress Bar -->
+                    <div class="progress mb-4" style="height: 6px;">
+                        <div class="progress-bar bg-primary" id="progressBar" role="progressbar" style="width: 20%;"></div>
+                    </div>
+                    
+                    <!-- Step Indicators -->
+                    <div class="text-center mb-4">
+                        <span class="step-indicator active">1. Language</span>
+                        <span class="step-indicator">2. Personal Info</span>
+                        <span class="step-indicator">3. Work Setup</span>
+                        <span class="step-indicator">4. Clinic Info</span>
+                        <span class="step-indicator">5. Fees</span>
+                    </div>
+
+                    <!-- Step 1: Language Selection -->
+                    <div id="step1" class="step-content text-center">
+                        <h5>Let's get to know you!</h5>
+                        <p class="text-muted">Which language would you prefer to use?</p>
+                        <div class="row justify-content-center">
+                            <div class="col-md-6">
+                                <label for="language" class="form-label">Language</label>
+                                <select class="form-select form-select-lg" id="language" name="language">
+                                    <option value="en">🇺🇸 English</option>
+                                    <option value="es">🇪🇸 Español</option>
+                                    <option value="fr">🇫🇷 Français</option>
+                                    <option value="it">🇮🇹 Italiano</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Personal Info -->
+                    <div id="step2" class="step-content text-center d-none">
+                        <h5>Nice to meet you!</h5>
+                        <p class="text-muted">What should we call you?</p>
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="first_name" class="form-label">First Name</label>
+                                        <input type="text" class="form-control form-control-lg" id="first_name" name="first_name" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="last_name" class="form-label">Last Name</label>
+                                        <input type="text" class="form-control form-control-lg" id="last_name" name="last_name" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Work Type Selection -->
+                    <div id="step3" class="step-content text-center d-none">
+                        <h5>Tell us about your work</h5>
+                        <p class="text-muted">Are you self-employed or do you work in a clinic?</p>
+                        
+                        <input type="hidden" id="selected_work_type" name="work_type" value="">
+                        <div class="row justify-content-center">
+                            <div class="col-md-4">
+                                <div class="work-card" data-value="freelance" onclick="window.selectWorkType && window.selectWorkType('freelance')">
+                                    <i class="bi bi-person-badge"></i>
+                                    <h6>Freelancer</h6>
+                                    <small class="text-muted">I work independently</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="work-card" data-value="clinic_employee" onclick="window.selectWorkType && window.selectWorkType('clinic_employee')">
+                                    <i class="bi bi-building"></i>
+                                    <h6>Clinic Employee</h6>
+                                    <small class="text-muted">I work in a clinic</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="work-card" data-value="mixed" onclick="window.selectWorkType && window.selectWorkType('mixed')">
+                                    <i class="bi bi-diagram-3"></i>
+                                    <h6>Both</h6>
+                                    <small class="text-muted">I do both freelance and clinic work</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <strong>Seleccionado: <span id="work_type_debug">None</span></strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
+                        <i class="bi bi-arrow-left me-2"></i>Previous
+                    </button>
+                    <button type="button" class="btn btn-primary" id="nextBtn">
+                        Next<i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Hardcoded translations to work without database
+        const translations = {
+            'es': {
+                'step_language': 'Idioma',
+                'step_personal_info': 'Información Personal',
+                'step_work_setup': 'Configuración de Trabajo',
+                'step_clinic_info': 'Información de Clínica',
+                'step_fees': 'Tarifas',
+                'get_to_know': '¡Conozcámonos!',
+                'which_language': '¿Qué idioma prefieres usar?',
+                'nice_to_meet': '¡Mucho gusto!',
+                'what_call_you': '¿Cómo te llamamos?',
+                'tell_about_work': 'Cuéntanos sobre tu trabajo',
+                'self_employed_clinic': '¿Trabajas por cuenta propia o en una clínica?',
+                'work_freelancer': 'Freelancer',
+                'work_freelancer_desc': 'Trabajo de forma independiente',
+                'work_clinic': 'Empleado de Clínica',
+                'work_clinic_desc': 'Trabajo en una clínica',
+                'work_both': 'Ambos',
+                'work_both_desc': 'Hago trabajo freelance y de clínica',
+                'previous': 'Anterior',
+                'next': 'Siguiente',
+                'language_label': 'Idioma',
+                'first_name': 'Nombre',
+                'last_name': 'Apellido',
+                'exit_warning_title': '¿Estás seguro?',
+                'exit_warning_message': 'Si sales ahora, algunas funcionalidades pueden no funcionar como se espera. ¿Quieres continuar con la configuración?',
+                'exit_anyway': 'Salir de todas formas',
+                'continue_setup': 'Continuar configuración'
+            },
+            'en': {
+                'step_language': 'Language',
+                'step_personal_info': 'Personal Info',
+                'step_work_setup': 'Work Setup',
+                'step_clinic_info': 'Clinic Info',
+                'step_fees': 'Fees',
+                'get_to_know': 'Let\'s get to know you!',
+                'which_language': 'Which language would you prefer to use?',
+                'nice_to_meet': 'Nice to meet you!',
+                'what_call_you': 'What should we call you?',
+                'tell_about_work': 'Tell us about your work',
+                'self_employed_clinic': 'Are you self-employed or do you work in a clinic?',
+                'work_freelancer': 'Freelancer',
+                'work_freelancer_desc': 'I work independently',
+                'work_clinic': 'Clinic Employee',
+                'work_clinic_desc': 'I work in a clinic',
+                'work_both': 'Both',
+                'work_both_desc': 'I do both freelance and clinic work',
+                'previous': 'Previous',
+                'next': 'Next',
+                'language_label': 'Language',
+                'first_name': 'First Name',
+                'last_name': 'Last Name',
+                'exit_warning_title': 'Are you sure?',
+                'exit_warning_message': 'If you exit now, some features may not work as expected. Would you like to continue with the setup?',
+                'exit_anyway': 'Exit anyway',
+                'continue_setup': 'Continue setup'
+            },
+            'fr': {
+                'step_language': 'Langue',
+                'step_personal_info': 'Infos Personnelles',
+                'step_work_setup': 'Configuration Travail',
+                'step_clinic_info': 'Infos Clinique',
+                'step_fees': 'Tarifs',
+                'get_to_know': 'Faisons connaissance!',
+                'which_language': 'Quelle langue préférez-vous utiliser?',
+                'nice_to_meet': 'Ravi de vous rencontrer!',
+                'what_call_you': 'Comment vous appeler?',
+                'tell_about_work': 'Parlez-nous de votre travail',
+                'self_employed_clinic': 'Êtes-vous indépendant ou travaillez-vous dans une clinique?',
+                'work_freelancer': 'Freelancer',
+                'work_freelancer_desc': 'Je travaille de façon indépendante',
+                'work_clinic': 'Employé de Clinique',
+                'work_clinic_desc': 'Je travaille dans une clinique',
+                'work_both': 'Les Deux',
+                'work_both_desc': 'Je fais du freelance et du travail en clinique',
+                'previous': 'Précédent',
+                'next': 'Suivant',
+                'language_label': 'Langue',
+                'first_name': 'Prénom',
+                'last_name': 'Nom de famille',
+                'exit_warning_title': 'Êtes-vous sûr?',
+                'exit_warning_message': 'Si vous quittez maintenant, certaines fonctionnalités peuvent ne pas fonctionner comme prévu. Souhaitez-vous continuer la configuration?',
+                'exit_anyway': 'Quitter quand même',
+                'continue_setup': 'Continuer la configuration'
+            },
+            'it': {
+                'step_language': 'Lingua',
+                'step_personal_info': 'Informazioni Personali',
+                'step_work_setup': 'Configurazione Lavoro',
+                'step_clinic_info': 'Informazioni Clinica',
+                'step_fees': 'Tariffe',
+                'get_to_know': 'Conosciamoci!',
+                'which_language': 'Quale lingua preferisci usare?',
+                'nice_to_meet': 'Piacere di conoscerti!',
+                'what_call_you': 'Come dovremmo chiamarti?',
+                'tell_about_work': 'Parlaci del tuo lavoro',
+                'self_employed_clinic': 'Sei autonomo o lavori in una clinica?',
+                'work_freelancer': 'Freelancer',
+                'work_freelancer_desc': 'Lavoro in modo indipendente',
+                'work_clinic': 'Dipendente di Clinica',
+                'work_clinic_desc': 'Lavoro in una clinica',
+                'work_both': 'Entrambi',
+                'work_both_desc': 'Faccio sia lavoro freelance che in clinica',
+                'previous': 'Precedente',
+                'next': 'Successivo',
+                'language_label': 'Lingua',
+                'first_name': 'Nome',
+                'last_name': 'Cognome',
+                'exit_warning_title': 'Sei sicuro?',
+                'exit_warning_message': 'Se esci ora, alcune funzionalità potrebbero non funzionare come previsto. Vuoi continuare con la configurazione?',
+                'exit_anyway': 'Esci comunque',
+                'continue_setup': 'Continua configurazione'
+            }
+        };
+
+        // Simple global work type selection
+        window.selectWorkType = function(value) {
+            console.log('selectWorkType called with:', value);
+            
+            // Remove selected from all cards
+            document.querySelectorAll('.work-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selected to clicked card
+            const selectedCard = document.querySelector(`.work-card[data-value="${value}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+            
+            // Update hidden input
+            const hiddenInput = document.getElementById('selected_work_type');
+            if (hiddenInput) {
+                hiddenInput.value = value;
+            }
+            
+            // Update debug display
+            const debugSpan = document.getElementById('work_type_debug');
+            if (debugSpan) {
+                debugSpan.textContent = value;
+            }
+            
+            // Enable next button
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn && value) {
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('disabled');
+            }
+            
+            console.log('Work type selected:', value);
+        };
+
+        // Apply translations function
+        function applyTranslations(lang) {
+            const t = translations[lang] || translations['en'];
+            
+            // Update step indicators
+            const stepIndicators = document.querySelectorAll('.step-indicator');
+            if (stepIndicators[0]) stepIndicators[0].textContent = `1. ${t.step_language}`;
+            if (stepIndicators[1]) stepIndicators[1].textContent = `2. ${t.step_personal_info}`;
+            if (stepIndicators[2]) stepIndicators[2].textContent = `3. ${t.step_work_setup}`;
+            if (stepIndicators[3]) stepIndicators[3].textContent = `4. ${t.step_clinic_info}`;
+            if (stepIndicators[4]) stepIndicators[4].textContent = `5. ${t.step_fees}`;
+            
+            // Update step content
+            const step1Title = document.querySelector('#step1 h5');
+            if (step1Title) step1Title.textContent = t.get_to_know;
+            
+            const step1Desc = document.querySelector('#step1 p');
+            if (step1Desc) step1Desc.textContent = t.which_language;
+            
+            const step2Title = document.querySelector('#step2 h5');
+            if (step2Title) step2Title.textContent = t.nice_to_meet;
+            
+            const step2Desc = document.querySelector('#step2 p');
+            if (step2Desc) step2Desc.textContent = t.what_call_you;
+            
+            const step3Title = document.querySelector('#step3 h5');
+            if (step3Title) step3Title.textContent = t.tell_about_work;
+            
+            const step3Desc = document.querySelector('#step3 p');
+            if (step3Desc) step3Desc.textContent = t.self_employed_clinic;
+            
+            // Update form labels
+            const languageLabel = document.querySelector('label[for="language"]');
+            if (languageLabel) languageLabel.textContent = t.language_label;
+            
+            const firstNameLabel = document.querySelector('label[for="first_name"]');
+            if (firstNameLabel) firstNameLabel.textContent = t.first_name;
+            
+            const lastNameLabel = document.querySelector('label[for="last_name"]');
+            if (lastNameLabel) lastNameLabel.textContent = t.last_name;
+            
+            // Update work type cards
+            const freelanceTitle = document.querySelector('.work-card[data-value="freelance"] h6');
+            if (freelanceTitle) freelanceTitle.textContent = t.work_freelancer;
+            
+            const freelanceDesc = document.querySelector('.work-card[data-value="freelance"] small');
+            if (freelanceDesc) freelanceDesc.textContent = t.work_freelancer_desc;
+            
+            const clinicTitle = document.querySelector('.work-card[data-value="clinic_employee"] h6');
+            if (clinicTitle) clinicTitle.textContent = t.work_clinic;
+            
+            const clinicDesc = document.querySelector('.work-card[data-value="clinic_employee"] small');
+            if (clinicDesc) clinicDesc.textContent = t.work_clinic_desc;
+            
+            const bothTitle = document.querySelector('.work-card[data-value="mixed"] h6');
+            if (bothTitle) bothTitle.textContent = t.work_both;
+            
+            const bothDesc = document.querySelector('.work-card[data-value="mixed"] small');
+            if (bothDesc) bothDesc.textContent = t.work_both_desc;
+            
+            // Update buttons
+            const prevBtn = document.querySelector('#prevBtn');
+            if (prevBtn) prevBtn.innerHTML = `<i class="bi bi-arrow-left me-2"></i>${t.previous}`;
+            
+            const nextBtn = document.querySelector('#nextBtn');
+            if (nextBtn) nextBtn.innerHTML = `${t.next}<i class="bi bi-arrow-right ms-2"></i>`;
+            
+            console.log('Translations applied for:', lang);
+        }
+
+        // Update progress bar function
+        function updateProgress(step) {
+            const progressBar = document.getElementById('progressBar');
+            if (progressBar) {
+                const percentage = (step / 5) * 100;
+                progressBar.style.width = `${percentage}%`;
+            }
+            
+            // Update step indicators
+            const stepIndicators = document.querySelectorAll('.step-indicator');
+            stepIndicators.forEach((indicator, index) => {
+                if (index < step) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            });
+        }
+
+        // Open modal function
+        function openModal() {
+            const welcomeModal = document.getElementById('welcomeModal');
+            if (welcomeModal) {
+                const modal = new bootstrap.Modal(welcomeModal);
+                modal.show();
+                
+                // Close button functionality
+                const closeBtn = document.getElementById('closeWelcomeModal');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function() {
+                        showExitWarning(modal);
+                    });
+                }
+                
+                // Exit warning function
+                function showExitWarning(modalInstance) {
+                    const currentLang = document.getElementById('language').value || 'en';
+                    const t = translations[currentLang] || translations['en'];
+                    
+                    const confirmed = confirm(`${t.exit_warning_title}\n\n${t.exit_warning_message}`);
+                    
+                    if (confirmed) {
+                        modalInstance.hide();
+                    }
+                    // If not confirmed, do nothing (stay in modal)
+                }
+                
+                // Language change handler
+                const languageSelect = document.getElementById('language');
+                if (languageSelect) {
+                    languageSelect.addEventListener('change', function() {
+                        const selectedLang = this.value;
+                        console.log('Language changed to:', selectedLang);
+                        applyTranslations(selectedLang);
+                    });
+                }
+                
+                // Apply English translations by default
+                applyTranslations('en');
+                
+                // Simple step navigation
+                let currentStep = 1;
+                const nextBtn = document.getElementById('nextBtn');
+                const prevBtn = document.getElementById('prevBtn');
+                
+                // Initialize progress
+                updateProgress(currentStep);
+                
+                if (nextBtn) {
+                    nextBtn.addEventListener('click', function() {
+                        console.log('Next clicked, current step:', currentStep);
+                        if (currentStep < 3) { // Only 3 steps in this test
+                            currentStep++;
+                            showStep(currentStep);
+                            updateProgress(currentStep);
+                        }
+                    });
+                }
+                
+                if (prevBtn) {
+                    prevBtn.addEventListener('click', function() {
+                        console.log('Previous clicked, current step:', currentStep);
+                        if (currentStep > 1) {
+                            currentStep--;
+                            showStep(currentStep);
+                            updateProgress(currentStep);
+                        }
+                    });
+                }
+                
+                function showStep(step) {
+                    console.log('Showing step:', step);
+                    
+                    // Hide all steps
+                    document.querySelectorAll('.step-content').forEach(s => {
+                        s.classList.add('d-none');
+                    });
+                    
+                    // Show current step
+                    const stepElement = document.getElementById(`step${step}`);
+                    if (stepElement) {
+                        stepElement.classList.remove('d-none');
+                    }
+                    
+                    // Update button visibility
+                    if (prevBtn) {
+                        prevBtn.style.display = step > 1 ? 'inline-block' : 'none';
+                    }
+                    
+                    // Reset next button state for step 3 (work type selection)
+                    if (nextBtn && step === 3) {
+                        const selectedWorkType = document.getElementById('selected_work_type');
+                        if (!selectedWorkType || !selectedWorkType.value) {
+                            nextBtn.disabled = true;
+                            nextBtn.classList.add('disabled');
+                        } else {
+                            nextBtn.disabled = false;
+                            nextBtn.classList.remove('disabled');
+                        }
+                    } else if (nextBtn) {
+                        nextBtn.disabled = false;
+                        nextBtn.classList.remove('disabled');
+                    }
+                }
+                
+                // Start with step 1
+                showStep(1);
+            }
+        }
+    </script>
+</body>
+</html> 

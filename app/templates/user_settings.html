@@ -23,6 +23,9 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link {{ 'active' if active_tab == 'financial' else '' }}" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial-tab-pane" type="button" role="tab" aria-controls="financial-tab-pane" aria-selected="{{ 'true' if active_tab == 'financial' else 'false' }}">{{ _('Financial Settings') }}</button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {{ 'active' if active_tab == 'account_deletion' else '' }}" id="account-deletion-tab" data-bs-toggle="tab" data-bs-target="#account-deletion-tab-pane" type="button" role="tab" aria-controls="account-deletion-tab-pane" aria-selected="{{ 'true' if active_tab == 'account_deletion' else 'false' }}">{{ _('Account Deletion') }}</button>
+        </li>
     </ul>
 
     <!-- Tab panes -->
@@ -67,7 +70,7 @@
 
                         <div class="mb-3">
                             {{ user_form.sex.label(class="form-label") }}
-                            {{ user_form.sex(class="form-control" + (" is-invalid" if user_form.sex.errors else "")) }}
+                            {{ user_form.sex(class="form-select" + (" is-invalid" if user_form.sex.errors else "")) }}
                             {% if user_form.sex.errors %}
                                 <div class="invalid-feedback">
                                     {% for error in user_form.sex.errors %}<span>{{ error }}</span>{% endfor %}
@@ -83,6 +86,14 @@
                                     {% for error in user_form.license_number.errors %}<span>{{ error }}</span>{% endfor %}
                                 </div>
                             {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="college_acronym" class="form-label">{{ _('College Acronym') }}</label>
+                            <input type="text" class="form-control" id="college_acronym" name="college_acronym" 
+                                   value="{{ current_user.college_acronym or '' }}" 
+                                   placeholder="e.g. COFIB, ICOFCV, COFM">
+                            <div class="form-text">{{ _('Acronym of your professional college') }}</div>
                         </div>
 
                         <button type="submit" name="submit" class="btn btn-primary">{{ _('Save Changes') }}</button>
@@ -151,7 +162,7 @@
 
                         <div class="mb-3">
                             {{ clinic_form.clinic_description.label(class="form-label") }}
-                            {{ clinic_form.clinic_description(class="form-control" + (" is-invalid" if clinic_form.clinic_description.errors else "")) }}
+                            {{ clinic_form.clinic_description(class="form-control" + (" is-invalid" if clinic_form.clinic_description.errors else ""), rows="3") }}
                             {% if clinic_form.clinic_description.errors %}
                                 <div class="invalid-feedback">
                                     {% for error in clinic_form.clinic_description.errors %}<span>{{ error }}</span>{% endfor %}
@@ -159,34 +170,47 @@
                             {% endif %}
                         </div>
 
-                        <div class="mb-3">
-                            {{ clinic_form.clinic_first_session_fee.label(class="form-label") }}
-                            {{ clinic_form.clinic_first_session_fee(class="form-control" + (" is-invalid" if clinic_form.clinic_first_session_fee.errors else "")) }}
-                            {% if clinic_form.clinic_first_session_fee.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in clinic_form.clinic_first_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
+                        <hr class="my-4">
+                        <h5 class="mb-3">{{ _('Fee Configuration') }}</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ clinic_form.clinic_first_session_fee.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">€</span>
+                                    {{ clinic_form.clinic_first_session_fee(class="form-control" + (" is-invalid" if clinic_form.clinic_first_session_fee.errors else "")) }}
+                                    {% if clinic_form.clinic_first_session_fee.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in clinic_form.clinic_first_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
+                                        </div>
+                                    {% endif %}
                                 </div>
-                            {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                {{ clinic_form.clinic_subsequent_session_fee.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">€</span>
+                                    {{ clinic_form.clinic_subsequent_session_fee(class="form-control" + (" is-invalid" if clinic_form.clinic_subsequent_session_fee.errors else "")) }}
+                                    {% if clinic_form.clinic_subsequent_session_fee.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in clinic_form.clinic_subsequent_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mb-3">
-                            {{ clinic_form.clinic_subsequent_session_fee.label(class="form-label") }}
-                            {{ clinic_form.clinic_subsequent_session_fee(class="form-control" + (" is-invalid" if clinic_form.clinic_subsequent_session_fee.errors else "")) }}
-                            {% if clinic_form.clinic_subsequent_session_fee.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in clinic_form.clinic_subsequent_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="form-check mb-3">
-                            {{ clinic_form.clinic_percentage_agreement(class="form-check-input" + (" is-invalid" if clinic_form.clinic_percentage_agreement.errors else "")) }}
-                            {{ clinic_form.clinic_percentage_agreement.label(class="form-check-label") }}
-                            {% if clinic_form.clinic_percentage_agreement.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in clinic_form.clinic_percentage_agreement.errors %}<span>{{ error }}</span>{% endfor %}
-                                </div>
-                            {% endif %}
+                            <div class="form-check">
+                                {{ clinic_form.clinic_percentage_agreement(class="form-check-input" + (" is-invalid" if clinic_form.clinic_percentage_agreement.errors else "")) }}
+                                {{ clinic_form.clinic_percentage_agreement.label(class="form-check-label") }}
+                                {% if clinic_form.clinic_percentage_agreement.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in clinic_form.clinic_percentage_agreement.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -358,6 +382,86 @@
                 </div>
             </div>
         </div>
+
+        {# --- Account Deletion Tab --- #}
+        <div class="tab-pane fade {{ 'show active' if active_tab == 'account_deletion' else '' }}" id="account-deletion-tab-pane" role="tabpanel" aria-labelledby="account-deletion-tab" tabindex="0">
+            <div class="card mb-4 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="card-title mb-0"><i class="bi bi-exclamation-triangle"></i> {{ _('Account Deletion') }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <h5 class="alert-heading"><i class="bi bi-info-circle"></i> {{ _('Understanding Your Options') }}</h5>
+                        <p class="mb-0">{{ _('We provide two types of account deletion to give you control over your data. Please read carefully before making a decision.') }}</p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-secondary">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-pause-circle"></i> {{ _('Temporary Deactivation') }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">{{ _('Your account will be deactivated but all your data remains safely stored. You can contact support to reactivate your account at any time.') }}</p>
+                                    <ul class="mb-3">
+                                        <li>{{ _('Account becomes inaccessible') }}</li>
+                                        <li>{{ _('All data is preserved') }}</li>
+                                        <li>{{ _('Can be reversed by contacting support') }}</li>
+                                        <li>{{ _('Ideal if you might return') }}</li>
+                                    </ul>
+                                    <form method="POST" action="{{ url_for('user_data.delete_account') }}" onsubmit="return confirm('{{ _('Are you sure you want to temporarily deactivate your account? You can contact support to reactivate it.') }}');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="bi bi-pause-circle"></i> {{ _('Temporarily Deactivate Account') }}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0"><i class="bi bi-trash"></i> {{ _('Permanent Deletion') }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">{{ _('Your account and ALL associated data will be permanently deleted. This action cannot be undone.') }}</p>
+                                    <ul class="mb-3">
+                                        <li>{{ _('Account permanently deleted') }}</li>
+                                        <li>{{ _('All patients and treatments deleted') }}</li>
+                                        <li>{{ _('All reports and documents deleted') }}</li>
+                                        <li>{{ _('Cannot be reversed') }}</li>
+                                    </ul>
+                                    <div class="alert alert-danger">
+                                        <strong>{{ _('Warning:') }}</strong> {{ _('This will permanently delete all patients, treatments, reports, and other data associated with your account. This action cannot be undone.') }}
+                                    </div>
+                                    
+                                    <!-- Two-step confirmation for permanent deletion -->
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="confirmPermanentDeletion" required>
+                                        <label class="form-check-label" for="confirmPermanentDeletion">
+                                            {{ _('I understand that this action will permanently delete all my data and cannot be undone') }}
+                                        </label>
+                                    </div>
+                                    
+                                    <form method="POST" action="{{ url_for('user_data.delete_account_permanent') }}" id="permanentDeleteForm" onsubmit="return confirmPermanentDeletion();">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-danger" id="permanentDeleteBtn" disabled>
+                                            <i class="bi bi-trash"></i> {{ _('Permanently Delete Account') }}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-4">
+                        <h6 class="alert-heading">{{ _('Need Help?') }}</h6>
+                        <p class="mb-0">{{ _('If you have questions about account deletion or need assistance with your data, please') }} <a href="mailto:support@physioapp.com">{{ _('contact our support team') }}</a> {{ _('before proceeding.') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -383,7 +487,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Log the initial state for debugging
     console.log('Calendly integration enabled:', calendlyCheckbox.checked);
+
+    // Account deletion confirmation logic
+    const confirmCheckbox = document.getElementById('confirmPermanentDeletion');
+    const deleteBtn = document.getElementById('permanentDeleteBtn');
+    
+    if (confirmCheckbox && deleteBtn) {
+        confirmCheckbox.addEventListener('change', function() {
+            deleteBtn.disabled = !this.checked;
+        });
+    }
 });
+
+function confirmPermanentDeletion() {
+    const message = "{{ _('Are you absolutely sure you want to permanently delete your account?') }}\n\n{{ _('This will delete:') }}\n- {{ _('All your patients and their data') }}\n- {{ _('All treatments and reports') }}\n- {{ _('All clinic information') }}\n- {{ _('All financial data') }}\n\n{{ _('This action cannot be undone. Type \"DELETE\" to confirm:') }}";
+    
+    const userInput = prompt(message);
+    if (userInput === "DELETE") {
+        return confirm("{{ _('Final confirmation: This will permanently delete everything. Are you sure?') }}");
+    }
+    return false;
+}
 </script>
 
 {% endblock %} 

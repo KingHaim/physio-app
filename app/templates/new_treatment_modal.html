@@ -125,7 +125,7 @@
                             </div>
                             
                             <!-- Hidden input to store trigger points data -->
-                            <input type="hidden" id="trigger_points" name="trigger_points" value="[]">
+                            <input type="hidden" id="trigger_points" name="trigger_points_data" value="[]">
                         </div>
                     </div>
                 </div>
@@ -316,5 +316,8 @@ document.addEventListener('DOMContentLoaded', function() {
             addPoint(svgP.x, svgP.y);
         });
     }
+    
+    // Initialize hidden field
+    updateFormData();
 });
 </script> 

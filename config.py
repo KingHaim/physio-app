@@ -42,6 +42,9 @@ class Config:
     # Stripe Secret Key
     STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
     
+    # DeepSeek AI API Key for clinical suggestions
+    DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY')
+    
     # Sentry DSN for error monitoring
     SENTRY_DSN = os.environ.get('SENTRY_DSN')
     

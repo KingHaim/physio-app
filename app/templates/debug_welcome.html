@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Welcome Modal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Debug Welcome Modal</h1>
+        <p>is_new_user: {{ is_new_user }}</p>
+        <p>welcome_form: {{ welcome_form }}</p>
+        
+        <button class="btn btn-primary" onclick="showModal()">Show Welcome Modal</button>
+    </div>
+
+    <!-- Include the same modal content as in index.html -->
+    <!-- Welcome Onboarding Modal -->
+    {% if is_new_user and welcome_form %}
+    <div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="welcomeModalLabel">{{ _('Welcome to TRXCKER!') }}</h5>
+                </div>
+                <div class="modal-body">
+                    <!-- Progress Bar -->
+                    <div class="progress mb-4" style="height: 6px;">
+                        <div class="progress-bar bg-primary" id="progressBar" role="progressbar" style="width: 20%;"></div>
+                    </div>
+                    
+                    <!-- Step Indicators -->
+                    <div class="row mb-4">
+                        <div class="col text-center">
+                            <small class="step-indicator active">1. Language</small>
+                        </div>
+                        <div class="col text-center">
+                            <small class="step-indicator">2. Personal Info</small>
+                        </div>
+                        <div class="col text-center">
+                            <small class="step-indicator">3. Work Setup</small>
+                        </div>
+                        <div class="col text-center">
+                            <small class="step-indicator">4. Clinic Info</small>
+                        </div>
+                        <div class="col text-center">
+                            <small class="step-indicator">5. Fees</small>
+                        </div>
+                    </div>
+                    
+                    <form id="welcomeForm" method="POST">
+                        {{ welcome_form.hidden_tag() }}
+                        
+                        <!-- Step 1: Language Selection -->
+                        <div id="step1" class="step-content">
+                            <div class="text-center mb-4">
+                                <h5>Let's get to know you!</h5>
+                                <p class="text-muted">Which language would you prefer to use?</p>
+                            </div>
+                            <div class="row justify-content-center">
+                                <div class="col-md-6">
+                                    {{ welcome_form.language.label(class="form-label") }}
+                                    {{ welcome_form.language(class="form-select form-select-lg", id="language") }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Other steps hidden for brevity in debug -->
+                        <div id="step2" class="step-content d-none">
+                            <h5>Step 2 content...</h5>
+                        </div>
+                        <div id="step3" class="step-content d-none">
+                            <h5>Step 3 content...</h5>
+                        </div>
+                        <div id="step4" class="step-content d-none">
+                            <h5>Step 4 content...</h5>
+                        </div>
+                        <div id="step5" class="step-content d-none">
+                            <h5>Step 5 content...</h5>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="prevBtn" style="display: none;">
+                        Previous
+                    </button>
+                    <button type="button" class="btn btn-primary" id="nextBtn">
+                        Next
+                    </button>
+                    <button type="submit" class="btn btn-success" id="completeBtn" form="welcomeForm" style="display: none;">
+                        Complete Setup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showModal() {
+            const modal = new bootstrap.Modal(document.getElementById('welcomeModal'));
+            modal.show();
+        }
+        
+        // Simple modal logic for testing
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Debug page loaded');
+            console.log('Modal element:', document.getElementById('welcomeModal'));
+            console.log('Language select:', document.getElementById('language'));
+        });
+    </script>
+</body>
+</html> 

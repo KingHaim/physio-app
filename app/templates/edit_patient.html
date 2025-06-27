@@ -105,6 +105,245 @@
 
                         <hr class="my-4">
 
+                        <!-- Anamnesis Section -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">{{ _('Clinical History / Anamnesis') }}</h6>
+                                
+                                <!-- Anamnesis Tabs -->
+                                <ul class="nav nav-tabs" id="editAnamnesisTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="edit-personal-data-tab" data-bs-toggle="tab" data-bs-target="#edit-personal-data" type="button" role="tab">
+                                            <i class="bi bi-person"></i> {{ _('Personal Data') }}
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="edit-chief-complaint-tab" data-bs-toggle="tab" data-bs-target="#edit-chief-complaint" type="button" role="tab">
+                                            <i class="bi bi-chat-dots"></i> {{ _('Chief Complaint') }}
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="edit-medical-history-tab" data-bs-toggle="tab" data-bs-target="#edit-medical-history" type="button" role="tab">
+                                            <i class="bi bi-clipboard-heart"></i> {{ _('Medical History') }}
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="edit-family-history-tab" data-bs-toggle="tab" data-bs-target="#edit-family-history" type="button" role="tab">
+                                            <i class="bi bi-people"></i> {{ _('Family History') }}
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="edit-lifestyle-tab" data-bs-toggle="tab" data-bs-target="#edit-lifestyle" type="button" role="tab">
+                                            <i class="bi bi-heart-pulse"></i> {{ _('Lifestyle') }}
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="edit-current-pain-tab" data-bs-toggle="tab" data-bs-target="#edit-current-pain" type="button" role="tab">
+                                            <i class="bi bi-bandaid"></i> {{ _('Current Pain') }}
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="edit-functional-exam-tab" data-bs-toggle="tab" data-bs-target="#edit-functional-exam" type="button" role="tab">
+                                            <i class="bi bi-activity"></i> {{ _('Functional Exam') }}
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content mt-3" id="editAnamnesisTabContent">
+                                    <!-- Personal Data Tab -->
+                                    <div class="tab-pane fade show active" id="edit-personal-data" role="tabpanel">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_age" class="form-label">{{ _('Age') }}</label>
+                                                <input type="number" class="form-control" id="edit_anamnesis_age" name="anamnesis_age" min="0" max="120">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_gender" class="form-label">{{ _('Gender') }}</label>
+                                                <select class="form-select" id="edit_anamnesis_gender" name="anamnesis_gender">
+                                                    <option value="">{{ _('Select gender') }}</option>
+                                                    <option value="male">{{ _('Male') }}</option>
+                                                    <option value="female">{{ _('Female') }}</option>
+                                                    <option value="other">{{ _('Other') }}</option>
+                                                    <option value="prefer_not_to_say">{{ _('Prefer not to say') }}</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_occupation" class="form-label">{{ _('Occupation') }}</label>
+                                                <input type="text" class="form-control" id="edit_anamnesis_occupation" name="anamnesis_occupation" placeholder="{{ _('Current job/profession') }}">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_emergency_contact" class="form-label">{{ _('Emergency Contact') }}</label>
+                                                <input type="text" class="form-control" id="edit_anamnesis_emergency_contact" name="anamnesis_emergency_contact" placeholder="{{ _('Name and phone number') }}">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Chief Complaint Tab -->
+                                    <div class="tab-pane fade" id="edit-chief-complaint" role="tabpanel">
+                                        <div class="mb-3">
+                                            <label for="edit_anamnesis_chief_complaint" class="form-label">
+                                                {{ _('Main reason for consultation') }} <span class="text-danger">*</span>
+                                            </label>
+                                            <textarea class="form-control" id="edit_anamnesis_chief_complaint" name="anamnesis_chief_complaint" rows="3" 
+                                                      placeholder="{{ _('What brought you here today? Describe your main concern or symptom.') }}" required></textarea>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_onset" class="form-label">{{ _('When did it start?') }}</label>
+                                                <input type="text" class="form-control" id="edit_anamnesis_onset" name="anamnesis_onset" 
+                                                       placeholder="{{ _('e.g., 2 weeks ago, after lifting heavy box') }}">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_mechanism" class="form-label">{{ _('How did it happen?') }}</label>
+                                                <input type="text" class="form-control" id="edit_anamnesis_mechanism" name="anamnesis_mechanism" 
+                                                       placeholder="{{ _('e.g., sudden, gradual, after activity') }}">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Medical History Tab -->
+                                    <div class="tab-pane fade" id="edit-medical-history" role="tabpanel">
+                                        <div class="mb-3">
+                                            <label for="edit_anamnesis_previous_conditions" class="form-label">{{ _('Previous illnesses/conditions') }}</label>
+                                            <textarea class="form-control" id="edit_anamnesis_previous_conditions" name="anamnesis_previous_conditions" rows="3" 
+                                                      placeholder="{{ _('List any previous medical conditions, diagnoses, or chronic illnesses') }}"></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="edit_anamnesis_surgeries" class="form-label">{{ _('Previous surgeries') }}</label>
+                                            <textarea class="form-control" id="edit_anamnesis_surgeries" name="anamnesis_surgeries" rows="2" 
+                                                      placeholder="{{ _('List any surgeries with approximate dates') }}"></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="edit_anamnesis_medications" class="form-label">{{ _('Current medications') }}</label>
+                                            <textarea class="form-control" id="edit_anamnesis_medications" name="anamnesis_medications" rows="3" 
+                                                      placeholder="{{ _('Include prescription drugs, supplements, and over-the-counter medications') }}"></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="edit_anamnesis_allergies" class="form-label">{{ _('Allergies') }}</label>
+                                            <textarea class="form-control" id="edit_anamnesis_allergies" name="anamnesis_allergies" rows="2" 
+                                                      placeholder="{{ _('Food, medication, environmental allergies') }}"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- Family History Tab -->
+                                    <div class="tab-pane fade" id="edit-family-history" role="tabpanel">
+                                        <div class="mb-3">
+                                            <label for="edit_anamnesis_family_history" class="form-label">{{ _('Relevant family medical history') }}</label>
+                                            <textarea class="form-control" id="edit_anamnesis_family_history" name="anamnesis_family_history" rows="4" 
+                                                      placeholder="{{ _('Include: diabetes, heart disease, cancer, musculoskeletal conditions, genetic disorders, etc.') }}"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- Lifestyle Tab -->
+                                    <div class="tab-pane fade" id="edit-lifestyle" role="tabpanel">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_physical_activity" class="form-label">{{ _('Physical activity level') }}</label>
+                                                <select class="form-select" id="edit_anamnesis_physical_activity" name="anamnesis_physical_activity">
+                                                    <option value="">{{ _('Select activity level') }}</option>
+                                                    <option value="sedentary">{{ _('Sedentary (little to no exercise)') }}</option>
+                                                    <option value="light">{{ _('Light (1-3 days/week)') }}</option>
+                                                    <option value="moderate">{{ _('Moderate (3-5 days/week)') }}</option>
+                                                    <option value="active">{{ _('Very active (6-7 days/week)') }}</option>
+                                                    <option value="athlete">{{ _('Athlete (multiple sessions/day)') }}</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_sleep" class="form-label">{{ _('Sleep quality') }}</label>
+                                                <select class="form-select" id="edit_anamnesis_sleep" name="anamnesis_sleep">
+                                                    <option value="">{{ _('Select sleep quality') }}</option>
+                                                    <option value="excellent">{{ _('Excellent (7-9h, refreshing)') }}</option>
+                                                    <option value="good">{{ _('Good (6-8h, mostly refreshing)') }}</option>
+                                                    <option value="fair">{{ _('Fair (5-7h, sometimes tired)') }}</option>
+                                                    <option value="poor">{{ _('Poor (<6h, often tired)') }}</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_work_posture" class="form-label">{{ _('Work posture/environment') }}</label>
+                                                <input type="text" class="form-control" id="edit_anamnesis_work_posture" name="anamnesis_work_posture" 
+                                                       placeholder="{{ _('e.g., desk job, standing, physical labor') }}">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_stress_level" class="form-label">{{ _('Stress level (1-10)') }}</label>
+                                                <input type="number" class="form-control" id="edit_anamnesis_stress_level" name="anamnesis_stress_level" min="1" max="10">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="edit_anamnesis_diet_habits" class="form-label">{{ _('Diet and nutrition habits') }}</label>
+                                            <textarea class="form-control" id="edit_anamnesis_diet_habits" name="anamnesis_diet_habits" rows="2" 
+                                                      placeholder="{{ _('General eating patterns, dietary restrictions, hydration') }}"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- Current Pain Tab -->
+                                    <div class="tab-pane fade" id="edit-current-pain" role="tabpanel">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_pain_scale" class="form-label">{{ _('Pain scale (0-10)') }}</label>
+                                                <input type="number" class="form-control" id="edit_anamnesis_pain_scale" name="anamnesis_pain_scale" min="0" max="10">
+                                                <div class="form-text">{{ _('0 = No pain, 10 = Worst pain imaginable') }}</div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_pain_type" class="form-label">{{ _('Type of pain') }}</label>
+                                                <input type="text" class="form-control" id="edit_anamnesis_pain_type" name="anamnesis_pain_type" 
+                                                       placeholder="{{ _('e.g., sharp, dull, burning, throbbing') }}">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_pain_triggers" class="form-label">{{ _('What makes it worse?') }}</label>
+                                                <input type="text" class="form-control" id="edit_anamnesis_pain_triggers" name="anamnesis_pain_triggers" 
+                                                       placeholder="{{ _('Activities, positions, times of day') }}">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_pain_relievers" class="form-label">{{ _('What makes it better?') }}</label>
+                                                <input type="text" class="form-control" id="edit_anamnesis_pain_relievers" name="anamnesis_pain_relievers" 
+                                                       placeholder="{{ _('Rest, heat, cold, positions, medications') }}">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="edit_anamnesis_pain_location" class="form-label">{{ _('Pain location and radiation') }}</label>
+                                            <textarea class="form-control" id="edit_anamnesis_pain_location" name="anamnesis_pain_location" rows="2" 
+                                                      placeholder="{{ _('Describe where the pain is located and if it radiates anywhere') }}"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- Functional Examination Tab -->
+                                    <div class="tab-pane fade" id="edit-functional-exam" role="tabpanel">
+                                        <div class="mb-3">
+                                            <label for="edit_anamnesis_functional_limitations" class="form-label">{{ _('Functional limitations') }}</label>
+                                            <textarea class="form-control" id="edit_anamnesis_functional_limitations" name="anamnesis_functional_limitations" rows="3" 
+                                                      placeholder="{{ _('What activities are difficult or impossible to perform?') }}"></textarea>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_rom_limitations" class="form-label">{{ _('Range of motion limitations') }}</label>
+                                                <textarea class="form-control" id="edit_anamnesis_rom_limitations" name="anamnesis_rom_limitations" rows="2" 
+                                                          placeholder="{{ _('Which movements are limited?') }}"></textarea>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="edit_anamnesis_strength_deficits" class="form-label">{{ _('Strength deficits') }}</label>
+                                                <textarea class="form-control" id="edit_anamnesis_strength_deficits" name="anamnesis_strength_deficits" rows="2" 
+                                                          placeholder="{{ _('Areas of weakness or strength loss') }}"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="edit_anamnesis_special_tests" class="form-label">{{ _('Special tests and observations') }}</label>
+                                            <textarea class="form-control" id="edit_anamnesis_special_tests" name="anamnesis_special_tests" rows="3" 
+                                                      placeholder="{{ _('Results of specific tests, postural observations, gait analysis, etc.') }}"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden field to store compiled anamnesis -->
+                                <input type="hidden" id="edit_compiled_anamnesis" name="anamnesis">
+                                
+                                <div class="form-text mt-2">
+                                    <strong class="text-warning">{{ _('Comprehensive clinical history is mandatory before creating any treatment records.') }}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
                         <!-- Patient Portal Access Section -->
                         <h5 class="mb-3">{{ _('Patient Portal Access') }}</h5>
                         <p class="text-muted small">{{ _("Manage the patient's login credentials to access their exercise prescriptions.") }}</p>
@@ -244,11 +483,248 @@
 
 {% block scripts %}
 <script>
+    // Function to compile all anamnesis fields into one (same as new patient)
+    function compileAnamnesis() {
+        const anamnesisData = {
+            personal_data: {
+                age: document.getElementById('edit_anamnesis_age').value,
+                gender: document.getElementById('edit_anamnesis_gender').value,
+                occupation: document.getElementById('edit_anamnesis_occupation').value,
+                emergency_contact: document.getElementById('edit_anamnesis_emergency_contact').value
+            },
+            chief_complaint: {
+                main_complaint: document.getElementById('edit_anamnesis_chief_complaint').value,
+                onset: document.getElementById('edit_anamnesis_onset').value,
+                mechanism: document.getElementById('edit_anamnesis_mechanism').value
+            },
+            medical_history: {
+                previous_conditions: document.getElementById('edit_anamnesis_previous_conditions').value,
+                surgeries: document.getElementById('edit_anamnesis_surgeries').value,
+                medications: document.getElementById('edit_anamnesis_medications').value,
+                allergies: document.getElementById('edit_anamnesis_allergies').value
+            },
+            family_history: {
+                family_history: document.getElementById('edit_anamnesis_family_history').value
+            },
+            lifestyle: {
+                physical_activity: document.getElementById('edit_anamnesis_physical_activity').value,
+                sleep: document.getElementById('edit_anamnesis_sleep').value,
+                work_posture: document.getElementById('edit_anamnesis_work_posture').value,
+                stress_level: document.getElementById('edit_anamnesis_stress_level').value,
+                diet_habits: document.getElementById('edit_anamnesis_diet_habits').value
+            },
+            current_pain: {
+                pain_scale: document.getElementById('edit_anamnesis_pain_scale').value,
+                pain_type: document.getElementById('edit_anamnesis_pain_type').value,
+                pain_triggers: document.getElementById('edit_anamnesis_pain_triggers').value,
+                pain_relievers: document.getElementById('edit_anamnesis_pain_relievers').value,
+                pain_location: document.getElementById('edit_anamnesis_pain_location').value
+            },
+            functional_exam: {
+                functional_limitations: document.getElementById('edit_anamnesis_functional_limitations').value,
+                rom_limitations: document.getElementById('edit_anamnesis_rom_limitations').value,
+                strength_deficits: document.getElementById('edit_anamnesis_strength_deficits').value,
+                special_tests: document.getElementById('edit_anamnesis_special_tests').value
+            }
+        };
+
+        // Create formatted text from the data
+        let compiledText = '';
+        
+        if (anamnesisData.personal_data.age || anamnesisData.personal_data.gender || anamnesisData.personal_data.occupation || anamnesisData.personal_data.emergency_contact) {
+            compiledText += '=== DATOS PERSONALES ===\n';
+            if (anamnesisData.personal_data.age) compiledText += `Edad: ${anamnesisData.personal_data.age}\n`;
+            if (anamnesisData.personal_data.gender) compiledText += `Género: ${anamnesisData.personal_data.gender}\n`;
+            if (anamnesisData.personal_data.occupation) compiledText += `Ocupación: ${anamnesisData.personal_data.occupation}\n`;
+            if (anamnesisData.personal_data.emergency_contact) compiledText += `Contacto de emergencia: ${anamnesisData.personal_data.emergency_contact}\n`;
+            compiledText += '\n';
+        }
+        
+        if (anamnesisData.chief_complaint.main_complaint) {
+            compiledText += '=== MOTIVO DE CONSULTA ===\n';
+            compiledText += `Motivo principal: ${anamnesisData.chief_complaint.main_complaint}\n`;
+            if (anamnesisData.chief_complaint.onset) compiledText += `Inicio: ${anamnesisData.chief_complaint.onset}\n`;
+            if (anamnesisData.chief_complaint.mechanism) compiledText += `Mecanismo: ${anamnesisData.chief_complaint.mechanism}\n`;
+            compiledText += '\n';
+        }
+        
+        if (anamnesisData.medical_history.previous_conditions || anamnesisData.medical_history.surgeries || anamnesisData.medical_history.medications || anamnesisData.medical_history.allergies) {
+            compiledText += '=== HISTORIA MÉDICA ===\n';
+            if (anamnesisData.medical_history.previous_conditions) compiledText += `Condiciones previas: ${anamnesisData.medical_history.previous_conditions}\n`;
+            if (anamnesisData.medical_history.surgeries) compiledText += `Cirugías: ${anamnesisData.medical_history.surgeries}\n`;
+            if (anamnesisData.medical_history.medications) compiledText += `Medicación actual: ${anamnesisData.medical_history.medications}\n`;
+            if (anamnesisData.medical_history.allergies) compiledText += `Alergias: ${anamnesisData.medical_history.allergies}\n`;
+            compiledText += '\n';
+        }
+        
+        if (anamnesisData.family_history.family_history) {
+            compiledText += '=== ANTECEDENTES FAMILIARES ===\n';
+            compiledText += `${anamnesisData.family_history.family_history}\n\n`;
+        }
+        
+        if (anamnesisData.lifestyle.physical_activity || anamnesisData.lifestyle.sleep || anamnesisData.lifestyle.work_posture || anamnesisData.lifestyle.stress_level || anamnesisData.lifestyle.diet_habits) {
+            compiledText += '=== ESTILO DE VIDA ===\n';
+            if (anamnesisData.lifestyle.physical_activity) compiledText += `Actividad física: ${anamnesisData.lifestyle.physical_activity}\n`;
+            if (anamnesisData.lifestyle.sleep) compiledText += `Calidad del sueño: ${anamnesisData.lifestyle.sleep}\n`;
+            if (anamnesisData.lifestyle.work_posture) compiledText += `Postura de trabajo: ${anamnesisData.lifestyle.work_posture}\n`;
+            if (anamnesisData.lifestyle.stress_level) compiledText += `Nivel de estrés: ${anamnesisData.lifestyle.stress_level}/10\n`;
+            if (anamnesisData.lifestyle.diet_habits) compiledText += `Hábitos alimentarios: ${anamnesisData.lifestyle.diet_habits}\n`;
+            compiledText += '\n';
+        }
+        
+        if (anamnesisData.current_pain.pain_scale || anamnesisData.current_pain.pain_type || anamnesisData.current_pain.pain_triggers || anamnesisData.current_pain.pain_relievers || anamnesisData.current_pain.pain_location) {
+            compiledText += '=== DOLOR ACTUAL ===\n';
+            if (anamnesisData.current_pain.pain_scale) compiledText += `Escala de dolor: ${anamnesisData.current_pain.pain_scale}/10\n`;
+            if (anamnesisData.current_pain.pain_type) compiledText += `Tipo de dolor: ${anamnesisData.current_pain.pain_type}\n`;
+            if (anamnesisData.current_pain.pain_location) compiledText += `Localización: ${anamnesisData.current_pain.pain_location}\n`;
+            if (anamnesisData.current_pain.pain_triggers) compiledText += `Factores que empeoran: ${anamnesisData.current_pain.pain_triggers}\n`;
+            if (anamnesisData.current_pain.pain_relievers) compiledText += `Factores que mejoran: ${anamnesisData.current_pain.pain_relievers}\n`;
+            compiledText += '\n';
+        }
+        
+        if (anamnesisData.functional_exam.functional_limitations || anamnesisData.functional_exam.rom_limitations || anamnesisData.functional_exam.strength_deficits || anamnesisData.functional_exam.special_tests) {
+            compiledText += '=== EXPLORACIÓN FUNCIONAL ===\n';
+            if (anamnesisData.functional_exam.functional_limitations) compiledText += `Limitaciones funcionales: ${anamnesisData.functional_exam.functional_limitations}\n`;
+            if (anamnesisData.functional_exam.rom_limitations) compiledText += `Limitaciones ROM: ${anamnesisData.functional_exam.rom_limitations}\n`;
+            if (anamnesisData.functional_exam.strength_deficits) compiledText += `Déficits de fuerza: ${anamnesisData.functional_exam.strength_deficits}\n`;
+            if (anamnesisData.functional_exam.special_tests) compiledText += `Pruebas especiales: ${anamnesisData.functional_exam.special_tests}\n`;
+        }
+        
+        document.getElementById('edit_compiled_anamnesis').value = compiledText;
+        return compiledText;
+    }
+
+    // Function to parse existing anamnesis and populate fields
+    function parseExistingAnamnesis() {
+        const existingAnamnesis = `{{ patient.anamnesis if patient.anamnesis else '' }}`;
+        if (!existingAnamnesis) return;
+
+        // Parse the structured anamnesis text
+        const sections = existingAnamnesis.split('===');
+        
+        sections.forEach(section => {
+            const lines = section.trim().split('\n').filter(line => line.trim());
+            if (lines.length === 0) return;
+            
+            const sectionTitle = lines[0].trim();
+            
+            if (sectionTitle.includes('DATOS PERSONALES')) {
+                lines.slice(1).forEach(line => {
+                    if (line.includes('Edad:')) {
+                        const age = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_age').value = age;
+                    } else if (line.includes('Género:')) {
+                        const gender = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_gender').value = gender;
+                    } else if (line.includes('Ocupación:')) {
+                        const occupation = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_occupation').value = occupation;
+                    } else if (line.includes('Contacto de emergencia:')) {
+                        const contact = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_emergency_contact').value = contact;
+                    }
+                });
+            } else if (sectionTitle.includes('MOTIVO DE CONSULTA')) {
+                lines.slice(1).forEach(line => {
+                    if (line.includes('Motivo principal:')) {
+                        const complaint = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_chief_complaint').value = complaint;
+                    } else if (line.includes('Inicio:')) {
+                        const onset = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_onset').value = onset;
+                    } else if (line.includes('Mecanismo:')) {
+                        const mechanism = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_mechanism').value = mechanism;
+                    }
+                });
+            } else if (sectionTitle.includes('HISTORIA MÉDICA')) {
+                lines.slice(1).forEach(line => {
+                    if (line.includes('Condiciones previas:')) {
+                        const conditions = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_previous_conditions').value = conditions;
+                    } else if (line.includes('Cirugías:')) {
+                        const surgeries = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_surgeries').value = surgeries;
+                    } else if (line.includes('Medicación actual:')) {
+                        const medications = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_medications').value = medications;
+                    } else if (line.includes('Alergias:')) {
+                        const allergies = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_allergies').value = allergies;
+                    }
+                });
+            } else if (sectionTitle.includes('ANTECEDENTES FAMILIARES')) {
+                const familyHistory = lines.slice(1).join('\n').trim();
+                document.getElementById('edit_anamnesis_family_history').value = familyHistory;
+            } else if (sectionTitle.includes('ESTILO DE VIDA')) {
+                lines.slice(1).forEach(line => {
+                    if (line.includes('Actividad física:')) {
+                        const activity = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_physical_activity').value = activity;
+                    } else if (line.includes('Calidad del sueño:')) {
+                        const sleep = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_sleep').value = sleep;
+                    } else if (line.includes('Postura de trabajo:')) {
+                        const posture = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_work_posture').value = posture;
+                    } else if (line.includes('Nivel de estrés:')) {
+                        const stress = line.split(':')[1].trim().replace('/10', '');
+                        document.getElementById('edit_anamnesis_stress_level').value = stress;
+                    } else if (line.includes('Hábitos alimentarios:')) {
+                        const diet = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_diet_habits').value = diet;
+                    }
+                });
+            } else if (sectionTitle.includes('DOLOR ACTUAL')) {
+                lines.slice(1).forEach(line => {
+                    if (line.includes('Escala de dolor:')) {
+                        const scale = line.split(':')[1].trim().replace('/10', '');
+                        document.getElementById('edit_anamnesis_pain_scale').value = scale;
+                    } else if (line.includes('Tipo de dolor:')) {
+                        const type = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_pain_type').value = type;
+                    } else if (line.includes('Localización:')) {
+                        const location = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_pain_location').value = location;
+                    } else if (line.includes('Factores que empeoran:')) {
+                        const triggers = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_pain_triggers').value = triggers;
+                    } else if (line.includes('Factores que mejoran:')) {
+                        const relievers = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_pain_relievers').value = relievers;
+                    }
+                });
+            } else if (sectionTitle.includes('EXPLORACIÓN FUNCIONAL')) {
+                lines.slice(1).forEach(line => {
+                    if (line.includes('Limitaciones funcionales:')) {
+                        const limitations = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_functional_limitations').value = limitations;
+                    } else if (line.includes('Limitaciones ROM:')) {
+                        const rom = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_rom_limitations').value = rom;
+                    } else if (line.includes('Déficits de fuerza:')) {
+                        const strength = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_strength_deficits').value = strength;
+                    } else if (line.includes('Pruebas especiales:')) {
+                        const tests = line.split(':')[1].trim();
+                        document.getElementById('edit_anamnesis_special_tests').value = tests;
+                    }
+                });
+            }
+        });
+    }
+
     // Form validation and handling
     document.addEventListener('DOMContentLoaded', function() {
+        // Parse existing anamnesis data
+        parseExistingAnamnesis();
+        
         const form = document.querySelector('form');
         
         form.addEventListener('submit', function(e) {
+            // Compile anamnesis before submitting
+            compileAnamnesis();
+            
             let isValid = true;
             const requiredFields = form.querySelectorAll('[required]');
             
@@ -276,7 +752,55 @@
                 alert('Please fill in all required fields correctly.');
             }
         });
+
+        // Add tab completion indicators
+        const tabs = [
+            'edit-personal-data', 'edit-chief-complaint', 'edit-medical-history', 
+            'edit-family-history', 'edit-lifestyle', 'edit-current-pain', 'edit-functional-exam'
+        ];
+        
+        tabs.forEach(function(tabId) {
+            const tabPane = document.getElementById(tabId);
+            const inputs = tabPane.querySelectorAll('input, textarea, select');
+            const tab = document.getElementById(tabId + '-tab');
+            
+            inputs.forEach(function(input) {
+                input.addEventListener('change', function() {
+                    updateTabCompletion(tabId, tab);
+                });
+            });
+            
+            // Initial check
+            updateTabCompletion(tabId, tab);
+        });
     });
+
+    function updateTabCompletion(tabId, tab) {
+        const tabPane = document.getElementById(tabId);
+        const inputs = tabPane.querySelectorAll('input, textarea, select');
+        
+        let hasContent = false;
+        inputs.forEach(function(input) {
+            if (input.value.trim() !== '') {
+                hasContent = true;
+            }
+        });
+        
+        if (hasContent) {
+            tab.classList.add('text-success');
+            if (!tab.querySelector('.bi-check-circle')) {
+                const icon = document.createElement('i');
+                icon.className = 'bi bi-check-circle ms-1';
+                tab.appendChild(icon);
+            }
+        } else {
+            tab.classList.remove('text-success');
+            const checkIcon = tab.querySelector('.bi-check-circle');
+            if (checkIcon) {
+                checkIcon.remove();
+            }
+        }
+    }
 
     // Date validation - prevent future dates for date of birth
     const dateOfBirthInput = document.getElementById('date_of_birth');

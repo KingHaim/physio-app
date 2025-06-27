@@ -26,6 +26,7 @@ class Patient(db.Model):
     _email = db.Column("email", db.String(500))
     _phone = db.Column("phone", db.String(100))
     _notes = db.Column("notes", db.Text)
+    _anamnesis = db.Column("anamnesis", db.Text)  # Clinical history/initial assessment
     
     # Non-sensitive fields remain as-is
     date_of_birth = db.Column(db.Date)
@@ -43,6 +44,13 @@ class Patient(db.Model):
     city = db.Column(db.String(50))
     postcode = db.Column(db.String(20))
     preferred_location = db.Column(db.String(50), default='Clinic')  # Clinic or Home Visit
+
+    # AI Analysis fields
+    ai_suggested_tests = db.Column(db.Text)  # JSON string with suggested functional tests
+    ai_red_flags = db.Column(db.Text)  # Critical warnings
+    ai_yellow_flags = db.Column(db.Text)  # Caution indicators
+    ai_clinical_notes = db.Column(db.Text)  # Additional clinical considerations
+    ai_analysis_date = db.Column(db.DateTime)  # When analysis was last performed
 
     consents = db.relationship('UserConsent', backref='patient', lazy=True)
     
@@ -134,6 +142,28 @@ class Patient(db.Model):
                 self._notes = encrypt_text(value)
         else:
             self._notes = None
+
+    @property
+    def anamnesis(self):
+        """Get decrypted patient anamnesis (clinical history)"""
+        if self._anamnesis:
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                return self._anamnesis
+            return decrypt_text(self._anamnesis)
+        return None
+
+    @anamnesis.setter
+    def anamnesis(self, value):
+        """Set encrypted patient anamnesis (clinical history)"""
+        if value:
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                self._anamnesis = value
+            else:
+                self._anamnesis = encrypt_text(value)
+        else:
+            self._anamnesis = None
 
 class Location(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -369,6 +399,7 @@ class User(db.Model, UserMixin):
     date_of_birth = db.Column(db.Date, nullable=True)
     sex = db.Column(db.String(16), nullable=True)  # 'Masculino', 'Femenino', 'Otro'
     license_number = db.Column(db.String(64), nullable=True)
+    college_acronym = db.Column(db.String(10), nullable=True)  # e.g. COFIB, ICOFCV, COFM
     
     # Clinic fields
     clinic_name = db.Column(db.String(150), nullable=True)
@@ -414,6 +445,9 @@ class User(db.Model, UserMixin):
     
     # Special access field for unlimited access without admin privileges
     has_unlimited_access = db.Column(db.Boolean, default=False)
+    
+    # Welcome flow field
+    is_new_user = db.Column(db.Boolean, default=True)
     
     # Specify the foreign key to resolve ambiguity
     patients = db.relationship('Patient', foreign_keys='[Patient.user_id]', backref='practitioner', lazy='dynamic')

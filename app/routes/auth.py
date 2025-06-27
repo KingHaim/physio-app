@@ -3,6 +3,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from app.models import User, db
 from app.forms import RegistrationForm, LoginForm
 from datetime import datetime
+import logging
 
 # If the above import fails, try this alternative:
 # from werkzeug.utils import url_parse
@@ -27,21 +28,39 @@ auth = Blueprint('auth', __name__)
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
+        current_app.logger.info(f"User already authenticated: {current_user.email} (ID: {current_user.id})")
         return redirect(url_for('main.index'))
     
     form = LoginForm()
     if form.validate_on_submit():
+        current_app.logger.info(f"Login attempt for email: {form.email.data}")
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
+            current_app.logger.info(f"Password verified for user: {user.email} (ID: {user.id})")
+            
             # Set session as permanent if remember me is checked
             if form.remember_me.data:
                 session.permanent = True
             
+            # Clear any existing session data that might interfere
+            session.clear()
+            
+            current_app.logger.info(f"About to call login_user for: {user.email} (ID: {user.id})")
             login_user(user, remember=form.remember_me.data)
+            current_app.logger.info(f"login_user completed. Current user is now: {current_user.email if current_user.is_authenticated else 'Not authenticated'}")
+            
+            # Set user's preferred language in session if available
+            if user.language:
+                session['lang'] = user.language
+                current_app.logger.info(f"Set user's preferred language '{user.language}' in session")
+            
             next_page = request.args.get('next')
             if not next_page or not is_safe_url(next_page):
                 next_page = url_for('main.index')
+            current_app.logger.info(f"Redirecting to: {next_page}")
             return redirect(next_page)
+        else:
+            current_app.logger.warning(f"Failed login attempt for email: {form.email.data}")
         flash('Invalid email or password', 'danger')
     
     return render_template('auth/login.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
@@ -49,6 +68,15 @@ def login():
 @auth.route('/logout')
 def logout():
     logout_user()
+    return redirect(url_for('auth.login'))
+
+@auth.route('/clear-session')
+def clear_session():
+    """Clear session data - useful for debugging login issues"""
+    from flask import session
+    logout_user()
+    session.clear()
+    flash('Session cleared successfully', 'info')
     return redirect(url_for('auth.login'))
 
 @auth.route('/register', methods=['GET', 'POST'])

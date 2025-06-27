@@ -112,6 +112,97 @@
         /* border: 1px solid #dee2e6; Optional border */
     }
 
+    /* Welcome Modal Styles */
+    .modal-xl {
+        max-width: 800px;
+    }
+
+    .step-indicator {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        color: #6c757d;
+        text-align: center;
+        line-height: 40px;
+        font-weight: bold;
+        margin: 0 10px;
+        transition: all 0.3s ease;
+    }
+
+    .step-indicator.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+
+    .step-indicator.completed {
+        background-color: #198754;
+        color: white;
+    }
+
+    .progress-container {
+        height: 6px;
+        background-color: #e9ecef;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #0d6efd, #198754);
+        transition: width 0.3s ease;
+    }
+
+    /* Work Type Cards - Simplified Approach */
+    .work-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        user-select: none;
+    }
+
+    .work-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .work-card .card {
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        height: 100%;
+    }
+
+    .work-card .card:hover {
+        border-color: #0d6efd;
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+    }
+
+    /* Selected state for work cards */
+    .work-card.selected .card {
+        border-color: #0d6efd !important;
+        background-color: #f8f9fa !important;
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2) !important;
+    }
+
+    .work-card.selected .card .bi {
+        color: #0d6efd !important;
+    }
+
+    .work-card.selected .card h6 {
+        color: #0d6efd !important;
+        font-weight: bold;
+    }
+
+    /* Hide any stray radio buttons or form elements in step 3 */
+    #step3 input[type="radio"],
+    #step3 .form-check,
+    #step3 .form-check-input,
+    #step3 .form-check-label {
+        display: none !important;
+        visibility: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }
 
 </style>
 {% endblock %}
@@ -119,7 +210,7 @@
 {% block content %}
 <div class="container-fluid px-4">
     
-    {% if show_welcome_flow %}
+    {% if show_welcome_flow and not is_new_user %}
     <div class="card border-primary mb-4 mt-4">
       <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">{{ _("🚀 Welcome to TRXCKER! Let's get you set up.") }}</h5>
@@ -148,464 +239,1057 @@
     </div>
     {% endif %}
 
-    <div class="container-fluid py-3">
-        <h1 class="h3 mb-3"><i class="bi bi-speedometer2"></i> {{ _('Dashboard') }}</h1> {# Increased mb slightly #}
+<div class="container-fluid py-3">
+    <h1 class="h3 mb-3"><i class="bi bi-speedometer2"></i> {{ _('Dashboard') }}</h1> {# Increased mb slightly #}
 
-        <!-- Dashboard Header Banner -->
-        <div class="dashboard-header-banner">
+    <!-- Dashboard Header Banner -->
+    <div class="dashboard-header-banner">
             {% if current_user.first_name %}
             <h4>{{ _('Welcome back, %(username)s!', username=current_user.first_name) }}</h4>
             {% endif %}
-            <p>{{ _('Here\'s an overview of your clinic\'s activity.') }}</p>
-            
-            {# Subscription Status Display - Always show current plan #}
-            <div class="subscription-status-text">
-                {% if current_plan_name == 'Free Plan' %}
-                    <i class="bi bi-gift-fill text-primary me-1"></i> 
-                {% else %}
-                    <i class="bi bi-award-fill text-success me-1"></i> 
+        <p>{{ _('Here\'s an overview of your clinic\'s activity.') }}</p>
+        
+        {# Subscription Status Display - Always show current plan #}
+        <div class="subscription-status-text">
+            {% if current_plan_name == 'Free Plan' %}
+                <i class="bi bi-gift-fill text-primary me-1"></i> 
+            {% else %}
+                <i class="bi bi-award-fill text-success me-1"></i> 
+            {% endif %}
+            {{ _('Current Plan') }}: <strong>{{ current_plan_name }}</strong> 
+            {% if current_plan_name != 'Free Plan' %}
+                ({{ _('Status') }}: <span class="fw-semibold">{{ current_subscription_status }}</span>)
+                {% if current_subscription_ends_at %}
+                    - {% if current_subscription_status == 'Trialing' %}{{ _('Ends') }}{% else %}{{ _('Renews') }}{% endif %}: {{ current_subscription_ends_at.strftime('%d %b %Y') }}
                 {% endif %}
-                {{ _('Current Plan') }}: <strong>{{ current_plan_name }}</strong> 
-                {% if current_plan_name != 'Free Plan' %}
-                    ({{ _('Status') }}: <span class="fw-semibold">{{ current_subscription_status }}</span>)
-                    {% if current_subscription_ends_at %}
-                        - {% if current_subscription_status == 'Trialing' %}{{ _('Ends') }}{% else %}{{ _('Renews') }}{% endif %}: {{ current_subscription_ends_at.strftime('%d %b %Y') }}
-                    {% endif %}
-                {% endif %}
-                {% if current_plan_name == 'Free Plan' %}
-                    <a href="{{ url_for('main.manage_subscription') }}" class="ms-2 badge bg-success text-decoration-none">{{ _('Upgrade Plan') }}</a>
-                {% else %}
-                    <a href="{{ url_for('main.my_account') }}" class="ms-2 badge bg-primary text-decoration-none">{{ _('Manage Plan') }}</a>
-                {% endif %}
-            </div>
+            {% endif %}
+            {% if current_plan_name == 'Free Plan' %}
+                <a href="{{ url_for('main.manage_subscription') }}" class="ms-2 badge bg-success text-decoration-none">{{ _('Upgrade Plan') }}</a>
+            {% else %}
+                <a href="{{ url_for('main.my_account') }}" class="ms-2 badge bg-primary text-decoration-none">{{ _('Manage Plan') }}</a>
+            {% endif %}
         </div>
-        
-        <!-- Key Metrics Panel (Stats Cards & Weekly Chart) -->
-        <div class="dashboard-metrics-panel">
-            <!-- Stats Cards -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card stats-card card-patients-capacity">
-                        <div class="card-body text-center">
-                            <h5 class="card-title mb-3">{{ _('Patient Capacity') }}</h5>
-                            {% if patient_plan_limit is not none %}
-                                <div style="max-width: 150px; max-height: 150px; margin: 0 auto;">
-                                    <canvas id="patientCapacityChart" 
-                                            data-current-patients="{{ current_patients_count|int }}"
-                                            data-limit="{{ patient_plan_limit|int }}"></canvas>
-                                </div>
-                                <p class="card-text mt-2">
-                                    <i class="bi bi-people"></i> 
-                                    <span class="stats-text">
-                                        {{ current_patients_count }} / {{ patient_plan_limit }}
-                                        {% if current_patients_count >= patient_plan_limit %}
-                                            <br><strong class="text-danger">{{ _('Limit Reached!') }}</strong> 
-                                            <a href="{{ url_for('main.manage_subscription') }}" class="badge bg-warning text-dark text-decoration-none ms-1">{{ _('Upgrade') }}</a>
-                                        {% elif (patient_plan_limit - current_patients_count) <= 5 %}
-                                            <br><strong class="text-warning">{{ _('Nearing Limit') }}</strong>
-                                        {% endif %}
-                                    </span>
-                                </p>
-                            {% else %}
-                                <h2 class="display-4">{{ current_patients_count }}</h2>
-                                <p class="card-text">
-                                    <i class="bi bi-infinity"></i> 
-                                    <span class="stats-text">{{ _('Unlimited Patients') }}</span>
-                                </p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card stats-card card-active-patients">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ _('Active Patients') }}</h5>
-                            <h2 class="display-4">{{ active_patients }}</h2>
-                            <p class="card-text">
-                                <i class="bi bi-person-check"></i> <span class="stats-text">{{ _('Currently under treatment') }}</span>
+    </div>
+    
+    <!-- Key Metrics Panel (Stats Cards & Weekly Chart) -->
+    <div class="dashboard-metrics-panel">
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stats-card card-patients-capacity">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-3">{{ _('Patient Capacity') }}</h5>
+                        {% if patient_plan_limit is not none %}
+                            <div style="max-width: 150px; max-height: 150px; margin: 0 auto;">
+                                <canvas id="patientCapacityChart" 
+                                        data-current-patients="{{ current_patients_count|int }}"
+                                        data-limit="{{ patient_plan_limit|int }}"></canvas>
+                            </div>
+                            <p class="card-text mt-2">
+                                <i class="bi bi-people"></i> 
+                                <span class="stats-text">
+                                    {{ current_patients_count }} / {{ patient_plan_limit }}
+                                    {% if current_patients_count >= patient_plan_limit %}
+                                        <br><strong class="text-danger">{{ _('Limit Reached!') }}</strong> 
+                                        <a href="{{ url_for('main.manage_subscription') }}" class="badge bg-warning text-dark text-decoration-none ms-1">{{ _('Upgrade') }}</a>
+                                    {% elif (patient_plan_limit - current_patients_count) <= 5 %}
+                                        <br><strong class="text-warning">{{ _('Nearing Limit') }}</strong>
+                                    {% endif %}
+                                </span>
                             </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card stats-card card-today-appts">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ _('Today\'s Appointments') }}</h5>
-                            <h2 class="display-4">{{ today_appointments }}</h2>
-                            <p class="card-text">
-                                <i class="bi bi-calendar-day"></i> <span class="stats-text">{{ _('Scheduled for today') }}</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card stats-card card-pending-review">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ _('Pending Review') }}</h5>
-                            <h2 class="display-4">{{ pending_review_count }}</h2>
-                            <p class="card-text">
-                                <i class="bi bi-clipboard-check"></i> <span class="stats-text">{{ _('Patients needing review') }}</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Weekly Appointments Chart - TO BE REMOVED -->
-        </div> <!-- End of dashboard-metrics-panel -->
-        
-        <!-- Main Content Area -->
-        <div class="row mt-4"> {# Added mt-4 for spacing from charts/stats #}
-            <!-- Upcoming Appointments -->
-            <div class="col-lg-12 mb-4">
-                <div class="card dashboard-card h-100"> {# Added dashboard-card class #}
-                    <div class="card-header dashboard-card-header"> {# Added dashboard-card-header class #}
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0 card-title-icon"><i class="bi bi-calendar-week me-2"></i>{{ _('Upcoming Appointments') }}</h5>
-                            <a href="{{ url_for('main.appointments') }}" class="btn btn-sm btn-outline-primary">{{ _('View All') }}</a>
-                        </div>
-                    </div>
-                    <div class="card-body p-0">
-                        {% if upcoming_appointments %}
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>{{ _('Patient') }}</th>
-                                        <th>{{ _('Date') }}</th>
-                                        <th>{{ _('Time') }}</th>
-                                        <th class="text-end">{{ _('Actions') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for appt in upcoming_appointments %}
-                                    <tr>
-                                        <td>
-                                            {# Check if treatment object exists before accessing patient #}
-                                            {% if appt.treatment and appt.treatment.patient %}
-                                            <a href="{{ url_for('main.patient_detail', id=appt.treatment.patient.id) }}" 
-                                               class="text-decoration-none text-dark fw-medium">
-                                               {{ appt.patient_name }}
-                                            </a>
-                                            {% else %}
-                                            <span class="text-muted">{{ appt.patient_name }}</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {# Use the relative_date calculated in the route #}
-                                            <span class="badge bg-{{ 'danger' if appt.relative_date == 'Today' else 'info' if appt.relative_date == 'Tomorrow' else 'secondary' }}">
-                                                {{ _(appt.relative_date) }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="text-dark">{{ appt.time }}</span>
-                                        </td>
-                                        <td class="text-end">
-                                            {% if appt.treatment %}
-                                            <a href="{{ url_for('main.view_treatment', id=appt.treatment.id) }}" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                            <a href="{{ url_for('main.edit_treatment', id=appt.treatment.id) }}" 
-                                               class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
                         {% else %}
-                        <div class="text-center py-5">
-                            <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
-                            <p class="text-muted mt-2">{{ _('No upcoming appointments') }}</p>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAppointmentModal">
-                                <i class="bi bi-calendar-plus"></i> {{ _('Schedule Appointment') }}
-                            </button>
-                        </div>
+                            <h2 class="display-4">{{ current_patients_count }}</h2>
+                            <p class="card-text">
+                                <i class="bi bi-infinity"></i> 
+                                <span class="stats-text">{{ _('Unlimited Patients') }}</span>
+                            </p>
                         {% endif %}
                     </div>
                 </div>
             </div>
-
-        </div>
-    </div>
-
-    <!-- New Appointment Modal -->
-    <div class="modal fade" id="newAppointmentModal" tabindex="-1" aria-labelledby="newAppointmentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="newAppointmentModalLabel">{{ _('New Appointment') }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+            <div class="col-md-3">
+                <div class="card stats-card card-active-patients">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ _('Active Patients') }}</h5>
+                        <h2 class="display-4">{{ active_patients }}</h2>
+                        <p class="card-text">
+                            <i class="bi bi-person-check"></i> <span class="stats-text">{{ _('Currently under treatment') }}</span>
+                        </p>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <form id="newAppointmentForm">
-                        <input type="hidden" id="csrf_token" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <div class="mb-3">
-                            <label for="appointmentPatient" class="form-label">{{ _('Patient') }}</label>
-                            <select class="form-select" id="appointmentPatient" name="patient_id" required>
-                                <option value="" selected disabled>{{ _('Select Patient...') }}</option>
-                                {% for patient in current_user.patients %}
-                                    <option value="{{ patient.id }}">{{ patient.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="appointmentDate" class="form-label">{{ _('Date') }}</label>
-                                <input type="date" class="form-control" id="appointmentDate" name="date" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="appointmentTime" class="form-label">{{ _('Time') }}</label>
-                                <input type="time" class="form-control" id="appointmentTime" name="time" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="appointmentTreatmentType" class="form-label">{{ _('Treatment Type') }}</label>
-                            <input type="text" class="form-control" id="appointmentTreatmentType" name="treatment_type" placeholder="{{ _('e.g., Initial Assessment, Follow-up') }}" required>
-                        </div>
-                         <div class="mb-3">
-                            <label for="appointmentLocation" class="form-label">{{ _('Location') }}</label>
-                            <select class="form-select" id="appointmentLocation" name="location">
-                                <option value="{{ current_user.clinic_name }}" selected>{{ current_user.clinic_name }}</option>
-                                <option value="Home Visit">{{ _('Home Visit') }}</option>
-                                <option value="Online">{{ _('Online') }}</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="appointmentNotes" class="form-label">{{ _('Notes (Optional)') }}</label>
-                            <textarea class="form-control" id="appointmentNotes" name="notes" rows="3"></textarea>
-                        </div>
-                        <!-- Hidden field for status, default to Scheduled -->
-                        <input type="hidden" id="appointmentStatus" name="status" value="Scheduled">
-                    </form>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card card-today-appts">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ _('Today\'s Appointments') }}</h5>
+                        <h2 class="display-4">{{ today_appointments }}</h2>
+                        <p class="card-text">
+                            <i class="bi bi-calendar-day"></i> <span class="stats-text">{{ _('Scheduled for today') }}</span>
+                        </p>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
-                    <button type="submit" class="btn btn-primary" form="newAppointmentForm">{{ _('Create Appointment') }}</button>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card card-pending-review">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ _('Pending Review') }}</h5>
+                        <h2 class="display-4">{{ pending_review_count }}</h2>
+                        <p class="card-text">
+                            <i class="bi bi-clipboard-check"></i> <span class="stats-text">{{ _('Patients needing review') }}</span>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <!-- End New Appointment Modal -->
-</div>
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const patientCapacityChartElement = document.getElementById('patientCapacityChart');
         
-        if (patientCapacityChartElement) {
-            const currentPatientsString = patientCapacityChartElement.dataset.currentPatients;
-            const limitString = patientCapacityChartElement.dataset.limit;
+        <!-- Weekly Appointments Chart - TO BE REMOVED -->
+    </div> <!-- End of dashboard-metrics-panel -->
+    
+    <!-- Main Content Area -->
+    <div class="row mt-4"> {# Added mt-4 for spacing from charts/stats #}
+        <!-- Upcoming Appointments -->
+        <div class="col-lg-12 mb-4">
+            <div class="card dashboard-card h-100"> {# Added dashboard-card class #}
+                <div class="card-header dashboard-card-header"> {# Added dashboard-card-header class #}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 card-title-icon"><i class="bi bi-calendar-week me-2"></i>{{ _('Upcoming Appointments') }}</h5>
+                        <a href="{{ url_for('main.appointments') }}" class="btn btn-sm btn-outline-primary">{{ _('View All') }}</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if upcoming_appointments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{ _('Patient') }}</th>
+                                    <th>{{ _('Date') }}</th>
+                                    <th>{{ _('Time') }}</th>
+                                    <th class="text-end">{{ _('Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appt in upcoming_appointments %}
+                                <tr>
+                                    <td>
+                                        {# Check if treatment object exists before accessing patient #}
+                                        {% if appt.treatment and appt.treatment.patient %}
+                                        <a href="{{ url_for('main.patient_detail', id=appt.treatment.patient.id) }}" 
+                                           class="text-decoration-none text-dark fw-medium">
+                                           {{ appt.patient_name }}
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">{{ appt.patient_name }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {# Use the relative_date calculated in the route #}
+                                        <span class="badge bg-{{ 'danger' if appt.relative_date == 'Today' else 'info' if appt.relative_date == 'Tomorrow' else 'secondary' }}">
+                                            {{ _(appt.relative_date) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-dark">{{ appt.time }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        {% if appt.treatment %}
+                                        <a href="{{ url_for('main.view_treatment', id=appt.treatment.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('main.edit_treatment', id=appt.treatment.id) }}" 
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2">{{ _('No upcoming appointments') }}</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAppointmentModal">
+                            <i class="bi bi-calendar-plus"></i> {{ _('Schedule Appointment') }}
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
 
-            // Only proceed if both data attributes are present and valid
-            if (typeof currentPatientsString !== 'undefined' && typeof limitString !== 'undefined') {
-                const currentPatients = parseInt(currentPatientsString, 10);
-                const limit = parseInt(limitString, 10);
+    </div>
+</div>
+
+<!-- New Appointment Modal -->
+<div class="modal fade" id="newAppointmentModal" tabindex="-1" aria-labelledby="newAppointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newAppointmentModalLabel">{{ _('New Appointment') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newAppointmentForm">
+                    <input type="hidden" id="csrf_token" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="appointmentPatient" class="form-label">{{ _('Patient') }}</label>
+                        <select class="form-select" id="appointmentPatient" name="patient_id" required>
+                            <option value="" selected disabled>{{ _('Select Patient...') }}</option>
+                            {% for patient in current_user.patients %}
+                                <option value="{{ patient.id }}">{{ patient.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="appointmentDate" class="form-label">{{ _('Date') }}</label>
+                            <input type="date" class="form-control" id="appointmentDate" name="date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="appointmentTime" class="form-label">{{ _('Time') }}</label>
+                            <input type="time" class="form-control" id="appointmentTime" name="time" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="appointmentTreatmentType" class="form-label">{{ _('Treatment Type') }}</label>
+                        <input type="text" class="form-control" id="appointmentTreatmentType" name="treatment_type" placeholder="{{ _('e.g., Initial Assessment, Follow-up') }}" required>
+                    </div>
+                     <div class="mb-3">
+                        <label for="appointmentLocation" class="form-label">{{ _('Location') }}</label>
+                        <select class="form-select" id="appointmentLocation" name="location">
+                                <option value="{{ current_user.clinic_name }}" selected>{{ current_user.clinic_name }}</option>
+                            <option value="Home Visit">{{ _('Home Visit') }}</option>
+                            <option value="Online">{{ _('Online') }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="appointmentNotes" class="form-label">{{ _('Notes (Optional)') }}</label>
+                        <textarea class="form-control" id="appointmentNotes" name="notes" rows="3"></textarea>
+                    </div>
+                    <!-- Hidden field for status, default to Scheduled -->
+                    <input type="hidden" id="appointmentStatus" name="status" value="Scheduled">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+                <button type="submit" class="btn btn-primary" form="newAppointmentForm">{{ _('Create Appointment') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End New Appointment Modal -->
+</div>
+
+<!-- Welcome Onboarding Modal -->
+{% if is_new_user and welcome_form %}
+
+<div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="welcomeModalLabel">{{ _('Welcome to TRXCKER!') }}</h5>
+                <button type="button" class="btn-close" id="closeWelcomeModal" aria-label="{{ _('Close') }}"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Progress Bar -->
+                <div class="progress mb-4" style="height: 6px;">
+                    <div class="progress-bar bg-primary" id="progressBar" role="progressbar" style="width: 20%;"></div>
+                </div>
                 
-                // The main Jinja condition already ensures limit > 0, but a JS check is good practice
-                if (!isNaN(currentPatients) && !isNaN(limit) && limit > 0) {
-                    const patientCapacityCtx = patientCapacityChartElement.getContext('2d');
-                    const remainingCapacity = Math.max(0, limit - currentPatients);
-
-                    let capacityData = {
-                        labels: [
-                            `{{ _('Current Patients') }} (${currentPatients})`,
-                            `{{ _('Remaining Capacity') }} (${remainingCapacity})`
-                        ],
-                        datasets: [{
-                            data: [currentPatients, remainingCapacity],
-                            backgroundColor: [
-                                'rgba(255, 255, 255, 0.8)', // White with opacity for current
-                                'rgba(255, 255, 255, 0.3)'  // Lighter white for remaining
-                            ],
-                            borderColor: [
-                                'rgba(255, 255, 255, 1)',
-                                'rgba(255, 255, 255, 0.5)'
-                            ],
-                            borderWidth: 1,
-                            hoverOffset: 4
-                        }]
-                    };
+                <!-- Step Indicators -->
+                <div class="row mb-4">
+                    <div class="col text-center">
+                        <small class="step-indicator active">1. {{ _('Language') }}</small>
+                    </div>
+                    <div class="col text-center">
+                        <small class="step-indicator">2. {{ _('Personal Info') }}</small>
+                    </div>
+                    <div class="col text-center">
+                        <small class="step-indicator">3. {{ _('Work Setup') }}</small>
+                    </div>
+                    <div class="col text-center">
+                        <small class="step-indicator">4. {{ _('Clinic Info') }}</small>
+                    </div>
+                    <div class="col text-center">
+                        <small class="step-indicator">5. {{ _('Fees') }}</small>
+                    </div>
+                </div>
+                
+                <form id="welcomeForm" method="POST">
+                    <!-- Manual hidden fields excluding work_type -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     
-                    if (currentPatients >= limit) {
-                        capacityData.labels = [`{{ _('Patients') }} (${currentPatients})`, `{{ _('Limit') }} (${limit}) - {{ _('Over!') }}`];
-                        capacityData.datasets[0].data = [currentPatients, 0];
-                        capacityData.datasets[0].backgroundColor = ['rgba(220, 53, 69, 0.8)', 'rgba(255, 255, 255, 0.3)'];
-                        capacityData.datasets[0].borderColor = ['rgba(220, 53, 69, 1)', 'rgba(255, 255, 255, 0.5)'];
-                    }
+                    <!-- Step 1: Language Selection -->
+                    <div id="step1" class="step-content">
+                        <div class="text-center mb-4">
+                            <h5>{{ _('Let\'s get to know you!') }}</h5>
+                            <p class="text-muted">{{ _('Which language would you prefer to use?') }}</p>
+                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-md-6">
+                                {{ welcome_form.language.label(class="form-label") }}
+                                {{ welcome_form.language(class="form-select form-select-lg", id="language") }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: Personal Information -->
+                    <div id="step2" class="step-content d-none">
+                        <div class="text-center mb-4">
+                            <h5>{{ _('Nice to meet you!') }}</h5>
+                            <p class="text-muted">{{ _('What should we call you?') }}</p>
+                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ welcome_form.first_name.label(class="form-label") }}
+                                        {{ welcome_form.first_name(class="form-control form-control-lg") }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ welcome_form.last_name.label(class="form-label") }}
+                                        {{ welcome_form.last_name(class="form-control form-control-lg") }}
+                                    </div>
+                                </div>
+                                
+                                <!-- Professional Registration Section -->
+                                <div class="row mt-3">
+                                    <div class="col-12 mb-2">
+                                        <h6 class="text-muted">{{ _('Professional Registration') }} <small class="text-muted">({{ _('Optional') }})</small></h6>
+                                    </div>
+                                    <div class="col-md-8 mb-3">
+                                        {{ welcome_form.license_number.label(class="form-label") }}
+                                        {{ welcome_form.license_number(class="form-control", placeholder=_("e.g. 12345")) }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ welcome_form.college_acronym.label(class="form-label") }}
+                                        {{ welcome_form.college_acronym(class="form-control", placeholder="e.g. COFIB") }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Work Type -->
+                    <div id="step3" class="step-content d-none">
+                        <div class="text-center mb-4">
+                            <h5>{{ _('Tell us about your work') }}</h5>
+                            <p class="text-muted">{{ _('Are you self-employed or do you work in a clinic?') }}</p>
+                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-md-10">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <div class="work-card" data-value="freelance" onclick="window.selectWorkType && window.selectWorkType('freelance')">
+                                            <div class="card h-100">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-person-workspace fs-1 text-primary mb-3"></i>
+                                                    <h6 class="card-title">{{ _('Freelancer') }}</h6>
+                                                    <small class="text-muted">{{ _('I work independently') }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="work-card" data-value="clinic_employee" onclick="window.selectWorkType && window.selectWorkType('clinic_employee')">
+                                            <div class="card h-100">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-building fs-1 text-primary mb-3"></i>
+                                                    <h6 class="card-title">{{ _('Clinic Employee') }}</h6>
+                                                    <small class="text-muted">{{ _('I work in a clinic') }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="work-card" data-value="mixed" onclick="window.selectWorkType && window.selectWorkType('mixed')">
+                                            <div class="card h-100">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-arrow-left-right fs-1 text-primary mb-3"></i>
+                                                    <h6 class="card-title">{{ _('Both') }}</h6>
+                                                    <small class="text-muted">{{ _('I do both freelance and clinic work') }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Hidden input to store the selection -->
+                                <input type="hidden" id="selected_work_type" name="work_type" value="">
+                                
+                                <!-- Debug info -->
+                                <div class="mt-3 text-center">
+                                    <small class="text-muted">Selected: <span id="work_type_debug">None</span></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4: Clinic Information -->
+                    <div id="step4" class="step-content d-none">
+                        <div class="text-center mb-4">
+                            <h5>{{ _('About your clinic') }}</h5>
+                            <p class="text-muted">{{ _('If you work in a clinic, tell us about it') }}</p>
+                        </div>
+                        
+                        <div class="clinic-fields" style="display: none;">
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        {{ welcome_form.clinic_name.label(class="form-label") }}
+                                        {{ welcome_form.clinic_name(class="form-control") }}
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        {{ welcome_form.pays_commission(class="form-check-input", id="pays_commission") }}
+                                        {{ welcome_form.pays_commission.label(class="form-check-label", for="pays_commission") }}
+                                    </div>
+                                    <div class="commission-fields" style="display: none;">
+                                        <div class="mb-3">
+                                            {{ welcome_form.commission_percentage.label(class="form-label") }}
+                                            <div class="input-group">
+                                                {{ welcome_form.commission_percentage(class="form-control") }}
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="no-clinic-message text-center" style="display: block;">
+                            <i class="bi bi-check-circle-fill text-success fs-1 mb-3"></i>
+                            <h6>{{ _('Perfect!') }}</h6>
+                            <p class="text-muted">{{ _('We\'ll help you configure your fees in the next step.') }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 5: Fee Structure -->
+                    <div id="step5" class="step-content d-none">
+                        <div class="text-center mb-4">
+                            <h5>{{ _('Fee structure') }}</h5>
+                            <p class="text-muted">{{ _('What do you typically charge for your sessions?') }}</p>
+                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ welcome_form.first_session_fee.label(class="form-label") }}
+                                        <div class="input-group">
+                                            <span class="input-group-text">€</span>
+                                            {{ welcome_form.first_session_fee(class="form-control") }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ welcome_form.subsequent_session_fee.label(class="form-label") }}
+                                        <div class="input-group">
+                                            <span class="input-group-text">€</span>
+                                            {{ welcome_form.subsequent_session_fee(class="form-control") }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" id="prevBtn" style="display: none;">
+                    <i class="bi bi-arrow-left me-2"></i>{{ _('Previous') }}
+                </button>
+                <button type="button" class="btn btn-primary" id="nextBtn">
+                    {{ _('Next') }}<i class="bi bi-arrow-right ms-2"></i>
+                </button>
+                <button type="submit" class="btn btn-success" id="completeBtn" form="welcomeForm" style="display: none;">
+                    <i class="bi bi-check-circle me-2"></i>{{ _('Complete Setup') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-                    new Chart(patientCapacityCtx, {
-                        type: 'doughnut',
-                        data: capacityData,
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            cutout: '70%',
-                            plugins: {
-                                legend: {
-                                    display: false
-                                },
-                                tooltip: {
-                                    enabled: true
-                                }
-                            }
-                        }
+<script>
+// Hardcoded translations to work without database
+const translations = {
+    'es': {
+        'step_language': 'Idioma',
+        'step_personal_info': 'Información Personal',
+        'step_work_setup': 'Configuración de Trabajo',
+        'step_clinic_info': 'Información de Clínica',
+        'step_fees': 'Tarifas',
+        'get_to_know': '¡Conozcámonos!',
+        'which_language': '¿Qué idioma prefieres usar?',
+        'nice_to_meet': '¡Mucho gusto!',
+        'what_call_you': '¿Cómo te llamamos?',
+        'tell_about_work': 'Cuéntanos sobre tu trabajo',
+        'self_employed_clinic': '¿Trabajas por cuenta propia o en una clínica?',
+        'work_freelancer': 'Freelancer',
+        'work_freelancer_desc': 'Trabajo de forma independiente',
+        'work_clinic': 'Empleado de Clínica',
+        'work_clinic_desc': 'Trabajo en una clínica',
+        'work_both': 'Ambos',
+        'work_both_desc': 'Hago trabajo freelance y de clínica',
+        'previous': 'Anterior',
+        'next': 'Siguiente',
+        'language_label': 'Idioma',
+        'first_name': 'Nombre',
+        'last_name': 'Apellido',
+        'about_clinic': 'Acerca de tu clínica',
+        'clinic_info_desc': 'Si trabajas en una clínica, cuéntanos sobre ella',
+        'perfect': '¡Perfecto!',
+        'help_configure_fees': 'Te ayudaremos a configurar tus tarifas en el siguiente paso.',
+        'fee_structure': 'Estructura de tarifas',
+        'what_charge_sessions': '¿Qué cobras típicamente por tus sesiones?',
+        'first_session_fee': 'Tarifa Primera Sesión (€)',
+        'subsequent_session_fee': 'Tarifa Sesiones Siguientes (€)',
+        'exit_warning_title': '¿Estás seguro?',
+        'exit_warning_message': 'Si sales ahora, algunas funcionalidades pueden no funcionar como se espera. ¿Quieres continuar con la configuración?',
+        'exit_anyway': 'Salir de todas formas',
+        'continue_setup': 'Continuar configuración',
+        'complete_setup': 'Completar Configuración',
+        'clinic_name': 'Nombre de la Clínica',
+        'pays_commission': '¿Pagas comisión a la clínica?',
+        'commission_percentage': 'Porcentaje de Comisión (%)',
+        'professional_registration': 'Registro Profesional',
+        'license_number': 'Número de Colegiado',
+        'college_acronym': 'Acrónimo del Colegio',
+        'optional': 'Opcional'
+    },
+    'en': {
+        'step_language': 'Language',
+        'step_personal_info': 'Personal Info',
+        'step_work_setup': 'Work Setup',
+        'step_clinic_info': 'Clinic Info',
+        'step_fees': 'Fees',
+        'get_to_know': 'Let\'s get to know you!',
+        'which_language': 'Which language would you prefer to use?',
+        'nice_to_meet': 'Nice to meet you!',
+        'what_call_you': 'What should we call you?',
+        'tell_about_work': 'Tell us about your work',
+        'self_employed_clinic': 'Are you self-employed or do you work in a clinic?',
+        'work_freelancer': 'Freelancer',
+        'work_freelancer_desc': 'I work independently',
+        'work_clinic': 'Clinic Employee',
+        'work_clinic_desc': 'I work in a clinic',
+        'work_both': 'Both',
+        'work_both_desc': 'I do both freelance and clinic work',
+        'previous': 'Previous',
+        'next': 'Next',
+        'language_label': 'Language',
+        'first_name': 'First Name',
+        'last_name': 'Last Name',
+        'about_clinic': 'About your clinic',
+        'clinic_info_desc': 'If you work in a clinic, tell us about it',
+        'perfect': 'Perfect!',
+        'help_configure_fees': 'We\'ll help you configure your fees in the next step.',
+        'fee_structure': 'Fee structure',
+        'what_charge_sessions': 'What do you typically charge for your sessions?',
+        'first_session_fee': 'First Session Fee (€)',
+        'subsequent_session_fee': 'Subsequent Session Fee (€)',
+        'exit_warning_title': 'Are you sure?',
+        'exit_warning_message': 'If you exit now, some features may not work as expected. Would you like to continue with the setup?',
+        'exit_anyway': 'Exit anyway',
+        'continue_setup': 'Continue setup',
+        'complete_setup': 'Complete Setup',
+        'clinic_name': 'Clinic Name',
+        'pays_commission': 'Do you pay commission to the clinic?',
+        'commission_percentage': 'Commission Percentage (%)',
+        'professional_registration': 'Professional Registration',
+        'license_number': 'License Number',
+        'college_acronym': 'College Acronym',
+        'optional': 'Optional'
+    },
+    'fr': {
+        'step_language': 'Langue',
+        'step_personal_info': 'Infos Personnelles',
+        'step_work_setup': 'Configuration Travail',
+        'step_clinic_info': 'Infos Clinique',
+        'step_fees': 'Tarifs',
+        'get_to_know': 'Faisons connaissance!',
+        'which_language': 'Quelle langue préférez-vous utiliser?',
+        'nice_to_meet': 'Ravi de vous rencontrer!',
+        'what_call_you': 'Comment vous appeler?',
+        'tell_about_work': 'Parlez-nous de votre travail',
+        'self_employed_clinic': 'Êtes-vous indépendant ou travaillez-vous dans une clinique?',
+        'work_freelancer': 'Freelancer',
+        'work_freelancer_desc': 'Je travaille de façon indépendante',
+        'work_clinic': 'Employé de Clinique',
+        'work_clinic_desc': 'Je travaille dans une clinique',
+        'work_both': 'Les Deux',
+        'work_both_desc': 'Je fais du freelance et du travail en clinique',
+        'previous': 'Précédent',
+        'next': 'Suivant',
+        'language_label': 'Langue',
+        'first_name': 'Prénom',
+        'last_name': 'Nom de famille',
+        'about_clinic': 'À propos de votre clinique',
+        'clinic_info_desc': 'Si vous travaillez dans une clinique, parlez-nous en',
+        'perfect': 'Parfait!',
+        'help_configure_fees': 'Nous vous aiderons à configurer vos tarifs à l\'étape suivante.',
+        'fee_structure': 'Structure tarifaire',
+        'what_charge_sessions': 'Que facturez-vous généralement pour vos séances?',
+        'first_session_fee': 'Tarif Première Séance (€)',
+        'subsequent_session_fee': 'Tarif Séances Suivantes (€)',
+        'exit_warning_title': 'Êtes-vous sûr?',
+        'exit_warning_message': 'Si vous quittez maintenant, certaines fonctionnalités peuvent ne pas fonctionner comme prévu. Souhaitez-vous continuer la configuration?',
+        'exit_anyway': 'Quitter quand même',
+        'continue_setup': 'Continuer la configuration',
+        'complete_setup': 'Terminer la Configuration',
+        'clinic_name': 'Nom de la Clinique',
+        'pays_commission': 'Payez-vous une commission à la clinique?',
+        'commission_percentage': 'Pourcentage de Commission (%)',
+        'professional_registration': 'Enregistrement Professionnel',
+        'license_number': 'Numéro de Licence',
+        'college_acronym': 'Acronyme du Collège',
+        'optional': 'Optionnel'
+    },
+    'it': {
+        'step_language': 'Lingua',
+        'step_personal_info': 'Informazioni Personali',
+        'step_work_setup': 'Configurazione Lavoro',
+        'step_clinic_info': 'Informazioni Clinica',
+        'step_fees': 'Tariffe',
+        'get_to_know': 'Conosciamoci!',
+        'which_language': 'Quale lingua preferisci usare?',
+        'nice_to_meet': 'Piacere di conoscerti!',
+        'what_call_you': 'Come dovremmo chiamarti?',
+        'tell_about_work': 'Parlaci del tuo lavoro',
+        'self_employed_clinic': 'Sei autonomo o lavori in una clinica?',
+        'work_freelancer': 'Freelancer',
+        'work_freelancer_desc': 'Lavoro in modo indipendente',
+        'work_clinic': 'Dipendente di Clinica',
+        'work_clinic_desc': 'Lavoro in una clinica',
+        'work_both': 'Entrambi',
+        'work_both_desc': 'Faccio sia lavoro freelance che in clinica',
+        'previous': 'Precedente',
+        'next': 'Successivo',
+        'language_label': 'Lingua',
+        'first_name': 'Nome',
+        'last_name': 'Cognome',
+        'about_clinic': 'Riguardo la tua clinica',
+        'clinic_info_desc': 'Se lavori in una clinica, raccontaci di essa',
+        'perfect': 'Perfetto!',
+        'help_configure_fees': 'Ti aiuteremo a configurare le tue tariffe nel prossimo passaggio.',
+        'fee_structure': 'Struttura tariffe',
+        'what_charge_sessions': 'Quanto addebiti tipicamente per le tue sessioni?',
+        'first_session_fee': 'Tariffa Prima Sessione (€)',
+        'subsequent_session_fee': 'Tariffa Sessioni Successive (€)',
+        'exit_warning_title': 'Sei sicuro?',
+        'exit_warning_message': 'Se esci ora, alcune funzionalità potrebbero non funzionare come previsto. Vuoi continuare con la configurazione?',
+        'exit_anyway': 'Esci comunque',
+        'continue_setup': 'Continua configurazione',
+        'complete_setup': 'Completa Configurazione',
+        'clinic_name': 'Nome Clinica',
+        'pays_commission': 'Paghi una commissione alla clinica?',
+        'commission_percentage': 'Percentuale di Commissione (%)',
+        'professional_registration': 'Registrazione Professionale',
+        'license_number': 'Numero di Iscrizione',
+        'college_acronym': 'Acronimo dell\'Ordine',
+        'optional': 'Opzionale'
+    }
+};
+
+// Simple global work type selection - NO DEPENDENCIES
+window.selectWorkType = function(value) {
+    console.log('selectWorkType called with:', value);
+    
+    // Remove selected from all cards
+    document.querySelectorAll('.work-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Add selected to clicked card
+    const selectedCard = document.querySelector(`.work-card[data-value="${value}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+    }
+    
+    // Update hidden input
+    const hiddenInput = document.getElementById('selected_work_type');
+    if (hiddenInput) {
+        hiddenInput.value = value;
+    }
+    
+    // Update debug display
+    const debugSpan = document.getElementById('work_type_debug');
+    if (debugSpan) {
+        debugSpan.textContent = value;
+    }
+    
+    // Enable next button
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn && value) {
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('disabled');
+    }
+    
+    console.log('Work type selected:', value);
+};
+
+// Apply translations function
+function applyTranslations(lang) {
+    const t = translations[lang] || translations['en'];
+    
+    // Update step indicators
+    const stepIndicators = document.querySelectorAll('.step-indicator');
+    if (stepIndicators[0]) stepIndicators[0].textContent = `1. ${t.step_language}`;
+    if (stepIndicators[1]) stepIndicators[1].textContent = `2. ${t.step_personal_info}`;
+    if (stepIndicators[2]) stepIndicators[2].textContent = `3. ${t.step_work_setup}`;
+    if (stepIndicators[3]) stepIndicators[3].textContent = `4. ${t.step_clinic_info}`;
+    if (stepIndicators[4]) stepIndicators[4].textContent = `5. ${t.step_fees}`;
+    
+    // Update step content
+    const step1Title = document.querySelector('#step1 h5');
+    if (step1Title) step1Title.textContent = t.get_to_know;
+    
+    const step1Desc = document.querySelector('#step1 p');
+    if (step1Desc) step1Desc.textContent = t.which_language;
+    
+    const step2Title = document.querySelector('#step2 h5');
+    if (step2Title) step2Title.textContent = t.nice_to_meet;
+    
+    const step2Desc = document.querySelector('#step2 p');
+    if (step2Desc) step2Desc.textContent = t.what_call_you;
+    
+    const step3Title = document.querySelector('#step3 h5');
+    if (step3Title) step3Title.textContent = t.tell_about_work;
+    
+    const step3Desc = document.querySelector('#step3 p');
+    if (step3Desc) step3Desc.textContent = t.self_employed_clinic;
+    
+    // Update step 4 content
+    const step4Title = document.querySelector('#step4 h5');
+    if (step4Title) step4Title.textContent = t.about_clinic;
+    
+    const step4Desc = document.querySelector('#step4 p');
+    if (step4Desc) step4Desc.textContent = t.clinic_info_desc;
+    
+    const step4Perfect = document.querySelector('#step4 h6');
+    if (step4Perfect) step4Perfect.textContent = t.perfect;
+    
+    const step4Help = document.querySelector('#step4 .no-clinic-message p');
+    if (step4Help) step4Help.textContent = t.help_configure_fees;
+    
+    // Update step 5 content
+    const step5Title = document.querySelector('#step5 h5');
+    if (step5Title) step5Title.textContent = t.fee_structure;
+    
+    const step5Desc = document.querySelector('#step5 p');
+    if (step5Desc) step5Desc.textContent = t.what_charge_sessions;
+    
+    const firstFeeLabel = document.querySelector('label[for="first_session_fee"]');
+    if (firstFeeLabel) firstFeeLabel.textContent = t.first_session_fee;
+    
+    const subsequentFeeLabel = document.querySelector('label[for="subsequent_session_fee"]');
+    if (subsequentFeeLabel) subsequentFeeLabel.textContent = t.subsequent_session_fee;
+    
+    // Update form labels
+    const languageLabel = document.querySelector('label[for="language"]');
+    if (languageLabel) languageLabel.textContent = t.language_label;
+    
+    const firstNameLabel = document.querySelector('label[for="first_name"]');
+    if (firstNameLabel) firstNameLabel.textContent = t.first_name;
+    
+    const lastNameLabel = document.querySelector('label[for="last_name"]');
+    if (lastNameLabel) lastNameLabel.textContent = t.last_name;
+    
+    // Update work type cards
+    const freelanceTitle = document.querySelector('.work-card[data-value="freelance"] h6');
+    if (freelanceTitle) freelanceTitle.textContent = t.work_freelancer;
+    
+    const freelanceDesc = document.querySelector('.work-card[data-value="freelance"] small');
+    if (freelanceDesc) freelanceDesc.textContent = t.work_freelancer_desc;
+    
+    const clinicTitle = document.querySelector('.work-card[data-value="clinic_employee"] h6');
+    if (clinicTitle) clinicTitle.textContent = t.work_clinic;
+    
+    const clinicDesc = document.querySelector('.work-card[data-value="clinic_employee"] small');
+    if (clinicDesc) clinicDesc.textContent = t.work_clinic_desc;
+    
+    const bothTitle = document.querySelector('.work-card[data-value="mixed"] h6');
+    if (bothTitle) bothTitle.textContent = t.work_both;
+    
+    const bothDesc = document.querySelector('.work-card[data-value="mixed"] small');
+    if (bothDesc) bothDesc.textContent = t.work_both_desc;
+    
+    // Update buttons
+    const prevBtn = document.querySelector('#prevBtn');
+    if (prevBtn) prevBtn.innerHTML = `<i class="bi bi-arrow-left me-2"></i>${t.previous}`;
+    
+    const nextBtn = document.querySelector('#nextBtn');
+    if (nextBtn) nextBtn.innerHTML = `${t.next}<i class="bi bi-arrow-right ms-2"></i>`;
+    
+    console.log('Translations applied for:', lang);
+}
+
+// Update progress bar function
+function updateProgress(step) {
+    const progressBar = document.getElementById('progressBar');
+    if (progressBar) {
+        const percentage = (step / 5) * 100;
+        progressBar.style.width = `${percentage}%`;
+    }
+    
+    // Update step indicators
+    const stepIndicators = document.querySelectorAll('.step-indicator');
+    stepIndicators.forEach((indicator, index) => {
+        if (index < step) {
+            indicator.classList.add('active');
+        } else {
+            indicator.classList.remove('active');
+        }
+    });
+}
+
+// Simple modal handling
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded');
+    
+    const welcomeModal = document.getElementById('welcomeModal');
+    if (welcomeModal) {
+        console.log('Welcome modal found');
+        
+        // Show modal
+        const modal = new bootstrap.Modal(welcomeModal);
+        modal.show();
+        
+        // Close button functionality
+        const closeBtn = document.getElementById('closeWelcomeModal');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                showExitWarning(modal);
+            });
+        }
+        
+        // Exit warning function
+        function showExitWarning(modalInstance) {
+            const currentLang = document.getElementById('language').value || 'en';
+            const t = translations[currentLang] || translations['en'];
+            
+            const confirmed = confirm(`${t.exit_warning_title}\n\n${t.exit_warning_message}`);
+            
+            if (confirmed) {
+                modalInstance.hide();
+            }
+            // If not confirmed, do nothing (stay in modal)
+        }
+        
+        // Language change handler
+        const languageSelect = document.getElementById('language');
+        if (languageSelect) {
+            languageSelect.addEventListener('change', function() {
+                const selectedLang = this.value;
+                console.log('Language changed to:', selectedLang);
+                applyTranslations(selectedLang);
+            });
+        }
+        
+        // Apply English translations by default
+        applyTranslations('en');
+        
+        // Simple step navigation
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        let currentStep = 1;
+        
+        // Initialize progress
+        updateProgress(currentStep);
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function() {
+                console.log('Next clicked, current step:', currentStep);
+                if (currentStep < 5) {
+                    currentStep++;
+                    showStep(currentStep);
+                    updateProgress(currentStep);
+                } else if (currentStep === 5) {
+                    // On step 5, submit the form
+                    console.log('Submitting form from step 5');
+                    document.getElementById('welcomeForm').submit();
+                }
+            });
+        }
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function() {
+                console.log('Previous clicked, current step:', currentStep);
+                if (currentStep > 1) {
+                    currentStep--;
+                    showStep(currentStep);
+                    updateProgress(currentStep);
+                }
+            });
+        }
+        
+        function showStep(step) {
+            console.log('Showing step:', step);
+            
+            // Hide all steps
+            document.querySelectorAll('.step-content').forEach(s => {
+                s.classList.add('d-none');
+            });
+            
+            // Show current step
+            const stepElement = document.getElementById(`step${step}`);
+            if (stepElement) {
+                stepElement.classList.remove('d-none');
+            }
+            
+            // Update button visibility
+            if (prevBtn) {
+                prevBtn.style.display = step > 1 ? 'inline-block' : 'none';
+            }
+            
+            // Handle step 4 - show/hide clinic fields based on work type
+            if (step === 4) {
+                const workType = document.getElementById('selected_work_type').value;
+                const clinicFields = document.querySelector('.clinic-fields');
+                const noClinicMessage = document.querySelector('.no-clinic-message');
+                
+                console.log('Step 4: work type is', workType);
+                
+                if (workType === 'clinic_employee' || workType === 'mixed') {
+                    // Show clinic fields
+                    if (clinicFields) clinicFields.style.display = 'block';
+                    if (noClinicMessage) noClinicMessage.style.display = 'none';
+                } else {
+                    // Hide clinic fields for freelancers
+                    if (clinicFields) clinicFields.style.display = 'none';
+                    if (noClinicMessage) noClinicMessage.style.display = 'block';
+                }
+                
+                // Add event listener for commission checkbox
+                const paysCommissionCheckbox = document.getElementById('pays_commission');
+                const commissionFields = document.querySelector('.commission-fields');
+                if (paysCommissionCheckbox && commissionFields) {
+                    paysCommissionCheckbox.addEventListener('change', function() {
+                        commissionFields.style.display = this.checked ? 'block' : 'none';
                     });
                 }
             }
-        }
-
-        // --- Weekly Appointments Bar Chart - TO BE REMOVED ---
-        /*
-        const weeklyAppointmentsCtx = document.getElementById('weeklyAppointmentsChart').getContext('2d');
-        {# const weeklyLabels = {{ weekly_appointment_labels|tojson }}; #} // Correctly commented out for Jinja
-        {# const weeklyCounts = {{ weekly_appointment_counts|tojson }}; #} // Correctly commented out for Jinja
-
-        new Chart(weeklyAppointmentsCtx, {
-            type: 'bar',
-            data: {
-                labels: weeklyLabels,
-                datasets: [{
-                    label: '{{ _('Appointments') }}',
-                    data: weeklyCounts,
-                    backgroundColor: 'rgba(41, 128, 185, 0.6)',
-                    borderColor: 'rgba(41, 128, 185, 1)',
-                    borderWidth: 1,
-                    borderRadius: 5,
-                    hoverBackgroundColor: 'rgba(41, 128, 185, 0.8)'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        },
-                        grid: {
-                            display: true,
-                            color: 'rgba(0,0,0,0.05)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        enabled: true,
-                        callbacks: {
-                            title: function(tooltipItems) {
-                                return tooltipItems[0].label;
-                            },
-                            label: function(tooltipItem) {
-                                return '{{ _('Appointments') }}: ' + tooltipItem.raw;
-                            }
-                        }
-                    }
+            
+            // Handle step 5 - show complete button instead of next
+            const completeBtn = document.getElementById('completeBtn');
+            console.log('Step:', step, 'Complete button found:', !!completeBtn, 'Next button found:', !!nextBtn);
+            
+            if (step === 5) {
+                console.log('Step 5: Converting next button to finish button');
+                if (nextBtn) {
+                    // Get current language and translations
+                    const currentLang = document.getElementById('language').value || 'en';
+                    const t = translations[currentLang] || translations['en'];
+                    
+                    // Change the next button to complete setup button
+                    nextBtn.innerHTML = `<i class="bi bi-check-circle me-2"></i>${t.complete_setup}`;
+                    nextBtn.className = 'btn btn-success';
+                    nextBtn.style.display = 'inline-block';
+                    console.log('Next button converted to complete setup button');
+                }
+                if (completeBtn) {
+                    completeBtn.style.display = 'none'; // Hide the separate complete button
+                    console.log('Separate complete button hidden');
+                }
+            } else {
+                console.log('Step', step, ': Showing normal next button');
+                if (nextBtn) {
+                    // Reset next button to normal state
+                    const currentLang = document.getElementById('language').value || 'en';
+                    const t = translations[currentLang] || translations['en'];
+                    nextBtn.innerHTML = `${t.next}<i class="bi bi-arrow-right ms-2"></i>`;
+                    nextBtn.className = 'btn btn-primary';
+                    nextBtn.style.display = 'inline-block';
+                }
+                if (completeBtn) {
+                    completeBtn.style.display = 'none';
                 }
             }
-        });
-        */
-
-        // Quick search functionality
-        const quickSearch = document.getElementById('quickSearch');
-        const searchResults = document.getElementById('searchResults');
-        
-        if (quickSearch && searchResults) {
-            quickSearch.addEventListener('input', _.debounce(async (e) => {
-                if (e.target.value.length < 2) {
-                    searchResults.innerHTML = '';
-                    return;
-                }
-                
-                try {
-                    const response = await fetch(`/api/quick_search?q=${e.target.value}`);
-                    if (!response.ok) {
-                        searchResults.innerHTML = `<div class="list-group-item list-group-item-danger">{{ _('Error fetching results.') }}</div>`;
-                        return;
-                    }
-                    const data = await response.json();
-                    
-                    if (data.length) {
-                        searchResults.innerHTML = data.map(patient => `
-                            <a href="/patient/${patient.id}" class="list-group-item list-group-item-action">
-                                <strong>${patient.name}</strong> (${patient.email})
-                            </a>
-                        `).join('');
-                    } else {
-                        searchResults.innerHTML = `<div class="list-group-item">{{ _('No patients found.') }}</div>`;
-                    }
-                } catch (error) {
-                    console.error('Quick search error:', error);
-                    searchResults.innerHTML = `<div class="list-group-item list-group-item-danger">{{ _('An error occurred.') }}</div>`;
-                }
-            }, 300)); // Debounce
-        }
-        
-        // Set default date to today when modal opens
-        const newAppointmentModal = document.getElementById('newAppointmentModal');
-        if (newAppointmentModal) {
-            newAppointmentModal.addEventListener('show.bs.modal', function () {
-                const today = new Date().toISOString().split('T')[0]; // Get YYYY-MM-DD format
-                document.getElementById('appointmentDate').value = today;
-                document.getElementById('appointmentTime').value = '09:00'; // Default to 9 AM
-            });
-        }
-    });
-
-    // Handle New Appointment Form Submission
-    const newAppointmentForm = document.getElementById('newAppointmentForm');
-    if (newAppointmentForm) {
-        newAppointmentForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(newAppointmentForm);
-            const patientId = formData.get('patient_id');
             
-            // Combine date and time for the 'date' field expected by add_treatment
-            const dateValue = formData.get('date');
-            const timeValue = formData.get('time');
-            formData.set('date', `${dateValue}T${timeValue}`); // Format as YYYY-MM-DDTHH:MM
-            formData.delete('time'); // Remove original time field as it's combined
-
-            fetch(`/patient/${patientId}/treatment`, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success || (data.redirect_url && data.message && data.message.includes('success'))) {
-                    var modalInstance = bootstrap.Modal.getInstance(document.getElementById('newAppointmentModal'));
-                    if (modalInstance) {
-                        modalInstance.hide();
-                    }
-                    // Show success message and refresh page to show new appointment
-                    alert(data.message || 'Appointment created successfully!');
-                    window.location.reload(); // Refresh to show new appointment in upcoming appointments
+            // Reset next button state for step 3 (work type selection)
+            if (nextBtn && step === 3) {
+                const selectedWorkType = document.getElementById('selected_work_type');
+                if (!selectedWorkType || !selectedWorkType.value) {
+                    nextBtn.disabled = true;
+                    nextBtn.classList.add('disabled');
                 } else {
-                    alert('Error: ' + (data.message || 'Could not create appointment.'));
+                    nextBtn.disabled = false;
+                    nextBtn.classList.remove('disabled');
                 }
-            })
-            .catch(error => {
-                console.error('Error submitting new appointment:', error);
-                alert('An error occurred while creating the appointment.');
+            } else if (nextBtn && step !== 5) {
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('disabled');
+            }
+        }
+        
+        // Add event listener for complete button
+        const completeBtn = document.getElementById('completeBtn');
+        if (completeBtn) {
+            completeBtn.addEventListener('click', function() {
+                console.log('Complete button clicked - submitting form');
+                document.getElementById('welcomeForm').submit();
             });
+        }
+        
+        // Start with step 1
+        showStep(1);
+    }
+});
+</script>
+{% endif %}
+
+<!-- Exit Confirmation Modal -->
+<div class="modal fade" id="exitConfirmModal" tabindex="-1" aria-labelledby="exitConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exitConfirmModalLabel">{{ _('Are you sure you want to exit?') }}</h5>
+            </div>
+            <div class="modal-body">
+                <p>{{ _('If you exit now, some features may not work properly. You can always complete the setup later from your account settings.') }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="continueSetupBtn">{{ _('Continue setup') }}</button>
+                <button type="button" class="btn btn-danger" id="confirmExitBtn">{{ _('Yes, exit setup') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Exit confirmation modal functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const continueSetupBtn = document.getElementById('continueSetupBtn');
+    const confirmExitBtn = document.getElementById('confirmExitBtn');
+    const exitConfirmModal = document.getElementById('exitConfirmModal');
+    
+    if (continueSetupBtn) {
+        continueSetupBtn.addEventListener('click', function() {
+            // Close the exit confirmation modal
+            const exitModal = bootstrap.Modal.getInstance(exitConfirmModal);
+            if (exitModal) {
+                exitModal.hide();
+            }
         });
     }
-
+    
+    if (confirmExitBtn) {
+        confirmExitBtn.addEventListener('click', function() {
+            // Close both modals and mark user as not new
+            const exitModal = bootstrap.Modal.getInstance(exitConfirmModal);
+            if (exitModal) {
+                exitModal.hide();
+            }
+            
+            const welcomeModal = bootstrap.Modal.getInstance(document.getElementById('welcomeModal'));
+            if (welcomeModal) {
+                welcomeModal.hide();
+            }
+            
+            // Mark user as no longer new (optional - could be done with AJAX)
+            console.log('User chose to exit setup');
+        });
+    }
+});
 </script>
 {% endblock %}

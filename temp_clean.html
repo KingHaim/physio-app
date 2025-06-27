@@ -1,0 +1,470 @@
+<!-- app/templates/new_patient.html -->
+{% extends "base.html" %}
+
+{% block title %}{{ _('New Patient') }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title mb-0">{{ _('New Patient') }}</h2>
+                    <p class="text-muted mb-0">{{ _('Complete the anamnesis (clinical history) before proceeding to patient data') }}</p>
+                </div>
+                <div class="card-body">
+                    <!-- Progress Steps -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="progress-steps">
+                                <div class="step active" id="step1-indicator">
+                                    <div class="step-number">1</div>
+                                    <div class="step-title">{{ _('Anamnesis & Patient Data') }}</div>
+                                </div>
+                                <div class="step" id="step2-indicator">
+                                    <div class="step-number">2</div>
+                                    <div class="step-title">{{ _('Portal Access') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form action="{{ url_for('main.new_patient') }}" method="POST" id="newPatientForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <!-- Step 1: Anamnesis & Patient Data -->
+                        <div class="step-content active" id="step1">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>{{ _('Complete Patient Information & Clinical History') }}</strong><br>
+                                {{ _('Fill in patient data and clinical history. This information is essential for proper treatment planning.') }}
+                            </div>
+                            
+                            <!-- Anamnesis Tabs -->
+                            <ul class="nav nav-tabs" id="anamnesisTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="personal-data-tab" data-bs-toggle="tab" data-bs-target="#personal-data" type="button" role="tab">
+                                        <i class="bi bi-person"></i> {{ _('Patient Data') }}
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="chief-complaint-tab" data-bs-toggle="tab" data-bs-target="#chief-complaint" type="button" role="tab">
+                                        <i class="bi bi-chat-dots"></i> {{ _('Chief Complaint') }}
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="medical-history-tab" data-bs-toggle="tab" data-bs-target="#medical-history" type="button" role="tab">
+                                        <i class="bi bi-clipboard-heart"></i> {{ _('Medical History') }}
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="family-history-tab" data-bs-toggle="tab" data-bs-target="#family-history" type="button" role="tab">
+                                        <i class="bi bi-people"></i> {{ _('Family History') }}
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="lifestyle-tab" data-bs-toggle="tab" data-bs-target="#lifestyle" type="button" role="tab">
+                                        <i class="bi bi-heart-pulse"></i> {{ _('Lifestyle') }}
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="current-pain-tab" data-bs-toggle="tab" data-bs-target="#current-pain" type="button" role="tab">
+                                        <i class="bi bi-bandaid"></i> {{ _('Current Pain') }}
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="functional-exam-tab" data-bs-toggle="tab" data-bs-target="#functional-exam" type="button" role="tab">
+                                        <i class="bi bi-activity"></i> {{ _('Functional Exam') }}
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <!-- Smart Clinical Assistant Welcome Panel -->
+                            <div id="welcome-suggestions-panel" class="alert alert-success mt-3 permanent-panel" 
+                                 style="display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important;">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        <i class="bi bi-robot text-success fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="alert-heading mb-1">
+                                            <i class="bi bi-lightbulb-fill"></i> {{ _('Smart Clinical Assistant Activated') }}
+                                        </h6>
+                                        <small class="text-muted">{{ _('Fill out the anamnesis data and then click "Generate AI Suggestions" for intelligent clinical recommendations.') }}</small>
+                                    </div>
+                                    <div class="ms-3 d-flex align-items-center">
+                                        <button type="button" class="btn btn-outline-primary btn-sm me-2" onclick="generateAISuggestions()" id="ai-suggestions-btn">
+                                            <i class="bi bi-magic"></i> {{ _('Generate AI Suggestions') }}
+                                        </button>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li>
+                                                    <button class="dropdown-item" onclick="hideWelcomePanelTemporarily()">
+                                                        <i class="bi bi-eye-slash"></i> {{ _('Hide temporarily') }}
+                                                    </button>
+                                                </li>
+                                                <li>
+                                                    <button class="dropdown-item" onclick="hideWelcomePanelPermanently()">
+                                                        <i class="bi bi-x-circle"></i> {{ _('Do not show again') }}
+                                                    </button>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <small class="dropdown-item-text text-muted">
+                                                        {{ _('You can always re-enable this in settings') }}
+                                                    </small>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SUPER STRONG CSS TO FORCE VISIBILITY -->
+                            <style>
+                            .permanent-panel {
+                                display: block !important;
+                                visibility: visible !important;
+                                opacity: 1 !important;
+                                position: relative !important;
+                                z-index: 1000 !important;
+                            }
+                            
+                            .permanent-panel.force-hide {
+                                display: none !important;
+                            }
+                            </style>
+
+                            <!-- Smart Suggestions Panel - Always Visible -->
+                            <div id="suggestions-panel" class="alert alert-info mt-3" style="display: none;">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        <i class="bi bi-lightbulb-fill text-warning fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="alert-heading mb-2">
+                                            <i class="bi bi-robot"></i> {{ _('Smart Clinical Suggestions') }}
+                                        </h6>
+                                        <div id="suggestions-content"></div>
+                                    </div>
+                                    <button type="button" class="btn-close" onclick="hideSuggestions()"></button>
+                                </div>
+                            </div>
+
+
+
+                            <!-- Simple JavaScript for panel functions -->
+                            <script>
+                            function hideSuggestions() {
+                                const panel = document.getElementById('suggestions-panel');
+                                if (panel) {
+                                    panel.style.display = 'none';
+                                }
+                            }
+
+                            function createSuggestionsPanel() {
+                                // Create suggestions panel if it doesn't exist
+                                let suggestionsPanel = document.getElementById('suggestions-panel');
+                                if (!suggestionsPanel) {
+                                    suggestionsPanel = document.createElement('div');
+                                    suggestionsPanel.id = 'suggestions-panel';
+                                    suggestionsPanel.className = 'alert alert-info mt-3';
+                                    suggestionsPanel.style.display = 'none';
+                                    suggestionsPanel.innerHTML = `
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                <i class="bi bi-lightbulb-fill text-warning fs-4"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="alert-heading mb-2">
+                                                    <i class="bi bi-robot"></i> {{ _('AI Clinical Suggestions') }}
+                                                </h6>
+                                                <div id="suggestions-content"></div>
+                                            </div>
+                                            <button type="button" class="btn-close" onclick="hideSuggestions()"></button>
+                                        </div>
+                                    `;
+                                    
+                                    // Insert after welcome panel
+                                    const welcomePanel = document.getElementById('welcome-suggestions-panel');
+                                    if (welcomePanel) {
+                                        welcomePanel.parentNode.insertBefore(suggestionsPanel, welcomePanel.nextSibling);
+                                    }
+                                }
+                            }
+
+                            // Generate AI Suggestions Function
+                            function generateAISuggestions() {
+                                const button = document.getElementById('ai-suggestions-btn');
+                                const originalText = button.innerHTML;
+                                
+                                // Show loading state
+                                button.innerHTML = '<i class="bi bi-hourglass-split"></i> {{ _("Generating...") }}';
+                                button.disabled = true;
+                                
+                                // Collect all form data
+                                const formData = new FormData(document.querySelector('form'));
+                                const anamnesisData = {};
+                                
+                                // Convert FormData to regular object
+                                for (let [key, value] of formData.entries()) {
+                                    if (anamnesisData[key]) {
+                                        // Handle multiple values (like checkboxes)
+                                        if (Array.isArray(anamnesisData[key])) {
+                                            anamnesisData[key].push(value);
+                                        } else {
+                                            anamnesisData[key] = [anamnesisData[key], value];
+                                        }
+                                    } else {
+                                        anamnesisData[key] = value;
+                                    }
+                                }
+                                
+                                // Call backend API
+                                fetch('/api/generate-ai-suggestions', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                                    },
+                                    body: JSON.stringify({ anamnesis_data: anamnesisData })
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        showAISuggestions(data.suggestions);
+                                    } else {
+                                        showError('Error generating suggestions: ' + (data.error || 'Unknown error'));
+                                    }
+                                })
+                                .catch(error => {
+                                    showError('Network error: ' + error.message);
+                                })
+                                .finally(() => {
+                                    // Restore button
+                                    button.innerHTML = originalText;
+                                    button.disabled = false;
+                                });
+                            }
+
+                            function showAISuggestions(suggestions) {
+                                createSuggestionsPanel();
+                                const content = document.getElementById('suggestions-content');
+                                const panel = document.getElementById('suggestions-panel');
+                                
+                                if (content && panel) {
+                                    let html = '';
+                                    
+                                    if (suggestions.tests && suggestions.tests.length > 0) {
+                                        html += '<div class="mb-3"><strong><i class="bi bi-clipboard-check"></i> {{ _("Recommended Tests") }}:</strong><ul class="mt-2">';
+                                        suggestions.tests.forEach(test => {
+                                            html += `<li>${test}</li>`;
+                                        });
+                                        html += '</ul></div>';
+                                    }
+                                    
+                                    if (suggestions.red_flags && suggestions.red_flags.length > 0) {
+                                        html += '<div class="mb-3"><strong class="text-danger"><i class="bi bi-exclamation-triangle"></i> {{ _("Red Flags") }}:</strong><ul class="mt-2">';
+                                        suggestions.red_flags.forEach(flag => {
+                                            html += `<li class="text-danger">${flag}</li>`;
+                                        });
+                                        html += '</ul></div>';
+                                    }
+                                    
+                                    if (suggestions.yellow_flags && suggestions.yellow_flags.length > 0) {
+                                        html += '<div class="mb-3"><strong class="text-warning"><i class="bi bi-exclamation-circle"></i> {{ _("Yellow Flags") }}:</strong><ul class="mt-2">';
+                                        suggestions.yellow_flags.forEach(flag => {
+                                            html += `<li class="text-warning">${flag}</li>`;
+                                        });
+                                        html += '</ul></div>';
+                                    }
+                                    
+                                    if (suggestions.clinical_notes && suggestions.clinical_notes.length > 0) {
+                                        html += '<div class="mb-3"><strong><i class="bi bi-journal-medical"></i> {{ _("Clinical Notes") }}:</strong><ul class="mt-2">';
+                                        suggestions.clinical_notes.forEach(note => {
+                                            html += `<li>${note}</li>`;
+                                        });
+                                        html += '</ul></div>';
+                                    }
+                                    
+                                    content.innerHTML = html;
+                                    panel.style.display = 'block';
+                                    
+                                    // Scroll to suggestions
+                                    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
+                            }
+
+                            function showError(message) {
+                                createSuggestionsPanel();
+                                const content = document.getElementById('suggestions-content');
+                                const panel = document.getElementById('suggestions-panel');
+                                
+                                if (content && panel) {
+                                    content.innerHTML = `<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle"></i> ${message}</div>`;
+                                    panel.style.display = 'block';
+                                }
+                            }
+
+                            // Initialize on page load
+                            document.addEventListener('DOMContentLoaded', function() {
+                                createSuggestionsPanel();
+                                checkWelcomePanelVisibility();
+                                initPanelProtection();
+                            });
+
+                            // Welcome Panel Management Functions
+                            function checkWelcomePanelVisibility() {
+                                const welcomePanel = document.getElementById('welcome-suggestions-panel');
+                                const hideWelcomePanel = localStorage.getItem('hideWelcomePanel');
+                                
+                                if (hideWelcomePanel === 'permanently' && welcomePanel) {
+                                    welcomePanel.classList.add('force-hide');
+                                } else if (welcomePanel) {
+                                    // FORCE VISIBILITY - ensure it stays visible
+                                    welcomePanel.classList.remove('force-hide');
+                                    welcomePanel.style.display = 'block';
+                                    welcomePanel.style.visibility = 'visible';
+                                    welcomePanel.style.opacity = '1';
+                                }
+                            }
+
+                            function hideWelcomePanelTemporarily() {
+                                const welcomePanel = document.getElementById('welcome-suggestions-panel');
+                                if (welcomePanel) {
+                                    welcomePanel.classList.add('force-hide');
+                                }
+                            }
+
+                            function hideWelcomePanelPermanently() {
+                                const welcomePanel = document.getElementById('welcome-suggestions-panel');
+                                if (welcomePanel) {
+                                    welcomePanel.classList.add('force-hide');
+                                    localStorage.setItem('hideWelcomePanel', 'permanently');
+                                    
+                                    // Show a small confirmation
+                                    showTemporaryMessage('{{ _("Panel hidden. You can re-enable it in settings.") }}', 'info');
+                                }
+                            }
+
+                            function showWelcomePanelAgain() {
+                                const welcomePanel = document.getElementById('welcome-suggestions-panel');
+                                if (welcomePanel) {
+                                    welcomePanel.classList.remove('force-hide');
+                                    welcomePanel.style.display = 'block';
+                                    welcomePanel.style.visibility = 'visible';
+                                    welcomePanel.style.opacity = '1';
+                                    localStorage.removeItem('hideWelcomePanel');
+                                }
+                            }
+
+                            function showTemporaryMessage(message, type = 'info') {
+                                // Create a temporary toast-like message
+                                const toastContainer = document.createElement('div');
+                                toastContainer.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+                                toastContainer.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+                                toastContainer.innerHTML = `
+                                    ${message}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                `;
+                                
+                                document.body.appendChild(toastContainer);
+                                
+                                // Auto-hide after 4 seconds
+                                setTimeout(() => {
+                                    if (toastContainer.parentNode) {
+                                        toastContainer.parentNode.removeChild(toastContainer);
+                                    }
+                                }, 4000);
+                            }
+
+                            // SUPER AGGRESSIVE PROTECTION - MutationObserver to watch for changes
+                            function initPanelProtection() {
+                                const welcomePanel = document.getElementById('welcome-suggestions-panel');
+                                if (!welcomePanel) return;
+
+                                // Create a MutationObserver to watch for style changes
+                                const observer = new MutationObserver(function(mutations) {
+                                    const hideWelcomePanel = localStorage.getItem('hideWelcomePanel');
+                                    
+                                    if (hideWelcomePanel !== 'permanently') {
+                                        mutations.forEach(function(mutation) {
+                                            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                                                // Someone tried to hide the panel, restore it!
+                                                if (welcomePanel.style.display === 'none' || 
+                                                    welcomePanel.style.visibility === 'hidden' || 
+                                                    welcomePanel.style.opacity === '0') {
+                                                    
+                                                    console.log('Panel tampering detected! Restoring visibility...');
+                                                    welcomePanel.classList.remove('force-hide');
+                                                    welcomePanel.style.display = 'block';
+                                                    welcomePanel.style.visibility = 'visible';
+                                                    welcomePanel.style.opacity = '1';
+                                                }
+                                            }
+                                        });
+                                    }
+                                });
+
+                                // Start observing
+                                observer.observe(welcomePanel, {
+                                    attributes: true,
+                                    attributeFilter: ['style', 'class']
+                                });
+                            }
+
+                            // FORCE PANEL VISIBILITY - More aggressive approach
+                            setInterval(function() {
+                                const welcomePanel = document.getElementById('welcome-suggestions-panel');
+                                const hideWelcomePanel = localStorage.getItem('hideWelcomePanel');
+                                
+                                if (welcomePanel && hideWelcomePanel !== 'permanently') {
+                                    // Force visibility if not permanently hidden
+                                    if (welcomePanel.classList.contains('force-hide')) {
+                                        welcomePanel.classList.remove('force-hide');
+                                    }
+                                    
+                                    if (welcomePanel.style.display === 'none' || 
+                                        welcomePanel.style.visibility === 'hidden' || 
+                                        welcomePanel.style.opacity === '0' ||
+                                        !welcomePanel.style.display) {
+                                        
+                                        welcomePanel.style.display = 'block';
+                                        welcomePanel.style.visibility = 'visible';
+                                        welcomePanel.style.opacity = '1';
+                                    }
+                                }
+                            }, 500); // Check every half second
+
+                            // Override addSurgery function to ensure it works
+                            window.addSurgery = function() {
+                                console.log('addSurgery called');
+                                const container = document.getElementById('surgeries-container');
+                                if (!container) {
+                                    console.error('Surgery container not found');
+                                    return;
+                                }
+                                
+                                const newSurgery = document.createElement('div');
+                                newSurgery.className = 'surgery-entry row mb-2';
+                                newSurgery.innerHTML = 
+                                    '<div class="col-md-6">' +
+                                        '<input type="text" class="form-control" name="surgery_description[]" placeholder="Tipo de cirugía">' +
+                                    '</div>' +
+                                    '<div class="col-md-4">' +
+                                        '<input type="date" class="form-control" name="surgery_date[]">' +
+                                    '</div>' +
+                                    '<div class="col-md-2">' +
+                                        '<button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSurgery(this)">' +
+                                            '<i class="bi bi-trash"></i>' +
+                                        '</button>' +
+                                    '</div>';
+                                container.appendChild(newSurgery);
+                                console.log('Surgery added successfully');
+                            };
+
+                            // Also override removeSurgery for consistency  
+                            window.removeSurgery = function(button) {

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-06-23 15:58+0200\n"
+"POT-Creation-Date: 2025-06-27 12:38+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,13 +18,16 @@ msgstr ""
 "Generated-By: Babel 2.17.0\n"
 
 #: app/forms.py:8 app/forms.py:18 app/forms.py:27 app/forms.py:51
-#: app/forms.py:64 app/templates/calendly_review.html:22
+#: app/forms.py:66 app/templates/calendly_review.html:22
 #: app/templates/pricing.html:223 app/templates/pricing.html:340
 #: app/templates/review_calendly_bookings.html:34
 msgid "Email"
 msgstr ""
 
-#: app/forms.py:9 app/forms.py:19 app/templates/new_patient.html:58
+#: app/forms.py:9 app/forms.py:19 app/templates/new_patient.html:952
+#: app/templates/new_patient_backup.html:988
+#: app/templates/new_patient_backup_final.html:947
+#: app/templates/new_patient_old.html:947
 msgid "Password"
 msgstr ""
 
@@ -58,7 +61,10 @@ msgstr ""
 msgid "Address"
 msgstr ""
 
-#: app/forms.py:26 app/forms.py:39
+#: app/forms.py:26 app/forms.py:39 app/templates/new_patient.html:106
+#: app/templates/new_patient_backup.html:150
+#: app/templates/new_patient_backup_final.html:106
+#: app/templates/new_patient_old.html:106
 msgid "Phone Number"
 msgstr ""
 
@@ -66,11 +72,11 @@ msgstr ""
 msgid "Location Type"
 msgstr ""
 
-#: app/forms.py:29 app/routes/main.py:2401
+#: app/forms.py:29 app/routes/main.py:2629
 msgid "Clinic"
 msgstr ""
 
-#: app/forms.py:29 app/templates/calendar.html:83 app/templates/index.html:374
+#: app/forms.py:29 app/templates/calendar.html:83 app/templates/index.html:465
 msgid "Home Visit"
 msgstr ""
 
@@ -78,11 +84,11 @@ msgstr ""
 msgid "External Location"
 msgstr ""
 
-#: app/forms.py:31 app/forms.py:43
+#: app/forms.py:31 app/forms.py:43 app/forms.py:160
 msgid "First Session Fee (€)"
 msgstr ""
 
-#: app/forms.py:32 app/forms.py:44
+#: app/forms.py:32 app/forms.py:44 app/forms.py:163
 msgid "Subsequent Session Fee (€)"
 msgstr ""
 
@@ -94,7 +100,7 @@ msgstr ""
 msgid "Save Location"
 msgstr ""
 
-#: app/forms.py:37
+#: app/forms.py:37 app/forms.py:153
 msgid "Clinic Name"
 msgstr ""
 
@@ -110,8 +116,9 @@ msgstr ""
 msgid "Website"
 msgstr ""
 
-#: app/forms.py:42 app/templates/patient_detail.html:582
-#: app/templates/treatment_detail.html:42 app/templates/user_settings.html:301
+#: app/forms.py:42 app/templates/patient_detail.html:756
+#: app/templates/patient_detail_BACKUP.html:740
+#: app/templates/treatment_detail.html:42 app/templates/user_settings.html:325
 msgid "Description"
 msgstr ""
 
@@ -119,7 +126,7 @@ msgstr ""
 msgid "Percentage Agreement"
 msgstr ""
 
-#: app/forms.py:46 app/templates/user_settings.html:193
+#: app/forms.py:46
 msgid "Clinic Share (%)"
 msgstr ""
 
@@ -127,16 +134,18 @@ msgstr ""
 msgid "Save Clinic Information"
 msgstr ""
 
-#: app/forms.py:52
+#: app/forms.py:52 app/forms.py:135
 msgid "First Name"
 msgstr ""
 
-#: app/forms.py:53
+#: app/forms.py:53 app/forms.py:136
 msgid "Last Name"
 msgstr ""
 
 #: app/forms.py:54 app/templates/edit_patient.html:37
-#: app/templates/new_patient.html:23
+#: app/templates/new_patient.html:94 app/templates/new_patient_backup.html:138
+#: app/templates/new_patient_backup_final.html:94
+#: app/templates/new_patient_old.html:94
 msgid "Date of Birth"
 msgstr ""
 
@@ -144,130 +153,182 @@ msgstr ""
 msgid "Sex"
 msgstr ""
 
-#: app/forms.py:55
+#: app/forms.py:55 app/templates/edit_patient.html:164
+#: app/templates/new_patient.html:160 app/templates/new_patient_backup.html:204
+#: app/templates/new_patient_backup_final.html:160
+#: app/templates/new_patient_old.html:160
 msgid "Male"
 msgstr ""
 
-#: app/forms.py:55
+#: app/forms.py:55 app/templates/edit_patient.html:165
+#: app/templates/new_patient.html:161 app/templates/new_patient_backup.html:205
+#: app/templates/new_patient_backup_final.html:161
+#: app/templates/new_patient_old.html:161
 msgid "Female"
 msgstr ""
 
-#: app/forms.py:55 app/forms.py:119
+#: app/forms.py:55 app/forms.py:121 app/templates/edit_patient.html:166
+#: app/templates/new_patient.html:162 app/templates/new_patient_backup.html:206
+#: app/templates/new_patient_backup_final.html:162
+#: app/templates/new_patient_old.html:162
 msgid "Other"
 msgstr ""
 
-#: app/forms.py:56
+#: app/forms.py:56 app/forms.py:139
 msgid "License Number"
 msgstr ""
 
-#: app/forms.py:57 app/forms.py:68
-msgid "Current Password"
-msgstr ""
-
-#: app/forms.py:58 app/forms.py:69 app/templates/edit_patient.html:122
-msgid "New Password"
+#: app/forms.py:57 app/forms.py:140 app/templates/user_settings.html:92
+msgid "College Acronym"
 msgstr ""
 
 #: app/forms.py:59 app/forms.py:70
+msgid "Current Password"
+msgstr ""
+
+#: app/forms.py:60 app/forms.py:71 app/templates/edit_patient.html:361
+msgid "New Password"
+msgstr ""
+
+#: app/forms.py:61 app/forms.py:72
 msgid "Confirm New Password"
 msgstr ""
 
-#: app/forms.py:60 app/forms.py:71
+#: app/forms.py:62 app/forms.py:73
 msgid "New passwords must match."
 msgstr ""
 
-#: app/forms.py:61
+#: app/forms.py:63
 msgid "Update Profile"
 msgstr ""
 
-#: app/forms.py:65 app/templates/my_account.html:195
+#: app/forms.py:67 app/templates/my_account.html:195
 msgid "Update Email"
 msgstr ""
 
-#: app/forms.py:72 app/templates/my_account.html:212
+#: app/forms.py:74 app/templates/my_account.html:212
 msgid "Change Password"
 msgstr ""
 
-#: app/forms.py:76
+#: app/forms.py:78
 msgid "Enable Calendly Integration"
 msgstr ""
 
-#: app/forms.py:83
+#: app/forms.py:85
 msgid "Calendly API Key"
 msgstr ""
 
-#: app/forms.py:85
+#: app/forms.py:87
 msgid "Paste your Calendly Personal Access Token here..."
 msgstr ""
 
-#: app/forms.py:86
+#: app/forms.py:88
 msgid "Calendly User URI"
 msgstr ""
 
-#: app/forms.py:94 app/templates/user_settings.html:265
+#: app/forms.py:96 app/templates/user_settings.html:289
 msgid "Save API Keys"
 msgstr ""
 
-#: app/forms.py:99
+#: app/forms.py:101
 msgid "Set Your Fixed Autónomo Contribution Base (€)"
 msgstr ""
 
-#: app/forms.py:102
+#: app/forms.py:104
 msgid "Leave blank to use automatic calculation based on income brackets."
 msgstr ""
 
-#: app/forms.py:103
+#: app/forms.py:105
 msgid "Save Contribution Base"
 msgstr ""
 
-#: app/forms.py:106
+#: app/forms.py:108
 msgid "Cost Description"
 msgstr ""
 
-#: app/forms.py:107 app/templates/user_settings.html:302
+#: app/forms.py:109 app/templates/user_settings.html:326
 msgid "Monthly Amount (€)"
 msgstr ""
 
-#: app/forms.py:110
+#: app/forms.py:112
 msgid "Add Fixed Cost"
 msgstr ""
 
-#: app/forms.py:113 app/templates/patient_detail.html:409
-#: app/templates/patient_detail.html:453
+#: app/forms.py:115 app/templates/patient_detail.html:474
+#: app/templates/patient_detail.html:518
+#: app/templates/patient_detail_BACKUP.html:474
+#: app/templates/patient_detail_BACKUP.html:518
 msgid "Purpose"
 msgstr ""
 
-#: app/forms.py:114
+#: app/forms.py:116
 msgid "Select Purpose"
 msgstr ""
 
-#: app/forms.py:115 app/templates/appointments.html:209
+#: app/forms.py:117 app/templates/appointments.html:209
 msgid "Treatment"
 msgstr ""
 
-#: app/forms.py:116
+#: app/forms.py:118
 msgid "Data Processing"
 msgstr ""
 
-#: app/forms.py:117
+#: app/forms.py:119
 msgid "Marketing Communications"
 msgstr ""
 
-#: app/forms.py:118
+#: app/forms.py:120
 msgid "Research Participation"
 msgstr ""
 
-#: app/forms.py:121 app/templates/patient_detail.html:411
+#: app/forms.py:123 app/templates/patient_detail.html:476
+#: app/templates/patient_detail_BACKUP.html:476
 msgid "Expiry Date"
 msgstr ""
 
-#: app/forms.py:122 app/templates/edit_patient.html:96
-#: app/templates/new_patient.html:43
+#: app/forms.py:124 app/templates/edit_patient.html:96
+#: app/templates/new_patient.html:189 app/templates/new_patient_backup.html:233
+#: app/templates/new_patient_backup_final.html:189
+#: app/templates/new_patient_old.html:189
 msgid "Additional Notes"
 msgstr ""
 
-#: app/forms.py:123
+#: app/forms.py:125
 msgid "Record Consent"
+msgstr ""
+
+#: app/forms.py:129 app/templates/index.html:506
+#: app/templates/welcome_modal.html:21
+msgid "Language"
+msgstr ""
+
+#: app/forms.py:144
+msgid "How do you work?"
+msgstr ""
+
+#: app/forms.py:146 app/templates/welcome_modal.html:93
+msgid "I work as a freelancer/autonomous"
+msgstr ""
+
+#: app/forms.py:147 app/templates/welcome_modal.html:105
+msgid "I work for a clinic"
+msgstr ""
+
+#: app/forms.py:148 app/templates/welcome_modal.html:117
+msgid "Both - I have my own patients and work for clinics"
+msgstr ""
+
+#: app/forms.py:154
+msgid "Do you pay commission to the clinic?"
+msgstr ""
+
+#: app/forms.py:155
+msgid "Commission Percentage (%)"
+msgstr ""
+
+#: app/forms.py:167 app/templates/index.html:706
+#: app/templates/welcome_modal.html:216
+msgid "Complete Setup"
 msgstr ""
 
 #: app/routes/locations.py:39
@@ -300,24 +361,40 @@ msgstr ""
 msgid "Location \"%(name)s\" has been deleted successfully!"
 msgstr ""
 
-#: app/routes/main.py:2405
+#: app/routes/main.py:399
+msgid "Welcome to TRXCKER! Your profile has been set up successfully."
+msgstr ""
+
+#: app/routes/main.py:405
+msgid "An error occurred while setting up your profile. Please try again."
+msgstr ""
+
+#: app/routes/main.py:2633
 msgid "Total Revenue"
 msgstr ""
 
-#: app/routes/main.py:2408
+#: app/routes/main.py:2636
 msgid "Total Fixed Expenses (€)"
 msgstr ""
 
-#: app/routes/main.py:2409
+#: app/routes/main.py:2637
 msgid "Est. Autónomo Contribution (€)"
 msgstr ""
 
-#: app/routes/main.py:2410
+#: app/routes/main.py:2638
 msgid "Est. Net Revenue (Final)"
 msgstr ""
 
-#: app/routes/main.py:3153
+#: app/routes/main.py:3501
 msgid "You do not have permission to access this page."
+msgstr ""
+
+#: app/routes/onboarding.py:125
+msgid "Profile updated successfully!"
+msgstr ""
+
+#: app/routes/onboarding.py:132
+msgid "An error occurred while saving your profile. Please try again."
 msgstr ""
 
 #: app/templates/analytics.html:3 app/templates/base.html:385
@@ -347,7 +424,7 @@ msgstr ""
 msgid "Total Patients"
 msgstr ""
 
-#: app/templates/analytics.html:27 app/templates/index.html:222
+#: app/templates/analytics.html:27 app/templates/index.html:313
 msgid "Active Patients"
 msgstr ""
 
@@ -458,14 +535,29 @@ msgstr ""
 #: app/templates/analytics.html:235 app/templates/analytics.html:262
 #: app/templates/analytics.html:274 app/templates/analytics.html:283
 #: app/templates/calendar.html:51 app/templates/calendar.html:96
-#: app/templates/calendly_review.html:65 app/templates/index.html:342
-#: app/templates/index.html:387 app/templates/my_account.html:158
-#: app/templates/my_account.html:187 app/templates/patient_detail.html:141
-#: app/templates/patient_detail.html:449 app/templates/patient_detail.html:476
-#: app/templates/patient_detail.html:539 app/templates/patient_detail.html:564
-#: app/templates/patient_detail.html:577 app/templates/patient_detail.html:732
-#: app/templates/patient_detail.html:744 app/templates/patient_detail.html:751
-#: app/templates/patient_detail.html:765 app/templates/patient_detail.html:816
+#: app/templates/calendly_review.html:65 app/templates/index.html:433
+#: app/templates/index.html:478 app/templates/index.html:495
+#: app/templates/my_account.html:158 app/templates/my_account.html:187
+#: app/templates/patient_detail.html:161 app/templates/patient_detail.html:514
+#: app/templates/patient_detail.html:541 app/templates/patient_detail.html:713
+#: app/templates/patient_detail.html:738 app/templates/patient_detail.html:751
+#: app/templates/patient_detail.html:906 app/templates/patient_detail.html:918
+#: app/templates/patient_detail.html:925 app/templates/patient_detail.html:939
+#: app/templates/patient_detail.html:990 app/templates/patient_detail.html:1045
+#: app/templates/patient_detail.html:1072
+#: app/templates/patient_detail_BACKUP.html:161
+#: app/templates/patient_detail_BACKUP.html:514
+#: app/templates/patient_detail_BACKUP.html:541
+#: app/templates/patient_detail_BACKUP.html:697
+#: app/templates/patient_detail_BACKUP.html:722
+#: app/templates/patient_detail_BACKUP.html:735
+#: app/templates/patient_detail_BACKUP.html:890
+#: app/templates/patient_detail_BACKUP.html:902
+#: app/templates/patient_detail_BACKUP.html:909
+#: app/templates/patient_detail_BACKUP.html:923
+#: app/templates/patient_detail_BACKUP.html:974
+#: app/templates/patient_detail_BACKUP.html:1029
+#: app/templates/patient_detail_BACKUP.html:1056
 msgid "Close"
 msgstr ""
 
@@ -514,7 +606,8 @@ msgstr ""
 msgid "Could not load patient list."
 msgstr ""
 
-#: app/templates/analytics.html:525 app/templates/patient_detail.html:183
+#: app/templates/analytics.html:525 app/templates/patient_detail.html:206
+#: app/templates/patient_detail_BACKUP.html:206
 msgid "Treatments"
 msgstr ""
 
@@ -532,14 +625,25 @@ msgstr ""
 
 #: app/templates/analytics.html:623 app/templates/edit_patient.html:61
 #: app/templates/my_account.html:79 app/templates/my_account.html:84
-#: app/templates/patient_detail.html:224 app/templates/patient_detail.html:422
-#: app/templates/patient_detail.html:465 app/templates/patient_detail.html:607
+#: app/templates/new_patient.html:112 app/templates/new_patient_backup.html:156
+#: app/templates/new_patient_backup_final.html:112
+#: app/templates/new_patient_old.html:112 app/templates/patient_detail.html:257
+#: app/templates/patient_detail.html:487 app/templates/patient_detail.html:530
+#: app/templates/patient_detail.html:781
+#: app/templates/patient_detail_BACKUP.html:257
+#: app/templates/patient_detail_BACKUP.html:487
+#: app/templates/patient_detail_BACKUP.html:530
+#: app/templates/patient_detail_BACKUP.html:765
 #: app/templates/patients_list.html:19
 msgid "Active"
 msgstr ""
 
 #: app/templates/analytics.html:623 app/templates/edit_patient.html:64
-#: app/templates/patient_detail.html:224 app/templates/patients_list.html:20
+#: app/templates/new_patient.html:113 app/templates/new_patient_backup.html:157
+#: app/templates/new_patient_backup_final.html:113
+#: app/templates/new_patient_old.html:113 app/templates/patient_detail.html:257
+#: app/templates/patient_detail_BACKUP.html:257
+#: app/templates/patients_list.html:20
 msgid "Inactive"
 msgstr ""
 
@@ -548,13 +652,12 @@ msgid "No data"
 msgstr ""
 
 #: app/templates/appointments.html:4 app/templates/appointments.html:61
-#: app/templates/base.html:344 app/templates/index.html:476
-#: app/templates/index.html:516
+#: app/templates/base.html:344
 msgid "Appointments"
 msgstr ""
 
 #: app/templates/appointments.html:63 app/templates/calendar.html:50
-#: app/templates/index.html:341
+#: app/templates/index.html:432
 msgid "New Appointment"
 msgstr ""
 
@@ -603,18 +706,20 @@ msgid "Calendar"
 msgstr ""
 
 #: app/templates/appointments.html:122 app/templates/calendar.html:71
-#: app/templates/index.html:276 app/templates/index.html:362
+#: app/templates/index.html:367 app/templates/index.html:453
 msgid "Time"
 msgstr ""
 
 #: app/templates/appointments.html:123 app/templates/appointments.html:192
-#: app/templates/calendar.html:57 app/templates/index.html:274
-#: app/templates/index.html:348 app/templates/review_calendly_bookings.html:86
+#: app/templates/calendar.html:57 app/templates/index.html:365
+#: app/templates/index.html:439 app/templates/review_calendly_bookings.html:86
 msgid "Patient"
 msgstr ""
 
 #: app/templates/appointments.html:124 app/templates/appointments.html:205
-#: app/templates/patient_detail.html:316 app/templates/patient_detail.html:629
+#: app/templates/patient_detail.html:349 app/templates/patient_detail.html:803
+#: app/templates/patient_detail_BACKUP.html:349
+#: app/templates/patient_detail_BACKUP.html:787
 #: app/templates/treatment_detail.html:86
 msgid "Type"
 msgstr ""
@@ -624,25 +729,36 @@ msgid "Duration"
 msgstr ""
 
 #: app/templates/appointments.html:126 app/templates/edit_patient.html:58
-#: app/templates/edit_patient.html:371 app/templates/index.html:170
-#: app/templates/patient_detail.html:317 app/templates/patient_detail.html:410
-#: app/templates/patient_detail.html:462 app/templates/patient_detail.html:657
+#: app/templates/edit_patient.html:895 app/templates/index.html:261
+#: app/templates/new_patient.html:110 app/templates/new_patient_backup.html:154
+#: app/templates/new_patient_backup_final.html:110
+#: app/templates/new_patient_old.html:110 app/templates/patient_detail.html:350
+#: app/templates/patient_detail.html:475 app/templates/patient_detail.html:527
+#: app/templates/patient_detail.html:831
+#: app/templates/patient_detail_BACKUP.html:350
+#: app/templates/patient_detail_BACKUP.html:475
+#: app/templates/patient_detail_BACKUP.html:527
+#: app/templates/patient_detail_BACKUP.html:815
 #: app/templates/patients_list.html:102
 #: app/templates/review_calendly_bookings.html:88
 msgid "Status"
 msgstr ""
 
 #: app/templates/appointments.html:127 app/templates/appointments.html:222
-#: app/templates/patient_detail.html:471
+#: app/templates/patient_detail.html:536
+#: app/templates/patient_detail_BACKUP.html:536
 msgid "Notes"
 msgstr ""
 
 #: app/templates/appointments.html:128 app/templates/calendly_review.html:25
-#: app/templates/index.html:277 app/templates/patient_detail.html:321
-#: app/templates/patient_detail.html:412 app/templates/patient_detail.html:632
+#: app/templates/index.html:368 app/templates/patient_detail.html:354
+#: app/templates/patient_detail.html:477 app/templates/patient_detail.html:806
+#: app/templates/patient_detail_BACKUP.html:354
+#: app/templates/patient_detail_BACKUP.html:477
+#: app/templates/patient_detail_BACKUP.html:790
 #: app/templates/review_calendly_bookings.html:37
 #: app/templates/review_calendly_bookings.html:89
-#: app/templates/review_payments.html:25 app/templates/user_settings.html:303
+#: app/templates/review_payments.html:25 app/templates/user_settings.html:327
 msgid "Actions"
 msgstr ""
 
@@ -682,10 +798,20 @@ msgstr ""
 msgid "1 hour"
 msgstr ""
 
-#: app/templates/appointments.html:228 app/templates/edit_patient.html:139
-#: app/templates/edit_patient.html:167 app/templates/edit_patient.html:236
-#: app/templates/locations/manage.html:121 app/templates/new_patient.html:66
-#: app/templates/patient_detail.html:856
+#: app/templates/appointments.html:228 app/templates/edit_patient.html:378
+#: app/templates/edit_patient.html:406 app/templates/edit_patient.html:475
+#: app/templates/locations/manage.html:121 app/templates/new_patient.html:930
+#: app/templates/new_patient_backup.html:971
+#: app/templates/new_patient_backup_final.html:930
+#: app/templates/new_patient_old.html:930
+#: app/templates/patient_detail.html:1030
+#: app/templates/patient_detail.html:1057
+#: app/templates/patient_detail.html:1112
+#: app/templates/patient_detail.html:1150
+#: app/templates/patient_detail_BACKUP.html:1014
+#: app/templates/patient_detail_BACKUP.html:1041
+#: app/templates/patient_detail_BACKUP.html:1096
+#: app/templates/patient_detail_BACKUP.html:1134
 msgid "Cancel"
 msgstr ""
 
@@ -694,11 +820,11 @@ msgid "Schedule"
 msgstr ""
 
 #: app/templates/base.html:334 app/templates/index.html:4
-#: app/templates/index.html:152
+#: app/templates/index.html:243
 msgid "Dashboard"
 msgstr ""
 
-#: app/templates/base.html:339 app/templates/index.html:438
+#: app/templates/base.html:339
 msgid "Patients"
 msgstr ""
 
@@ -706,7 +832,7 @@ msgstr ""
 msgid "Management"
 msgstr ""
 
-#: app/templates/base.html:365 app/templates/index.html:244
+#: app/templates/base.html:365 app/templates/index.html:335
 #: app/templates/patients_list.html:22
 msgid "Pending Review"
 msgstr ""
@@ -715,8 +841,10 @@ msgstr ""
 msgid "Review Payments"
 msgstr ""
 
-#: app/templates/base.html:381 app/templates/patient_detail.html:193
-#: app/templates/patient_detail.html:503
+#: app/templates/base.html:381 app/templates/patient_detail.html:221
+#: app/templates/patient_detail.html:568
+#: app/templates/patient_detail_BACKUP.html:221
+#: app/templates/patient_detail_BACKUP.html:568
 msgid "Reports"
 msgstr ""
 
@@ -763,39 +891,43 @@ msgstr ""
 msgid "Login"
 msgstr ""
 
-#: app/templates/calendar.html:59 app/templates/index.html:350
+#: app/templates/calendar.html:59 app/templates/index.html:441
 msgid "Select Patient..."
 msgstr ""
 
-#: app/templates/calendar.html:67 app/templates/index.html:275
-#: app/templates/index.html:358 app/templates/patient_detail.html:315
-#: app/templates/patient_detail.html:586 app/templates/treatment_detail.html:19
+#: app/templates/calendar.html:67 app/templates/index.html:366
+#: app/templates/index.html:449 app/templates/patient_detail.html:348
+#: app/templates/patient_detail.html:760
+#: app/templates/patient_detail_BACKUP.html:348
+#: app/templates/patient_detail_BACKUP.html:744
+#: app/templates/treatment_detail.html:19
 msgid "Date"
 msgstr ""
 
-#: app/templates/calendar.html:76 app/templates/index.html:367
-#: app/templates/patient_detail.html:667
+#: app/templates/calendar.html:76 app/templates/index.html:458
+#: app/templates/patient_detail.html:841
+#: app/templates/patient_detail_BACKUP.html:825
 msgid "Treatment Type"
 msgstr ""
 
-#: app/templates/calendar.html:77 app/templates/index.html:368
+#: app/templates/calendar.html:77 app/templates/index.html:459
 msgid "e.g., Initial Assessment, Follow-up"
 msgstr ""
 
-#: app/templates/calendar.html:80 app/templates/index.html:371
+#: app/templates/calendar.html:80 app/templates/index.html:462
 #: app/templates/review_payments.html:23
 msgid "Location"
 msgstr ""
 
-#: app/templates/calendar.html:84 app/templates/index.html:375
+#: app/templates/calendar.html:84 app/templates/index.html:466
 msgid "Online"
 msgstr ""
 
-#: app/templates/calendar.html:88 app/templates/index.html:379
+#: app/templates/calendar.html:88 app/templates/index.html:470
 msgid "Notes (Optional)"
 msgstr ""
 
-#: app/templates/calendar.html:97 app/templates/index.html:388
+#: app/templates/calendar.html:97 app/templates/index.html:479
 msgid "Create Appointment"
 msgstr ""
 
@@ -807,7 +939,7 @@ msgstr ""
 msgid "Unmatched Calendly Bookings"
 msgstr ""
 
-#: app/templates/calendly_review.html:21 app/templates/edit_patient.html:369
+#: app/templates/calendly_review.html:21 app/templates/edit_patient.html:893
 #: app/templates/patients_list.html:99
 #: app/templates/review_calendly_bookings.html:33
 msgid "Name"
@@ -879,8 +1011,15 @@ msgstr ""
 msgid "Error creating patient:"
 msgstr ""
 
+#: app/templates/debug_welcome.html:26 app/templates/index.html:494
+#: app/templates/welcome_modal.html:7
+msgid "Welcome to TRXCKER!"
+msgstr ""
+
 #: app/templates/edit_patient.html:4 app/templates/locations/manage.html:78
-#: app/templates/patient_detail.html:235 app/templates/patient_detail.html:370
+#: app/templates/patient_detail.html:268 app/templates/patient_detail.html:403
+#: app/templates/patient_detail_BACKUP.html:268
+#: app/templates/patient_detail_BACKUP.html:403
 msgid "Edit"
 msgstr ""
 
@@ -893,15 +1032,18 @@ msgid "Back to Patient"
 msgstr ""
 
 #: app/templates/edit_patient.html:25 app/templates/user_settings.html:15
-#: app/templates/user_settings.html:34
+#: app/templates/user_settings.html:37
 msgid "Personal Information"
 msgstr ""
 
-#: app/templates/edit_patient.html:27 app/templates/new_patient.html:18
+#: app/templates/edit_patient.html:27 app/templates/new_patient.html:90
+#: app/templates/new_patient_backup.html:134
+#: app/templates/new_patient_backup_final.html:90
+#: app/templates/new_patient_old.html:90
 msgid "Full Name"
 msgstr ""
 
-#: app/templates/edit_patient.html:47 app/templates/new_patient.html:28
+#: app/templates/edit_patient.html:47
 msgid "Contact Information"
 msgstr ""
 
@@ -909,7 +1051,10 @@ msgstr ""
 msgid "Phone number or email address"
 msgstr ""
 
-#: app/templates/edit_patient.html:67
+#: app/templates/edit_patient.html:67 app/templates/new_patient.html:114
+#: app/templates/new_patient_backup.html:158
+#: app/templates/new_patient_backup_final.html:114
+#: app/templates/new_patient_old.html:114
 msgid "Treatment Completed"
 msgstr ""
 
@@ -917,14 +1062,18 @@ msgstr ""
 msgid "Medical Information"
 msgstr ""
 
-#: app/templates/edit_patient.html:77 app/templates/edit_patient.html:374
-#: app/templates/new_patient.html:33 app/templates/patient_detail.html:254
+#: app/templates/edit_patient.html:77 app/templates/edit_patient.html:898
+#: app/templates/patient_detail.html:287
+#: app/templates/patient_detail_BACKUP.html:287
 #: app/templates/patients_list.html:100
 msgid "Diagnosis"
 msgstr ""
 
-#: app/templates/edit_patient.html:87 app/templates/new_patient.html:38
-#: app/templates/patient_detail.html:264
+#: app/templates/edit_patient.html:87 app/templates/new_patient.html:185
+#: app/templates/new_patient_backup.html:229
+#: app/templates/new_patient_backup_final.html:185
+#: app/templates/new_patient_old.html:185 app/templates/patient_detail.html:297
+#: app/templates/patient_detail_BACKUP.html:297
 msgid "Treatment Plan"
 msgstr ""
 
@@ -936,119 +1085,509 @@ msgstr ""
 msgid "Any additional information or observations"
 msgstr ""
 
-#: app/templates/edit_patient.html:109
+#: app/templates/edit_patient.html:111
+msgid "Clinical History / Anamnesis"
+msgstr ""
+
+#: app/templates/edit_patient.html:117
+msgid "Personal Data"
+msgstr ""
+
+#: app/templates/edit_patient.html:122 app/templates/new_patient.html:52
+#: app/templates/new_patient_backup.html:52
+#: app/templates/new_patient_backup_final.html:52
+#: app/templates/new_patient_old.html:52
+msgid "Chief Complaint"
+msgstr ""
+
+#: app/templates/edit_patient.html:127 app/templates/new_patient.html:57
+#: app/templates/new_patient_backup.html:57
+#: app/templates/new_patient_backup_final.html:57
+#: app/templates/new_patient_old.html:57
+msgid "Medical History"
+msgstr ""
+
+#: app/templates/edit_patient.html:132 app/templates/new_patient.html:62
+#: app/templates/new_patient_backup.html:62
+#: app/templates/new_patient_backup_final.html:62
+#: app/templates/new_patient_old.html:62
+msgid "Family History"
+msgstr ""
+
+#: app/templates/edit_patient.html:137 app/templates/new_patient.html:67
+#: app/templates/new_patient_backup.html:67
+#: app/templates/new_patient_backup_final.html:67
+#: app/templates/new_patient_old.html:67
+msgid "Lifestyle"
+msgstr ""
+
+#: app/templates/edit_patient.html:142 app/templates/new_patient.html:72
+#: app/templates/new_patient_backup.html:72
+#: app/templates/new_patient_backup_final.html:72
+#: app/templates/new_patient_old.html:72
+msgid "Current Pain"
+msgstr ""
+
+#: app/templates/edit_patient.html:147 app/templates/new_patient.html:77
+#: app/templates/new_patient_backup.html:77
+#: app/templates/new_patient_backup_final.html:77
+#: app/templates/new_patient_old.html:77
+msgid "Functional Exam"
+msgstr ""
+
+#: app/templates/edit_patient.html:157
+msgid "Age"
+msgstr ""
+
+#: app/templates/edit_patient.html:161 app/templates/new_patient.html:157
+#: app/templates/new_patient_backup.html:201
+#: app/templates/new_patient_backup_final.html:157
+#: app/templates/new_patient_old.html:157
+msgid "Gender"
+msgstr ""
+
+#: app/templates/edit_patient.html:163 app/templates/new_patient.html:159
+#: app/templates/new_patient_backup.html:203
+#: app/templates/new_patient_backup_final.html:159
+#: app/templates/new_patient_old.html:159
+msgid "Select gender"
+msgstr ""
+
+#: app/templates/edit_patient.html:167 app/templates/new_patient.html:163
+#: app/templates/new_patient_backup.html:207
+#: app/templates/new_patient_backup_final.html:163
+#: app/templates/new_patient_old.html:163
+msgid "Prefer not to say"
+msgstr ""
+
+#: app/templates/edit_patient.html:171 app/templates/new_patient.html:172
+#: app/templates/new_patient_backup.html:216
+#: app/templates/new_patient_backup_final.html:172
+#: app/templates/new_patient_old.html:172
+msgid "Occupation"
+msgstr ""
+
+#: app/templates/edit_patient.html:172 app/templates/new_patient.html:173
+#: app/templates/new_patient_backup.html:217
+#: app/templates/new_patient_backup_final.html:173
+#: app/templates/new_patient_old.html:173
+msgid "Current job/profession"
+msgstr ""
+
+#: app/templates/edit_patient.html:175 app/templates/new_patient.html:176
+#: app/templates/new_patient_backup.html:220
+#: app/templates/new_patient_backup_final.html:176
+#: app/templates/new_patient_old.html:176
+msgid "Emergency Contact"
+msgstr ""
+
+#: app/templates/edit_patient.html:176 app/templates/new_patient.html:177
+#: app/templates/new_patient_backup.html:221
+#: app/templates/new_patient_backup_final.html:177
+#: app/templates/new_patient_old.html:177
+msgid "Name and phone number"
+msgstr ""
+
+#: app/templates/edit_patient.html:185 app/templates/new_patient.html:238
+#: app/templates/new_patient_backup.html:282
+#: app/templates/new_patient_backup_final.html:238
+#: app/templates/new_patient_old.html:238
+msgid "Main reason for consultation"
+msgstr ""
+
+#: app/templates/edit_patient.html:188 app/templates/new_patient.html:241
+#: app/templates/new_patient_backup.html:285
+#: app/templates/new_patient_backup_final.html:241
+#: app/templates/new_patient_old.html:241
+msgid "What brought you here today? Describe your main concern or symptom."
+msgstr ""
+
+#: app/templates/edit_patient.html:192 app/templates/new_patient.html:247
+#: app/templates/new_patient_backup.html:291
+#: app/templates/new_patient_backup_final.html:247
+#: app/templates/new_patient_old.html:247
+msgid "When did it start?"
+msgstr ""
+
+#: app/templates/edit_patient.html:194
+msgid "e.g., 2 weeks ago, after lifting heavy box"
+msgstr ""
+
+#: app/templates/edit_patient.html:197 app/templates/new_patient.html:253
+#: app/templates/new_patient_backup.html:297
+#: app/templates/new_patient_backup_final.html:253
+#: app/templates/new_patient_old.html:253
+msgid "How did it happen?"
+msgstr ""
+
+#: app/templates/edit_patient.html:199
+msgid "e.g., sudden, gradual, after activity"
+msgstr ""
+
+#: app/templates/edit_patient.html:207
+msgid "Previous illnesses/conditions"
+msgstr ""
+
+#: app/templates/edit_patient.html:209
+msgid "List any previous medical conditions, diagnoses, or chronic illnesses"
+msgstr ""
+
+#: app/templates/edit_patient.html:212 app/templates/new_patient.html:340
+#: app/templates/new_patient_backup.html:384
+#: app/templates/new_patient_backup_final.html:340
+#: app/templates/new_patient_old.html:340
+msgid "Previous surgeries"
+msgstr ""
+
+#: app/templates/edit_patient.html:214
+msgid "List any surgeries with approximate dates"
+msgstr ""
+
+#: app/templates/edit_patient.html:217 app/templates/new_patient.html:365
+#: app/templates/new_patient_backup.html:406
+#: app/templates/new_patient_backup_final.html:365
+#: app/templates/new_patient_old.html:365
+msgid "Current medications"
+msgstr ""
+
+#: app/templates/edit_patient.html:219
+msgid "Include prescription drugs, supplements, and over-the-counter medications"
+msgstr ""
+
+#: app/templates/edit_patient.html:222
+msgid "Allergies"
+msgstr ""
+
+#: app/templates/edit_patient.html:224
+msgid "Food, medication, environmental allergies"
+msgstr ""
+
+#: app/templates/edit_patient.html:231
+msgid "Relevant family medical history"
+msgstr ""
+
+#: app/templates/edit_patient.html:233
+msgid ""
+"Include: diabetes, heart disease, cancer, musculoskeletal conditions, "
+"genetic disorders, etc."
+msgstr ""
+
+#: app/templates/edit_patient.html:241 app/templates/new_patient.html:498
+#: app/templates/new_patient_backup.html:539
+#: app/templates/new_patient_backup_final.html:498
+#: app/templates/new_patient_old.html:498
+msgid "Physical activity level"
+msgstr ""
+
+#: app/templates/edit_patient.html:243 app/templates/new_patient.html:501
+#: app/templates/new_patient_backup.html:542
+#: app/templates/new_patient_backup_final.html:501
+#: app/templates/new_patient_old.html:501
+msgid "Select activity level"
+msgstr ""
+
+#: app/templates/edit_patient.html:244 app/templates/new_patient.html:502
+#: app/templates/new_patient_backup.html:543
+#: app/templates/new_patient_backup_final.html:502
+#: app/templates/new_patient_old.html:502
+msgid "Sedentary (little to no exercise)"
+msgstr ""
+
+#: app/templates/edit_patient.html:245 app/templates/new_patient.html:503
+#: app/templates/new_patient_backup.html:544
+#: app/templates/new_patient_backup_final.html:503
+#: app/templates/new_patient_old.html:503
+msgid "Light (1-3 days/week)"
+msgstr ""
+
+#: app/templates/edit_patient.html:246 app/templates/new_patient.html:504
+#: app/templates/new_patient_backup.html:545
+#: app/templates/new_patient_backup_final.html:504
+#: app/templates/new_patient_old.html:504
+msgid "Moderate (3-5 days/week)"
+msgstr ""
+
+#: app/templates/edit_patient.html:247 app/templates/new_patient.html:505
+#: app/templates/new_patient_backup.html:546
+#: app/templates/new_patient_backup_final.html:505
+#: app/templates/new_patient_old.html:505
+msgid "Very active (6-7 days/week)"
+msgstr ""
+
+#: app/templates/edit_patient.html:248 app/templates/new_patient.html:506
+#: app/templates/new_patient_backup.html:547
+#: app/templates/new_patient_backup_final.html:506
+#: app/templates/new_patient_old.html:506
+msgid "Athlete (multiple sessions/day)"
+msgstr ""
+
+#: app/templates/edit_patient.html:252 app/templates/new_patient.html:512
+#: app/templates/new_patient_backup.html:553
+#: app/templates/new_patient_backup_final.html:512
+#: app/templates/new_patient_old.html:512
+msgid "Sleep quality"
+msgstr ""
+
+#: app/templates/edit_patient.html:254 app/templates/new_patient.html:515
+#: app/templates/new_patient_backup.html:556
+#: app/templates/new_patient_backup_final.html:515
+#: app/templates/new_patient_old.html:515
+msgid "Select sleep quality"
+msgstr ""
+
+#: app/templates/edit_patient.html:255 app/templates/new_patient.html:516
+#: app/templates/new_patient_backup.html:557
+#: app/templates/new_patient_backup_final.html:516
+#: app/templates/new_patient_old.html:516
+msgid "Excellent (7-9h, refreshing)"
+msgstr ""
+
+#: app/templates/edit_patient.html:256 app/templates/new_patient.html:517
+#: app/templates/new_patient_backup.html:558
+#: app/templates/new_patient_backup_final.html:517
+#: app/templates/new_patient_old.html:517
+msgid "Good (6-8h, mostly refreshing)"
+msgstr ""
+
+#: app/templates/edit_patient.html:257 app/templates/new_patient.html:518
+#: app/templates/new_patient_backup.html:559
+#: app/templates/new_patient_backup_final.html:518
+#: app/templates/new_patient_old.html:518
+msgid "Fair (5-7h, sometimes tired)"
+msgstr ""
+
+#: app/templates/edit_patient.html:258 app/templates/new_patient.html:519
+#: app/templates/new_patient_backup.html:560
+#: app/templates/new_patient_backup_final.html:519
+#: app/templates/new_patient_old.html:519
+msgid "Poor (<6h, often tired)"
+msgstr ""
+
+#: app/templates/edit_patient.html:262
+msgid "Work posture/environment"
+msgstr ""
+
+#: app/templates/edit_patient.html:264
+msgid "e.g., desk job, standing, physical labor"
+msgstr ""
+
+#: app/templates/edit_patient.html:267 app/templates/new_patient.html:549
+#: app/templates/new_patient_backup.html:590
+#: app/templates/new_patient_backup_final.html:549
+#: app/templates/new_patient_old.html:549
+msgid "Stress level (1-10)"
+msgstr ""
+
+#: app/templates/edit_patient.html:272
+msgid "Diet and nutrition habits"
+msgstr ""
+
+#: app/templates/edit_patient.html:274
+msgid "General eating patterns, dietary restrictions, hydration"
+msgstr ""
+
+#: app/templates/edit_patient.html:282
+msgid "Pain scale (0-10)"
+msgstr ""
+
+#: app/templates/edit_patient.html:284
+msgid "0 = No pain, 10 = Worst pain imaginable"
+msgstr ""
+
+#: app/templates/edit_patient.html:287
+msgid "Type of pain"
+msgstr ""
+
+#: app/templates/edit_patient.html:289
+msgid "e.g., sharp, dull, burning, throbbing"
+msgstr ""
+
+#: app/templates/edit_patient.html:292 app/templates/new_patient.html:728
+#: app/templates/new_patient_backup.html:769
+#: app/templates/new_patient_backup_final.html:728
+#: app/templates/new_patient_old.html:728
+msgid "What makes it worse?"
+msgstr ""
+
+#: app/templates/edit_patient.html:294
+msgid "Activities, positions, times of day"
+msgstr ""
+
+#: app/templates/edit_patient.html:297 app/templates/new_patient.html:735
+#: app/templates/new_patient_backup.html:776
+#: app/templates/new_patient_backup_final.html:735
+#: app/templates/new_patient_old.html:735
+msgid "What makes it better?"
+msgstr ""
+
+#: app/templates/edit_patient.html:299
+msgid "Rest, heat, cold, positions, medications"
+msgstr ""
+
+#: app/templates/edit_patient.html:303
+msgid "Pain location and radiation"
+msgstr ""
+
+#: app/templates/edit_patient.html:305
+msgid "Describe where the pain is located and if it radiates anywhere"
+msgstr ""
+
+#: app/templates/edit_patient.html:312
+msgid "Functional limitations"
+msgstr ""
+
+#: app/templates/edit_patient.html:314
+msgid "What activities are difficult or impossible to perform?"
+msgstr ""
+
+#: app/templates/edit_patient.html:318
+msgid "Range of motion limitations"
+msgstr ""
+
+#: app/templates/edit_patient.html:320
+msgid "Which movements are limited?"
+msgstr ""
+
+#: app/templates/edit_patient.html:323
+msgid "Strength deficits"
+msgstr ""
+
+#: app/templates/edit_patient.html:325
+msgid "Areas of weakness or strength loss"
+msgstr ""
+
+#: app/templates/edit_patient.html:329
+msgid "Special tests and observations"
+msgstr ""
+
+#: app/templates/edit_patient.html:331
+msgid "Results of specific tests, postural observations, gait analysis, etc."
+msgstr ""
+
+#: app/templates/edit_patient.html:340
+msgid ""
+"Comprehensive clinical history is mandatory before creating any treatment"
+" records."
+msgstr ""
+
+#: app/templates/edit_patient.html:348
 msgid "Patient Portal Access"
 msgstr ""
 
-#: app/templates/edit_patient.html:110
+#: app/templates/edit_patient.html:349
 msgid ""
 "Manage the patient's login credentials to access their exercise "
 "prescriptions."
 msgstr ""
 
-#: app/templates/edit_patient.html:113 app/templates/new_patient.html:54
+#: app/templates/edit_patient.html:352 app/templates/new_patient.html:948
+#: app/templates/new_patient_backup.html:984
+#: app/templates/new_patient_backup_final.html:943
+#: app/templates/new_patient_old.html:943
 msgid "Login Email"
 msgstr ""
 
-#: app/templates/edit_patient.html:118
+#: app/templates/edit_patient.html:357
 msgid "Enter an email and password below to create a login."
 msgstr ""
 
-#: app/templates/edit_patient.html:124
+#: app/templates/edit_patient.html:363
 msgid "Leave blank to keep current password"
 msgstr ""
 
-#: app/templates/edit_patient.html:125
+#: app/templates/edit_patient.html:364
 msgid "Only enter a new password if you want to change it."
 msgstr ""
 
-#: app/templates/edit_patient.html:133 app/templates/edit_patient.html:199
+#: app/templates/edit_patient.html:372 app/templates/edit_patient.html:438
 msgid "Merge Patient"
 msgstr ""
 
-#: app/templates/edit_patient.html:136
+#: app/templates/edit_patient.html:375
 msgid "Delete Patient"
 msgstr ""
 
-#: app/templates/edit_patient.html:143 app/templates/user_settings.html:88
-#: app/templates/user_settings.html:202 app/templates/user_settings.html:289
+#: app/templates/edit_patient.html:382 app/templates/user_settings.html:99
+#: app/templates/user_settings.html:226 app/templates/user_settings.html:313
 msgid "Save Changes"
 msgstr ""
 
-#: app/templates/edit_patient.html:158 app/templates/locations/manage.html:110
+#: app/templates/edit_patient.html:397 app/templates/locations/manage.html:110
 msgid "Confirm Delete"
 msgstr ""
 
-#: app/templates/edit_patient.html:162
+#: app/templates/edit_patient.html:401
 msgid ""
 "Are you sure you want to permanently delete this patient? This action "
 "cannot be undone."
 msgstr ""
 
-#: app/templates/edit_patient.html:168
+#: app/templates/edit_patient.html:407
 msgid "Yes, Delete"
 msgstr ""
 
-#: app/templates/edit_patient.html:180
+#: app/templates/edit_patient.html:419
 msgid "Confirm Cancel"
 msgstr ""
 
-#: app/templates/edit_patient.html:184
+#: app/templates/edit_patient.html:423
 msgid "Are you sure you want to cancel? Any unsaved changes will be lost."
 msgstr ""
 
-#: app/templates/edit_patient.html:187
+#: app/templates/edit_patient.html:426
 msgid "No, Continue Editing"
 msgstr ""
 
-#: app/templates/edit_patient.html:188
+#: app/templates/edit_patient.html:427
 msgid "Yes, Cancel"
 msgstr ""
 
-#: app/templates/edit_patient.html:205
+#: app/templates/edit_patient.html:444
 msgid "This will merge the current patient ("
 msgstr ""
 
-#: app/templates/edit_patient.html:205
+#: app/templates/edit_patient.html:444
 msgid ""
 ") with another patient profile. All treatments, reports, and data will be"
 " transferred to the target patient, and this patient will be deleted."
 msgstr ""
 
-#: app/templates/edit_patient.html:209
+#: app/templates/edit_patient.html:448
 msgid "Search for target patient to merge with:"
 msgstr ""
 
-#: app/templates/edit_patient.html:213
+#: app/templates/edit_patient.html:452
 msgid "Enter patient name or contact information..."
 msgstr ""
 
-#: app/templates/edit_patient.html:214
+#: app/templates/edit_patient.html:453
 msgid "Start typing to search for patients"
 msgstr ""
 
-#: app/templates/edit_patient.html:218
+#: app/templates/edit_patient.html:457
 msgid "Search Results:"
 msgstr ""
 
-#: app/templates/edit_patient.html:225
+#: app/templates/edit_patient.html:464
 msgid "Selected Target Patient:"
 msgstr ""
 
-#: app/templates/edit_patient.html:238
+#: app/templates/edit_patient.html:477
 msgid "Confirm Merge"
 msgstr ""
 
-#: app/templates/edit_patient.html:370
+#: app/templates/edit_patient.html:894
 msgid "Contact"
 msgstr ""
 
-#: app/templates/edit_patient.html:370 app/templates/edit_patient.html:374
-#: app/templates/patient_detail.html:150 app/templates/patient_detail.html:151
+#: app/templates/edit_patient.html:894 app/templates/edit_patient.html:898
+#: app/templates/patient_detail.html:170 app/templates/patient_detail.html:171
+#: app/templates/patient_detail_BACKUP.html:170
+#: app/templates/patient_detail_BACKUP.html:171
 msgid "Not provided"
 msgstr ""
 
-#: app/templates/edit_patient.html:375
+#: app/templates/edit_patient.html:899
 msgid "ID"
 msgstr ""
 
@@ -1088,148 +1627,256 @@ msgstr ""
 msgid "Annual Total"
 msgstr ""
 
-#: app/templates/index.html:125
+#: app/templates/index.html:216
 msgid "🚀 Welcome to TRXCKER! Let's get you set up."
 msgstr ""
 
-#: app/templates/index.html:129
+#: app/templates/index.html:220
 msgid ""
 "To personalize your experience and unlock all features, please complete "
 "these first steps:"
 msgstr ""
 
-#: app/templates/index.html:132
+#: app/templates/index.html:223
 msgid "Step 1: Complete Your Profile"
 msgstr ""
 
-#: app/templates/index.html:134
+#: app/templates/index.html:225
 msgid "Add your name and professional details."
 msgstr ""
 
-#: app/templates/index.html:137
+#: app/templates/index.html:228
 msgid "Step 2: Connect Your Tools (Optional)"
 msgstr ""
 
-#: app/templates/index.html:139
+#: app/templates/index.html:230
 msgid "Integrate with Calendly to sync your appointments automatically."
 msgstr ""
 
-#: app/templates/index.html:142
+#: app/templates/index.html:233
 msgid "Step 3: Add Your First Patient"
 msgstr ""
 
-#: app/templates/index.html:144
+#: app/templates/index.html:235
 msgid "Start managing your patient records and treatments."
 msgstr ""
 
-#: app/templates/index.html:157
+#: app/templates/index.html:248
 #, python-format
 msgid "Welcome back, %(username)s!"
 msgstr ""
 
-#: app/templates/index.html:159
+#: app/templates/index.html:250
 msgid "Here's an overview of your clinic's activity."
 msgstr ""
 
-#: app/templates/index.html:168 app/templates/pricing.html:309
+#: app/templates/index.html:259 app/templates/pricing.html:309
 #: app/templates/pricing.html:396
 msgid "Current Plan"
 msgstr ""
 
-#: app/templates/index.html:172
+#: app/templates/index.html:263
 msgid "Ends"
 msgstr ""
 
-#: app/templates/index.html:172
+#: app/templates/index.html:263
 msgid "Renews"
 msgstr ""
 
-#: app/templates/index.html:176
+#: app/templates/index.html:267
 msgid "Upgrade Plan"
 msgstr ""
 
-#: app/templates/index.html:178
+#: app/templates/index.html:269
 msgid "Manage Plan"
 msgstr ""
 
-#: app/templates/index.html:190
+#: app/templates/index.html:281
 msgid "Patient Capacity"
 msgstr ""
 
-#: app/templates/index.html:202 app/templates/patients_list.html:43
+#: app/templates/index.html:293 app/templates/patients_list.html:43
 msgid "Limit Reached!"
 msgstr ""
 
-#: app/templates/index.html:203 app/templates/patients_list.html:44
+#: app/templates/index.html:294 app/templates/patients_list.html:44
 msgid "Upgrade"
 msgstr ""
 
-#: app/templates/index.html:205 app/templates/patients_list.html:46
+#: app/templates/index.html:296 app/templates/patients_list.html:46
 msgid "Nearing Limit"
 msgstr ""
 
-#: app/templates/index.html:213
+#: app/templates/index.html:304
 msgid "Unlimited Patients"
 msgstr ""
 
-#: app/templates/index.html:225
+#: app/templates/index.html:316
 msgid "Currently under treatment"
 msgstr ""
 
-#: app/templates/index.html:233
+#: app/templates/index.html:324
 msgid "Today's Appointments"
 msgstr ""
 
-#: app/templates/index.html:236
+#: app/templates/index.html:327
 msgid "Scheduled for today"
 msgstr ""
 
-#: app/templates/index.html:247
+#: app/templates/index.html:338
 msgid "Patients needing review"
 msgstr ""
 
-#: app/templates/index.html:264
+#: app/templates/index.html:355
 msgid "Upcoming Appointments"
 msgstr ""
 
-#: app/templates/index.html:265
+#: app/templates/index.html:356
 msgid "View All"
 msgstr ""
 
-#: app/templates/index.html:323
+#: app/templates/index.html:414
 msgid "No upcoming appointments"
 msgstr ""
 
-#: app/templates/index.html:325
+#: app/templates/index.html:416
 msgid "Schedule Appointment"
 msgstr ""
 
-#: app/templates/index.html:419
-msgid "Current Patients"
+#: app/templates/index.html:509 app/templates/welcome_modal.html:22
+msgid "Personal Info"
 msgstr ""
 
-#: app/templates/index.html:420
-msgid "Remaining Capacity"
+#: app/templates/index.html:512 app/templates/welcome_modal.html:23
+msgid "Work Setup"
 msgstr ""
 
-#: app/templates/index.html:438
-msgid "Limit"
+#: app/templates/index.html:515 app/templates/welcome_modal.html:24
+msgid "Clinic Info"
 msgstr ""
 
-#: app/templates/index.html:438
-msgid "Over!"
+#: app/templates/index.html:518 app/templates/locations/manage.html:50
+#: app/templates/welcome_modal.html:25
+msgid "Fees"
 msgstr ""
 
-#: app/templates/index.html:539
-msgid "Error fetching results."
+#: app/templates/index.html:529
+msgid "Let's get to know you!"
 msgstr ""
 
-#: app/templates/index.html:551
-msgid "No patients found."
+#: app/templates/index.html:530
+msgid "Which language would you prefer to use?"
 msgstr ""
 
-#: app/templates/index.html:555
-msgid "An error occurred."
+#: app/templates/index.html:543 app/templates/welcome_modal.html:56
+msgid "Nice to meet you!"
+msgstr ""
+
+#: app/templates/index.html:544
+msgid "What should we call you?"
+msgstr ""
+
+#: app/templates/index.html:562
+msgid "Professional Registration"
+msgstr ""
+
+#: app/templates/index.html:562
+msgid "Optional"
+msgstr ""
+
+#: app/templates/index.html:566
+msgid "e.g. 12345"
+msgstr ""
+
+#: app/templates/index.html:580
+msgid "Tell us about your work"
+msgstr ""
+
+#: app/templates/index.html:581
+msgid "Are you self-employed or do you work in a clinic?"
+msgstr ""
+
+#: app/templates/index.html:591
+msgid "Freelancer"
+msgstr ""
+
+#: app/templates/index.html:592
+msgid "I work independently"
+msgstr ""
+
+#: app/templates/index.html:602
+msgid "Clinic Employee"
+msgstr ""
+
+#: app/templates/index.html:603
+msgid "I work in a clinic"
+msgstr ""
+
+#: app/templates/index.html:613
+msgid "Both"
+msgstr ""
+
+#: app/templates/index.html:614
+msgid "I do both freelance and clinic work"
+msgstr ""
+
+#: app/templates/index.html:634 app/templates/welcome_modal.html:133
+msgid "About your clinic"
+msgstr ""
+
+#: app/templates/index.html:635
+msgid "If you work in a clinic, tell us about it"
+msgstr ""
+
+#: app/templates/index.html:664 app/templates/welcome_modal.html:168
+msgid "Perfect!"
+msgstr ""
+
+#: app/templates/index.html:665
+msgid "We'll help you configure your fees in the next step."
+msgstr ""
+
+#: app/templates/index.html:672
+msgid "Fee structure"
+msgstr ""
+
+#: app/templates/index.html:673
+msgid "What do you typically charge for your sessions?"
+msgstr ""
+
+#: app/templates/index.html:700 app/templates/welcome_modal.html:210
+msgid "Previous"
+msgstr ""
+
+#: app/templates/index.html:703 app/templates/welcome_modal.html:213
+msgid "Next"
+msgstr ""
+
+#: app/templates/index.html:1246
+msgid "Are you sure you want to exit?"
+msgstr ""
+
+#: app/templates/index.html:1249
+msgid ""
+"If you exit now, some features may not work properly. You can always "
+"complete the setup later from your account settings."
+msgstr ""
+
+#: app/templates/index.html:1252
+msgid "Continue setup"
+msgstr ""
+
+#: app/templates/index.html:1253
+msgid "Yes, exit setup"
+msgstr ""
+
+#: app/templates/manage_subscription.html:2
+#: app/templates/manage_subscription.html:9 app/templates/my_account.html:49
+msgid "Manage Subscription"
+msgstr ""
+
+#: app/templates/manage_subscription.html:12
+msgid "Subscription management coming soon..."
 msgstr ""
 
 #: app/templates/monitoring.html:3 app/templates/monitoring.html:10
@@ -1312,10 +1959,6 @@ msgstr ""
 msgid "Security events viewing requires additional backend implementation"
 msgstr ""
 
-#: app/templates/my_account.html:49
-msgid "Manage Subscription"
-msgstr ""
-
 #: app/templates/my_account.html:52
 msgid "Profile"
 msgstr ""
@@ -1328,7 +1971,8 @@ msgstr ""
 msgid "Current Subscription"
 msgstr ""
 
-#: app/templates/my_account.html:76 app/templates/patient_detail.html:152
+#: app/templates/my_account.html:76 app/templates/patient_detail.html:172
+#: app/templates/patient_detail_BACKUP.html:172
 msgid "Status:"
 msgstr ""
 
@@ -1459,488 +2103,2354 @@ msgid "Manage Billing Details on Stripe"
 msgstr ""
 
 #: app/templates/new_patient.html:4 app/templates/new_patient.html:12
+#: app/templates/new_patient_backup.html:4
+#: app/templates/new_patient_backup.html:12
+#: app/templates/new_patient_backup_final.html:4
+#: app/templates/new_patient_backup_final.html:12
+#: app/templates/new_patient_old.html:4 app/templates/new_patient_old.html:12
 msgid "New Patient"
 msgstr ""
 
-#: app/templates/new_patient.html:50
+#: app/templates/new_patient.html:13 app/templates/new_patient_backup.html:13
+#: app/templates/new_patient_backup_final.html:13
+#: app/templates/new_patient_old.html:13
+msgid ""
+"Complete the anamnesis (clinical history) before proceeding to patient "
+"data"
+msgstr ""
+
+#: app/templates/new_patient.html:22 app/templates/new_patient_backup.html:22
+#: app/templates/new_patient_backup_final.html:22
+#: app/templates/new_patient_old.html:22
+msgid "Anamnesis & Patient Data"
+msgstr ""
+
+#: app/templates/new_patient.html:26 app/templates/new_patient_backup.html:26
+#: app/templates/new_patient_backup_final.html:26
+#: app/templates/new_patient_old.html:26
+msgid "Portal Access"
+msgstr ""
+
+#: app/templates/new_patient.html:39 app/templates/new_patient_backup.html:39
+#: app/templates/new_patient_backup_final.html:39
+#: app/templates/new_patient_old.html:39
+msgid "Complete Patient Information & Clinical History"
+msgstr ""
+
+#: app/templates/new_patient.html:40 app/templates/new_patient_backup.html:40
+#: app/templates/new_patient_backup_final.html:40
+#: app/templates/new_patient_old.html:40
+msgid ""
+"Fill in patient data and clinical history. This information is essential "
+"for proper treatment planning."
+msgstr ""
+
+#: app/templates/new_patient.html:47 app/templates/new_patient_backup.html:47
+#: app/templates/new_patient_backup_final.html:47
+#: app/templates/new_patient_old.html:47
+msgid "Patient Data"
+msgstr ""
+
+#: app/templates/new_patient.html:85 app/templates/new_patient_backup.html:129
+#: app/templates/new_patient_backup_final.html:85
+#: app/templates/new_patient_old.html:85
+msgid "Basic Patient Information"
+msgstr ""
+
+#: app/templates/new_patient.html:98 app/templates/new_patient_backup.html:142
+#: app/templates/new_patient_backup_final.html:98
+#: app/templates/new_patient_old.html:98
+msgid "Primary Contact"
+msgstr ""
+
+#: app/templates/new_patient.html:99 app/templates/new_patient_backup.html:143
+#: app/templates/new_patient_backup_final.html:99
+#: app/templates/new_patient_old.html:99
+msgid "Phone number or email"
+msgstr ""
+
+#: app/templates/new_patient.html:102 app/templates/new_patient_backup.html:146
+#: app/templates/new_patient_backup_final.html:102
+#: app/templates/new_patient_old.html:102
+msgid "Email Address"
+msgstr ""
+
+#: app/templates/new_patient.html:120 app/templates/new_patient_backup.html:164
+#: app/templates/new_patient_backup_final.html:120
+#: app/templates/new_patient_old.html:120
+msgid "Address Information"
+msgstr ""
+
+#: app/templates/new_patient.html:123 app/templates/new_patient_backup.html:167
+#: app/templates/new_patient_backup_final.html:123
+#: app/templates/new_patient_old.html:123
+msgid "Address Line 1"
+msgstr ""
+
+#: app/templates/new_patient.html:124 app/templates/new_patient_backup.html:168
+#: app/templates/new_patient_backup_final.html:124
+#: app/templates/new_patient_old.html:124
+msgid "Street address"
+msgstr ""
+
+#: app/templates/new_patient.html:127 app/templates/new_patient_backup.html:171
+#: app/templates/new_patient_backup_final.html:127
+#: app/templates/new_patient_old.html:127
+msgid "Address Line 2"
+msgstr ""
+
+#: app/templates/new_patient.html:128 app/templates/new_patient_backup.html:172
+#: app/templates/new_patient_backup_final.html:128
+#: app/templates/new_patient_old.html:128
+msgid "Apartment, suite, etc."
+msgstr ""
+
+#: app/templates/new_patient.html:131 app/templates/new_patient_backup.html:175
+#: app/templates/new_patient_backup_final.html:131
+#: app/templates/new_patient_old.html:131
+msgid "City"
+msgstr ""
+
+#: app/templates/new_patient.html:135 app/templates/new_patient_backup.html:179
+#: app/templates/new_patient_backup_final.html:135
+#: app/templates/new_patient_old.html:135
+msgid "Postal Code"
+msgstr ""
+
+#: app/templates/new_patient.html:139 app/templates/new_patient_backup.html:183
+#: app/templates/new_patient_backup_final.html:139
+#: app/templates/new_patient_old.html:139
+msgid "Preferred Treatment Location"
+msgstr ""
+
+#: app/templates/new_patient.html:141 app/templates/new_patient_backup.html:185
+#: app/templates/new_patient_backup_final.html:141
+#: app/templates/new_patient_old.html:141
+msgid "Select location"
+msgstr ""
+
+#: app/templates/new_patient.html:150 app/templates/new_patient_backup.html:194
+#: app/templates/new_patient_backup_final.html:150
+#: app/templates/new_patient_old.html:150
+msgid "Basic Medical Information"
+msgstr ""
+
+#: app/templates/new_patient.html:153 app/templates/new_patient_backup.html:197
+#: app/templates/new_patient_backup_final.html:153
+#: app/templates/new_patient_old.html:153
+msgid "Primary Diagnosis"
+msgstr ""
+
+#: app/templates/new_patient.html:154 app/templates/new_patient_backup.html:198
+#: app/templates/new_patient_backup_final.html:154
+#: app/templates/new_patient_old.html:154
+msgid "Primary condition being treated"
+msgstr ""
+
+#: app/templates/new_patient.html:169 app/templates/new_patient_backup.html:213
+#: app/templates/new_patient_backup_final.html:169
+#: app/templates/new_patient_old.html:169
+msgid "Personal Details"
+msgstr ""
+
+#: app/templates/new_patient.html:182 app/templates/new_patient_backup.html:226
+#: app/templates/new_patient_backup_final.html:182
+#: app/templates/new_patient_old.html:182
+msgid "Treatment Planning"
+msgstr ""
+
+#: app/templates/new_patient.html:186 app/templates/new_patient_backup.html:230
+#: app/templates/new_patient_backup_final.html:186
+#: app/templates/new_patient_old.html:186
+msgid "Initial treatment strategy and goals"
+msgstr ""
+
+#: app/templates/new_patient.html:190 app/templates/new_patient_backup.html:234
+#: app/templates/new_patient_backup_final.html:190
+#: app/templates/new_patient_old.html:190
+msgid "Any other relevant information"
+msgstr ""
+
+#: app/templates/new_patient.html:197
+#: app/templates/new_patient_backup_final.html:197
+#: app/templates/new_patient_old.html:197
+msgid "Reason for Todays Visit"
+msgstr ""
+
+#: app/templates/new_patient.html:202 app/templates/new_patient_backup.html:246
+#: app/templates/new_patient_backup_final.html:202
+#: app/templates/new_patient_old.html:202
+msgid "Quick Diagnosis Selection"
+msgstr ""
+
+#: app/templates/new_patient.html:205 app/templates/new_patient_backup.html:249
+#: app/templates/new_patient_backup_final.html:205
+#: app/templates/new_patient_old.html:205
+msgid "Select a common diagnosis..."
+msgstr ""
+
+#: app/templates/new_patient.html:206 app/templates/new_patient_backup.html:250
+#: app/templates/new_patient_backup_final.html:206
+#: app/templates/new_patient_old.html:206
+msgid "Musculoskeletal"
+msgstr ""
+
+#: app/templates/new_patient.html:207 app/templates/new_patient_backup.html:251
+#: app/templates/new_patient_backup_final.html:207
+#: app/templates/new_patient_old.html:207
+msgid "Tendinopathy"
+msgstr ""
+
+#: app/templates/new_patient.html:208 app/templates/new_patient_backup.html:252
+#: app/templates/new_patient_backup_final.html:208
+#: app/templates/new_patient_old.html:208
+msgid "Grade II Sprain"
+msgstr ""
+
+#: app/templates/new_patient.html:209 app/templates/new_patient_backup.html:253
+#: app/templates/new_patient_backup_final.html:209
+#: app/templates/new_patient_old.html:209
+msgid "Grade I Sprain"
+msgstr ""
+
+#: app/templates/new_patient.html:210 app/templates/new_patient_backup.html:254
+#: app/templates/new_patient_backup_final.html:210
+#: app/templates/new_patient_old.html:210
+msgid "Muscle Strain"
+msgstr ""
+
+#: app/templates/new_patient.html:211 app/templates/new_patient_backup.html:255
+#: app/templates/new_patient_backup_final.html:211
+#: app/templates/new_patient_old.html:211
+msgid "Joint Stiffness"
+msgstr ""
+
+#: app/templates/new_patient.html:212 app/templates/new_patient.html:325
+#: app/templates/new_patient_backup.html:256
+#: app/templates/new_patient_backup.html:369
+#: app/templates/new_patient_backup_final.html:212
+#: app/templates/new_patient_backup_final.html:325
+#: app/templates/new_patient_old.html:212
+#: app/templates/new_patient_old.html:325
+msgid "Chronic Pain"
+msgstr ""
+
+#: app/templates/new_patient.html:214 app/templates/new_patient_backup.html:258
+#: app/templates/new_patient_backup_final.html:214
+#: app/templates/new_patient_old.html:214
+msgid "Spine"
+msgstr ""
+
+#: app/templates/new_patient.html:215 app/templates/new_patient_backup.html:259
+#: app/templates/new_patient_backup_final.html:215
+#: app/templates/new_patient_old.html:215
+msgid "Lower Back Pain"
+msgstr ""
+
+#: app/templates/new_patient.html:216 app/templates/new_patient_backup.html:260
+#: app/templates/new_patient_backup_final.html:216
+#: app/templates/new_patient_old.html:216
+msgid "Cervical Pain"
+msgstr ""
+
+#: app/templates/new_patient.html:217 app/templates/new_patient_backup.html:261
+#: app/templates/new_patient_backup_final.html:217
+#: app/templates/new_patient_old.html:217
+msgid "Herniated Disc"
+msgstr ""
+
+#: app/templates/new_patient.html:218 app/templates/new_patient_backup.html:262
+#: app/templates/new_patient_backup_final.html:218
+#: app/templates/new_patient_old.html:218
+msgid "Sciatica"
+msgstr ""
+
+#: app/templates/new_patient.html:219 app/templates/new_patient_backup.html:263
+#: app/templates/new_patient_backup_final.html:219
+#: app/templates/new_patient_old.html:219
+msgid "Whiplash"
+msgstr ""
+
+#: app/templates/new_patient.html:221 app/templates/new_patient_backup.html:265
+#: app/templates/new_patient_backup_final.html:221
+#: app/templates/new_patient_old.html:221
+msgid "Sports Injuries"
+msgstr ""
+
+#: app/templates/new_patient.html:222
+#: app/templates/new_patient_backup_final.html:222
+#: app/templates/new_patient_old.html:222
+msgid "Runners Knee"
+msgstr ""
+
+#: app/templates/new_patient.html:223 app/templates/new_patient_backup.html:267
+#: app/templates/new_patient_backup_final.html:223
+#: app/templates/new_patient_old.html:223
+msgid "Tennis Elbow"
+msgstr ""
+
+#: app/templates/new_patient.html:224 app/templates/new_patient_backup.html:268
+#: app/templates/new_patient_backup_final.html:224
+#: app/templates/new_patient_old.html:224
+msgid "Shoulder Impingement"
+msgstr ""
+
+#: app/templates/new_patient.html:225 app/templates/new_patient_backup.html:269
+#: app/templates/new_patient_backup_final.html:225
+#: app/templates/new_patient_old.html:225
+msgid "ACL Injury"
+msgstr ""
+
+#: app/templates/new_patient.html:226 app/templates/new_patient_backup.html:270
+#: app/templates/new_patient_backup_final.html:226
+#: app/templates/new_patient_old.html:226
+msgid "Rotator Cuff Injury"
+msgstr ""
+
+#: app/templates/new_patient.html:228 app/templates/new_patient_backup.html:272
+#: app/templates/new_patient_backup_final.html:228
+#: app/templates/new_patient_old.html:228
+msgid "Post-Surgical"
+msgstr ""
+
+#: app/templates/new_patient.html:229 app/templates/new_patient_backup.html:273
+#: app/templates/new_patient_backup_final.html:229
+#: app/templates/new_patient_old.html:229
+msgid "Post-Surgery Knee Rehabilitation"
+msgstr ""
+
+#: app/templates/new_patient.html:230 app/templates/new_patient_backup.html:274
+#: app/templates/new_patient_backup_final.html:230
+#: app/templates/new_patient_old.html:230
+msgid "Post-Surgery Shoulder Rehabilitation"
+msgstr ""
+
+#: app/templates/new_patient.html:231 app/templates/new_patient_backup.html:275
+#: app/templates/new_patient_backup_final.html:231
+#: app/templates/new_patient_old.html:231
+msgid "Post-Surgery Hip Rehabilitation"
+msgstr ""
+
+#: app/templates/new_patient.html:250 app/templates/new_patient_backup.html:294
+#: app/templates/new_patient_backup_final.html:250
+#: app/templates/new_patient_old.html:250
+msgid "Approximate date when symptoms began"
+msgstr ""
+
+#: app/templates/new_patient.html:255 app/templates/new_patient_backup.html:299
+#: app/templates/new_patient_backup_final.html:255
+#: app/templates/new_patient_old.html:255
+msgid "Select mechanism..."
+msgstr ""
+
+#: app/templates/new_patient.html:256 app/templates/new_patient_backup.html:300
+#: app/templates/new_patient_backup_final.html:256
+#: app/templates/new_patient_old.html:256
+msgid "Sudden onset"
+msgstr ""
+
+#: app/templates/new_patient.html:257 app/templates/new_patient_backup.html:301
+#: app/templates/new_patient_backup_final.html:257
+#: app/templates/new_patient_old.html:257
+msgid "Gradual onset"
+msgstr ""
+
+#: app/templates/new_patient.html:258 app/templates/new_patient_backup.html:302
+#: app/templates/new_patient_backup_final.html:258
+#: app/templates/new_patient_old.html:258
+msgid "Trauma/Accident"
+msgstr ""
+
+#: app/templates/new_patient.html:259 app/templates/new_patient_backup.html:303
+#: app/templates/new_patient_backup_final.html:259
+#: app/templates/new_patient_old.html:259
+msgid "Overuse/Repetitive"
+msgstr ""
+
+#: app/templates/new_patient.html:260 app/templates/new_patient_backup.html:304
+#: app/templates/new_patient_backup_final.html:260
+#: app/templates/new_patient_old.html:260
+msgid "Sports activity"
+msgstr ""
+
+#: app/templates/new_patient.html:261 app/templates/new_patient_backup.html:305
+#: app/templates/new_patient_backup_final.html:261
+#: app/templates/new_patient_old.html:261
+msgid "Work-related"
+msgstr ""
+
+#: app/templates/new_patient.html:262 app/templates/new_patient_backup.html:306
+#: app/templates/new_patient_backup_final.html:262
+#: app/templates/new_patient_old.html:262
+msgid "Unknown/Idiopathic"
+msgstr ""
+
+#: app/templates/new_patient.html:268 app/templates/new_patient_backup.html:312
+#: app/templates/new_patient_backup_final.html:268
+#: app/templates/new_patient_old.html:268
+msgid "Additional onset details"
+msgstr ""
+
+#: app/templates/new_patient.html:270 app/templates/new_patient_backup.html:314
+#: app/templates/new_patient_backup_final.html:270
+#: app/templates/new_patient_old.html:270
+msgid "e.g., after lifting heavy box, during morning run, working at computer..."
+msgstr ""
+
+#: app/templates/new_patient.html:276 app/templates/new_patient_backup.html:320
+#: app/templates/new_patient_backup_final.html:276
+#: app/templates/new_patient_old.html:276
+msgid "Previous Medical History"
+msgstr ""
+
+#: app/templates/new_patient.html:281 app/templates/new_patient_backup.html:325
+#: app/templates/new_patient_backup_final.html:281
+#: app/templates/new_patient_old.html:281
+msgid "Common Previous Conditions"
+msgstr ""
+
+#: app/templates/new_patient.html:287 app/templates/new_patient.html:440
+#: app/templates/new_patient_backup.html:331
+#: app/templates/new_patient_backup.html:481
+#: app/templates/new_patient_backup_final.html:287
+#: app/templates/new_patient_backup_final.html:440
+#: app/templates/new_patient_old.html:287
+#: app/templates/new_patient_old.html:440
+msgid "Diabetes"
+msgstr ""
+
+#: app/templates/new_patient.html:291 app/templates/new_patient.html:456
+#: app/templates/new_patient_backup.html:335
+#: app/templates/new_patient_backup.html:497
+#: app/templates/new_patient_backup_final.html:291
+#: app/templates/new_patient_backup_final.html:456
+#: app/templates/new_patient_old.html:291
+#: app/templates/new_patient_old.html:456
+msgid "Hypertension"
+msgstr ""
+
+#: app/templates/new_patient.html:295 app/templates/new_patient.html:462
+#: app/templates/new_patient_backup.html:339
+#: app/templates/new_patient_backup.html:503
+#: app/templates/new_patient_backup_final.html:295
+#: app/templates/new_patient_backup_final.html:462
+#: app/templates/new_patient_old.html:295
+#: app/templates/new_patient_old.html:462
+msgid "Arthritis"
+msgstr ""
+
+#: app/templates/new_patient.html:299 app/templates/new_patient.html:466
+#: app/templates/new_patient_backup.html:343
+#: app/templates/new_patient_backup.html:507
+#: app/templates/new_patient_backup_final.html:299
+#: app/templates/new_patient_backup_final.html:466
+#: app/templates/new_patient_old.html:299
+#: app/templates/new_patient_old.html:466
+msgid "Osteoporosis"
+msgstr ""
+
+#: app/templates/new_patient.html:303 app/templates/new_patient_backup.html:347
+#: app/templates/new_patient_backup_final.html:303
+#: app/templates/new_patient_old.html:303
+msgid "Fibromyalgia"
+msgstr ""
+
+#: app/templates/new_patient.html:309 app/templates/new_patient.html:444
+#: app/templates/new_patient_backup.html:353
+#: app/templates/new_patient_backup.html:485
+#: app/templates/new_patient_backup_final.html:309
+#: app/templates/new_patient_backup_final.html:444
+#: app/templates/new_patient_old.html:309
+#: app/templates/new_patient_old.html:444
+msgid "Heart Disease"
+msgstr ""
+
+#: app/templates/new_patient.html:313 app/templates/new_patient_backup.html:357
+#: app/templates/new_patient_backup_final.html:313
+#: app/templates/new_patient_old.html:313
+msgid "Asthma"
+msgstr ""
+
+#: app/templates/new_patient.html:317 app/templates/new_patient_backup.html:361
+#: app/templates/new_patient_backup_final.html:317
+#: app/templates/new_patient_old.html:317
+msgid "Depression/Anxiety"
+msgstr ""
+
+#: app/templates/new_patient.html:321 app/templates/new_patient_backup.html:365
+#: app/templates/new_patient_backup_final.html:321
+#: app/templates/new_patient_old.html:321
+msgid "Thyroid Disorders"
+msgstr ""
+
+#: app/templates/new_patient.html:332 app/templates/new_patient_backup.html:376
+#: app/templates/new_patient_backup_final.html:332
+#: app/templates/new_patient_old.html:332
+msgid "Other previous conditions"
+msgstr ""
+
+#: app/templates/new_patient.html:334 app/templates/new_patient_backup.html:378
+#: app/templates/new_patient_backup_final.html:334
+#: app/templates/new_patient_old.html:334
+msgid "Any other medical conditions not listed above..."
+msgstr ""
+
+#: app/templates/new_patient.html:358
+#: app/templates/new_patient_backup_final.html:358
+#: app/templates/new_patient_old.html:358
+msgid "Add Surgery"
+msgstr ""
+
+#: app/templates/new_patient.html:368 app/templates/new_patient_backup.html:409
+#: app/templates/new_patient_backup_final.html:368
+#: app/templates/new_patient_old.html:368
+msgid ""
+"Include prescription drugs, supplements, and over-the-counter medications"
+" with dosages..."
+msgstr ""
+
+#: app/templates/new_patient.html:374 app/templates/new_patient_backup.html:415
+#: app/templates/new_patient_backup_final.html:374
+#: app/templates/new_patient_old.html:374
+msgid "Known allergies"
+msgstr ""
+
+#: app/templates/new_patient.html:380 app/templates/new_patient_backup.html:421
+#: app/templates/new_patient_backup_final.html:380
+#: app/templates/new_patient_old.html:380
+msgid "Penicillin"
+msgstr ""
+
+#: app/templates/new_patient.html:384 app/templates/new_patient_backup.html:425
+#: app/templates/new_patient_backup_final.html:384
+#: app/templates/new_patient_old.html:384
+msgid "NSAIDs"
+msgstr ""
+
+#: app/templates/new_patient.html:388 app/templates/new_patient_backup.html:429
+#: app/templates/new_patient_backup_final.html:388
+#: app/templates/new_patient_old.html:388
+msgid "Latex"
+msgstr ""
+
+#: app/templates/new_patient.html:394 app/templates/new_patient_backup.html:435
+#: app/templates/new_patient_backup_final.html:394
+#: app/templates/new_patient_old.html:394
+msgid "Nuts"
+msgstr ""
+
+#: app/templates/new_patient.html:398 app/templates/new_patient_backup.html:439
+#: app/templates/new_patient_backup_final.html:398
+#: app/templates/new_patient_old.html:398
+msgid "Shellfish"
+msgstr ""
+
+#: app/templates/new_patient.html:402 app/templates/new_patient_backup.html:443
+#: app/templates/new_patient_backup_final.html:402
+#: app/templates/new_patient_old.html:402
+msgid "Dairy"
+msgstr ""
+
+#: app/templates/new_patient.html:408 app/templates/new_patient_backup.html:449
+#: app/templates/new_patient_backup_final.html:408
+#: app/templates/new_patient_old.html:408
+msgid "Pollen"
+msgstr ""
+
+#: app/templates/new_patient.html:412 app/templates/new_patient_backup.html:453
+#: app/templates/new_patient_backup_final.html:412
+#: app/templates/new_patient_old.html:412
+msgid "Dust mites"
+msgstr ""
+
+#: app/templates/new_patient.html:416 app/templates/new_patient_backup.html:457
+#: app/templates/new_patient_backup_final.html:416
+#: app/templates/new_patient_old.html:416
+msgid "No known allergies"
+msgstr ""
+
+#: app/templates/new_patient.html:422 app/templates/new_patient_backup.html:463
+#: app/templates/new_patient_backup_final.html:422
+#: app/templates/new_patient_old.html:422
+msgid "Other allergies or specific reactions..."
+msgstr ""
+
+#: app/templates/new_patient.html:429 app/templates/new_patient_backup.html:470
+#: app/templates/new_patient_backup_final.html:429
+#: app/templates/new_patient_old.html:429
+msgid "Family Medical History"
+msgstr ""
+
+#: app/templates/new_patient.html:434 app/templates/new_patient_backup.html:475
+#: app/templates/new_patient_backup_final.html:434
+#: app/templates/new_patient_old.html:434
+msgid "Common family conditions"
+msgstr ""
+
+#: app/templates/new_patient.html:448 app/templates/new_patient_backup.html:489
+#: app/templates/new_patient_backup_final.html:448
+#: app/templates/new_patient_old.html:448
+msgid "Cancer"
+msgstr ""
+
+#: app/templates/new_patient.html:452 app/templates/new_patient_backup.html:493
+#: app/templates/new_patient_backup_final.html:452
+#: app/templates/new_patient_old.html:452
+msgid "Stroke"
+msgstr ""
+
+#: app/templates/new_patient.html:470 app/templates/new_patient_backup.html:511
+#: app/templates/new_patient_backup_final.html:470
+#: app/templates/new_patient_old.html:470
+msgid "Mental Health Disorders"
+msgstr ""
+
+#: app/templates/new_patient.html:474 app/templates/new_patient_backup.html:515
+#: app/templates/new_patient_backup_final.html:474
+#: app/templates/new_patient_old.html:474
+msgid "Autoimmune Disorders"
+msgstr ""
+
+#: app/templates/new_patient.html:478 app/templates/new_patient_backup.html:519
+#: app/templates/new_patient_backup_final.html:478
+#: app/templates/new_patient_old.html:478
+msgid "No significant family history"
+msgstr ""
+
+#: app/templates/new_patient.html:485 app/templates/new_patient_backup.html:526
+#: app/templates/new_patient_backup_final.html:485
+#: app/templates/new_patient_old.html:485
+msgid "Additional family history details"
+msgstr ""
+
+#: app/templates/new_patient.html:487 app/templates/new_patient_backup.html:528
+#: app/templates/new_patient_backup_final.html:487
+#: app/templates/new_patient_old.html:487
+msgid ""
+"Include specific family member relationships, ages of onset, genetic "
+"disorders, etc."
+msgstr ""
+
+#: app/templates/new_patient.html:493 app/templates/new_patient_backup.html:534
+#: app/templates/new_patient_backup_final.html:493
+#: app/templates/new_patient_old.html:493
+msgid "Lifestyle and Habits"
+msgstr ""
+
+#: app/templates/new_patient.html:525 app/templates/new_patient_backup.html:566
+#: app/templates/new_patient_backup_final.html:525
+#: app/templates/new_patient_old.html:525
+msgid "Activity details"
+msgstr ""
+
+#: app/templates/new_patient.html:527 app/templates/new_patient_backup.html:568
+#: app/templates/new_patient_backup_final.html:527
+#: app/templates/new_patient_old.html:527
+msgid ""
+"What types of activities do you do? How often? Any sports or specific "
+"exercises?"
+msgstr ""
+
+#: app/templates/new_patient.html:533 app/templates/new_patient_backup.html:574
+#: app/templates/new_patient_backup_final.html:533
+#: app/templates/new_patient_old.html:533
+msgid "Work environment"
+msgstr ""
+
+#: app/templates/new_patient.html:536 app/templates/new_patient_backup.html:577
+#: app/templates/new_patient_backup_final.html:536
+#: app/templates/new_patient_old.html:536
+msgid "Select work type..."
+msgstr ""
+
+#: app/templates/new_patient.html:537 app/templates/new_patient_backup.html:578
+#: app/templates/new_patient_backup_final.html:537
+#: app/templates/new_patient_old.html:537
+msgid "Desk job (computer work)"
+msgstr ""
+
+#: app/templates/new_patient.html:538 app/templates/new_patient_backup.html:579
+#: app/templates/new_patient_backup_final.html:538
+#: app/templates/new_patient_old.html:538
+msgid "Standing work"
+msgstr ""
+
+#: app/templates/new_patient.html:539 app/templates/new_patient_backup.html:580
+#: app/templates/new_patient_backup_final.html:539
+#: app/templates/new_patient_old.html:539
+msgid "Physical labor"
+msgstr ""
+
+#: app/templates/new_patient.html:540 app/templates/new_patient_backup.html:581
+#: app/templates/new_patient_backup_final.html:540
+#: app/templates/new_patient_old.html:540
+msgid "Mixed (sitting/standing)"
+msgstr ""
+
+#: app/templates/new_patient.html:541 app/templates/new_patient_backup.html:582
+#: app/templates/new_patient_backup_final.html:541
+#: app/templates/new_patient_old.html:541
+msgid "Driving/Transport"
+msgstr ""
+
+#: app/templates/new_patient.html:542 app/templates/new_patient_backup.html:583
+#: app/templates/new_patient_backup_final.html:542
+#: app/templates/new_patient_old.html:542
+msgid "Healthcare worker"
+msgstr ""
+
+#: app/templates/new_patient.html:543 app/templates/new_patient_backup.html:584
+#: app/templates/new_patient_backup_final.html:543
+#: app/templates/new_patient_old.html:543
+msgid "Retired"
+msgstr ""
+
+#: app/templates/new_patient.html:564 app/templates/new_patient_backup.html:605
+#: app/templates/new_patient_backup_final.html:564
+#: app/templates/new_patient_old.html:564
+msgid "Lifestyle habits"
+msgstr ""
+
+#: app/templates/new_patient.html:570 app/templates/new_patient_backup.html:611
+#: app/templates/new_patient_backup_final.html:570
+#: app/templates/new_patient_old.html:570
+msgid "Smoking"
+msgstr ""
+
+#: app/templates/new_patient.html:574 app/templates/new_patient_backup.html:615
+#: app/templates/new_patient_backup_final.html:574
+#: app/templates/new_patient_old.html:574
+msgid "Regular alcohol consumption"
+msgstr ""
+
+#: app/templates/new_patient.html:578 app/templates/new_patient_backup.html:619
+#: app/templates/new_patient_backup_final.html:578
+#: app/templates/new_patient_old.html:578
+msgid "High caffeine intake"
+msgstr ""
+
+#: app/templates/new_patient.html:584 app/templates/new_patient_backup.html:625
+#: app/templates/new_patient_backup_final.html:584
+#: app/templates/new_patient_old.html:584
+msgid "Healthy balanced diet"
+msgstr ""
+
+#: app/templates/new_patient.html:588 app/templates/new_patient_backup.html:629
+#: app/templates/new_patient_backup_final.html:588
+#: app/templates/new_patient_old.html:588
+msgid "Good hydration (>2L/day)"
+msgstr ""
+
+#: app/templates/new_patient.html:592 app/templates/new_patient_backup.html:633
+#: app/templates/new_patient_backup_final.html:592
+#: app/templates/new_patient_old.html:592
+msgid "Takes supplements"
+msgstr ""
+
+#: app/templates/new_patient.html:599 app/templates/new_patient_backup.html:640
+#: app/templates/new_patient_backup_final.html:599
+#: app/templates/new_patient_old.html:599
+msgid "Additional lifestyle notes"
+msgstr ""
+
+#: app/templates/new_patient.html:601 app/templates/new_patient_backup.html:642
+#: app/templates/new_patient_backup_final.html:601
+#: app/templates/new_patient_old.html:601
+msgid ""
+"Any dietary restrictions, special habits, or lifestyle factors affecting "
+"health..."
+msgstr ""
+
+#: app/templates/new_patient.html:607 app/templates/new_patient_backup.html:648
+#: app/templates/new_patient_backup_final.html:607
+#: app/templates/new_patient_old.html:607
+msgid "Current Pain Assessment"
+msgstr ""
+
+#: app/templates/new_patient.html:612 app/templates/new_patient_backup.html:653
+#: app/templates/new_patient_backup_final.html:612
+#: app/templates/new_patient_old.html:612
+msgid "Pain level (0-10)"
+msgstr ""
+
+#: app/templates/new_patient.html:620 app/templates/new_patient_backup.html:661
+#: app/templates/new_patient_backup_final.html:620
+#: app/templates/new_patient_old.html:620
+msgid "No pain"
+msgstr ""
+
+#: app/templates/new_patient.html:629 app/templates/new_patient_backup.html:670
+#: app/templates/new_patient_backup_final.html:629
+#: app/templates/new_patient_old.html:629
+msgid "Pain characteristics"
+msgstr ""
+
+#: app/templates/new_patient.html:635 app/templates/new_patient_backup.html:676
+#: app/templates/new_patient_backup_final.html:635
+#: app/templates/new_patient_old.html:635
+msgid "Sharp/Stabbing"
+msgstr ""
+
+#: app/templates/new_patient.html:639 app/templates/new_patient_backup.html:680
+#: app/templates/new_patient_backup_final.html:639
+#: app/templates/new_patient_old.html:639
+msgid "Dull/Aching"
+msgstr ""
+
+#: app/templates/new_patient.html:643 app/templates/new_patient_backup.html:684
+#: app/templates/new_patient_backup_final.html:643
+#: app/templates/new_patient_old.html:643
+msgid "Burning"
+msgstr ""
+
+#: app/templates/new_patient.html:647 app/templates/new_patient_backup.html:688
+#: app/templates/new_patient_backup_final.html:647
+#: app/templates/new_patient_old.html:647
+msgid "Throbbing"
+msgstr ""
+
+#: app/templates/new_patient.html:653 app/templates/new_patient_backup.html:694
+#: app/templates/new_patient_backup_final.html:653
+#: app/templates/new_patient_old.html:653
+msgid "Tingling/Pins & needles"
+msgstr ""
+
+#: app/templates/new_patient.html:657 app/templates/new_patient_backup.html:698
+#: app/templates/new_patient_backup_final.html:657
+#: app/templates/new_patient_old.html:657
+msgid "Numbness"
+msgstr ""
+
+#: app/templates/new_patient.html:661 app/templates/new_patient_backup.html:702
+#: app/templates/new_patient_backup_final.html:661
+#: app/templates/new_patient_old.html:661
+msgid "Stiffness"
+msgstr ""
+
+#: app/templates/new_patient.html:665 app/templates/new_patient_backup.html:706
+#: app/templates/new_patient_backup_final.html:665
+#: app/templates/new_patient_old.html:665
+msgid "Cramping/Spasms"
+msgstr ""
+
+#: app/templates/new_patient.html:675 app/templates/new_patient_backup.html:716
+#: app/templates/new_patient_backup_final.html:675
+#: app/templates/new_patient_old.html:675
+msgid "When is pain worse?"
+msgstr ""
+
+#: app/templates/new_patient.html:678 app/templates/new_patient_backup.html:719
+#: app/templates/new_patient_backup_final.html:678
+#: app/templates/new_patient_old.html:678
+msgid "Morning"
+msgstr ""
+
+#: app/templates/new_patient.html:679 app/templates/new_patient_backup.html:720
+#: app/templates/new_patient_backup_final.html:679
+#: app/templates/new_patient_old.html:679
+msgid "Afternoon"
+msgstr ""
+
+#: app/templates/new_patient.html:680 app/templates/new_patient_backup.html:721
+#: app/templates/new_patient_backup_final.html:680
+#: app/templates/new_patient_old.html:680
+msgid "Evening"
+msgstr ""
+
+#: app/templates/new_patient.html:681 app/templates/new_patient_backup.html:722
+#: app/templates/new_patient_backup_final.html:681
+#: app/templates/new_patient_old.html:681
+msgid "Night"
+msgstr ""
+
+#: app/templates/new_patient.html:682 app/templates/new_patient_backup.html:723
+#: app/templates/new_patient_backup_final.html:682
+#: app/templates/new_patient_old.html:682
+msgid "With movement"
+msgstr ""
+
+#: app/templates/new_patient.html:683 app/templates/new_patient_backup.html:724
+#: app/templates/new_patient_backup_final.html:683
+#: app/templates/new_patient_old.html:683
+msgid "At rest"
+msgstr ""
+
+#: app/templates/new_patient.html:684 app/templates/new_patient_backup.html:725
+#: app/templates/new_patient_backup_final.html:684
+#: app/templates/new_patient_old.html:684
+msgid "Weather changes"
+msgstr ""
+
+#: app/templates/new_patient.html:685 app/templates/new_patient_backup.html:726
+#: app/templates/new_patient_backup_final.html:685
+#: app/templates/new_patient_old.html:685
+msgid "During stress"
+msgstr ""
+
+#: app/templates/new_patient.html:687 app/templates/new_patient_backup.html:728
+#: app/templates/new_patient_backup_final.html:687
+#: app/templates/new_patient_old.html:687
+msgid "Hold Ctrl/Cmd to select multiple"
+msgstr ""
+
+#: app/templates/new_patient.html:692 app/templates/new_patient_backup.html:733
+#: app/templates/new_patient_backup_final.html:692
+#: app/templates/new_patient_old.html:692
+msgid "Pain location"
+msgstr ""
+
+#: app/templates/new_patient.html:695 app/templates/new_patient_backup.html:736
+#: app/templates/new_patient_backup_final.html:695
+#: app/templates/new_patient_old.html:695
+msgid "Select primary location..."
+msgstr ""
+
+#: app/templates/new_patient.html:696 app/templates/new_patient_backup.html:737
+#: app/templates/new_patient_backup_final.html:696
+#: app/templates/new_patient_old.html:696
+msgid "Head & Neck"
+msgstr ""
+
+#: app/templates/new_patient.html:697 app/templates/new_patient_backup.html:738
+#: app/templates/new_patient_backup_final.html:697
+#: app/templates/new_patient_old.html:697
+msgid "Head/Headache"
+msgstr ""
+
+#: app/templates/new_patient.html:698 app/templates/new_patient_backup.html:739
+#: app/templates/new_patient_backup_final.html:698
+#: app/templates/new_patient_old.html:698
+msgid "Neck"
+msgstr ""
+
+#: app/templates/new_patient.html:699 app/templates/new_patient_backup.html:740
+#: app/templates/new_patient_backup_final.html:699
+#: app/templates/new_patient_old.html:699
+msgid "Jaw/TMJ"
+msgstr ""
+
+#: app/templates/new_patient.html:701 app/templates/new_patient_backup.html:742
+#: app/templates/new_patient_backup_final.html:701
+#: app/templates/new_patient_old.html:701
+msgid "Upper Body"
+msgstr ""
+
+#: app/templates/new_patient.html:702 app/templates/new_patient.html:812
+#: app/templates/new_patient_backup.html:743
+#: app/templates/new_patient_backup.html:853
+#: app/templates/new_patient_backup_final.html:702
+#: app/templates/new_patient_backup_final.html:812
+#: app/templates/new_patient_old.html:702
+#: app/templates/new_patient_old.html:812
+msgid "Shoulder"
+msgstr ""
+
+#: app/templates/new_patient.html:703 app/templates/new_patient_backup.html:744
+#: app/templates/new_patient_backup_final.html:703
+#: app/templates/new_patient_old.html:703
+msgid "Arm"
+msgstr ""
+
+#: app/templates/new_patient.html:704 app/templates/new_patient.html:813
+#: app/templates/new_patient_backup.html:745
+#: app/templates/new_patient_backup.html:854
+#: app/templates/new_patient_backup_final.html:704
+#: app/templates/new_patient_backup_final.html:813
+#: app/templates/new_patient_old.html:704
+#: app/templates/new_patient_old.html:813
+msgid "Elbow"
+msgstr ""
+
+#: app/templates/new_patient.html:705 app/templates/new_patient_backup.html:746
+#: app/templates/new_patient_backup_final.html:705
+#: app/templates/new_patient_old.html:705
+msgid "Wrist/Hand"
+msgstr ""
+
+#: app/templates/new_patient.html:706 app/templates/new_patient_backup.html:747
+#: app/templates/new_patient_backup_final.html:706
+#: app/templates/new_patient_old.html:706
+msgid "Upper back"
+msgstr ""
+
+#: app/templates/new_patient.html:708 app/templates/new_patient_backup.html:749
+#: app/templates/new_patient_backup_final.html:708
+#: app/templates/new_patient_old.html:708
+msgid "Core & Spine"
+msgstr ""
+
+#: app/templates/new_patient.html:709 app/templates/new_patient_backup.html:750
+#: app/templates/new_patient_backup_final.html:709
+#: app/templates/new_patient_old.html:709
+msgid "Chest"
+msgstr ""
+
+#: app/templates/new_patient.html:710 app/templates/new_patient_backup.html:751
+#: app/templates/new_patient_backup_final.html:710
+#: app/templates/new_patient_old.html:710
+msgid "Mid back"
+msgstr ""
+
+#: app/templates/new_patient.html:711 app/templates/new_patient_backup.html:752
+#: app/templates/new_patient_backup_final.html:711
+#: app/templates/new_patient_old.html:711
+msgid "Lower back"
+msgstr ""
+
+#: app/templates/new_patient.html:712 app/templates/new_patient_backup.html:753
+#: app/templates/new_patient_backup_final.html:712
+#: app/templates/new_patient_old.html:712
+msgid "Pelvis/Hip"
+msgstr ""
+
+#: app/templates/new_patient.html:714 app/templates/new_patient_backup.html:755
+#: app/templates/new_patient_backup_final.html:714
+#: app/templates/new_patient_old.html:714
+msgid "Lower Body"
+msgstr ""
+
+#: app/templates/new_patient.html:715 app/templates/new_patient_backup.html:756
+#: app/templates/new_patient_backup_final.html:715
+#: app/templates/new_patient_old.html:715
+msgid "Thigh"
+msgstr ""
+
+#: app/templates/new_patient.html:716 app/templates/new_patient.html:816
+#: app/templates/new_patient_backup.html:757
+#: app/templates/new_patient_backup.html:857
+#: app/templates/new_patient_backup_final.html:716
+#: app/templates/new_patient_backup_final.html:816
+#: app/templates/new_patient_old.html:716
+#: app/templates/new_patient_old.html:816
+msgid "Knee"
+msgstr ""
+
+#: app/templates/new_patient.html:717 app/templates/new_patient_backup.html:758
+#: app/templates/new_patient_backup_final.html:717
+#: app/templates/new_patient_old.html:717
+msgid "Calf/Shin"
+msgstr ""
+
+#: app/templates/new_patient.html:718 app/templates/new_patient_backup.html:759
+#: app/templates/new_patient_backup_final.html:718
+#: app/templates/new_patient_old.html:718
+msgid "Ankle/Foot"
+msgstr ""
+
+#: app/templates/new_patient.html:731 app/templates/new_patient_backup.html:772
+#: app/templates/new_patient_backup_final.html:731
+#: app/templates/new_patient_old.html:731
+msgid "Activities, positions, or movements that increase pain..."
+msgstr ""
+
+#: app/templates/new_patient.html:738 app/templates/new_patient_backup.html:779
+#: app/templates/new_patient_backup_final.html:738
+#: app/templates/new_patient_old.html:738
+msgid "Rest, medications, positions, or treatments that help..."
+msgstr ""
+
+#: app/templates/new_patient.html:745 app/templates/new_patient_backup.html:786
+#: app/templates/new_patient_backup_final.html:745
+#: app/templates/new_patient_old.html:745
+msgid "Functional Assessment"
+msgstr ""
+
+#: app/templates/new_patient.html:750 app/templates/new_patient_backup.html:791
+#: app/templates/new_patient_backup_final.html:750
+#: app/templates/new_patient_old.html:750
+msgid "Current functional limitations"
+msgstr ""
+
+#: app/templates/new_patient.html:756 app/templates/new_patient_backup.html:797
+#: app/templates/new_patient_backup_final.html:756
+#: app/templates/new_patient_old.html:756
+msgid "Walking difficulties"
+msgstr ""
+
+#: app/templates/new_patient.html:760 app/templates/new_patient_backup.html:801
+#: app/templates/new_patient_backup_final.html:760
+#: app/templates/new_patient_old.html:760
+msgid "Stair climbing"
+msgstr ""
+
+#: app/templates/new_patient.html:764 app/templates/new_patient_backup.html:805
+#: app/templates/new_patient_backup_final.html:764
+#: app/templates/new_patient_old.html:764
+msgid "Prolonged sitting"
+msgstr ""
+
+#: app/templates/new_patient.html:768 app/templates/new_patient_backup.html:809
+#: app/templates/new_patient_backup_final.html:768
+#: app/templates/new_patient_old.html:768
+msgid "Prolonged standing"
+msgstr ""
+
+#: app/templates/new_patient.html:772 app/templates/new_patient_backup.html:813
+#: app/templates/new_patient_backup_final.html:772
+#: app/templates/new_patient_old.html:772
+msgid "Lifting/Carrying"
+msgstr ""
+
+#: app/templates/new_patient.html:778 app/templates/new_patient_backup.html:819
+#: app/templates/new_patient_backup_final.html:778
+#: app/templates/new_patient_old.html:778
+msgid "Reaching overhead"
+msgstr ""
+
+#: app/templates/new_patient.html:782 app/templates/new_patient_backup.html:823
+#: app/templates/new_patient_backup_final.html:782
+#: app/templates/new_patient_old.html:782
+msgid "Bending/Stooping"
+msgstr ""
+
+#: app/templates/new_patient.html:786 app/templates/new_patient_backup.html:827
+#: app/templates/new_patient_backup_final.html:786
+#: app/templates/new_patient_old.html:786
+msgid "Sleep disruption"
+msgstr ""
+
+#: app/templates/new_patient.html:790 app/templates/new_patient_backup.html:831
+#: app/templates/new_patient_backup_final.html:790
+#: app/templates/new_patient_old.html:790
+msgid "Work activities"
+msgstr ""
+
+#: app/templates/new_patient.html:794 app/templates/new_patient_backup.html:835
+#: app/templates/new_patient_backup_final.html:794
+#: app/templates/new_patient_old.html:794
+msgid "Sports/Recreation"
+msgstr ""
+
+#: app/templates/new_patient.html:803 app/templates/new_patient_backup.html:844
+#: app/templates/new_patient_backup_final.html:803
+#: app/templates/new_patient_old.html:803
+msgid "Range of Motion observations"
+msgstr ""
+
+#: app/templates/new_patient.html:808 app/templates/new_patient_backup.html:849
+#: app/templates/new_patient_backup_final.html:808
+#: app/templates/new_patient_old.html:808
+msgid "Select area to assess..."
+msgstr ""
+
+#: app/templates/new_patient.html:809 app/templates/new_patient_backup.html:850
+#: app/templates/new_patient_backup_final.html:809
+#: app/templates/new_patient_old.html:809
+msgid "Cervical spine"
+msgstr ""
+
+#: app/templates/new_patient.html:810 app/templates/new_patient_backup.html:851
+#: app/templates/new_patient_backup_final.html:810
+#: app/templates/new_patient_old.html:810
+msgid "Thoracic spine"
+msgstr ""
+
+#: app/templates/new_patient.html:811 app/templates/new_patient_backup.html:852
+#: app/templates/new_patient_backup_final.html:811
+#: app/templates/new_patient_old.html:811
+msgid "Lumbar spine"
+msgstr ""
+
+#: app/templates/new_patient.html:814 app/templates/new_patient_backup.html:855
+#: app/templates/new_patient_backup_final.html:814
+#: app/templates/new_patient_old.html:814
+msgid "Wrist"
+msgstr ""
+
+#: app/templates/new_patient.html:815 app/templates/new_patient_backup.html:856
+#: app/templates/new_patient_backup_final.html:815
+#: app/templates/new_patient_old.html:815
+msgid "Hip"
+msgstr ""
+
+#: app/templates/new_patient.html:817 app/templates/new_patient_backup.html:858
+#: app/templates/new_patient_backup_final.html:817
+#: app/templates/new_patient_old.html:817
+msgid "Ankle"
+msgstr ""
+
+#: app/templates/new_patient.html:822 app/templates/new_patient_backup.html:863
+#: app/templates/new_patient_backup_final.html:822
+#: app/templates/new_patient_old.html:822
+msgid "ROM quality..."
+msgstr ""
+
+#: app/templates/new_patient.html:823 app/templates/new_patient_backup.html:864
+#: app/templates/new_patient_backup_final.html:823
+#: app/templates/new_patient_old.html:823
+msgid "Normal/Full"
+msgstr ""
+
+#: app/templates/new_patient.html:824 app/templates/new_patient_backup.html:865
+#: app/templates/new_patient_backup_final.html:824
+#: app/templates/new_patient_old.html:824
+msgid "Limited"
+msgstr ""
+
+#: app/templates/new_patient.html:825 app/templates/new_patient_backup.html:866
+#: app/templates/new_patient_backup_final.html:825
+#: app/templates/new_patient_old.html:825
+msgid "Painful"
+msgstr ""
+
+#: app/templates/new_patient.html:826 app/templates/new_patient_backup.html:867
+#: app/templates/new_patient_backup_final.html:826
+#: app/templates/new_patient_old.html:826
+msgid "Severely restricted"
+msgstr ""
+
+#: app/templates/new_patient.html:831 app/templates/new_patient_backup.html:872
+#: app/templates/new_patient_backup_final.html:831
+#: app/templates/new_patient_old.html:831
+msgid "Specific ROM findings, measurements, or movement patterns observed..."
+msgstr ""
+
+#: app/templates/new_patient.html:837 app/templates/new_patient_backup.html:878
+#: app/templates/new_patient_backup_final.html:837
+#: app/templates/new_patient_old.html:837
+msgid "Strength observations"
+msgstr ""
+
+#: app/templates/new_patient.html:842 app/templates/new_patient_backup.html:883
+#: app/templates/new_patient_backup_final.html:842
+#: app/templates/new_patient_old.html:842
+msgid "Select muscle group..."
+msgstr ""
+
+#: app/templates/new_patient.html:843 app/templates/new_patient_backup.html:884
+#: app/templates/new_patient_backup_final.html:843
+#: app/templates/new_patient_old.html:843
+msgid "Neck muscles"
+msgstr ""
+
+#: app/templates/new_patient.html:844 app/templates/new_patient_backup.html:885
+#: app/templates/new_patient_backup_final.html:844
+#: app/templates/new_patient_old.html:844
+msgid "Shoulder girdle"
+msgstr ""
+
+#: app/templates/new_patient.html:845 app/templates/new_patient_backup.html:886
+#: app/templates/new_patient_backup_final.html:845
+#: app/templates/new_patient_old.html:845
+msgid "Arm muscles"
+msgstr ""
+
+#: app/templates/new_patient.html:846 app/templates/new_patient_backup.html:887
+#: app/templates/new_patient_backup_final.html:846
+#: app/templates/new_patient_old.html:846
+msgid "Core/Trunk"
+msgstr ""
+
+#: app/templates/new_patient.html:847 app/templates/new_patient_backup.html:888
+#: app/templates/new_patient_backup_final.html:847
+#: app/templates/new_patient_old.html:847
+msgid "Hip muscles"
+msgstr ""
+
+#: app/templates/new_patient.html:848 app/templates/new_patient_backup.html:889
+#: app/templates/new_patient_backup_final.html:848
+#: app/templates/new_patient_old.html:848
+msgid "Thigh muscles"
+msgstr ""
+
+#: app/templates/new_patient.html:849 app/templates/new_patient_backup.html:890
+#: app/templates/new_patient_backup_final.html:849
+#: app/templates/new_patient_old.html:849
+msgid "Calf muscles"
+msgstr ""
+
+#: app/templates/new_patient.html:854 app/templates/new_patient_backup.html:895
+#: app/templates/new_patient_backup_final.html:854
+#: app/templates/new_patient_old.html:854
+msgid "Strength grade..."
+msgstr ""
+
+#: app/templates/new_patient.html:855 app/templates/new_patient_backup.html:896
+#: app/templates/new_patient_backup_final.html:855
+#: app/templates/new_patient_old.html:855
+msgid "Normal"
+msgstr ""
+
+#: app/templates/new_patient.html:856 app/templates/new_patient_backup.html:897
+#: app/templates/new_patient_backup_final.html:856
+#: app/templates/new_patient_old.html:856
+msgid "Good"
+msgstr ""
+
+#: app/templates/new_patient.html:857 app/templates/new_patient_backup.html:898
+#: app/templates/new_patient_backup_final.html:857
+#: app/templates/new_patient_old.html:857
+msgid "Fair"
+msgstr ""
+
+#: app/templates/new_patient.html:858 app/templates/new_patient_backup.html:899
+#: app/templates/new_patient_backup_final.html:858
+#: app/templates/new_patient_old.html:858
+msgid "Poor"
+msgstr ""
+
+#: app/templates/new_patient.html:859 app/templates/new_patient_backup.html:900
+#: app/templates/new_patient_backup_final.html:859
+#: app/templates/new_patient_old.html:859
+msgid "Trace"
+msgstr ""
+
+#: app/templates/new_patient.html:860 app/templates/new_patient_backup.html:901
+#: app/templates/new_patient_backup_final.html:860
+#: app/templates/new_patient_old.html:860
+msgid "None"
+msgstr ""
+
+#: app/templates/new_patient.html:865 app/templates/new_patient_backup.html:906
+#: app/templates/new_patient_backup_final.html:865
+#: app/templates/new_patient_old.html:865
+msgid "Manual muscle testing results, weakness patterns, compensations noted..."
+msgstr ""
+
+#: app/templates/new_patient.html:871 app/templates/new_patient_backup.html:912
+#: app/templates/new_patient_backup_final.html:871
+#: app/templates/new_patient_old.html:871
+msgid "Special tests performed"
+msgstr ""
+
+#: app/templates/new_patient.html:876 app/templates/new_patient_backup.html:917
+#: app/templates/new_patient_backup_final.html:876
+#: app/templates/new_patient_old.html:876
+msgid "Select a common test..."
+msgstr ""
+
+#: app/templates/new_patient.html:877 app/templates/new_patient_backup.html:918
+#: app/templates/new_patient_backup_final.html:877
+#: app/templates/new_patient_old.html:877
+msgid "Spine Tests"
+msgstr ""
+
+#: app/templates/new_patient.html:878 app/templates/new_patient_backup.html:919
+#: app/templates/new_patient_backup_final.html:878
+#: app/templates/new_patient_old.html:878
+msgid "Straight Leg Raise (SLR)"
+msgstr ""
+
+#: app/templates/new_patient.html:879 app/templates/new_patient_backup.html:920
+#: app/templates/new_patient_backup_final.html:879
+#: app/templates/new_patient_old.html:879
+msgid "Spurling's Test"
+msgstr ""
+
+#: app/templates/new_patient.html:880 app/templates/new_patient_backup.html:921
+#: app/templates/new_patient_backup_final.html:880
+#: app/templates/new_patient_old.html:880
+msgid "Cervical Distraction"
+msgstr ""
+
+#: app/templates/new_patient.html:881 app/templates/new_patient_backup.html:922
+#: app/templates/new_patient_backup_final.html:881
+#: app/templates/new_patient_old.html:881
+msgid "Slump Test"
+msgstr ""
+
+#: app/templates/new_patient.html:883 app/templates/new_patient_backup.html:924
+#: app/templates/new_patient_backup_final.html:883
+#: app/templates/new_patient_old.html:883
+msgid "Shoulder Tests"
+msgstr ""
+
+#: app/templates/new_patient.html:884 app/templates/new_patient_backup.html:925
+#: app/templates/new_patient_backup_final.html:884
+#: app/templates/new_patient_old.html:884
+msgid "Impingement Tests"
+msgstr ""
+
+#: app/templates/new_patient.html:885 app/templates/new_patient_backup.html:926
+#: app/templates/new_patient_backup_final.html:885
+#: app/templates/new_patient_old.html:885
+msgid "Apprehension Test"
+msgstr ""
+
+#: app/templates/new_patient.html:886 app/templates/new_patient_backup.html:927
+#: app/templates/new_patient_backup_final.html:886
+#: app/templates/new_patient_old.html:886
+msgid "Drop Arm Test"
+msgstr ""
+
+#: app/templates/new_patient.html:887 app/templates/new_patient_backup.html:928
+#: app/templates/new_patient_backup_final.html:887
+#: app/templates/new_patient_old.html:887
+msgid "Cross-over Test"
+msgstr ""
+
+#: app/templates/new_patient.html:889 app/templates/new_patient_backup.html:930
+#: app/templates/new_patient_backup_final.html:889
+#: app/templates/new_patient_old.html:889
+msgid "Knee Tests"
+msgstr ""
+
+#: app/templates/new_patient.html:890 app/templates/new_patient_backup.html:931
+#: app/templates/new_patient_backup_final.html:890
+#: app/templates/new_patient_old.html:890
+msgid "McMurray Test"
+msgstr ""
+
+#: app/templates/new_patient.html:891 app/templates/new_patient_backup.html:932
+#: app/templates/new_patient_backup_final.html:891
+#: app/templates/new_patient_old.html:891
+msgid "Lachman Test"
+msgstr ""
+
+#: app/templates/new_patient.html:892 app/templates/new_patient_backup.html:933
+#: app/templates/new_patient_backup_final.html:892
+#: app/templates/new_patient_old.html:892
+msgid "Drawer Test"
+msgstr ""
+
+#: app/templates/new_patient.html:893 app/templates/new_patient_backup.html:934
+#: app/templates/new_patient_backup_final.html:893
+#: app/templates/new_patient_old.html:893
+msgid "Valgus/Varus Stress"
+msgstr ""
+
+#: app/templates/new_patient.html:895 app/templates/new_patient_backup.html:936
+#: app/templates/new_patient_backup_final.html:895
+#: app/templates/new_patient_old.html:895
+msgid "Hip Tests"
+msgstr ""
+
+#: app/templates/new_patient.html:896 app/templates/new_patient_backup.html:937
+#: app/templates/new_patient_backup_final.html:896
+#: app/templates/new_patient_old.html:896
+msgid "Thomas Test"
+msgstr ""
+
+#: app/templates/new_patient.html:897 app/templates/new_patient_backup.html:938
+#: app/templates/new_patient_backup_final.html:897
+#: app/templates/new_patient_old.html:897
+msgid "FABER Test"
+msgstr ""
+
+#: app/templates/new_patient.html:898 app/templates/new_patient_backup.html:939
+#: app/templates/new_patient_backup_final.html:898
+#: app/templates/new_patient_old.html:898
+msgid "Trendelenburg Test"
+msgstr ""
+
+#: app/templates/new_patient.html:904 app/templates/new_patient_backup.html:945
+#: app/templates/new_patient_backup_final.html:904
+#: app/templates/new_patient_old.html:904
+msgid "Result..."
+msgstr ""
+
+#: app/templates/new_patient.html:905 app/templates/new_patient_backup.html:946
+#: app/templates/new_patient_backup_final.html:905
+#: app/templates/new_patient_old.html:905
+msgid "Positive"
+msgstr ""
+
+#: app/templates/new_patient.html:906 app/templates/new_patient_backup.html:947
+#: app/templates/new_patient_backup_final.html:906
+#: app/templates/new_patient_old.html:906
+msgid "Negative"
+msgstr ""
+
+#: app/templates/new_patient.html:907 app/templates/new_patient_backup.html:948
+#: app/templates/new_patient_backup_final.html:907
+#: app/templates/new_patient_old.html:907
+msgid "Inconclusive"
+msgstr ""
+
+#: app/templates/new_patient.html:912 app/templates/new_patient_backup.html:953
+#: app/templates/new_patient_backup_final.html:912
+#: app/templates/new_patient_old.html:912
+msgid "Document special tests performed, results, and clinical relevance..."
+msgstr ""
+
+#: app/templates/new_patient.html:918 app/templates/new_patient_backup.html:959
+#: app/templates/new_patient_backup_final.html:918
+#: app/templates/new_patient_old.html:918
+msgid "Additional examination findings"
+msgstr ""
+
+#: app/templates/new_patient.html:921 app/templates/new_patient_backup.html:962
+#: app/templates/new_patient_backup_final.html:921
+#: app/templates/new_patient_old.html:921
+msgid ""
+"Posture, gait, neurological findings, palpation, clinical impression, red"
+" flags, etc."
+msgstr ""
+
+#: app/templates/new_patient.html:932 app/templates/new_patient_backup.html:973
+#: app/templates/new_patient_backup_final.html:932
+#: app/templates/new_patient_old.html:932
+msgid "Next: Portal Access"
+msgstr ""
+
+#: app/templates/new_patient.html:939 app/templates/new_patient_backup.html:980
+#: app/templates/new_patient_backup_final.html:939
+#: app/templates/new_patient_old.html:939
 msgid "Patient Portal Access (Optional)"
 msgstr ""
 
-#: app/templates/new_patient.html:51
+#: app/templates/new_patient.html:945 app/templates/new_patient_backup.html:981
+#: app/templates/new_patient_backup_final.html:940
+#: app/templates/new_patient_old.html:940
 msgid ""
 "Enter an email and password if you want the patient to be able to log in "
 "and view their exercise prescriptions."
 msgstr ""
 
-#: app/templates/new_patient.html:59
+#: app/templates/new_patient.html:953 app/templates/new_patient_backup.html:989
+#: app/templates/new_patient_backup_final.html:948
+#: app/templates/new_patient_old.html:948
 msgid "Set initial password"
 msgstr ""
 
-#: app/templates/new_patient.html:60
+#: app/templates/new_patient.html:954 app/templates/new_patient_backup.html:990
+#: app/templates/new_patient_backup_final.html:949
+#: app/templates/new_patient_old.html:949
 msgid "Leave blank if login email is not provided."
 msgstr ""
 
-#: app/templates/new_patient.html:65
+#: app/templates/new_patient.html:960 app/templates/new_patient_backup.html:996
+#: app/templates/new_patient_backup_final.html:955
+#: app/templates/new_patient_old.html:955
+msgid "Back: Patient Data & Anamnesis"
+msgstr ""
+
+#: app/templates/new_patient.html:967 app/templates/new_patient_backup.html:999
+#: app/templates/new_patient_backup_final.html:958
+#: app/templates/new_patient_old.html:958
 #: app/templates/review_calendly_bookings.html:56
 msgid "Create Patient"
 msgstr ""
 
+#: app/templates/new_patient.html:1402
+#: app/templates/new_patient_backup.html:1422
+#: app/templates/new_patient_backup_final.html:1382
+#: app/templates/new_patient_old.html:1380
+msgid ""
+"Please complete at least the main reason for consultation before "
+"proceeding."
+msgstr ""
+
+#: app/templates/new_patient.html:1478
+#: app/templates/new_patient_backup.html:1479
+#: app/templates/new_patient_backup_final.html:1439
+#: app/templates/new_patient_old.html:1437
+msgid "Main reason for consultation is required before creating a patient record."
+msgstr ""
+
+#: app/templates/new_patient_backup.html:90
+msgid "Smart Clinical Assistant Activated"
+msgstr ""
+
+#: app/templates/new_patient_backup.html:92
+msgid ""
+"I will provide intelligent clinical suggestions as you fill out the "
+"anamnesis. Look for the blue suggestions panel below."
+msgstr ""
+
+#: app/templates/new_patient_backup.html:105
+#: app/templates/new_patient_backup_final.html:1560
+#: app/templates/new_patient_old.html:1558
+msgid "Smart Clinical Suggestions"
+msgstr ""
+
+#: app/templates/new_patient_backup.html:241
+msgid "Reason for Today's Visit"
+msgstr ""
+
+#: app/templates/new_patient_backup.html:266
+msgid "Runner's Knee"
+msgstr ""
+
+#: app/templates/new_patient_backup.html:389
+#: app/templates/new_patient_backup.html:1185
+msgid "Type of surgery"
+msgstr ""
+
+#: app/templates/new_patient_backup.html:1412
+#: app/templates/new_patient_backup_final.html:1372
+#: app/templates/new_patient_old.html:1370
+msgid ""
+"Please fill in all required patient data fields (Name, Date of Birth, "
+"Contact, and Diagnosis)."
+msgstr ""
+
+#: app/templates/new_patient_backup.html:1468
+#: app/templates/new_patient_backup_final.html:1428
+#: app/templates/new_patient_old.html:1426
+msgid ""
+"Please fill in all required patient data fields before creating the "
+"patient record."
+msgstr ""
+
 #: app/templates/patient_detail.html:3
+#: app/templates/patient_detail_BACKUP.html:3
 msgid "Patient Details"
 msgstr ""
 
-#: app/templates/patient_detail.html:133
+#: app/templates/patient_detail.html:153
+#: app/templates/patient_detail_BACKUP.html:153
+#: app/templates/user_settings.html:436
 msgid "Warning:"
 msgstr ""
 
-#: app/templates/patient_detail.html:133
+#: app/templates/patient_detail.html:153
+#: app/templates/patient_detail_BACKUP.html:153
 msgid "The 'today' variable is not defined. Some features may not work correctly."
 msgstr ""
 
-#: app/templates/patient_detail.html:140
+#: app/templates/patient_detail.html:160
+#: app/templates/patient_detail_BACKUP.html:160
 msgid "past treatment(s) were automatically marked as completed."
 msgstr ""
 
-#: app/templates/patient_detail.html:150
+#: app/templates/patient_detail.html:170
+#: app/templates/patient_detail_BACKUP.html:170
 msgid "Date of Birth:"
 msgstr ""
 
-#: app/templates/patient_detail.html:151
+#: app/templates/patient_detail.html:171
+#: app/templates/patient_detail_BACKUP.html:171
 msgid "Contact:"
 msgstr ""
 
-#: app/templates/patient_detail.html:158
+#: app/templates/patient_detail.html:178
+#: app/templates/patient_detail_BACKUP.html:178
 msgid "Edit Patient"
 msgstr ""
 
-#: app/templates/patient_detail.html:161 app/templates/patient_detail.html:576
-#: app/templates/patient_detail.html:728
+#: app/templates/patient_detail.html:181 app/templates/patient_detail.html:750
+#: app/templates/patient_detail.html:902
+#: app/templates/patient_detail_BACKUP.html:181
+#: app/templates/patient_detail_BACKUP.html:734
+#: app/templates/patient_detail_BACKUP.html:886
 msgid "Add Treatment"
 msgstr ""
 
-#: app/templates/patient_detail.html:164
+#: app/templates/patient_detail.html:184
+#: app/templates/patient_detail_BACKUP.html:184
 msgid "Add Recurring"
 msgstr ""
 
-#: app/templates/patient_detail.html:167
+#: app/templates/patient_detail.html:187
+#: app/templates/patient_detail_BACKUP.html:187
 msgid "Generate AI Report"
 msgstr ""
 
-#: app/templates/patient_detail.html:170
+#: app/templates/patient_detail.html:190 app/templates/patient_detail.html:1114
+#: app/templates/patient_detail.html:1503
+#: app/templates/patient_detail_BACKUP.html:190
+#: app/templates/patient_detail_BACKUP.html:1098
+#: app/templates/patient_detail_BACKUP.html:1487
 msgid "Generate Exercise Homework"
 msgstr ""
 
-#: app/templates/patient_detail.html:173
+#: app/templates/patient_detail.html:193 app/templates/patient_detail.html:226
+#: app/templates/patient_detail.html:1127
+#: app/templates/patient_detail.html:1134
+#: app/templates/patient_detail_BACKUP.html:193
+#: app/templates/patient_detail_BACKUP.html:226
+#: app/templates/patient_detail_BACKUP.html:1111
+#: app/templates/patient_detail_BACKUP.html:1118
+msgid "AI Clinical Analysis"
+msgstr ""
+
+#: app/templates/patient_detail.html:196
+#: app/templates/patient_detail_BACKUP.html:196
 msgid "View Latest Report"
 msgstr ""
 
-#: app/templates/patient_detail.html:188
+#: app/templates/patient_detail.html:211 app/templates/patient_detail.html:430
+#: app/templates/patient_detail_BACKUP.html:211
+#: app/templates/patient_detail_BACKUP.html:430
+msgid "Clinical History"
+msgstr ""
+
+#: app/templates/patient_detail.html:216
+#: app/templates/patient_detail_BACKUP.html:216
 msgid "Consents"
 msgstr ""
 
-#: app/templates/patient_detail.html:208
+#: app/templates/patient_detail.html:241
+#: app/templates/patient_detail_BACKUP.html:241
 msgid "Recurring Appointments"
 msgstr ""
 
-#: app/templates/patient_detail.html:210
+#: app/templates/patient_detail.html:243
+#: app/templates/patient_detail_BACKUP.html:243
 msgid "Add Rule"
 msgstr ""
 
-#: app/templates/patient_detail.html:229
+#: app/templates/patient_detail.html:262
+#: app/templates/patient_detail_BACKUP.html:262
 msgid "Starts:"
 msgstr ""
 
-#: app/templates/patient_detail.html:230
+#: app/templates/patient_detail.html:263
+#: app/templates/patient_detail_BACKUP.html:263
 msgid "Ends:"
 msgstr ""
 
-#: app/templates/patient_detail.html:231
+#: app/templates/patient_detail.html:264
+#: app/templates/patient_detail_BACKUP.html:264
 msgid "Time:"
 msgstr ""
 
-#: app/templates/patient_detail.html:233
+#: app/templates/patient_detail.html:266
+#: app/templates/patient_detail_BACKUP.html:266
 msgid "Location:"
 msgstr ""
 
-#: app/templates/patient_detail.html:233
+#: app/templates/patient_detail.html:266
+#: app/templates/patient_detail_BACKUP.html:266
 msgid "Fee:"
 msgstr ""
 
-#: app/templates/patient_detail.html:236
+#: app/templates/patient_detail.html:269
+#: app/templates/patient_detail_BACKUP.html:269
 msgid "Are you sure you want to delete this recurring rule?"
 msgstr ""
 
-#: app/templates/locations/manage.html:83 app/templates/patient_detail.html:237
-#: app/templates/patient_detail.html:430
+#: app/templates/locations/manage.html:83 app/templates/patient_detail.html:270
+#: app/templates/patient_detail.html:495
+#: app/templates/patient_detail_BACKUP.html:270
+#: app/templates/patient_detail_BACKUP.html:495
 msgid "Delete"
 msgstr ""
 
-#: app/templates/patient_detail.html:278
+#: app/templates/patient_detail.html:311
+#: app/templates/patient_detail_BACKUP.html:311
 msgid "Past Treatments"
 msgstr ""
 
-#: app/templates/patient_detail.html:280
+#: app/templates/patient_detail.html:313
+#: app/templates/patient_detail_BACKUP.html:313
 msgid "Add Past Treatment"
 msgstr ""
 
-#: app/templates/patient_detail.html:286
+#: app/templates/patient_detail.html:319
+#: app/templates/patient_detail_BACKUP.html:319
 msgid "Bulk Actions for Selected"
 msgstr ""
 
-#: app/templates/patient_detail.html:289
+#: app/templates/patient_detail.html:322
+#: app/templates/patient_detail_BACKUP.html:322
 msgid "Set Location"
 msgstr ""
 
-#: app/templates/patient_detail.html:291
+#: app/templates/patient_detail.html:324
+#: app/templates/patient_detail_BACKUP.html:324
 msgid "Set Loc: Home Visit"
 msgstr ""
 
-#: app/templates/patient_detail.html:295
+#: app/templates/patient_detail.html:328
+#: app/templates/patient_detail_BACKUP.html:328
 msgid "Set Payment Method"
 msgstr ""
 
-#: app/templates/patient_detail.html:296
+#: app/templates/patient_detail.html:329
+#: app/templates/patient_detail_BACKUP.html:329
 msgid "Set Pmt: Cash"
 msgstr ""
 
-#: app/templates/patient_detail.html:297
+#: app/templates/patient_detail.html:330
+#: app/templates/patient_detail_BACKUP.html:330
 msgid "Set Pmt: Card"
 msgstr ""
 
-#: app/templates/patient_detail.html:304
+#: app/templates/patient_detail.html:337
+#: app/templates/patient_detail_BACKUP.html:337
 msgid "Total treatments for this patient:"
 msgstr ""
 
-#: app/templates/patient_detail.html:306
+#: app/templates/patient_detail.html:339
+#: app/templates/patient_detail_BACKUP.html:339
 msgid "Showing treatments completed on or before today"
 msgstr ""
 
-#: app/templates/patient_detail.html:318 app/templates/treatment_detail.html:22
+#: app/templates/patient_detail.html:351
+#: app/templates/patient_detail_BACKUP.html:351
+#: app/templates/treatment_detail.html:22
 msgid "Pain Level"
 msgstr ""
 
-#: app/templates/patient_detail.html:319
+#: app/templates/patient_detail.html:352
+#: app/templates/patient_detail_BACKUP.html:352
 msgid "Fee (€)"
 msgstr ""
 
-#: app/templates/patient_detail.html:320
+#: app/templates/patient_detail.html:353
+#: app/templates/patient_detail_BACKUP.html:353
 msgid "Payment"
 msgstr ""
 
-#: app/templates/patient_detail.html:341
+#: app/templates/patient_detail.html:374
+#: app/templates/patient_detail_BACKUP.html:374
 msgid "Fee"
 msgstr ""
 
-#: app/templates/patient_detail.html:342
+#: app/templates/patient_detail.html:375
+#: app/templates/patient_detail_BACKUP.html:375
 msgid "Set Fee"
 msgstr ""
 
-#: app/templates/patient_detail.html:351
+#: app/templates/patient_detail.html:384
+#: app/templates/patient_detail_BACKUP.html:384
 #, python-format
 msgid "Paid - %(method)s"
 msgstr ""
 
-#: app/templates/patient_detail.html:353
+#: app/templates/patient_detail.html:386
+#: app/templates/patient_detail_BACKUP.html:386
 msgid "Unpaid"
 msgstr ""
 
-#: app/templates/patient_detail.html:358
+#: app/templates/patient_detail.html:391
+#: app/templates/patient_detail_BACKUP.html:391
 msgid "Cash"
 msgstr ""
 
-#: app/templates/patient_detail.html:359
+#: app/templates/patient_detail.html:392
+#: app/templates/patient_detail_BACKUP.html:392
 msgid "Card"
 msgstr ""
 
-#: app/templates/patient_detail.html:367
+#: app/templates/patient_detail.html:400
+#: app/templates/patient_detail_BACKUP.html:400
 msgid "View"
 msgstr ""
 
-#: app/templates/patient_detail.html:382
+#: app/templates/patient_detail.html:415
+#: app/templates/patient_detail_BACKUP.html:415
 msgid "No treatments found for this patient."
 msgstr ""
 
-#: app/templates/patient_detail.html:397
+#: app/templates/patient_detail.html:432
+#: app/templates/patient_detail_BACKUP.html:432
+msgid "Edit Anamnesis"
+msgstr ""
+
+#: app/templates/patient_detail.html:443
+#: app/templates/patient_detail_BACKUP.html:443
+msgid "No Clinical History Available"
+msgstr ""
+
+#: app/templates/patient_detail.html:444
+#: app/templates/patient_detail_BACKUP.html:444
+msgid ""
+"The clinical history (anamnesis) for this patient has not been completed "
+"yet."
+msgstr ""
+
+#: app/templates/patient_detail.html:446
+#: app/templates/patient_detail_BACKUP.html:446
+msgid "Add Clinical History"
+msgstr ""
+
+#: app/templates/patient_detail.html:462
+#: app/templates/patient_detail_BACKUP.html:462
 msgid "Patient Consents"
 msgstr ""
 
-#: app/templates/patient_detail.html:399
+#: app/templates/patient_detail.html:464
+#: app/templates/patient_detail_BACKUP.html:464
 msgid "Add New Consent"
 msgstr ""
 
-#: app/templates/patient_detail.html:408
+#: app/templates/patient_detail.html:473
+#: app/templates/patient_detail_BACKUP.html:473
 msgid "Date Given"
 msgstr ""
 
-#: app/templates/patient_detail.html:424 app/templates/patient_detail.html:467
+#: app/templates/patient_detail.html:489 app/templates/patient_detail.html:532
+#: app/templates/patient_detail_BACKUP.html:489
+#: app/templates/patient_detail_BACKUP.html:532
 msgid "Expired"
 msgstr ""
 
-#: app/templates/patient_detail.html:427 app/templates/patient_detail.html:460
+#: app/templates/patient_detail.html:492 app/templates/patient_detail.html:525
+#: app/templates/patient_detail_BACKUP.html:492
+#: app/templates/patient_detail_BACKUP.html:525
 msgid "N/A"
 msgstr ""
 
-#: app/templates/patient_detail.html:433
+#: app/templates/patient_detail.html:498
+#: app/templates/patient_detail_BACKUP.html:498
 msgid "View Details"
 msgstr ""
 
-#: app/templates/patient_detail.html:437
+#: app/templates/patient_detail.html:502
+#: app/templates/patient_detail_BACKUP.html:502
 msgid "Revoke"
 msgstr ""
 
-#: app/templates/patient_detail.html:448
+#: app/templates/patient_detail.html:513
+#: app/templates/patient_detail_BACKUP.html:513
 msgid "Consent Details"
 msgstr ""
 
-#: app/templates/patient_detail.html:456
+#: app/templates/patient_detail.html:521
+#: app/templates/patient_detail_BACKUP.html:521
 msgid "Given At"
 msgstr ""
 
-#: app/templates/patient_detail.html:459
+#: app/templates/patient_detail.html:524
+#: app/templates/patient_detail_BACKUP.html:524
 msgid "Expires At"
 msgstr ""
 
-#: app/templates/patient_detail.html:472
+#: app/templates/patient_detail.html:537
+#: app/templates/patient_detail_BACKUP.html:537
 msgid "No additional notes"
 msgstr ""
 
-#: app/templates/patient_detail.html:478
+#: app/templates/patient_detail.html:543
+#: app/templates/patient_detail_BACKUP.html:543
 msgid "Revoke Consent"
 msgstr ""
 
-#: app/templates/patient_detail.html:489
+#: app/templates/patient_detail.html:554
+#: app/templates/patient_detail_BACKUP.html:554
 msgid "No consent records found for this patient."
 msgstr ""
 
-#: app/templates/patient_detail.html:505
+#: app/templates/patient_detail.html:570
+#: app/templates/patient_detail_BACKUP.html:570
 msgid "View All Reports"
 msgstr ""
 
-#: app/templates/patient_detail.html:518
+#: app/templates/patient_detail.html:583
+#: app/templates/patient_detail_BACKUP.html:583
 msgid "Click to view this report"
 msgstr ""
 
-#: app/templates/patient_detail.html:523
+#: app/templates/patient_detail.html:588
+#: app/templates/patient_detail_BACKUP.html:588
 msgid "No reports generated yet."
 msgstr ""
 
-#: app/templates/patient_detail.html:538 app/templates/treatment_detail.html:4
-#: app/templates/treatment_detail.html:12
+#: app/templates/patient_detail.html:610
+msgid "Analysis Completed Successfully"
+msgstr ""
+
+#: app/templates/patient_detail.html:611
+msgid "Generated on"
+msgstr ""
+
+#: app/templates/patient_detail.html:623
+msgid "Recommended Tests & Assessments"
+msgstr ""
+
+#: app/templates/patient_detail.html:638
+msgid "Red Flags - Immediate Attention Required"
+msgstr ""
+
+#: app/templates/patient_detail.html:653
+msgid "Yellow Flags - Monitor & Consider"
+msgstr ""
+
+#: app/templates/patient_detail.html:668
+msgid "Clinical Notes & Recommendations"
+msgstr ""
+
+#: app/templates/patient_detail.html:679
+msgid "Regenerate Analysis"
+msgstr ""
+
+#: app/templates/patient_detail.html:690
+msgid "No AI Analysis Available"
+msgstr ""
+
+#: app/templates/patient_detail.html:691
+msgid ""
+"Generate an intelligent clinical analysis based on patient anamnesis data"
+" and treatment history using advanced AI technology."
+msgstr ""
+
+#: app/templates/patient_detail.html:694
+msgid "Generate AI Analysis"
+msgstr ""
+
+#: app/templates/patient_detail.html:712
+#: app/templates/patient_detail_BACKUP.html:696
+#: app/templates/treatment_detail.html:4 app/templates/treatment_detail.html:12
 msgid "Treatment Details"
 msgstr ""
 
-#: app/templates/patient_detail.html:544
+#: app/templates/patient_detail.html:718
+#: app/templates/patient_detail_BACKUP.html:702
 msgid "Date:"
 msgstr ""
 
-#: app/templates/patient_detail.html:545
+#: app/templates/patient_detail.html:719
+#: app/templates/patient_detail_BACKUP.html:703
 msgid "Description:"
 msgstr ""
 
-#: app/templates/patient_detail.html:548
+#: app/templates/patient_detail.html:722
+#: app/templates/patient_detail_BACKUP.html:706
 msgid "Pain Level:"
 msgstr ""
 
-#: app/templates/patient_detail.html:553 app/templates/patient_detail.html:653
+#: app/templates/patient_detail.html:727 app/templates/patient_detail.html:827
+#: app/templates/patient_detail_BACKUP.html:711
+#: app/templates/patient_detail_BACKUP.html:811
 #: app/templates/patients_list.html:166 app/templates/treatment_detail.html:45
 msgid "Progress Notes"
 msgstr ""
 
-#: app/templates/patient_detail.html:562
+#: app/templates/patient_detail.html:736
+#: app/templates/patient_detail_BACKUP.html:720
 msgid "Edit Treatment"
 msgstr ""
 
-#: app/templates/patient_detail.html:590
+#: app/templates/patient_detail.html:764
+#: app/templates/patient_detail_BACKUP.html:748
 msgid "Pain Level (0-10)"
 msgstr ""
 
-#: app/templates/patient_detail.html:592
+#: app/templates/patient_detail.html:766
+#: app/templates/patient_detail_BACKUP.html:750
 msgid "Optional: Leave blank if not applicable"
 msgstr ""
 
-#: app/templates/patient_detail.html:595
+#: app/templates/patient_detail.html:769
+#: app/templates/patient_detail_BACKUP.html:753
 msgid "Movement Restriction"
 msgstr ""
 
-#: app/templates/patient_detail.html:601
+#: app/templates/patient_detail.html:775
+#: app/templates/patient_detail_BACKUP.html:759
 msgid "Body Chart"
 msgstr ""
 
-#: app/templates/patient_detail.html:605
+#: app/templates/patient_detail.html:779
+#: app/templates/patient_detail_BACKUP.html:763
 msgid "Add Trigger Points"
 msgstr ""
 
-#: app/templates/patient_detail.html:608
+#: app/templates/patient_detail.html:782
+#: app/templates/patient_detail_BACKUP.html:766
 msgid "Latent"
 msgstr ""
 
-#: app/templates/patient_detail.html:609
+#: app/templates/patient_detail.html:783
+#: app/templates/patient_detail_BACKUP.html:767
 msgid "Satellite"
 msgstr ""
 
-#: app/templates/patient_detail.html:620
+#: app/templates/patient_detail.html:794
+#: app/templates/patient_detail_BACKUP.html:778
 msgid "Click on the body map to add trigger points"
 msgstr ""
 
-#: app/templates/patient_detail.html:624
+#: app/templates/patient_detail.html:798
+#: app/templates/patient_detail_BACKUP.html:782
 msgid "Trigger Points"
 msgstr ""
 
-#: app/templates/patient_detail.html:630 app/templates/treatment_detail.html:87
+#: app/templates/patient_detail.html:804
+#: app/templates/patient_detail_BACKUP.html:788
+#: app/templates/treatment_detail.html:87
 msgid "Muscle"
 msgstr ""
 
-#: app/templates/patient_detail.html:631 app/templates/treatment_detail.html:88
+#: app/templates/patient_detail.html:805
+#: app/templates/patient_detail_BACKUP.html:789
+#: app/templates/treatment_detail.html:88
 msgid "Intensity"
 msgstr ""
 
-#: app/templates/patient_detail.html:649
+#: app/templates/patient_detail.html:823
+#: app/templates/patient_detail_BACKUP.html:807
 msgid "Assessment"
 msgstr ""
 
-#: app/templates/patient_detail.html:659
+#: app/templates/patient_detail.html:833
+#: app/templates/patient_detail_BACKUP.html:817
 msgid "Select status"
 msgstr ""
 
-#: app/templates/patient_detail.html:660
+#: app/templates/patient_detail.html:834
+#: app/templates/patient_detail_BACKUP.html:818
 msgid "Scheduled"
 msgstr ""
 
-#: app/templates/patient_detail.html:661
+#: app/templates/patient_detail.html:835
+#: app/templates/patient_detail_BACKUP.html:819
 msgid "In Progress"
 msgstr ""
 
-#: app/templates/patient_detail.html:662 app/templates/patients_list.html:21
+#: app/templates/patient_detail.html:836
+#: app/templates/patient_detail_BACKUP.html:820
+#: app/templates/patients_list.html:21
 msgid "Completed"
 msgstr ""
 
-#: app/templates/patient_detail.html:663
+#: app/templates/patient_detail.html:837
+#: app/templates/patient_detail_BACKUP.html:821
 msgid "Cancelled"
 msgstr ""
 
-#: app/templates/patient_detail.html:671
+#: app/templates/patient_detail.html:845
+#: app/templates/patient_detail_BACKUP.html:829
 msgid "Provider"
 msgstr ""
 
-#: app/templates/patient_detail.html:743
+#: app/templates/patient_detail.html:917
+#: app/templates/patient_detail_BACKUP.html:901
 msgid "AI Generated Exercise Prescription"
 msgstr ""
 
-#: app/templates/patient_detail.html:748
+#: app/templates/patient_detail.html:922
+#: app/templates/patient_detail_BACKUP.html:906
 msgid "Generating exercise prescription..."
 msgstr ""
 
-#: app/templates/patient_detail.html:764
+#: app/templates/patient_detail.html:938
+#: app/templates/patient_detail_BACKUP.html:922
 msgid "Add Consent"
 msgstr ""
 
-#: app/templates/patient_detail.html:769
+#: app/templates/patient_detail.html:943
+#: app/templates/patient_detail_BACKUP.html:927
 msgid "Consent Type"
 msgstr ""
 
-#: app/templates/patient_detail.html:771
+#: app/templates/patient_detail.html:945
+#: app/templates/patient_detail_BACKUP.html:929
 msgid "Select consent type..."
 msgstr ""
 
-#: app/templates/patient_detail.html:772
+#: app/templates/patient_detail.html:946
+#: app/templates/patient_detail_BACKUP.html:930
 msgid "C.I FISIOTERAPIA GENERAL"
 msgstr ""
 
-#: app/templates/patient_detail.html:773
+#: app/templates/patient_detail.html:947
+#: app/templates/patient_detail_BACKUP.html:931
 msgid "C.I CONSEJERÍA DE SALUD"
 msgstr ""
 
-#: app/templates/patient_detail.html:774
+#: app/templates/patient_detail.html:948
+#: app/templates/patient_detail_BACKUP.html:932
 msgid "CONSENTIMIENTO INFORMADO NEUROMODULACIÓN PERCUTÁNEA"
 msgstr ""
 
-#: app/templates/patient_detail.html:775
+#: app/templates/patient_detail.html:949
+#: app/templates/patient_detail_BACKUP.html:933
 msgid "C.I ELECTROTERAPIA"
 msgstr ""
 
-#: app/templates/patient_detail.html:776
+#: app/templates/patient_detail.html:950
+#: app/templates/patient_detail_BACKUP.html:934
 msgid "C.I EPI"
 msgstr ""
 
-#: app/templates/patient_detail.html:777
+#: app/templates/patient_detail.html:951
+#: app/templates/patient_detail_BACKUP.html:935
 msgid "C.I PUNCIÓN SECA"
 msgstr ""
 
-#: app/templates/patient_detail.html:778
+#: app/templates/patient_detail.html:952
+#: app/templates/patient_detail_BACKUP.html:936
 msgid "C.I SUELO PÉLVICO"
 msgstr ""
 
-#: app/templates/patient_detail.html:779
+#: app/templates/patient_detail.html:953
+#: app/templates/patient_detail_BACKUP.html:937
 msgid "C.I ACUPUNTURA"
 msgstr ""
 
-#: app/templates/patient_detail.html:780
+#: app/templates/patient_detail.html:954
+#: app/templates/patient_detail_BACKUP.html:938
 msgid "C.I MANIPULACIONES ARTICULARES"
 msgstr ""
 
-#: app/templates/patient_detail.html:781
+#: app/templates/patient_detail.html:955
+#: app/templates/patient_detail_BACKUP.html:939
 msgid "C.I MASAJE TERAPÉUTICO"
 msgstr ""
 
-#: app/templates/patient_detail.html:782
+#: app/templates/patient_detail.html:956
+#: app/templates/patient_detail_BACKUP.html:940
 msgid "C.I PROYECTOS DE INVESTIGACIÓN"
 msgstr ""
 
-#: app/templates/patient_detail.html:790
+#: app/templates/patient_detail.html:964
+#: app/templates/patient_detail_BACKUP.html:948
 msgid "Signature (draw below):"
 msgstr ""
 
-#: app/templates/patient_detail.html:795
+#: app/templates/patient_detail.html:969
+#: app/templates/patient_detail_BACKUP.html:953
 msgid "Clear"
 msgstr ""
 
-#: app/templates/patient_detail.html:796
+#: app/templates/patient_detail.html:970
+#: app/templates/patient_detail_BACKUP.html:954
 msgid "Accept with Signature"
 msgstr ""
 
-#: app/templates/patient_detail.html:800
+#: app/templates/patient_detail.html:974
+#: app/templates/patient_detail_BACKUP.html:958
 msgid "Or scan to accept on your device:"
 msgstr ""
 
-#: app/templates/patient_detail.html:815
+#: app/templates/patient_detail.html:989
+#: app/templates/patient_detail_BACKUP.html:973
 msgid "Select Report Language"
 msgstr ""
 
-#: app/templates/patient_detail.html:819
+#: app/templates/patient_detail.html:993
+#: app/templates/patient_detail_BACKUP.html:977
 msgid "Choose the language for your AI-generated patient report:"
 msgstr ""
 
-#: app/templates/patient_detail.html:858 app/templates/patient_detail.html:1107
+#: app/templates/patient_detail.html:1032
+#: app/templates/patient_detail.html:1404
+#: app/templates/patient_detail_BACKUP.html:1016
+#: app/templates/patient_detail_BACKUP.html:1388
 msgid "Generate Report"
 msgstr ""
 
-#: app/templates/patient_detail.html:961
+#: app/templates/patient_detail.html:1044
+#: app/templates/patient_detail_BACKUP.html:1028
+msgid "Review and Edit Report"
+msgstr ""
+
+#: app/templates/patient_detail.html:1049
+#: app/templates/patient_detail_BACKUP.html:1033
+msgid ""
+"Please review the generated report below. You can edit the content before"
+" saving it."
+msgstr ""
+
+#: app/templates/patient_detail.html:1052
+#: app/templates/patient_detail_BACKUP.html:1036
+msgid "Report Content"
+msgstr ""
+
+#: app/templates/patient_detail.html:1059
+#: app/templates/patient_detail.html:1452
+#: app/templates/patient_detail_BACKUP.html:1043
+#: app/templates/patient_detail_BACKUP.html:1436
+msgid "Save Report"
+msgstr ""
+
+#: app/templates/patient_detail.html:1071
+#: app/templates/patient_detail_BACKUP.html:1055
+msgid "Select Exercise Prescription Language"
+msgstr ""
+
+#: app/templates/patient_detail.html:1075
+#: app/templates/patient_detail_BACKUP.html:1059
+msgid "Choose the language for your AI-generated exercise prescription:"
+msgstr ""
+
+#: app/templates/patient_detail.html:1136
+#: app/templates/patient_detail_BACKUP.html:1120
+msgid ""
+"This will analyze all available anamnesis data for this patient and "
+"generate:"
+msgstr ""
+
+#: app/templates/patient_detail.html:1138
+#: app/templates/patient_detail_BACKUP.html:1122
+msgid "Suggested clinical tests"
+msgstr ""
+
+#: app/templates/patient_detail.html:1139
+#: app/templates/patient_detail_BACKUP.html:1123
+msgid "Red flags (warning signs)"
+msgstr ""
+
+#: app/templates/patient_detail.html:1140
+#: app/templates/patient_detail_BACKUP.html:1124
+msgid "Yellow flags (psychosocial factors)"
+msgstr ""
+
+#: app/templates/patient_detail.html:1141
+#: app/templates/patient_detail_BACKUP.html:1125
+msgid "Clinical notes and recommendations"
+msgstr ""
+
+#: app/templates/patient_detail.html:1145
+#: app/templates/patient_detail_BACKUP.html:1129
+msgid "All data is anonymized before being sent to the AI service."
+msgstr ""
+
+#: app/templates/patient_detail.html:1153
+#: app/templates/patient_detail_BACKUP.html:1137
+msgid "Generate Analysis"
+msgstr ""
+
+#: app/templates/patient_detail.html:1256
+#: app/templates/patient_detail_BACKUP.html:1240
 msgid "Please provide a signature."
 msgstr ""
 
-#: app/templates/patient_detail.html:965
+#: app/templates/patient_detail.html:1260
+#: app/templates/patient_detail_BACKUP.html:1244
 msgid "Consent record not created."
 msgstr ""
 
-#: app/templates/patient_detail.html:985
+#: app/templates/patient_detail.html:1280
+#: app/templates/patient_detail_BACKUP.html:1264
 msgid "Consent and signature saved!"
 msgstr ""
 
-#: app/templates/patient_detail.html:988
+#: app/templates/patient_detail.html:1283
+#: app/templates/patient_detail_BACKUP.html:1267
 msgid "Error:"
 msgstr ""
 
-#: app/templates/patient_detail.html:1079
+#: app/templates/patient_detail.html:1374
+#: app/templates/patient_detail.html:1475
+#: app/templates/patient_detail_BACKUP.html:1358
+#: app/templates/patient_detail_BACKUP.html:1459
 msgid "Generating..."
 msgstr ""
 
-#: app/templates/patient_detail.html:1095
-msgid "Report generated successfully."
+#: app/templates/patient_detail.html:1395
+#: app/templates/patient_detail.html:1399
+#: app/templates/patient_detail_BACKUP.html:1379
+#: app/templates/patient_detail_BACKUP.html:1383
+msgid "Error generating report:"
 msgstr ""
 
-#: app/templates/patient_detail.html:1098
-#: app/templates/patient_detail.html:1102
-msgid "Error generating report:"
+#: app/templates/patient_detail.html:1417
+#: app/templates/patient_detail_BACKUP.html:1401
+msgid "Report content cannot be empty."
+msgstr ""
+
+#: app/templates/patient_detail.html:1423
+#: app/templates/patient_detail_BACKUP.html:1407
+msgid "Saving..."
+msgstr ""
+
+#: app/templates/patient_detail.html:1440
+#: app/templates/patient_detail_BACKUP.html:1424
+msgid "Report saved successfully."
+msgstr ""
+
+#: app/templates/patient_detail.html:1443
+#: app/templates/patient_detail.html:1447
+#: app/templates/patient_detail_BACKUP.html:1427
+#: app/templates/patient_detail_BACKUP.html:1431
+msgid "Error saving report:"
+msgstr ""
+
+#: app/templates/patient_detail.html:1491
+#: app/templates/patient_detail_BACKUP.html:1475
+msgid "Exercise prescription generated successfully."
+msgstr ""
+
+#: app/templates/patient_detail.html:1494
+#: app/templates/patient_detail.html:1498
+#: app/templates/patient_detail_BACKUP.html:1478
+#: app/templates/patient_detail_BACKUP.html:1482
+msgid "Error generating exercises:"
 msgstr ""
 
 #: app/templates/patients_list.html:4 app/templates/patients_list.html:11
@@ -2377,11 +4887,11 @@ msgstr ""
 msgid "Current"
 msgstr ""
 
-#: app/templates/user_settings.html:18 app/templates/user_settings.html:98
+#: app/templates/user_settings.html:18 app/templates/user_settings.html:109
 msgid "Clinic Information"
 msgstr ""
 
-#: app/templates/user_settings.html:21 app/templates/user_settings.html:212
+#: app/templates/user_settings.html:21 app/templates/user_settings.html:236
 msgid "API Integrations"
 msgstr ""
 
@@ -2389,68 +4899,306 @@ msgstr ""
 msgid "Financial Settings"
 msgstr ""
 
-#: app/templates/user_settings.html:218
+#: app/templates/user_settings.html:27 app/templates/user_settings.html:390
+msgid "Account Deletion"
+msgstr ""
+
+#: app/templates/user_settings.html:96
+msgid "Acronym of your professional college"
+msgstr ""
+
+#: app/templates/user_settings.html:174
+msgid "Fee Configuration"
+msgstr ""
+
+#: app/templates/user_settings.html:242
 msgid "Available Integrations"
 msgstr ""
 
-#: app/templates/user_settings.html:219
+#: app/templates/user_settings.html:243
 msgid ""
 "Select which integrations you would like to enable. All integrations are "
 "disabled by default for security."
 msgstr ""
 
-#: app/templates/user_settings.html:224
+#: app/templates/user_settings.html:248
 msgid "Sync appointments and bookings from Calendly"
 msgstr ""
 
-#: app/templates/user_settings.html:233
+#: app/templates/user_settings.html:257
 msgid "Calendly Configuration"
 msgstr ""
 
-#: app/templates/user_settings.html:245
+#: app/templates/user_settings.html:269
 msgid "Find your Personal Access Token in your"
 msgstr ""
 
-#: app/templates/user_settings.html:245
+#: app/templates/user_settings.html:269
 msgid "Calendly API & Webhooks page"
 msgstr ""
 
-#: app/templates/user_settings.html:258
+#: app/templates/user_settings.html:282
 msgid ""
 "Your Calendly User URI is needed to fetch your specific events. Format: "
 "https://api.calendly.com/users/your-user-id"
 msgstr ""
 
-#: app/templates/user_settings.html:275
+#: app/templates/user_settings.html:299
 msgid "Autónomo Contribution Base"
 msgstr ""
 
-#: app/templates/user_settings.html:294
+#: app/templates/user_settings.html:318
 msgid "Manage Fixed Costs"
 msgstr ""
 
-#: app/templates/user_settings.html:296
+#: app/templates/user_settings.html:320
 msgid "Existing Costs"
 msgstr ""
 
-#: app/templates/user_settings.html:312
+#: app/templates/user_settings.html:336
 msgid "Are you sure you want to delete this cost?"
 msgstr ""
 
-#: app/templates/user_settings.html:314
+#: app/templates/user_settings.html:338
 msgid "Delete Cost"
 msgstr ""
 
-#: app/templates/user_settings.html:324
+#: app/templates/user_settings.html:348
 msgid "No fixed costs added yet."
 msgstr ""
 
-#: app/templates/user_settings.html:328
+#: app/templates/user_settings.html:352
 msgid "Add New Fixed Cost"
 msgstr ""
 
-#: app/templates/user_settings.html:354
+#: app/templates/user_settings.html:378
 msgid "Add"
+msgstr ""
+
+#: app/templates/user_settings.html:394
+msgid "Understanding Your Options"
+msgstr ""
+
+#: app/templates/user_settings.html:395
+msgid ""
+"We provide two types of account deletion to give you control over your "
+"data. Please read carefully before making a decision."
+msgstr ""
+
+#: app/templates/user_settings.html:402
+msgid "Temporary Deactivation"
+msgstr ""
+
+#: app/templates/user_settings.html:405
+msgid ""
+"Your account will be deactivated but all your data remains safely stored."
+" You can contact support to reactivate your account at any time."
+msgstr ""
+
+#: app/templates/user_settings.html:407
+msgid "Account becomes inaccessible"
+msgstr ""
+
+#: app/templates/user_settings.html:408
+msgid "All data is preserved"
+msgstr ""
+
+#: app/templates/user_settings.html:409
+msgid "Can be reversed by contacting support"
+msgstr ""
+
+#: app/templates/user_settings.html:410
+msgid "Ideal if you might return"
+msgstr ""
+
+#: app/templates/user_settings.html:412
+msgid ""
+"Are you sure you want to temporarily deactivate your account? You can "
+"contact support to reactivate it."
+msgstr ""
+
+#: app/templates/user_settings.html:415
+msgid "Temporarily Deactivate Account"
+msgstr ""
+
+#: app/templates/user_settings.html:425
+msgid "Permanent Deletion"
+msgstr ""
+
+#: app/templates/user_settings.html:428
+msgid ""
+"Your account and ALL associated data will be permanently deleted. This "
+"action cannot be undone."
+msgstr ""
+
+#: app/templates/user_settings.html:430
+msgid "Account permanently deleted"
+msgstr ""
+
+#: app/templates/user_settings.html:431
+msgid "All patients and treatments deleted"
+msgstr ""
+
+#: app/templates/user_settings.html:432
+msgid "All reports and documents deleted"
+msgstr ""
+
+#: app/templates/user_settings.html:433
+msgid "Cannot be reversed"
+msgstr ""
+
+#: app/templates/user_settings.html:436
+msgid ""
+"This will permanently delete all patients, treatments, reports, and other"
+" data associated with your account. This action cannot be undone."
+msgstr ""
+
+#: app/templates/user_settings.html:443
+msgid ""
+"I understand that this action will permanently delete all my data and "
+"cannot be undone"
+msgstr ""
+
+#: app/templates/user_settings.html:450
+msgid "Permanently Delete Account"
+msgstr ""
+
+#: app/templates/user_settings.html:459
+msgid "Need Help?"
+msgstr ""
+
+#: app/templates/user_settings.html:460
+msgid ""
+"If you have questions about account deletion or need assistance with your"
+" data, please"
+msgstr ""
+
+#: app/templates/user_settings.html:460
+msgid "contact our support team"
+msgstr ""
+
+#: app/templates/user_settings.html:460
+msgid "before proceeding."
+msgstr ""
+
+#: app/templates/user_settings.html:503
+msgid "Are you absolutely sure you want to permanently delete your account?"
+msgstr ""
+
+#: app/templates/user_settings.html:503
+msgid "This will delete:"
+msgstr ""
+
+#: app/templates/user_settings.html:503
+msgid "All your patients and their data"
+msgstr ""
+
+#: app/templates/user_settings.html:503
+msgid "All treatments and reports"
+msgstr ""
+
+#: app/templates/user_settings.html:503
+msgid "All clinic information"
+msgstr ""
+
+#: app/templates/user_settings.html:503
+msgid "All financial data"
+msgstr ""
+
+#: app/templates/user_settings.html:503
+msgid "This action cannot be undone. Type \"DELETE\" to confirm:"
+msgstr ""
+
+#: app/templates/user_settings.html:507
+msgid "Final confirmation: This will permanently delete everything. Are you sure?"
+msgstr ""
+
+#: app/templates/welcome_modal.html:32
+msgid "Let's get to know each other!"
+msgstr ""
+
+#: app/templates/welcome_modal.html:33
+msgid "First, in which language would you like me to speak to you?"
+msgstr ""
+
+#: app/templates/welcome_modal.html:41
+msgid "Select your language"
+msgstr ""
+
+#: app/templates/welcome_modal.html:57
+msgid "What should I call you?"
+msgstr ""
+
+#: app/templates/welcome_modal.html:64
+msgid "Your first name"
+msgstr ""
+
+#: app/templates/welcome_modal.html:68
+msgid "Your last name (optional)"
+msgstr ""
+
+#: app/templates/welcome_modal.html:78
+msgid "Tell me about your work"
+msgstr ""
+
+#: app/templates/welcome_modal.html:79
+msgid "Are you self-employed or do you work for a clinic?"
+msgstr ""
+
+#: app/templates/welcome_modal.html:94
+msgid "I work independently, usually home visits"
+msgstr ""
+
+#: app/templates/welcome_modal.html:106
+msgid "I work for a clinic or medical center"
+msgstr ""
+
+#: app/templates/welcome_modal.html:118
+msgid "I work both independently and for clinics"
+msgstr ""
+
+#: app/templates/welcome_modal.html:134
+msgid "If you work for a clinic, tell me about it"
+msgstr ""
+
+#: app/templates/welcome_modal.html:142
+msgid "Name of the clinic where you work"
+msgstr ""
+
+#: app/templates/welcome_modal.html:160
+msgid "Percentage that the clinic keeps from your sessions"
+msgstr ""
+
+#: app/templates/welcome_modal.html:169
+msgid "Let's configure your fees in the next step"
+msgstr ""
+
+#: app/templates/welcome_modal.html:179
+msgid "Your fee structure"
+msgstr ""
+
+#: app/templates/welcome_modal.html:180
+msgid "What do you charge for your sessions?"
+msgstr ""
+
+#: app/templates/welcome_modal.html:191
+msgid "Usually includes initial assessment"
+msgstr ""
+
+#: app/templates/welcome_modal.html:200
+msgid "Your standard session fee"
+msgstr ""
+
+#: app/templates/welcome_modal.html:323
+msgid "Please select a language"
+msgstr ""
+
+#: app/templates/welcome_modal.html:329
+msgid "Please enter your first name"
+msgstr ""
+
+#: app/templates/welcome_modal.html:335
+msgid "Please select how you work"
 msgstr ""
 
 #: app/templates/auth/login.html:13
@@ -2491,10 +5239,6 @@ msgstr ""
 
 #: app/templates/locations/manage.html:12
 msgid "Add New Location"
-msgstr ""
-
-#: app/templates/locations/manage.html:50
-msgid "Fees"
 msgstr ""
 
 #: app/templates/locations/manage.html:52
@@ -2543,477 +5287,5 @@ msgstr ""
 
 #: app/templates/locations/manage.html:124
 msgid "Delete Location"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/_termui_impl.py:556
-#, python-brace-format
-msgid "{editor}: Editing failed"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/_termui_impl.py:560
-#, python-brace-format
-msgid "{editor}: Editing failed: {e}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:1124
-msgid "Aborted!"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:1349
-#: venv/lib/python3.9/site-packages/click/core.py:1379
-#, python-brace-format
-msgid "(Deprecated) {text}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:1396
-msgid "Options"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:1422
-#, python-brace-format
-msgid "Got unexpected extra argument ({args})"
-msgid_plural "Got unexpected extra arguments ({args})"
-msgstr[0] ""
-msgstr[1] ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:1438
-#, python-brace-format
-msgid "DeprecationWarning: The command {name!r} is deprecated."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:1645
-msgid "Commands"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:1677
-msgid "Missing command."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:1755
-#, python-brace-format
-msgid "No such command {name!r}."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:2313
-msgid "Value must be an iterable."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:2334
-#, python-brace-format
-msgid "Takes {nargs} values but 1 was given."
-msgid_plural "Takes {nargs} values but {len} were given."
-msgstr[0] ""
-msgstr[1] ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:2783
-#, python-brace-format
-msgid "env var: {var}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:2813
-msgid "(dynamic)"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:2828
-#, python-brace-format
-msgid "default: {default}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/core.py:2841
-msgid "required"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/decorators.py:457
-#, python-format
-msgid "%(prog)s, version %(version)s"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/decorators.py:520
-msgid "Show the version and exit."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/decorators.py:541
-msgid "Show this message and exit."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/exceptions.py:49
-#: venv/lib/python3.9/site-packages/click/exceptions.py:88
-#, python-brace-format
-msgid "Error: {message}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/exceptions.py:80
-#, python-brace-format
-msgid "Try '{command} {option}' for help."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/exceptions.py:129
-#, python-brace-format
-msgid "Invalid value: {message}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/exceptions.py:131
-#, python-brace-format
-msgid "Invalid value for {param_hint}: {message}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/exceptions.py:187
-msgid "Missing argument"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/exceptions.py:189
-msgid "Missing option"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/exceptions.py:191
-msgid "Missing parameter"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/exceptions.py:193
-#, python-brace-format
-msgid "Missing {param_type}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/exceptions.py:200
-#, python-brace-format
-msgid "Missing parameter: {param_name}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/exceptions.py:220
-#, python-brace-format
-msgid "No such option: {name}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/exceptions.py:232
-#, python-brace-format
-msgid "Did you mean {possibility}?"
-msgid_plural "(Possible options: {possibilities})"
-msgstr[0] ""
-msgstr[1] ""
-
-#: venv/lib/python3.9/site-packages/click/exceptions.py:270
-msgid "unknown error"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/exceptions.py:277
-#, python-brace-format
-msgid "Could not open file {filename!r}: {message}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/parser.py:233
-#, python-brace-format
-msgid "Argument {name!r} takes {nargs} values."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/parser.py:415
-#, python-brace-format
-msgid "Option {name!r} does not take a value."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/parser.py:476
-#, python-brace-format
-msgid "Option {name!r} requires an argument."
-msgid_plural "Option {name!r} requires {nargs} arguments."
-msgstr[0] ""
-msgstr[1] ""
-
-#: venv/lib/python3.9/site-packages/click/shell_completion.py:326
-msgid "Shell completion is not supported for Bash versions older than 4.4."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/shell_completion.py:333
-msgid "Couldn't detect Bash version, shell completion is not supported."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/termui.py:158
-msgid "Repeat for confirmation"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/termui.py:174
-msgid "Error: The value you entered was invalid."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/termui.py:176
-#, python-brace-format
-msgid "Error: {e.message}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/termui.py:187
-msgid "Error: The two entered values do not match."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/termui.py:243
-msgid "Error: invalid input"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/termui.py:773
-msgid "Press any key to continue..."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:267
-#, python-brace-format
-msgid ""
-"Choose from:\n"
-"\t{choices}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:299
-#, python-brace-format
-msgid "{value!r} is not {choice}."
-msgid_plural "{value!r} is not one of {choices}."
-msgstr[0] ""
-msgstr[1] ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:393
-#, python-brace-format
-msgid "{value!r} does not match the format {format}."
-msgid_plural "{value!r} does not match the formats {formats}."
-msgstr[0] ""
-msgstr[1] ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:415
-#, python-brace-format
-msgid "{value!r} is not a valid {number_type}."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:471
-#, python-brace-format
-msgid "{value} is not in the range {range}."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:612
-#, python-brace-format
-msgid "{value!r} is not a valid boolean."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:636
-#, python-brace-format
-msgid "{value!r} is not a valid UUID."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:826
-msgid "file"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:828
-msgid "directory"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:830
-msgid "path"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:881
-#, python-brace-format
-msgid "{name} {filename!r} does not exist."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:890
-#, python-brace-format
-msgid "{name} {filename!r} is a file."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:898
-#, python-brace-format
-msgid "{name} {filename!r} is a directory."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:907
-#, python-brace-format
-msgid "{name} {filename!r} is not readable."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:916
-#, python-brace-format
-msgid "{name} {filename!r} is not writable."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:925
-#, python-brace-format
-msgid "{name} {filename!r} is not executable."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/click/types.py:992
-#, python-brace-format
-msgid "{len_type} values are required, but {len_value} was given."
-msgid_plural "{len_type} values are required, but {len_value} were given."
-msgstr[0] ""
-msgstr[1] ""
-
-#: venv/lib/python3.9/site-packages/flask_wtf/file.py:55
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:293
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:323
-msgid "This field is required."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/flask_wtf/file.py:94
-#, python-brace-format
-msgid "File does not have an approved extension: {extensions}"
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/flask_wtf/file.py:101
-msgid "File does not have an approved extension."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:86
-#, python-format
-msgid "Invalid field name '%s'."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:99
-#, python-format
-msgid "Field must be equal to %(other_name)s."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:146
-#, python-format
-msgid "Field must be at least %(min)d character long."
-msgid_plural "Field must be at least %(min)d characters long."
-msgstr[0] ""
-msgstr[1] ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:152
-#, python-format
-msgid "Field cannot be longer than %(max)d character."
-msgid_plural "Field cannot be longer than %(max)d characters."
-msgstr[0] ""
-msgstr[1] ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:158
-#, python-format
-msgid "Field must be exactly %(max)d character long."
-msgid_plural "Field must be exactly %(max)d characters long."
-msgstr[0] ""
-msgstr[1] ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:164
-#, python-format
-msgid "Field must be between %(min)d and %(max)d characters long."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:216
-#, python-format
-msgid "Number must be at least %(min)s."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:219
-#, python-format
-msgid "Number must be at most %(max)s."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:222
-#, python-format
-msgid "Number must be between %(min)s and %(max)s."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:358
-msgid "Invalid input."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:422
-msgid "Invalid email address."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:460
-msgid "Invalid IP address."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:503
-msgid "Invalid Mac address."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:540
-msgid "Invalid URL."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:561
-msgid "Invalid UUID."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:595
-#, python-format
-msgid "Invalid value, must be one of: %(values)s."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:631
-#, python-format
-msgid "Invalid value, can't be any of: %(values)s."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:700
-msgid "This field cannot be edited."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:716
-msgid "This field is disabled and cannot have a value."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/csrf/core.py:96
-msgid "Invalid CSRF Token."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/csrf/session.py:64
-msgid "CSRF token missing."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/csrf/session.py:72
-msgid "CSRF failed."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/csrf/session.py:77
-msgid "CSRF token expired."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:142
-msgid "Invalid Choice: could not coerce."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:149
-#: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:203
-msgid "Choices cannot be None."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:155
-msgid "Not a valid choice."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:194
-msgid "Invalid choice(s): one or more data inputs could not be coerced."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:212
-#, python-format
-msgid "'%(value)s' is not a valid choice for this field."
-msgid_plural "'%(value)s' are not valid choices for this field."
-msgstr[0] ""
-msgstr[1] ""
-
-#: venv/lib/python3.9/site-packages/wtforms/fields/datetime.py:52
-msgid "Not a valid datetime value."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/fields/datetime.py:78
-msgid "Not a valid date value."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/fields/datetime.py:104
-msgid "Not a valid time value."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/fields/datetime.py:149
-msgid "Not a valid week value."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/fields/numeric.py:82
-#: venv/lib/python3.9/site-packages/wtforms/fields/numeric.py:92
-msgid "Not a valid integer value."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/fields/numeric.py:168
-msgid "Not a valid decimal value."
-msgstr ""
-
-#: venv/lib/python3.9/site-packages/wtforms/fields/numeric.py:197
-msgid "Not a valid float value."
 msgstr ""
 

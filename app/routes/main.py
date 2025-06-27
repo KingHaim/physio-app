@@ -7,7 +7,7 @@ from app.models import (
     db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, 
     PatientReport, RecurringAppointment, User, PracticeReport, Plan, 
     FixedCost, UserSubscription, DataProcessingActivity, UserConsent, 
-    SecurityBreach, SecurityLog
+    SecurityBreach, SecurityLog, Location
 )
 from app.utils import mark_past_treatments_as_completed, mark_inactive_patients
 from flask_login import login_required, current_user, logout_user
@@ -28,10 +28,12 @@ from flask_wtf.csrf import generate_csrf
 import stripe
 from app.forms import (
     UpdateEmailForm, ChangePasswordForm, UserProfileForm, ClinicForm,
-    ApiIntegrationsForm, FinancialSettingsForm, UserConsentForm, LoginForm, RegistrationForm
+    ApiIntegrationsForm, FinancialSettingsForm, UserConsentForm, LoginForm, RegistrationForm,
+    WelcomeOnboardingForm
 )
 from functools import wraps
 from flask_babel import _
+# from .analytics import generate_analytics_report, generate_deepseek_report
 
 # Define timezones
 UTC = pytz.utc
@@ -45,6 +47,100 @@ def set_language(lang_code):
     if lang_code in current_app.config.get('BABEL_SUPPORTED_LOCALES', []):
         session['lang'] = lang_code
     return redirect(request.referrer or url_for('main.index'))
+
+@main.route('/api/welcome-translations/<lang_code>')
+@login_required
+def get_welcome_translations(lang_code):
+    """Get welcome modal translations for a specific language."""
+    if lang_code not in ['es', 'en', 'fr', 'it']:
+        return jsonify({'error': 'Unsupported language'}), 400
+    
+    # Import Babel directly for translations
+    import babel.support
+    from babel import Locale
+    from flask import current_app
+    import os
+    
+    # Get translations for the specified language
+    try:
+        # Load translations from the compiled .mo files
+        locale = Locale(lang_code)
+        translations_dir = os.path.join(current_app.root_path, 'translations')
+        
+        if os.path.exists(os.path.join(translations_dir, lang_code)):
+            translations_catalog = babel.support.Translations.load(
+                dirname=translations_dir,
+                locales=[locale],
+                domain='messages'
+            )
+            
+            # Helper function to get translation from specific catalog
+            def get_translation(text):
+                return translations_catalog.gettext(text)
+        else:
+            # Language not available, use English
+            def get_translation(text):
+                return text
+    except Exception as e:
+        current_app.logger.warning(f"Error loading translations for {lang_code}: {e}")
+        # Fallback to English translations
+        def get_translation(text):
+            return text
+    
+    # Get all the translation strings used in the welcome modal
+    translations = {
+        'welcome_title': get_translation('Welcome to TRXCKER!'),
+        'step_language': get_translation('Language'),
+        'step_personal_info': get_translation('Personal Info'),
+        'step_work_setup': get_translation('Work Setup'),
+        'step_clinic_info': get_translation('Clinic Info'),
+        'step_fees': get_translation('Fees'),
+        'get_to_know': get_translation('Let\'s get to know each other!'),
+        'which_language': get_translation('First, in which language would you like me to speak to you?'),
+        'select_language': get_translation('Select your language'),
+        'nice_to_meet': get_translation('Nice to meet you!'),
+        'what_call_you': get_translation('What should I call you?'),
+        'first_name': get_translation('First Name'),
+        'last_name': get_translation('Last Name'),
+        'your_first_name': get_translation('Your first name'),
+        'your_last_name': get_translation('Your last name (optional)'),
+        'tell_about_work': get_translation('Tell me about your work'),
+        'self_employed_clinic': get_translation('Are you self-employed or do you work for a clinic?'),
+        'work_freelancer': get_translation('I work as a freelancer/autonomous'),
+        'work_freelancer_desc': get_translation('I work independently, usually home visits'),
+        'work_clinic': get_translation('I work for a clinic'),
+        'work_clinic_desc': get_translation('I work for a clinic or medical center'),
+        'work_both': get_translation('Both - I have my own patients and work for clinics'),
+        'work_both_desc': get_translation('I work both independently and for clinics'),
+        'about_clinic': get_translation('About your clinic'),
+        'if_work_clinic': get_translation('If you work for a clinic, tell me about it'),
+        'clinic_name_label': get_translation('Clinic Name'),
+        'clinic_name_placeholder': get_translation('Name of the clinic where you work'),
+        'pays_commission': get_translation('The clinic keeps a percentage of my session fees'),
+        'commission_percentage': get_translation('Commission Percentage'),
+        'commission_desc': get_translation('Percentage that the clinic keeps from your sessions'),
+        'perfect': get_translation('Perfect!'),
+        'configure_fees_next': get_translation('Let\'s configure your fees in the next step'),
+        'fee_structure': get_translation('Your fee structure'),
+        'what_charge_sessions': get_translation('What do you charge for your sessions?'),
+        'first_session_fee': get_translation('First Session Fee'),
+        'first_session_desc': get_translation('Usually includes initial assessment'),
+        'subsequent_session_fee': get_translation('Subsequent Session Fee'),
+        'subsequent_session_desc': get_translation('Your standard session fee'),
+        'previous': get_translation('Previous'),
+        'next': get_translation('Next'),
+        'complete_setup': get_translation('Complete Setup'),
+        'close_modal': get_translation('Close'),
+        'exit_warning_title': get_translation('Are you sure you want to exit?'),
+        'exit_warning_message': get_translation('If you exit now, some features may not work properly. You can always complete the setup later from your account settings.'),
+        'exit_confirm': get_translation('Yes, exit setup'),
+        'exit_cancel': get_translation('Continue setup'),
+        'please_select_language': get_translation('Please select a language'),
+        'please_enter_first_name': get_translation('Please enter your first name'),
+        'please_select_work': get_translation('Please select how you work')
+    }
+    
+    return jsonify(translations)
 
 # --- Role Checking Decorator ---
 def physio_required(f):
@@ -87,6 +183,10 @@ TAX_BRACKETS_2025 = [
     {'lower': 4050,    'upper': float('inf'), 'desc': 'Más de 4.050 €',       'base': 1601.31} # Assumed last base applies
 ]
 
+# --- Define Constants ---
+AUTONOMO_CONTRIBUTION_RATE = 0.314
+# --- End Constants ---
+
 # --- Define Fixed Monthly Expenses (Placeholder - Update with your actuals) ---
 # Expenses should be in EUR
 FIXED_MONTHLY_EXPENSES = {
@@ -99,7 +199,6 @@ TOTAL_FIXED_MONTHLY_EXPENSES = sum(FIXED_MONTHLY_EXPENSES.values())
 # --- End Fixed Monthly Expenses ---
 
 # --- Define Constants and Brackets (Ideally move to config/helpers) ---
-AUTONOMO_CONTRIBUTION_RATE = 0.314
 MONTHLY_FIXED_EXPENSES = 250 # Or get from config/db if dynamic
 # Define brackets for the relevant year (e.g., 2024 - update as needed)
 # Example structure - Make sure this matches the one in financials route
@@ -207,10 +306,104 @@ def monitoring_dashboard():
     """Monitoring dashboard for system administrators."""
     return render_template('monitoring.html')
 
-@main.route('/index')
+@main.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
     """Dashboard route for authenticated users."""
+    # Check if user is new and needs onboarding
+    # A user is new if they lack essential profile info
+    is_new_user = (not current_user.first_name or 
+                   not current_user.clinic_first_session_fee or 
+                   not current_user.clinic_subsequent_session_fee)
+    welcome_form = WelcomeOnboardingForm() if is_new_user else None
+    
+    # Handle onboarding form submission
+    if is_new_user and request.method == 'POST' and welcome_form.validate_on_submit():
+        # Update user language preference
+        current_user.language = welcome_form.language.data
+        # Also set it in session for immediate application
+        session['lang'] = welcome_form.language.data
+        
+        # Update personal information
+        current_user.first_name = welcome_form.first_name.data
+        current_user.last_name = welcome_form.last_name.data
+        
+        # Update professional registration
+        if welcome_form.license_number.data:
+            current_user.license_number = welcome_form.license_number.data
+        if welcome_form.college_acronym.data:
+            current_user.college_acronym = welcome_form.college_acronym.data
+        
+        # Update work setup based on selection
+        work_type = welcome_form.work_type.data
+        
+        if work_type in ['clinic_employee', 'mixed'] and welcome_form.clinic_name.data:
+            current_user.clinic_name = welcome_form.clinic_name.data
+            if welcome_form.pays_commission.data and welcome_form.commission_percentage.data:
+                current_user.clinic_percentage_agreement = True
+                current_user.clinic_percentage_amount = welcome_form.commission_percentage.data
+        elif work_type == 'freelance':
+            # Set a default clinic name for freelancers to satisfy the is_new_user condition
+            current_user.clinic_name = 'Independent Practice'
+        
+        # Update fee structure
+        if welcome_form.first_session_fee.data:
+            current_user.clinic_first_session_fee = welcome_form.first_session_fee.data
+        if welcome_form.subsequent_session_fee.data:
+            current_user.clinic_subsequent_session_fee = welcome_form.subsequent_session_fee.data
+        
+        # Create default locations based on work type
+        if work_type == 'freelance':
+            # Create "Home Visit" location
+            home_location = Location(
+                user_id=current_user.id,
+                name='Home Visit',
+                location_type='Home Visit',
+                first_session_fee=welcome_form.first_session_fee.data,
+                subsequent_session_fee=welcome_form.subsequent_session_fee.data
+            )
+            db.session.add(home_location)
+        elif work_type == 'clinic_employee':
+            # Create clinic location
+            clinic_location = Location(
+                user_id=current_user.id,
+                name=welcome_form.clinic_name.data or 'Main Clinic',
+                location_type='Clinic',
+                first_session_fee=welcome_form.first_session_fee.data,
+                subsequent_session_fee=welcome_form.subsequent_session_fee.data,
+                fee_percentage=welcome_form.commission_percentage.data if welcome_form.pays_commission.data else None
+            )
+            db.session.add(clinic_location)
+        elif work_type == 'mixed':
+            # Create both locations
+            clinic_location = Location(
+                user_id=current_user.id,
+                name=welcome_form.clinic_name.data or 'Main Clinic',
+                location_type='Clinic',
+                first_session_fee=welcome_form.first_session_fee.data,
+                subsequent_session_fee=welcome_form.subsequent_session_fee.data,
+                fee_percentage=welcome_form.commission_percentage.data if welcome_form.pays_commission.data else None
+            )
+            home_location = Location(
+                user_id=current_user.id,
+                name='Home Visit',
+                location_type='Home Visit',
+                first_session_fee=welcome_form.first_session_fee.data,
+                subsequent_session_fee=welcome_form.subsequent_session_fee.data
+            )
+            db.session.add(clinic_location)
+            db.session.add(home_location)
+        
+        try:
+            db.session.commit()
+            flash(_('Welcome to TRXCKER! Your profile has been set up successfully.'), 'success')
+            # Set language in session for immediate effect
+            session['language'] = welcome_form.language.data
+            return redirect(url_for('main.index'))
+        except Exception as e:
+            db.session.rollback()
+            flash(_('An error occurred while setting up your profile. Please try again.'), 'danger')
+    
     # Get current user's subscription info
     current_plan_name = 'Free Plan'
     current_subscription_status = None
@@ -248,7 +441,9 @@ def index():
                          patient_plan_limit=patient_plan_limit,
                          current_patients_count=current_patients_count,
                          active_patients=active_patients,
-                         today_appointments=today_appointments)
+                         today_appointments=today_appointments,
+                         is_new_user=is_new_user,
+                         welcome_form=welcome_form)
 
 @main.route('/welcome')
 def welcome_redirect():
@@ -387,6 +582,17 @@ def patient_detail(id):
 def add_treatment(patient_id):
     print("--- add_treatment route START ---")
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+    # First, validate that the patient exists and has anamnesis
+    patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first_or_404()
+    
+    # Check if anamnesis is completed
+    if not patient.anamnesis or not patient.anamnesis.strip():
+        error_message = 'Cannot create treatment: Patient anamnesis (clinical history) must be completed first. Please edit the patient record to add anamnesis before creating treatments.'
+        if is_ajax:
+            return jsonify({'success': False, 'message': error_message}), 400
+        flash(error_message, 'danger')
+        return redirect(url_for('main.patient_detail', id=patient_id))
 
     # Get form data
     treatment_type = request.form.get('treatment_type')
@@ -1739,15 +1945,13 @@ def calculate_age(born):
 @physio_required
 def analytics():
     # Fetch latest AI report from the database
-    if current_user.is_admin:
-        latest_report = PracticeReport.query.filter_by(user_id=None).order_by(PracticeReport.generated_at.desc()).first()
-        # Optional: If you also want admins to see their own user-specific reports as a fallback or primary view, adjust logic here.
-        # For now, admin sees global (user_id=None) reports.
-    else:
-        latest_report = PracticeReport.query.filter_by(user_id=current_user.id).order_by(PracticeReport.generated_at.desc()).first()
-
-    ai_report_html = "" # Initialize as empty string
+    latest_report = PracticeReport.query.filter_by(
+        user_id=current_user.id
+    ).order_by(PracticeReport.generated_at.desc()).first()
+    
+    ai_report_html = None
     ai_report_generated_at = None
+    
     if latest_report:
         ai_report_generated_at = latest_report.generated_at
         try:
@@ -1758,66 +1962,64 @@ def analytics():
     else:
         ai_report_html = "<p class=\"text-info\">No practice report generated yet. Click 'Generate New Report' to create one.</p>"
 
-    # --- Data JUST for Summary Cards (Filtered for non-admins) ---
-    if current_user.is_admin:
-        total_patients = Patient.query.count()
-        active_patients = Patient.query.filter(Patient.status == 'Active').count()
-        total_treatments = Treatment.query.count()
-        monthly_revenue_query = db.session.query(
-            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
-            func.sum(Treatment.fee_charged).label('monthly_total')
-        ).filter(Treatment.fee_charged.isnot(None)).group_by('month')
-        costaspine_revenue_base_query = db.session.query(
-            func.sum(Treatment.fee_charged).label('total_costaspine_revenue')
-        ).filter(
-            Treatment.location == 'CostaSpine Clinic',
-            Treatment.fee_charged.isnot(None)
-        )
-        autonomo_base_query = db.session.query(
-            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
-            func.to_char(Treatment.created_at, 'YYYY').label('year'),
-            func.sum(Treatment.fee_charged).label('monthly_total_revenue'),
-            func.sum(
-                case((Treatment.location == 'CostaSpine Clinic', Treatment.fee_charged), else_=0)
-            ).label('monthly_costaspine_revenue')
-        ).filter(
-            Treatment.fee_charged.isnot(None),
-            Treatment.created_at.isnot(None)
-        ).group_by('year', 'month').order_by('year', 'month')
-    else:
-        total_patients = Patient.query.filter_by(user_id=current_user.id).count()
-        active_patients = Patient.query.filter_by(user_id=current_user.id, status='Active').count()
-        total_treatments = Treatment.query.join(Patient).filter(Patient.user_id == current_user.id).count()
-        monthly_revenue_query = db.session.query(
-            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
-            func.sum(Treatment.fee_charged).label('monthly_total')
-        ).join(Patient).filter(Patient.user_id == current_user.id, Treatment.fee_charged.isnot(None)).group_by('month')
-        
-        # Use dynamic clinic name from user settings
-        clinic_name_filter = current_user.clinic_name or 'CostaSpine Clinic' # Fallback for safety
-        
-        costaspine_revenue_base_query = db.session.query(
-            func.sum(Treatment.fee_charged).label('total_costaspine_revenue')
-        ).join(Patient).filter(
-            Patient.user_id == current_user.id,
-            Treatment.location == clinic_name_filter, # Use dynamic clinic name
-            Treatment.fee_charged.isnot(None)
-        )
-        autonomo_base_query = db.session.query(
-            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
-            func.to_char(Treatment.created_at, 'YYYY').label('year'),
-            func.sum(Treatment.fee_charged).label('monthly_total_revenue'),
-            func.sum(
-                case((Treatment.location == clinic_name_filter, Treatment.fee_charged), else_=0) # Use dynamic clinic name
-            ).label('monthly_costaspine_revenue')
-        ).join(Patient).filter(
-            Patient.user_id == current_user.id,
-            Treatment.fee_charged.isnot(None),
-            Treatment.created_at.isnot(None)
-        ).group_by('year', 'month').order_by('year', 'month')
-
+    # --- Summary Card Data Fetching ---
+    # Filter data to the authenticated user's patients
+    patients_query = Patient.query.filter_by(user_id=current_user.id)
+    total_patients = patients_query.count()
+    
+    # Active patients: those with at least one treatment in the last 90 days
+    ninety_days_ago = datetime.now() - timedelta(days=90)
+    active_patients_ids = db.session.query(distinct(Treatment.patient_id)).filter(
+        Treatment.created_at >= ninety_days_ago,
+        Treatment.patient_id.in_(patients_query.with_entities(Patient.id))
+    ).all()
+    active_patients = len(active_patients_ids)
+    
     inactive_patients = total_patients - active_patients
-    avg_treatments = round(total_treatments / total_patients, 1) if total_patients else 0
+    
+    treatments_query = Treatment.query.join(Patient).filter(Patient.user_id == current_user.id)
+    total_treatments = treatments_query.count()
+    
+    avg_treatments = total_treatments / total_patients if total_patients > 0 else 0
+    
+    # Base query for revenue calculations
+    costaspine_revenue_base_query = db.session.query(
+        func.sum(Treatment.fee_charged)
+    ).join(Patient).filter(
+        Patient.user_id == current_user.id,
+        Treatment.fee_charged.isnot(None),
+        Treatment.fee_charged > 0
+    )
+    
+    monthly_revenue_query = db.session.query(
+        func.sum(Treatment.fee_charged).label('monthly_total')
+    ).join(Patient).filter(
+        Patient.user_id == current_user.id,
+        Treatment.fee_charged.isnot(None),
+        Treatment.fee_charged > 0
+    ).group_by(
+        func.extract('year', Treatment.created_at),
+        func.extract('month', Treatment.created_at)
+    )
+    
+    autonomo_base_query = db.session.query(
+        func.extract('year', Treatment.created_at).label('year'),
+        func.extract('month', Treatment.created_at).label('month'),
+        func.sum(
+            case(
+                (Treatment.location == current_user.clinic_name, Treatment.fee_charged),
+                else_=0
+            )
+        ).label('monthly_costaspine_revenue'),
+        func.sum(Treatment.fee_charged).label('monthly_total_revenue')
+    ).join(Patient).filter(
+        Patient.user_id == current_user.id,
+        Treatment.fee_charged.isnot(None),
+        Treatment.fee_charged > 0
+    ).group_by(
+        func.extract('year', Treatment.created_at),
+        func.extract('month', Treatment.created_at)
+    )
     
     monthly_revenue = monthly_revenue_query.all()
     total_revenue = sum(m.monthly_total for m in monthly_revenue if m.monthly_total)
@@ -1843,6 +2045,13 @@ def analytics():
     clinic_percentage = current_user.clinic_percentage_amount or 30.0 # Fallback
     costaspine_service_fee_weekly = costaspine_revenue_weekly_data * (clinic_percentage / 100.0)
     
+    # Get dynamic fixed expenses from user's FixedCost records
+    user_fixed_costs = FixedCost.query.filter_by(user_id=current_user.id).all()
+    monthly_fixed_expenses = sum(fc.monthly_amount for fc in user_fixed_costs)
+    
+    # Use user's contribution_base if set, otherwise calculate dynamically
+    user_contribution_base = current_user.contribution_base
+    
     total_autonomo_contribution = 0
     monthly_data_autonomo = autonomo_base_query.all()
 
@@ -1852,10 +2061,19 @@ def analytics():
         revenue = month_data.monthly_total_revenue or 0
         cs_revenue = month_data.monthly_costaspine_revenue or 0
         costaspine_fee = cs_revenue * (clinic_percentage / 100.0) # Use dynamic percentage
-        net_revenue_before_contrib = revenue - costaspine_fee - MONTHLY_FIXED_EXPENSES 
-        bracket_info = find_bracket(net_revenue_before_contrib, current_brackets)
-        min_base = bracket_info.get('base', 0) if bracket_info else 0
-        monthly_contribution = min_base * AUTONOMO_CONTRIBUTION_RATE if min_base > 0 else 0
+        
+        # Use dynamic fixed expenses instead of hardcoded value
+        net_revenue_before_contrib = revenue - costaspine_fee - monthly_fixed_expenses
+        
+        if user_contribution_base:
+            # If user has set a fixed contribution base, use it
+            monthly_contribution = user_contribution_base * AUTONOMO_CONTRIBUTION_RATE
+        else:
+            # Otherwise, calculate based on income brackets
+            bracket_info = find_bracket(net_revenue_before_contrib, current_brackets)
+            min_base = bracket_info.get('base', 0) if bracket_info else 0
+            monthly_contribution = min_base * AUTONOMO_CONTRIBUTION_RATE if min_base > 0 else 0
+        
         total_autonomo_contribution += monthly_contribution
     # --- End Summary Card Data Fetching ---
     
@@ -2346,6 +2564,9 @@ def financials():
         m_tax = m_taxable_card_revenue * tax_rate
         m_net = m_revenue - m_costaspine_fee - m_tax
 
+        # Use user's contribution_base if set, otherwise calculate dynamically
+        user_contribution_base = current_user.contribution_base
+        
         current_bracket = find_bracket(m_net, TAX_BRACKETS_2025)
         bracket_desc = "-"
         min_base_value = 0
@@ -2353,7 +2574,14 @@ def financials():
         diff_to_upper = "-"
         monthly_contribution = 0
 
-        if current_bracket:
+        if user_contribution_base:
+            # If user has set a fixed contribution base, use it
+            bracket_desc = "Fixed Contribution Base (User Setting)"
+            min_base_value = user_contribution_base
+            min_base_display = f"€{min_base_value:,.2f}"
+            monthly_contribution = min_base_value * 0.314
+            diff_to_upper = "Fixed Base"
+        elif current_bracket:
             bracket_desc = current_bracket['desc']
             min_base_value = current_bracket['base']
             min_base_display = f"€{min_base_value:,.2f}"
@@ -2477,6 +2705,12 @@ def new_patient():
         return redirect(url_for('main.pricing_page'))
 
     if request.method == 'POST':
+        # DEBUG: Print all form data received
+        print("=== DEBUG: NEW PATIENT FORM DATA ===")
+        for key, value in request.form.items():
+            print(f"{key}: {value}")
+        print("=====================================")
+        
         # Re-check just before creating, as a safeguard
         current_patients_post, patient_limit_post = current_user.patient_usage_details
         if patient_limit_post is not None and current_patients_post >= patient_limit_post:
@@ -2488,6 +2722,7 @@ def new_patient():
             diagnosis = request.form['diagnosis']
             treatment_plan = request.form.get('treatment_plan')
             notes = request.form.get('notes')
+            anamnesis = request.form.get('anamnesis')  # Add anamnesis processing
             patient_contact_email_on_patient_record = request.form.get('patient_contact_email_on_patient_record')
             patient_contact_phone_on_patient_record = request.form.get('patient_contact_phone_on_patient_record')
             address_line1 = request.form.get('address_line1')
@@ -2495,18 +2730,107 @@ def new_patient():
             city = request.form.get('city')
             postcode = request.form.get('postcode')
             preferred_location = request.form.get('preferred_location')
+            
+            # DEBUG: Check anamnesis specifically
+            print(f"DEBUG: Anamnesis value: '{anamnesis}'")
+            print(f"DEBUG: Anamnesis length: {len(anamnesis) if anamnesis else 0}")
+            print(f"DEBUG: Anamnesis is empty: {not anamnesis or not anamnesis.strip()}")
+            
+            # Validate anamnesis is required
+            if not anamnesis or not anamnesis.strip():
+                print("DEBUG: ANAMNESIS VALIDATION FAILED - Returning to form")
+                flash('Anamnesis (clinical history) is required before creating a patient record.', 'danger')
+                return render_template('new_patient.html', 
+                                       name=name, date_of_birth=date_of_birth_str, contact=contact, 
+                                       diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes,
+                                       anamnesis=anamnesis)
+            
+            try:
+                date_of_birth = datetime.strptime(date_of_birth_str, '%Y-%m-%d').date() if date_of_birth_str else None
+            except ValueError:
+                flash('Invalid date format for Date of Birth. Please use YYYY-MM-DD.', 'danger')
+                return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location)
+
+            new_patient_obj = Patient(
+                name=name,
+                date_of_birth=date_of_birth,
+                contact=contact,
+                diagnosis=diagnosis,
+                treatment_plan=treatment_plan,
+                notes=notes,
+                anamnesis=anamnesis,  # Add anamnesis to Patient object
+                email=patient_contact_email_on_patient_record,
+                phone=patient_contact_phone_on_patient_record,
+                address_line1=address_line1,
+                address_line2=address_line2,
+                city=city,
+                postcode=postcode,
+                preferred_location=preferred_location,
+                user_id=current_user.id, 
+                status='Active'
+            )
+            
             portal_login_email = request.form.get('patient_email', '').strip().lower()
+            portal_login_password = request.form.get('patient_password', '')
+            newly_created_portal_user = None
 
-            # It's better to redirect to pricing page for consistency
-            return redirect(url_for('main.pricing_page'))
+            if portal_login_email:
+                existing_user_check = User.query.filter_by(email=portal_login_email).first()
+                if existing_user_check:
+                    flash('That portal login email address is already in use. Cannot create patient portal account with this email.', 'danger')
+                    return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location, portal_login_email=portal_login_email)
+                
+                if not portal_login_password:
+                    flash('Password is required when providing an email for patient portal access.', 'danger')
+                    return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location, portal_login_email=portal_login_email)
 
-        # --- Basic Patient Info ---
+                newly_created_portal_user = User(
+                    username=portal_login_email, 
+                    email=portal_login_email,
+                    role='patient'
+                )
+                newly_created_portal_user.set_password(portal_login_password)
+            
+            try:
+                db.session.add(new_patient_obj) 
+                
+                if newly_created_portal_user:
+                    db.session.add(newly_created_portal_user) 
+                
+                db.session.flush() 
+                
+                if newly_created_portal_user: 
+                    new_patient_obj.portal_user_id = newly_created_portal_user.id 
+                    
+                db.session.commit()
+                flash_message = f'Patient {name} created successfully!'
+                if newly_created_portal_user:
+                    flash_message += ' Portal access enabled.'
+                flash(flash_message, 'success')
+                return redirect(url_for('main.patient_detail', id=new_patient_obj.id))
+            
+            except Exception as e: 
+                db.session.rollback()
+                flash(f'Error creating patient: {str(e)}', 'danger')
+                print(f"Error creating patient: {e}") 
+                return render_template('new_patient.html',
+                                       name=name, date_of_birth=date_of_birth_str, contact=contact, 
+                                       diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes,
+                                       anamnesis=anamnesis,
+                                       patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, 
+                                       patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record,
+                                       address_line1=address_line1, address_line2=address_line2, city=city,
+                                       postcode=postcode, preferred_location=preferred_location,
+                                       portal_login_email=portal_login_email)
+
+        # Normal patient creation process (when limit is not reached)
         name = request.form['name']
         date_of_birth_str = request.form.get('date_of_birth')
         contact = request.form['contact']
         diagnosis = request.form['diagnosis']
         treatment_plan = request.form.get('treatment_plan')
         notes = request.form.get('notes')
+        anamnesis = request.form.get('anamnesis')  # Add anamnesis processing
         patient_contact_email_on_patient_record = request.form.get('patient_contact_email_on_patient_record')
         patient_contact_phone_on_patient_record = request.form.get('patient_contact_phone_on_patient_record')
         address_line1 = request.form.get('address_line1')
@@ -2515,11 +2839,25 @@ def new_patient():
         postcode = request.form.get('postcode')
         preferred_location = request.form.get('preferred_location')
         
+        # DEBUG: Check anamnesis specifically
+        print(f"DEBUG: Normal processing - Anamnesis value: '{anamnesis}'")
+        print(f"DEBUG: Normal processing - Anamnesis length: {len(anamnesis) if anamnesis else 0}")
+        print(f"DEBUG: Normal processing - Anamnesis is empty: {not anamnesis or not anamnesis.strip()}")
+        
+        # Validate anamnesis is required
+        if not anamnesis or not anamnesis.strip():
+            print("DEBUG: NORMAL PROCESSING - ANAMNESIS VALIDATION FAILED - Returning to form")
+            flash('Anamnesis (clinical history) is required before creating a patient record.', 'danger')
+            return render_template('new_patient.html', 
+                                   name=name, date_of_birth=date_of_birth_str, contact=contact, 
+                                   diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes,
+                                   anamnesis=anamnesis)
+        
         try:
             date_of_birth = datetime.strptime(date_of_birth_str, '%Y-%m-%d').date() if date_of_birth_str else None
         except ValueError:
             flash('Invalid date format for Date of Birth. Please use YYYY-MM-DD.', 'danger')
-            return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location)
+            return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location)
 
         new_patient_obj = Patient(
             name=name,
@@ -2528,6 +2866,7 @@ def new_patient():
             diagnosis=diagnosis,
             treatment_plan=treatment_plan,
             notes=notes,
+            anamnesis=anamnesis,  # Add anamnesis to Patient object
             email=patient_contact_email_on_patient_record,
             phone=patient_contact_phone_on_patient_record,
             address_line1=address_line1,
@@ -2547,11 +2886,11 @@ def new_patient():
             existing_user_check = User.query.filter_by(email=portal_login_email).first()
             if existing_user_check:
                 flash('That portal login email address is already in use. Cannot create patient portal account with this email.', 'danger')
-                return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location, portal_login_email=portal_login_email)
+                return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location, portal_login_email=portal_login_email)
             
             if not portal_login_password:
                 flash('Password is required when providing an email for patient portal access.', 'danger')
-                return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location, portal_login_email=portal_login_email)
+                return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location, portal_login_email=portal_login_email)
 
             newly_created_portal_user = User(
                 username=portal_login_email, 
@@ -2561,30 +2900,38 @@ def new_patient():
             newly_created_portal_user.set_password(portal_login_password)
         
         try:
+            print("DEBUG: Starting database transaction...")
             db.session.add(new_patient_obj) 
             
             if newly_created_portal_user:
+                print("DEBUG: Adding portal user to session...")
                 db.session.add(newly_created_portal_user) 
             
+            print("DEBUG: Flushing session to get IDs...")
             db.session.flush() 
             
             if newly_created_portal_user: 
+                print(f"DEBUG: Linking portal user ID {newly_created_portal_user.id} to patient...")
                 new_patient_obj.portal_user_id = newly_created_portal_user.id 
                 
+            print("DEBUG: Committing transaction...")
             db.session.commit()
+            
             flash_message = f'Patient {name} created successfully!'
             if newly_created_portal_user:
                 flash_message += ' Portal access enabled.'
             flash(flash_message, 'success')
+            print(f"DEBUG: Patient created successfully with ID {new_patient_obj.id}")
             return redirect(url_for('main.patient_detail', id=new_patient_obj.id))
         
         except Exception as e: 
             db.session.rollback()
             flash(f'Error creating patient: {str(e)}', 'danger')
-            print(f"Error creating patient: {e}") 
+            print(f"ERROR creating patient: {e}") 
             return render_template('new_patient.html',
                                    name=name, date_of_birth=date_of_birth_str, contact=contact, 
                                    diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes,
+                                   anamnesis=anamnesis,
                                    patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, 
                                    patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record,
                                    address_line1=address_line1, address_line2=address_line2, city=city,
@@ -2630,6 +2977,7 @@ def edit_patient(id):
             patient.diagnosis = request.form['diagnosis']
             patient.treatment_plan = request.form['treatment_plan']
             patient.notes = request.form['notes']
+            patient.anamnesis = request.form.get('anamnesis')  # Add anamnesis processing
             patient.status = request.form['status']
             patient.email = request.form.get('patient_contact_email')
             patient.phone = request.form.get('patient_contact_phone')
@@ -3656,6 +4004,7 @@ def user_settings():
                 current_user.date_of_birth = user_form.date_of_birth.data
                 current_user.sex = user_form.sex.data
                 current_user.license_number = user_form.license_number.data
+                current_user.college_acronym = user_form.college_acronym.data
                 db.session.commit()
                 flash('Your profile has been updated.', 'success')
                 return redirect(url_for('main.user_settings'))
@@ -4002,4 +4351,41 @@ def get_inactive_patients_data():
     except Exception as e:
         current_app.logger.error(f"Error in get_inactive_patients_data: {e}")
         return jsonify({"error": "Failed to fetch inactive patient data"}), 500
+
+@main.route('/debug/session')
+@login_required
+def debug_session():
+    """Debug endpoint to check session information"""
+    from flask import session, request
+    import json
+    
+    debug_info = {
+        'current_user_id': current_user.id if current_user.is_authenticated else None,
+        'current_user_email': current_user.email if current_user.is_authenticated else None,
+        'current_user_name': f"{current_user.first_name} {current_user.last_name}" if current_user.is_authenticated else None,
+        'session_data': dict(session),
+        'cookies': dict(request.cookies),
+        'is_authenticated': current_user.is_authenticated,
+        'user_agent': request.headers.get('User-Agent')
+    }
+    
+    return f"<pre>{json.dumps(debug_info, indent=2, default=str)}</pre>"
+
+@main.route('/debug/force-welcome')
+@login_required
+def force_welcome():
+    """Debug endpoint to force welcome modal to appear"""
+    # Temporarily set user as new for testing
+    original_is_new_user = getattr(current_user, 'is_new_user', False)
+    current_user.is_new_user = True
+    
+    from app.forms import WelcomeOnboardingForm
+    welcome_form = WelcomeOnboardingForm()
+    
+    # Reset the is_new_user flag
+    current_user.is_new_user = original_is_new_user
+    
+    return render_template('debug_welcome.html', 
+                         is_new_user=True,
+                         welcome_form=welcome_form)
 

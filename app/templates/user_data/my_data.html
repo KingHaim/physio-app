@@ -5,6 +5,12 @@
 {% block content %}
 <div class="container mt-5">
     <h2>My Personal Data</h2>
+    
+    <div class="alert alert-info mb-4">
+        <h5 class="alert-heading"><i class="bi bi-info-circle"></i> Data Transparency</h5>
+        <p class="mb-0">Below is all the personal data we have stored about your account. You can export this data or manage your account deletion preferences.</p>
+    </div>
+    
     <table class="table table-bordered mt-4">
         <tbody>
         {% for key, value in user_info.items() %}
@@ -15,11 +21,77 @@
         {% endfor %}
         </tbody>
     </table>
-    <div class="mt-4">
-        <a href="{{ url_for('user_data.export_data') }}" class="btn btn-outline-primary">Export as JSON</a>
-        <form method="POST" action="{{ url_for('user_data.delete_account') }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete your account? This cannot be undone.');">
-            <button type="submit" class="btn btn-danger">Delete My Account</button>
-        </form>
+    
+    <div class="row mt-5">
+        <div class="col-md-4 mb-3">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-download"></i> Export Data</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Download all your data in JSON format for your records.</p>
+                    <a href="{{ url_for('user_data.export_data') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-download"></i> Export as JSON
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-pause-circle"></i> Temporary Deactivation</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Deactivate your account but keep all data safe. Can be reversed by contacting support.</p>
+                    <form method="POST" action="{{ url_for('user_data.delete_account') }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to temporarily deactivate your account? You can contact support to reactivate it.');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-pause-circle"></i> Deactivate Account
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-trash"></i> Permanent Deletion</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Permanently delete all your data. This action cannot be undone.</p>
+                    <div class="alert alert-danger p-2 mb-3">
+                        <small><strong>Warning:</strong> This deletes everything permanently.</small>
+                    </div>
+                    <form method="POST" action="{{ url_for('user_data.delete_account_permanent') }}" style="display:inline;" onsubmit="return confirmPermanentDeletion();">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Delete Permanently
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="alert alert-info mt-4">
+        <h6 class="alert-heading">Need More Control?</h6>
+        <p class="mb-0">For comprehensive account deletion options with detailed explanations, visit 
+            <a href="{{ url_for('main.user_settings', tab='account_deletion') }}">Account Settings</a>.
+        </p>
     </div>
 </div>
+
+<script>
+function confirmPermanentDeletion() {
+    const message = "Are you absolutely sure you want to permanently delete your account?\n\nThis will delete:\n- All your patients and their data\n- All treatments and reports\n- All clinic information\n- All financial data\n\nThis action cannot be undone. Type \"DELETE\" to confirm:";
+    
+    const userInput = prompt(message);
+    if (userInput === "DELETE") {
+        return confirm("Final confirmation: This will permanently delete everything. Are you sure?");
+    }
+    return false;
+}
+</script>
 {% endblock %} 

@@ -1,0 +1,376 @@
+<!-- Welcome Onboarding Modal -->
+<div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false" {% if is_new_user %}data-show-modal="true"{% endif %}>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 bg-primary text-white">
+                <h4 class="modal-title" id="welcomeModalLabel">
+                    <i class="bi bi-stars me-2"></i>{{ _('Welcome to TRXCKER!') }}
+                </h4>
+            </div>
+            <div class="modal-body p-4">
+                <form method="POST" action="{{ url_for('main.index') }}" id="welcomeForm">
+                    {{ welcome_form.hidden_tag() }}
+                    
+                    <!-- Progress Bar -->
+                    <div class="progress mb-4" style="height: 8px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 20%" id="progressBar"></div>
+                    </div>
+                    
+                    <!-- Step Indicators -->
+                    <div class="d-flex justify-content-between mb-4">
+                        <small class="text-muted step-indicator active" data-step="1">1. {{ _('Language') }}</small>
+                        <small class="text-muted step-indicator" data-step="2">2. {{ _('Personal Info') }}</small>
+                        <small class="text-muted step-indicator" data-step="3">3. {{ _('Work Setup') }}</small>
+                        <small class="text-muted step-indicator" data-step="4">4. {{ _('Clinic Info') }}</small>
+                        <small class="text-muted step-indicator" data-step="5">5. {{ _('Fees') }}</small>
+                    </div>
+
+                    <!-- Step 1: Language Selection -->
+                    <div class="step-content" id="step1">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-translate text-primary" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">{{ _('Let\'s get to know each other!') }}</h5>
+                            <p class="text-muted">{{ _('First, in which language would you like me to speak to you?') }}</p>
+                        </div>
+                        
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">{{ welcome_form.language.label }}</label>
+                                    <select class="form-select form-select-lg" name="language" id="language" required>
+                                        <option value="">{{ _('Select your language') }}</option>
+                                        <option value="es">🇪🇸 Español</option>
+                                        <option value="en">🇬🇧 English</option>
+                                        <option value="fr">🇫🇷 Français</option>
+                                        <option value="it">🇮🇹 Italiano</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Personal Information -->
+                    <div class="step-content d-none" id="step2">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-person-hearts text-primary" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">{{ _('Nice to meet you!') }}</h5>
+                            <p class="text-muted">{{ _('What should I call you?') }}</p>
+                        </div>
+                        
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    {{ welcome_form.first_name.label(class="form-label fw-bold") }}
+                                    {{ welcome_form.first_name(class="form-control form-control-lg", placeholder=_("Your first name"), required=True) }}
+                                </div>
+                                <div class="mb-3">
+                                    {{ welcome_form.last_name.label(class="form-label") }}
+                                    {{ welcome_form.last_name(class="form-control", placeholder=_("Your last name (optional)")) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Work Setup -->
+                    <div class="step-content d-none" id="step3">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-briefcase-fill text-primary" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">{{ _('Tell me about your work') }}</h5>
+                            <p class="text-muted">{{ _('Are you self-employed or do you work for a clinic?') }}</p>
+                        </div>
+                        
+                        <div class="row justify-content-center">
+                            <div class="col-md-10">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">{{ welcome_form.work_type.label }}</label>
+                                    <div class="work-type-options">
+                                        <div class="form-check form-check-card mb-3">
+                                            <input class="form-check-input" type="radio" name="work_type" id="freelance" value="freelance">
+                                            <label class="form-check-label w-100" for="freelance">
+                                                <div class="card">
+                                                    <div class="card-body text-center">
+                                                        <i class="bi bi-house-door text-primary mb-2" style="font-size: 2rem;"></i>
+                                                        <h6>{{ _('I work as a freelancer/autonomous') }}</h6>
+                                                        <small class="text-muted">{{ _('I work independently, usually home visits') }}</small>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-card mb-3">
+                                            <input class="form-check-input" type="radio" name="work_type" id="clinic_employee" value="clinic_employee">
+                                            <label class="form-check-label w-100" for="clinic_employee">
+                                                <div class="card">
+                                                    <div class="card-body text-center">
+                                                        <i class="bi bi-building text-primary mb-2" style="font-size: 2rem;"></i>
+                                                        <h6>{{ _('I work for a clinic') }}</h6>
+                                                        <small class="text-muted">{{ _('I work for a clinic or medical center') }}</small>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-card mb-3">
+                                            <input class="form-check-input" type="radio" name="work_type" id="mixed" value="mixed">
+                                            <label class="form-check-label w-100" for="mixed">
+                                                <div class="card">
+                                                    <div class="card-body text-center">
+                                                        <i class="bi bi-arrow-left-right text-primary mb-2" style="font-size: 2rem;"></i>
+                                                        <h6>{{ _('Both - I have my own patients and work for clinics') }}</h6>
+                                                        <small class="text-muted">{{ _('I work both independently and for clinics') }}</small>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Clinic Information -->
+                    <div class="step-content d-none" id="step4">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-hospital text-primary" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">{{ _('About your clinic') }}</h5>
+                            <p class="text-muted">{{ _('If you work for a clinic, tell me about it') }}</p>
+                        </div>
+                        
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="clinic-fields" style="display: none;">
+                                    <div class="mb-3">
+                                        {{ welcome_form.clinic_name.label(class="form-label fw-bold") }}
+                                        {{ welcome_form.clinic_name(class="form-control", placeholder=_("Name of the clinic where you work")) }}
+                                    </div>
+                                    
+                                    <div class="commission-section">
+                                        <div class="form-check mb-3">
+                                            {{ welcome_form.pays_commission(class="form-check-input") }}
+                                            <label class="form-check-label fw-bold" for="pays_commission">
+                                                {{ welcome_form.pays_commission.label }}
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="commission-fields" style="display: none;">
+                                            <div class="mb-3">
+                                                {{ welcome_form.commission_percentage.label(class="form-label") }}
+                                                <div class="input-group">
+                                                    {{ welcome_form.commission_percentage(class="form-control", placeholder="30") }}
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                                <div class="form-text">{{ _('Percentage that the clinic keeps from your sessions') }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="no-clinic-message text-center" style="display: none;">
+                                    <i class="bi bi-check-circle-fill text-success mb-3" style="font-size: 3rem;"></i>
+                                    <h6>{{ _('Perfect!') }}</h6>
+                                    <p class="text-muted">{{ _('Let\'s configure your fees in the next step') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Fee Structure -->
+                    <div class="step-content d-none" id="step5">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-currency-euro text-primary" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">{{ _('Your fee structure') }}</h5>
+                            <p class="text-muted">{{ _('What do you charge for your sessions?') }}</p>
+                        </div>
+                        
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    {{ welcome_form.first_session_fee.label(class="form-label fw-bold") }}
+                                    <div class="input-group">
+                                        {{ welcome_form.first_session_fee(class="form-control", placeholder="60") }}
+                                        <span class="input-group-text">€</span>
+                                    </div>
+                                    <div class="form-text">{{ _('Usually includes initial assessment') }}</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ welcome_form.subsequent_session_fee.label(class="form-label fw-bold") }}
+                                    <div class="input-group">
+                                        {{ welcome_form.subsequent_session_fee(class="form-control", placeholder="50") }}
+                                        <span class="input-group-text">€</span>
+                                    </div>
+                                    <div class="form-text">{{ _('Your standard session fee') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer border-0 p-4">
+                <button type="button" class="btn btn-outline-secondary" id="prevBtn" style="display: none;">
+                    <i class="bi bi-arrow-left me-2"></i>{{ _('Previous') }}
+                </button>
+                <button type="button" class="btn btn-primary" id="nextBtn">
+                    {{ _('Next') }}<i class="bi bi-arrow-right ms-2"></i>
+                </button>
+                <button type="submit" form="welcomeForm" class="btn btn-success" id="completeBtn" style="display: none;">
+                    <i class="bi bi-check-circle me-2"></i>{{ _('Complete Setup') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-check-card .card {
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.form-check-card .form-check-input:checked ~ .form-check-label .card {
+    border-color: var(--bs-primary);
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.form-check-card .card:hover {
+    border-color: var(--bs-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.step-indicator.active {
+    color: var(--bs-primary) !important;
+    font-weight: bold;
+}
+
+.step-indicator.completed {
+    color: var(--bs-success) !important;
+    font-weight: bold;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentStep = 1;
+    const totalSteps = 5;
+    
+    // Show modal automatically if user is new
+    {% if is_new_user %}
+        const welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
+        welcomeModal.show();
+    {% endif %}
+    
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const completeBtn = document.getElementById('completeBtn');
+    const progressBar = document.getElementById('progressBar');
+    
+    // Navigation functions
+    function showStep(step) {
+        // Hide all steps
+        document.querySelectorAll('.step-content').forEach(content => {
+            content.classList.add('d-none');
+        });
+        
+        // Show current step
+        document.getElementById(`step${step}`).classList.remove('d-none');
+        
+        // Update progress bar
+        const progressPercent = (step / totalSteps) * 100;
+        progressBar.style.width = progressPercent + '%';
+        
+        // Update step indicators
+        document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+            indicator.classList.remove('active', 'completed');
+            if (index + 1 < step) {
+                indicator.classList.add('completed');
+            } else if (index + 1 === step) {
+                indicator.classList.add('active');
+            }
+        });
+        
+        // Show/hide navigation buttons
+        prevBtn.style.display = step > 1 ? 'inline-block' : 'none';
+        
+        if (step === totalSteps) {
+            nextBtn.style.display = 'none';
+            completeBtn.style.display = 'inline-block';
+        } else {
+            nextBtn.style.display = 'inline-block';
+            completeBtn.style.display = 'none';
+        }
+    }
+    
+    // Next button click
+    nextBtn.addEventListener('click', function() {
+        if (validateCurrentStep()) {
+            currentStep++;
+            showStep(currentStep);
+        }
+    });
+    
+    // Previous button click
+    prevBtn.addEventListener('click', function() {
+        currentStep--;
+        showStep(currentStep);
+    });
+    
+    // Validation function
+    function validateCurrentStep() {
+        if (currentStep === 1) {
+            const language = document.getElementById('language').value;
+            if (!language) {
+                alert('{{ _("Please select a language") }}');
+                return false;
+            }
+        } else if (currentStep === 2) {
+            const firstName = document.querySelector('input[name="first_name"]').value;
+            if (!firstName.trim()) {
+                alert('{{ _("Please enter your first name") }}');
+                return false;
+            }
+        } else if (currentStep === 3) {
+            const workType = document.querySelector('input[name="work_type"]:checked');
+            if (!workType) {
+                alert('{{ _("Please select how you work") }}');
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    // Work type change handler
+    document.querySelectorAll('input[name="work_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const clinicFields = document.querySelector('.clinic-fields');
+            const noClinicMessage = document.querySelector('.no-clinic-message');
+            
+            if (this.value === 'clinic_employee' || this.value === 'mixed') {
+                clinicFields.style.display = 'block';
+                noClinicMessage.style.display = 'none';
+            } else {
+                clinicFields.style.display = 'none';
+                noClinicMessage.style.display = 'block';
+            }
+        });
+    });
+    
+    // Commission checkbox handler
+    const paysCommissionCheckbox = document.getElementById('pays_commission');
+    if (paysCommissionCheckbox) {
+        paysCommissionCheckbox.addEventListener('change', function() {
+            const commissionFields = document.querySelector('.commission-fields');
+            commissionFields.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+    
+    // Language change handler for immediate UI update
+    document.getElementById('language').addEventListener('change', function() {
+        const selectedLang = this.value;
+        if (selectedLang) {
+            // You can add real-time language switching here if needed
+            console.log('Selected language:', selectedLang);
+        }
+    });
+});
+</script> 

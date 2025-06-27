@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, TextAreaField, PasswordField, DecimalField, SelectField, BooleanField
+from wtforms import StringField, SubmitField, TextAreaField, PasswordField, DecimalField, SelectField, BooleanField, RadioField
 from wtforms.validators import DataRequired, Optional, Length, Email, URL, EqualTo, NumberRange
 from wtforms.fields import DateField
 from flask_babel import lazy_gettext as _l
@@ -54,6 +54,8 @@ class UserProfileForm(FlaskForm):
     date_of_birth = DateField(_l('Date of Birth'), format='%Y-%m-%d', validators=[Optional()])
     sex = SelectField(_l('Sex'), choices=[('Masculino', _l('Male')), ('Femenino', _l('Female')), ('Otro', _l('Other'))], validators=[Optional()])
     license_number = StringField(_l('License Number'), validators=[Optional(), Length(max=64)])
+    college_acronym = StringField(_l('College Acronym'), validators=[Optional(), Length(max=10)], 
+                                 render_kw={"placeholder": "e.g. COFIB, ICOFCV, COFM, etc."})
     current_password = PasswordField(_l('Current Password'), validators=[Optional(), Length(min=6)])
     new_password = PasswordField(_l('New Password'), validators=[Optional(), Length(min=6)])
     confirm_new_password = PasswordField(_l('Confirm New Password'), 
@@ -120,4 +122,46 @@ class UserConsentForm(FlaskForm):
     ])
     expires_at = DateField(_l('Expiry Date'), validators=[Optional()])
     notes = TextAreaField(_l('Additional Notes'), validators=[Optional(), Length(max=500)])
-    submit = SubmitField(_l('Record Consent')) 
+    submit = SubmitField(_l('Record Consent'))
+
+class WelcomeOnboardingForm(FlaskForm):
+    # Step 1: Language Selection
+    language = SelectField(_l('Language'), 
+                          choices=[('en', '🇺🇸 English'), ('es', '🇪🇸 Español'), ('fr', '🇫🇷 Français'), ('it', '🇮🇹 Italiano')],
+                          default='en',
+                          validators=[DataRequired()])
+    
+    # Step 2: Personal Information
+    first_name = StringField(_l('First Name'), validators=[DataRequired(), Length(max=64)])
+    last_name = StringField(_l('Last Name'), validators=[Optional(), Length(max=64)])
+    
+    # Professional Registration
+    license_number = StringField(_l('License Number'), validators=[Optional(), Length(max=64)])
+    college_acronym = StringField(_l('College Acronym'), validators=[Optional(), Length(max=10)], 
+                                 render_kw={"placeholder": "e.g. COFIB, ICOFCV, COFM, etc."})
+    
+    # Step 3: Work Setup
+    work_type = RadioField(_l('How do you work?'), 
+                           choices=[
+                               ('freelance', _l('I work as a freelancer/autonomous')),
+                               ('clinic_employee', _l('I work for a clinic')),
+                               ('mixed', _l('Both - I have my own patients and work for clinics'))
+                           ],
+                           validators=[DataRequired()])
+    
+    # Step 4: Clinic Information (conditional)
+    clinic_name = StringField(_l('Clinic Name'), validators=[Optional(), Length(max=150)])
+    pays_commission = BooleanField(_l('Do you pay commission to the clinic?'))
+    commission_percentage = DecimalField(_l('Commission Percentage (%)'), 
+                                       validators=[Optional(), NumberRange(min=0, max=100)], 
+                                       places=2)
+    
+    # Step 5: Fee Structure
+    first_session_fee = DecimalField(_l('First Session Fee (€)'), 
+                                   validators=[Optional(), NumberRange(min=0)], 
+                                   places=2)
+    subsequent_session_fee = DecimalField(_l('Subsequent Session Fee (€)'), 
+                                        validators=[Optional(), NumberRange(min=0)], 
+                                        places=2)
+    
+    submit = SubmitField(_l('Complete Setup')) 

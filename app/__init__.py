@@ -224,6 +224,9 @@ def create_app(config_class=Config):
     from app.routes.locations import locations as locations_blueprint
     app.register_blueprint(locations_blueprint)
 
+    from app.routes.onboarding import onboarding as onboarding_blueprint
+    app.register_blueprint(onboarding_blueprint)
+
     # Create all tables
     # with app.app_context():
     #     db.create_all()
@@ -233,6 +236,18 @@ def create_app(config_class=Config):
         return Markup(markdown.markdown(text))
 
     app.jinja_env.filters['markdown'] = markdown_filter
+    
+    # Add from_json filter for parsing JSON in templates
+    import json
+    def from_json_filter(text):
+        if not text:
+            return []
+        try:
+            return json.loads(text)
+        except (json.JSONDecodeError, TypeError):
+            return []
+    
+    app.jinja_env.filters['from_json'] = from_json_filter
 
     # Make csrf_token available in templates
     from flask_wtf.csrf import generate_csrf
@@ -247,7 +262,13 @@ def create_app(config_class=Config):
     
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        app.logger.info(f"user_loader called with user_id: {user_id}")
+        user = User.query.get(int(user_id))
+        if user:
+            app.logger.info(f"user_loader found user: {user.email} (ID: {user.id})")
+        else:
+            app.logger.warning(f"user_loader could not find user with ID: {user_id}")
+        return user
 
     @app.context_processor
     def inject_pending_review_count():

@@ -1,0 +1,26 @@
+.form-check-card .card {
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.form-check-card .form-check-input:checked ~ .form-check-label .card {
+    border-color: var(--bs-primary);
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.form-check-card .card:hover {
+    border-color: var(--bs-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.step-indicator.active {
+    color: var(--bs-primary) !important;
+    font-weight: bold;
+}
+
+.step-indicator.completed {
+    color: var(--bs-success) !important;
+    font-weight: bold;
+} 

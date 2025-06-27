@@ -143,36 +143,6 @@
         border: none;
         padding: 0;
     }
-
-    /* AI Clinical Analysis Button Styling */
-    #generateClinicalAnalysisBtn {
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        border-width: 2px;
-    }
-
-    #generateClinicalAnalysisBtn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(52, 144, 220, 0.3);
-        border-color: var(--primary-color);
-        background: linear-gradient(135deg, var(--primary-color), #74b9ff);
-        color: white;
-    }
-
-    #generateClinicalAnalysisBtn:hover i {
-        animation: robot-pulse 1s ease-in-out infinite;
-    }
-
-    @keyframes robot-pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-    }
-
-    #generateClinicalAnalysisBtn:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 6px rgba(52, 144, 220, 0.2);
-    }
 </style>
 {% endblock %}
 
@@ -219,7 +189,7 @@
                 <button id="generateExerciseBtn" class="btn btn-warning">
                     <i class="bi bi-clipboard-heart"></i> {{ _('Generate Exercise Homework') }}
                 </button>
-                <button id="generateClinicalAnalysisBtn" class="btn btn-outline-primary">
+                <button id="generateClinicalAnalysisBtn" class="btn btn-success">
                     <i class="bi bi-robot"></i> {{ _('AI Clinical Analysis') }}
                 </button>
                 <a href="{{ url_for('main.patient_reports_list', patient_id=patient.id) }}" class="btn btn-outline-secondary">
@@ -627,102 +597,86 @@
         <div class="tab-pane fade" id="ai-analysis" role="tabpanel" aria-labelledby="ai-analysis-tab">
             <div class="row">
                 <div class="col-md-12">
-                    <div class="card shadow-lg" style="border: none; border-radius: 12px; overflow: hidden;">
-                        <div class="card-body" style="padding: 30px; background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);">
+                    <div class="card" style="border: 2px solid #28a745;">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="bi bi-robot"></i> ANÁLISIS CLÍNICO AI - VERSIÓN SIMPLE</h5>
+                            {% if patient.ai_analysis_date %}
+                                <small>Último análisis: {{ patient.ai_analysis_date.strftime('%Y-%m-%d %H:%M') }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="card-body" style="background-color: #f8f9fa;">
                             
                             <!-- MOSTRAR SI HAY DATOS -->
                             {% if patient.ai_analysis_date %}
-                                <div class="mb-4">
-                                    <div class="alert" style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: none; border-radius: 10px; padding: 15px;">
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-check-circle-fill text-success me-3" style="font-size: 24px;"></i>
-                                            <div>
-                                                <h6 class="mb-1" style="color: #155724; font-weight: 600;">{{ _('Analysis Completed Successfully') }}</h6>
-                                                <small style="color: #155724;">{{ _('Generated on') }} {{ patient.ai_analysis_date.strftime('%B %d, %Y at %H:%M') }}</small>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div class="alert alert-success mb-4">
+                                    <h6><i class="bi bi-check-circle"></i> Análisis generado el: {{ patient.ai_analysis_date.strftime('%Y-%m-%d %H:%M') }}</h6>
                                 </div>
                                 
                                 <!-- TESTS SUGERIDOS -->
                                 {% if patient.ai_suggested_tests %}
-                                <div class="analysis-section mb-4">
-                                    <div class="section-header" style="background: linear-gradient(135deg, #4285f4 0%, #34a853 100%); color: white; padding: 15px 20px; border-radius: 10px 10px 0 0; margin-bottom: 0;">
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-clipboard-check me-3" style="font-size: 20px;"></i>
-                                            <h6 class="mb-0" style="font-weight: 600;">{{ _('Recommended Tests & Assessments') }}</h6>
-                                        </div>
+                                <div class="card mb-3">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0"><i class="bi bi-clipboard-check"></i> TESTS RECOMENDADOS</h6>
                                     </div>
-                                    <div class="section-content" style="background: white; padding: 25px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.07); border-left: 4px solid #4285f4;">
-                                        <div style="font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #2c3e50; white-space: pre-wrap;">{{ patient.ai_suggested_tests }}</div>
+                                    <div class="card-body">
+                                        <div style="white-space: pre-wrap; font-family: monospace; background: #e9ecef; padding: 15px; border-radius: 5px;">{{ patient.ai_suggested_tests }}</div>
                                     </div>
                                 </div>
                                 {% endif %}
 
                                 <!-- BANDERAS ROJAS -->
                                 {% if patient.ai_red_flags %}
-                                <div class="analysis-section mb-4">
-                                    <div class="section-header" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 15px 20px; border-radius: 10px 10px 0 0; margin-bottom: 0;">
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-exclamation-triangle-fill me-3" style="font-size: 20px;"></i>
-                                            <h6 class="mb-0" style="font-weight: 600;">{{ _('Red Flags - Immediate Attention Required') }}</h6>
-                                        </div>
+                                <div class="card mb-3">
+                                    <div class="card-header bg-danger text-white">
+                                        <h6 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> BANDERAS ROJAS</h6>
                                     </div>
-                                    <div class="section-content" style="background: #fff5f5; padding: 25px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.07); border-left: 4px solid #e74c3c;">
-                                        <div style="font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #721c24; white-space: pre-wrap; font-weight: 500;">{{ patient.ai_red_flags }}</div>
+                                    <div class="card-body">
+                                        <div style="white-space: pre-wrap; font-family: monospace; background: #f8d7da; padding: 15px; border-radius: 5px;">{{ patient.ai_red_flags }}</div>
                                     </div>
                                 </div>
                                 {% endif %}
 
                                 <!-- BANDERAS AMARILLAS -->
                                 {% if patient.ai_yellow_flags %}
-                                <div class="analysis-section mb-4">
-                                    <div class="section-header" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 15px 20px; border-radius: 10px 10px 0 0; margin-bottom: 0;">
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-exclamation-circle-fill me-3" style="font-size: 20px;"></i>
-                                            <h6 class="mb-0" style="font-weight: 600;">{{ _('Yellow Flags - Monitor & Consider') }}</h6>
-                                        </div>
+                                <div class="card mb-3">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6 class="mb-0"><i class="bi bi-exclamation-circle-fill"></i> BANDERAS AMARILLAS</h6>
                                     </div>
-                                    <div class="section-content" style="background: #fffbf0; padding: 25px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.07); border-left: 4px solid #f39c12;">
-                                        <div style="font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #8a6d3b; white-space: pre-wrap;">{{ patient.ai_yellow_flags }}</div>
+                                    <div class="card-body">
+                                        <div style="white-space: pre-wrap; font-family: monospace; background: #fff3cd; padding: 15px; border-radius: 5px;">{{ patient.ai_yellow_flags }}</div>
                                     </div>
                                 </div>
                                 {% endif %}
 
                                 <!-- NOTAS CLÍNICAS -->
                                 {% if patient.ai_clinical_notes %}
-                                <div class="analysis-section mb-4">
-                                    <div class="section-header" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; padding: 15px 20px; border-radius: 10px 10px 0 0; margin-bottom: 0;">
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-journal-medical me-3" style="font-size: 20px;"></i>
-                                            <h6 class="mb-0" style="font-weight: 600;">{{ _('Clinical Notes & Recommendations') }}</h6>
-                                        </div>
+                                <div class="card mb-3">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h6 class="mb-0"><i class="bi bi-journal-medical"></i> NOTAS CLÍNICAS</h6>
                                     </div>
-                                    <div class="section-content" style="background: white; padding: 25px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.07); border-left: 4px solid #6c757d;">
-                                        <div style="font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #495057; white-space: pre-wrap;">{{ patient.ai_clinical_notes }}</div>
+                                    <div class="card-body">
+                                        <div style="white-space: pre-wrap; font-family: monospace; background: #e2e3e5; padding: 15px; border-radius: 5px;">{{ patient.ai_clinical_notes }}</div>
                                     </div>
                                 </div>
                                 {% endif %}
 
-                                <div class="text-center mt-5" style="padding: 20px;">
-                                    <button id="regenerateAnalysisBtn" class="btn btn-lg shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; padding: 15px 40px; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease; letter-spacing: 0.5px;">
-                                        <i class="bi bi-arrow-clockwise me-2"></i>{{ _('Regenerate Analysis') }}
-                                    </button>
+                                <div class="text-center mt-4">
+                                    <a href="/patient/{{ patient.id }}" class="btn btn-success btn-lg">
+                                        <i class="bi bi-arrow-clockwise"></i> REGENERAR ANÁLISIS
+                                    </a>
                                 </div>
                                 
                             {% else %}
                                 <!-- NO HAY DATOS -->
                                 <div class="text-center py-5">
-                                    <div style="background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%); padding: 40px; border-radius: 20px; margin-bottom: 30px;">
-                                        <div style="background: rgba(255,255,255,0.9); border-radius: 50%; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-                                            <i class="bi bi-robot" style="font-size: 48px; color: #6c757d;"></i>
-                                        </div>
-                                        <h4 style="color: #2d3436; font-weight: 600; margin-bottom: 15px;">{{ _('No AI Analysis Available') }}</h4>
-                                        <p style="color: #636e72; font-size: 16px; max-width: 500px; margin: 0 auto;">{{ _('Generate an intelligent clinical analysis based on patient anamnesis data and treatment history using advanced AI technology.') }}</p>
+                                    <div class="alert alert-warning">
+                                        <h4><i class="bi bi-robot text-muted" style="font-size: 3rem;"></i></h4>
+                                        <h5 class="text-muted mt-3">NO HAY ANÁLISIS AI DISPONIBLE</h5>
+                                        <p class="text-muted mb-4">Genera un análisis clínico AI basado en los datos de anamnesis y historial de tratamientos del paciente.</p>
                                     </div>
-                                    <button id="generateAnalysisBtn" class="btn btn-lg shadow-lg" style="background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); border: none; color: white; padding: 18px 50px; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease; letter-spacing: 0.5px;">
-                                        <i class="bi bi-robot me-2"></i>{{ _('Generate AI Analysis') }}
-                                    </button>
+                                    <a href="/patient/{{ patient.id }}" class="btn btn-success btn-lg">
+                                        <i class="bi bi-robot"></i> GENERAR ANÁLISIS AI
+                                    </a>
                                 </div>
                             {% endif %}
                             
@@ -1535,64 +1489,9 @@ function getCurrentLang() {
     };
   }
 
-  // Clinical Analysis functionality - TEST VERSION WITHOUT CSRF
-  function handleClinicalAnalysis(isRegenerate = false) {
-    const buttonId = isRegenerate ? 'regenerateAnalysisBtn' : 'generateAnalysisBtn';
-    const button = document.getElementById(buttonId);
-    
-    if (!button) return;
-    
-    // Disable button and show loading state
-    button.disabled = true;
-    const originalContent = button.innerHTML;
-    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>{{ _("Generating...") }}';
-    
-    fetch(`/api/patient/{{ patient.id }}/generate-clinical-analysis`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-        // CSRF token no longer needed - endpoint is exempt
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        // Reload the page to show the new analysis
-        window.location.reload();
-      } else {
-        alert('{{ _("Error generating clinical analysis:") }} ' + (data.error || ''));
-      }
-    })
-    .catch(error => {
-      console.error('Clinical analysis error:', error);
-      alert('{{ _("Error generating clinical analysis:") }} ' + error.message);
-    })
-    .finally(() => {
-      // Re-enable the button
-      button.disabled = false;
-      button.innerHTML = originalContent;
-    });
-  }
+  // NO MORE CLINICAL ANALYSIS JAVASCRIPT NEEDED
+  // The new version uses simple links, no complex JavaScript required
   
-  // Handle Generate AI Analysis button
-  var generateAnalysisBtn = document.getElementById('generateAnalysisBtn');
-  console.log('generateAnalysisBtn found:', generateAnalysisBtn);
-  if (generateAnalysisBtn) {
-    generateAnalysisBtn.addEventListener('click', function() {
-      console.log('Generate Analysis button clicked');
-      handleClinicalAnalysis(false);
-    });
-  }
-  
-  // Handle Regenerate Analysis button
-  var regenerateAnalysisBtn = document.getElementById('regenerateAnalysisBtn');
-  console.log('regenerateAnalysisBtn found:', regenerateAnalysisBtn);
-  if (regenerateAnalysisBtn) {
-    regenerateAnalysisBtn.addEventListener('click', function() {
-      console.log('Regenerate Analysis button clicked');
-      handleClinicalAnalysis(true);
-    });
-  }
 });
 </script>
 {% endblock %}

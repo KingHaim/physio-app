@@ -34,6 +34,9 @@
             <a href="{{ url_for('main.download_report_pdf', report_id=report.id) }}" class="btn btn-outline-success">
                 <i class="bi bi-file-earmark-pdf"></i> Export to PDF
             </a>
+            <button class="btn btn-outline-warning" onclick="editReport({{ report.id }})">
+                <i class="bi bi-pencil"></i> Edit Report
+            </button>
             <button class="btn btn-outline-danger" onclick="deleteReport({{ report.id }})">
                 <i class="bi bi-trash"></i> Delete Report
             </button>
@@ -65,22 +68,6 @@
                     </div>
                 </div>
                 <hr>
-            </div>
-            
-            <!-- Patient info summary at the top of the report -->
-            <div class="patient-summary mb-4 p-3 bg-light rounded">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="mb-2">Patient Information</h6>
-                        <p class="mb-1"><strong>Name:</strong> {{ patient.name }}</p>
-                        <p class="mb-1"><strong>Diagnosis:</strong> {{ patient.diagnosis }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="mb-2">Treatment Information</h6>
-                        <p class="mb-1"><strong>Report Type:</strong> {{ report.report_type }}</p>
-                        <p class="mb-1"><strong>Generated:</strong> {{ report.generated_date.strftime('%Y-%m-%d %H:%M') }}</p>
-                    </div>
-                </div>
             </div>
             
             <div class="report-content">
@@ -122,6 +109,33 @@
     {% endif %}
     {# End Past Exercise Homework Section #}
 
+</div>
+
+<!-- Report Edit Modal -->
+<div class="modal fade" id="editReportModal" tabindex="-1" aria-labelledby="editReportModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editReportModalLabel">Edit Report</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> Edit the report content below and click save to update.
+        </div>
+        <div class="form-group">
+          <label for="editReportContent" class="form-label">Report Content</label>
+          <textarea id="editReportContent" class="form-control" rows="20" style="font-family: 'Courier New', monospace;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="updateReportBtn">
+          <i class="bi bi-check-circle"></i> Update Report
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -260,7 +274,7 @@
             .then(data => {
                 if (data.success) {
                     alert('Report deleted successfully.');
-                    window.location.href = `/patient/${data.patient_id}`;
+                    window.location.href = `/patient/{{ patient.id }}`;
                 } else {
                     alert('Error deleting report: ' + (data.message || 'Unknown error'));
                 }
@@ -270,6 +284,96 @@
                 alert('An error occurred while deleting the report: ' + error.message);
             });
         }
+    }
+
+    function editReport(reportId) {
+        // Get the current report content (raw markdown)
+        const reportContent = `{{ report.content|safe|replace('\n', '\\n')|replace('\r', '') }}`;
+        
+        // Create the modal if it doesn't exist
+        if (!document.getElementById('editReportModal')) {
+            const modalHTML = `
+                <div class="modal fade" id="editReportModal" tabindex="-1" aria-labelledby="editReportModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="editReportModalLabel">Edit Report</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="alert alert-info">
+                          <i class="bi bi-info-circle"></i> Edit the report content below and click save to update.
+                        </div>
+                        <div class="form-group">
+                          <label for="editReportContent" class="form-label">Report Content</label>
+                          <textarea id="editReportContent" class="form-control" rows="20" style="font-family: 'Courier New', monospace;"></textarea>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="updateReportBtn">
+                          <i class="bi bi-check-circle"></i> Update Report
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+        
+        // Populate the textarea with current content
+        document.getElementById('editReportContent').value = reportContent;
+        
+        // Show the modal
+        const editModal = new bootstrap.Modal(document.getElementById('editReportModal'));
+        editModal.show();
+        
+        // Handle the update button click
+        const updateBtn = document.getElementById('updateReportBtn');
+        updateBtn.onclick = function() {
+            const newContent = document.getElementById('editReportContent').value;
+            
+            if (!newContent.trim()) {
+                alert('Report content cannot be empty.');
+                return;
+            }
+
+            // Disable the button and show loading state
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Updating...';
+            
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            fetch(`/api/report/${reportId}/update`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    content: newContent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    editModal.hide();
+                    alert('Report updated successfully.');
+                    window.location.reload();
+                } else {
+                    alert('Error updating report: ' + (data.message || ''));
+                }
+            })
+            .catch(error => {
+                alert('Error updating report: ' + error.message);
+            })
+            .finally(() => {
+                // Re-enable the button
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-check-circle"></i> Update Report';
+            });
+        };
     }
 </script>
 {% endblock %}
