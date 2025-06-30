@@ -21,41 +21,11 @@
     {% if not user_has_tax_config %}
     <div class="tax-config-warning mb-4" style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 0.375rem; padding: 1rem;">
         <i class="bi bi-exclamation-triangle-fill" style="color: #856404;"></i>
-        <strong style="color: #856404;">
-            {% set tax_config_title = _('Tax Configuration Required') %}
-            {% if tax_config_title == 'Tax Configuration Required' %}
-                {# Fallback to manual language detection if translation not available #}
-                {% if session.get('lang') == 'es' %}
-                    Configuración Fiscal Requerida
-                {% elif session.get('lang') == 'fr' %}
-                    Configuration Fiscale Requise
-                {% elif session.get('lang') == 'it' %}
-                    Configurazione Fiscale Richiesta
-                {% else %}
-                    Tax Configuration Required
-                {% endif %}
-            {% else %}
-                {{ tax_config_title }}
-            {% endif %}
-        </strong><br>
+        <strong style="color: #856404;">{{ _('Tax Configuration Required') }}</strong><br>
         <span style="color: #856404;">
-            {% if session.get('lang') == 'es' %}
-                Aún no has configurado tus tasas fiscales y brackets. Por favor visita
-                <a href="{{ url_for('main.user_settings') }}" style="color: #664d03; text-decoration: underline;">Configuración Financiera</a> 
-                para configurar tus impuestos. Hasta entonces, los cálculos financieros mostrarán N/A.
-            {% elif session.get('lang') == 'fr' %}
-                Vous n'avez pas encore configuré vos taux d'imposition et tranches. Veuillez visiter
-                <a href="{{ url_for('main.user_settings') }}" style="color: #664d03; text-decoration: underline;">Paramètres Financiers</a> 
-                pour configurer vos impôts. En attendant, les calculs financiers afficheront N/A.
-            {% elif session.get('lang') == 'it' %}
-                Non hai ancora configurato le tue aliquote fiscali e scaglioni. Visita
-                <a href="{{ url_for('main.user_settings') }}" style="color: #664d03; text-decoration: underline;">Impostazioni Finanziarie</a> 
-                per configurare le tue tasse. Nel frattempo, i calcoli finanziari mostreranno N/A.
-            {% else %}
-                You have not yet configured your tax rates and brackets. Please visit
-                <a href="{{ url_for('main.user_settings') }}" style="color: #664d03; text-decoration: underline;">{{ _('Financial Settings') }}</a> 
-                to configure your taxes. Until then, financial calculations will show N/A.
-            {% endif %}
+            {{ _('You have not yet configured your tax rates and brackets. Please visit') }}
+            <a href="{{ url_for('main.user_settings') }}" style="color: #664d03; text-decoration: underline;">{{ _('Financial Settings') }}</a> 
+            {{ _('to configure your taxes. Until then, financial calculations will show N/A.') }}
         </span>
     </div>
     {% endif %}
@@ -167,21 +137,21 @@
     {# Monthly Bracket Analysis Card #}
     <div class="card shadow-sm">
         <div class="card-header">
-             <h5 class="mb-0">{{ _('Monthly Financial Breakdown & {} Contribution Analysis').format(tax_year) }}</h5>
+             <h5 class="mb-0">Monthly Financial Breakdown & {{ tax_year }} Contribution Analysis</h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-bordered table-hover financial-table">
                     <thead class="table-light">
                         <tr>
-                            <th>{{ _('Month') }}</th>
-                            <th>{{ _('Net Revenue (before Contrib.)') }}</th>
-                            <th>{{ _('Fixed Expenses') }}</th>
-                            <th>{{ _('Income Bracket (Tramo)') }}</th>
-                            <th>{{ _('Min. Contribution Base (€)') }}</th>
-                            <th>{{ _('Est. Monthly Contribution (€)') }}</th>
-                            <th>{{ _('Final Net Revenue (€)') }}</th>
-                            <th>{{ _('Room Before Next Bracket') }}</th>
+                            <th>Month</th>
+                            <th>Net Revenue (before Contrib.)</th>
+                            <th>Fixed Expenses</th>
+                            <th>Income Bracket (Tramo)</th>
+                            <th>Min. Contribution Base (€)</th>
+                            <th>Est. Monthly Contribution (€)</th>
+                            <th>Final Net Revenue (€)</th>
+                            <th>Room Before Next Bracket</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -230,7 +200,7 @@
                 </table>
             </div>
             <small class="text-muted">
-                {{ _('*\'Net Revenue (before Contrib.)\' = Monthly Revenue{} - Fixed Expenses. This value determines the Income Bracket. \'Final Net Revenue\' = Net Revenue (before Contrib.) - Est. Monthly Contribution. All expenses and contributions are in EUR. Income brackets and minimum contribution bases shown are for the Spanish Autónomo system for {}.').format(' - ' + clinic_fee_label if has_clinic_configured and clinic_fee_enabled else '', tax_year) }}
+                 *'Net Revenue (before Contrib.)' = Monthly Revenue{% if has_clinic_configured and clinic_fee_enabled %} - {{ clinic_fee_label }}{% endif %} - Fixed Expenses. This value determines the Income Bracket. 'Final Net Revenue' = Net Revenue (before Contrib.) - Est. Monthly Contribution. All expenses and contributions are in EUR. Income brackets and minimum contribution bases shown are for the Spanish Autónomo system for {{ tax_year }}.
             </small>
         </div>
     </div>

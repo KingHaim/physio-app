@@ -1,0 +1,16 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: es\n"
+
+msgid "Tax Configuration Required"
+msgstr "Configuración Fiscal Requerida"
+
+msgid "You have not yet configured your tax rates and brackets. Please visit"
+msgstr "Aún no has configurado tus tasas fiscales y brackets. Por favor visita"
+
+msgid "Financial Settings"
+msgstr "Configuración Financiera"
+
+msgid "to configure your taxes. Until then, financial calculations will show N/A."
+msgstr "para configurar tus impuestos. Hasta entonces, los cálculos financieros mostrarán N/A." 

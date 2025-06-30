@@ -69,7 +69,13 @@
             <div class="card shadow-sm stats-card bg-secondary text-white"> {# Changed from bg-warning text-dark #}
                 <div class="card-body">
                     <h5 class="card-title">{{ _('Est. Total Autónomo Contr. (€)') }}</h5>
-                    <h2 class="display-5 mb-1">€{{ "{:,.2f}".format(total_autonomo_contribution or 0) }}</h2>
+                    <h2 class="display-5 mb-1">
+                        {% if total_autonomo_contribution == "N/A" %}
+                            {{ total_autonomo_contribution }}
+                        {% else %}
+                            €{{ "{:,.2f}".format(total_autonomo_contribution or 0) }}
+                        {% endif %}
+                    </h2>
                     <small class="text-muted-white">{{ _('Sum of estimated monthly contributions (€)') }}</small> {# Adjusted text color #}
                 </div>
             </div>

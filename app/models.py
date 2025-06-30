@@ -1,5 +1,5 @@
 # app/models.py
-from datetime import datetime
+from datetime import datetime, timedelta
 from . import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -24,7 +24,7 @@ class Patient(db.Model):
     # Increased length to accommodate encrypted data
     _name = db.Column("name", db.String(500), nullable=False)
     _email = db.Column("email", db.String(500))
-    _phone = db.Column("phone", db.String(100))
+    _phone = db.Column("phone", db.String(500))
     _notes = db.Column("notes", db.Text)
     _anamnesis = db.Column("anamnesis", db.Text)  # Clinical history/initial assessment
     
@@ -393,6 +393,12 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(255))
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Email verification fields
+    email_verified = db.Column(db.Boolean, default=False, nullable=False)
+    email_verification_token = db.Column(db.String(255), nullable=True, index=True)
+    email_verification_sent_at = db.Column(db.DateTime, nullable=True)
+    
     # Personal fields
     first_name = db.Column(db.String(64), nullable=True)
     last_name = db.Column(db.String(64), nullable=True)
@@ -623,6 +629,45 @@ class User(db.Model, UserMixin):
         
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def generate_email_verification_token(self):
+        """Generate a unique email verification token"""
+        import secrets
+        import hashlib
+        
+        # Generate a secure random token
+        token = secrets.token_urlsafe(32)
+        # Hash it for additional security
+        hashed_token = hashlib.sha256(token.encode()).hexdigest()
+        
+        self.email_verification_token = hashed_token
+        self.email_verification_sent_at = datetime.utcnow()
+        
+        return token  # Return the original token for the email link
+    
+    def verify_email_token(self, token):
+        """Verify the email verification token and mark email as verified"""
+        import hashlib
+        
+        if not self.email_verification_token:
+            return False
+            
+        # Check if token has expired (24 hours)
+        if self.email_verification_sent_at:
+            expiry_time = self.email_verification_sent_at + timedelta(hours=24)
+            if datetime.utcnow() > expiry_time:
+                return False
+        
+        # Hash the provided token and compare
+        hashed_token = hashlib.sha256(token.encode()).hexdigest()
+        
+        if hashed_token == self.email_verification_token:
+            self.email_verified = True
+            self.email_verification_token = None  # Clear the token
+            self.email_verification_sent_at = None
+            return True
+            
+        return False
 
 class FixedCost(db.Model):
     id = db.Column(db.Integer, primary_key=True)

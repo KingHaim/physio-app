@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from datetime import datetime, timedelta, date, time
 from calendar import monthrange, day_name
 from sqlalchemy import func, extract, or_, case, cast, Float, exc, text
+from sqlalchemy import distinct
 from app.models import (
     db, Patient, Treatment, TriggerPoint, UnmatchedCalendlyBooking, 
     PatientReport, RecurringAppointment, User, PracticeReport, Plan, 
@@ -163,62 +164,17 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Define the 2025 tax brackets based on the provided image
-# Each dict represents a bracket with its lower/upper income bounds,
-# description, and minimum contribution base.
-TAX_BRACKETS_2025 = [
-    {'lower': 0,       'upper': 670,      'desc': 'Hasta 670 €',              'base': 653.59},
-    {'lower': 670,     'upper': 900,      'desc': 'Entre 670 € y 900 €',      'base': 718.95},
-    {'lower': 900,     'upper': 1125.90,  'desc': 'Entre 900 € y 1.125,90 €', 'base': 849.67},
-    {'lower': 1125.90, 'upper': 1300,     'desc': 'Entre 1.125,90 € y 1.300 €','base': 950.98},
-    {'lower': 1300,    'upper': 1500,     'desc': 'Entre 1.300 € y 1.500 €',  'base': 960.78},
-    {'lower': 1500,    'upper': 1700,     'desc': 'Entre 1.500 € y 1.700 €',  'base': 960.78},
-    {'lower': 1700,    'upper': 1850,     'desc': 'Entre 1.700 € y 1.850 €',  'base': 1143.79},
-    {'lower': 1850,    'upper': 2030,     'desc': 'Entre 1.850 € y 2.030 €',  'base': 1209.15},
-    {'lower': 2030,    'upper': 2330,     'desc': 'Entre 2.030 € y 2.330 €',  'base': 1274.51}, # Adjusted range based on next
-    {'lower': 2330,    'upper': 2760,     'desc': 'Entre 2.330 € y 2.760 €',  'base': 1356.21},
-    {'lower': 2760,    'upper': 3190,     'desc': 'Entre 2.760 € y 3.190 €',  'base': 1437.91},
-    {'lower': 3190,    'upper': 3620,     'desc': 'Entre 3.190 € y 3.620 €',  'base': 1519.61},
-    {'lower': 3620,    'upper': 4050,     'desc': 'Entre 3.620 € y 4.050 €',  'base': 1601.31},
-    {'lower': 4050,    'upper': float('inf'), 'desc': 'Más de 4.050 €',       'base': 1601.31} # Assumed last base applies
-]
-
 # --- Define Constants ---
-AUTONOMO_CONTRIBUTION_RATE = 0.314
+# REMOVED: AUTONOMO_CONTRIBUTION_RATE - Now dynamic per user
 # --- End Constants ---
 
 # --- Define Fixed Monthly Expenses (Placeholder - Update with your actuals) ---
-# Expenses should be in EUR
-FIXED_MONTHLY_EXPENSES = {
-    'chatgpt': 24.20,
-    'icloud': 9.99,
-    'autonomos': 230.00,
-    'other': 100.00 # Catch-all for other fixed costs
-}
-TOTAL_FIXED_MONTHLY_EXPENSES = sum(FIXED_MONTHLY_EXPENSES.values())
+# REMOVED: FIXED_MONTHLY_EXPENSES - Now dynamic per user from FixedCost table
 # --- End Fixed Monthly Expenses ---
 
 # --- Define Constants and Brackets (Ideally move to config/helpers) ---
-MONTHLY_FIXED_EXPENSES = 250 # Or get from config/db if dynamic
-# Define brackets for the relevant year (e.g., 2024 - update as needed)
-# Example structure - Make sure this matches the one in financials route
-BRACKETS_2024 = {
-     1: {'lower': -float('inf'), 'upper': 670, 'base': 950.98},
-     2: {'lower': 670, 'upper': 900, 'base': 960.78},
-     3: {'lower': 900, 'upper': 1166.70, 'base': 960.78}, # Example: Same base for Tramo 3 Reducido
-     4: {'lower': 1166.70, 'upper': 1300, 'base': 1013.07},
-     5: {'lower': 1300, 'upper': 1500, 'base': 1029.41},
-     6: {'lower': 1500, 'upper': 1700, 'base': 1045.75},
-     7: {'lower': 1700, 'upper': 1850, 'base': 1078.43},
-     8: {'lower': 1850, 'upper': 2030, 'base': 1111.11},
-     9: {'lower': 2030, 'upper': 2330, 'base': 1143.79},
-    10: {'lower': 2330, 'upper': 2760, 'base': 1176.47},
-    11: {'lower': 2760, 'upper': 3190, 'base': 1241.83},
-    12: {'lower': 3190, 'upper': 3620, 'base': 1307.19},
-    13: {'lower': 3620, 'upper': 4050, 'base': 1372.55},
-    14: {'lower': 4050, 'upper': 6000, 'base': 1454.25},
-    15: {'lower': 6000, 'upper': float('inf'), 'base': 1732.03}
-}
+# REMOVED: MONTHLY_FIXED_EXPENSES - Now dynamic per user
+# REMOVED: BRACKETS_2024 - Users now configure their own brackets
 # --- End Constants and Brackets ---
 
 # Helper function to find the correct bracket
@@ -418,6 +374,33 @@ def index():
         func.date(Treatment.created_at) == today
     ).count()
     
+    # Get upcoming appointments for the dashboard
+    upcoming_appointments_query = Treatment.query.join(Patient).filter(
+        Patient.user_id == current_user.id,
+        Treatment.status == 'Scheduled',
+        Treatment.created_at >= datetime.utcnow()
+    ).order_by(Treatment.created_at.asc()).limit(10)
+    
+    upcoming_appointments = []
+    for treatment in upcoming_appointments_query.all():
+        # Calculate relative date
+        treatment_date = treatment.created_at.date()
+        if treatment_date == today:
+            relative_date = 'Today'
+        elif treatment_date == today + timedelta(days=1):
+            relative_date = 'Tomorrow'
+        elif treatment_date <= today + timedelta(days=7):
+            relative_date = treatment.created_at.strftime('%A')  # Day of the week
+        else:
+            relative_date = treatment.created_at.strftime('%b %d')  # Month Day
+        
+        upcoming_appointments.append({
+            'treatment': treatment,
+            'patient_name': treatment.patient.name if treatment.patient else 'Unknown',
+            'relative_date': relative_date,
+            'time': treatment.created_at.strftime('%H:%M')
+        })
+    
     # Get user's subscription if exists
     subscription = UserSubscription.query.filter_by(user_id=current_user.id).first()
     if subscription and subscription.plan:
@@ -442,6 +425,7 @@ def index():
                          current_patients_count=current_patients_count,
                          active_patients=active_patients,
                          today_appointments=today_appointments,
+                         upcoming_appointments=upcoming_appointments,
                          is_new_user=is_new_user,
                          welcome_form=welcome_form)
 
@@ -586,9 +570,10 @@ def add_treatment(patient_id):
     # First, validate that the patient exists and has anamnesis
     patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first_or_404()
     
-    # Check if anamnesis is completed
-    if not patient.anamnesis or not patient.anamnesis.strip():
-        error_message = 'Cannot create treatment: Patient anamnesis (clinical history) must be completed first. Please edit the patient record to add anamnesis before creating treatments.'
+    # Check if anamnesis is completed - but only for completed treatments, not for scheduling appointments
+    status = request.form.get('status')
+    if status == 'Completed' and (not patient.anamnesis or not patient.anamnesis.strip()):
+        error_message = 'Cannot complete treatment: Patient anamnesis (clinical history) must be completed first. Please edit the patient record to add anamnesis before marking treatments as completed.'
         if is_ajax:
             return jsonify({'success': False, 'message': error_message}), 400
         flash(error_message, 'danger')
@@ -1969,7 +1954,7 @@ def analytics():
     
     # Active patients: those with at least one treatment in the last 90 days
     ninety_days_ago = datetime.now() - timedelta(days=90)
-    active_patients_ids = db.session.query(distinct(Treatment.patient_id)).filter(
+    active_patients_ids = db.session.query(func.distinct(Treatment.patient_id)).filter(
         Treatment.created_at >= ninety_days_ago,
         Treatment.patient_id.in_(patients_query.with_entities(Patient.id))
     ).all()
@@ -2052,29 +2037,59 @@ def analytics():
     # Use user's contribution_base if set, otherwise calculate dynamically
     user_contribution_base = current_user.contribution_base
     
+    # Check if user has configured tax settings
+    user_has_tax_config = bool(
+        current_user.tax_rate is not None or 
+        current_user.autonomo_contribution_rate is not None or 
+        current_user.tax_brackets is not None
+    )
+    
     total_autonomo_contribution = 0
     monthly_data_autonomo = autonomo_base_query.all()
-
-    for month_data in monthly_data_autonomo:
-        # ... autonomo calculation loop ...
-        current_brackets = TAX_BRACKETS_2025 
-        revenue = month_data.monthly_total_revenue or 0
-        cs_revenue = month_data.monthly_costaspine_revenue or 0
-        costaspine_fee = cs_revenue * (clinic_percentage / 100.0) # Use dynamic percentage
+    
+    # If user hasn't configured tax settings, skip autonomo calculations
+    if not user_has_tax_config:
+        total_autonomo_contribution = 'N/A'
+    else:
+        # Use dynamic user configuration instead of hardcoded values
+        default_tax_brackets = [
+            {'lower': 0,       'upper': 670,      'desc': 'Hasta 670 €',              'base': 653.59},
+            {'lower': 670,     'upper': 900,      'desc': 'Entre 670 € y 900 €',      'base': 718.95},
+            {'lower': 900,     'upper': 1125.90,  'desc': 'Entre 900 € y 1.125,90 €', 'base': 849.67},
+            {'lower': 1125.90, 'upper': 1300,     'desc': 'Entre 1.125,90 € y 1.300 €','base': 950.98},
+            {'lower': 1300,    'upper': 1500,     'desc': 'Entre 1.300 € y 1.500 €',  'base': 960.78},
+            {'lower': 1500,    'upper': 1700,     'desc': 'Entre 1.500 € y 1.700 €',  'base': 960.78},
+            {'lower': 1700,    'upper': 1850,     'desc': 'Entre 1.700 € y 1.850 €',  'base': 1143.79},
+            {'lower': 1850,    'upper': 2030,     'desc': 'Entre 1.850 € y 2.030 €',  'base': 1209.15},
+            {'lower': 2030,    'upper': 2330,     'desc': 'Entre 2.030 € y 2.330 €',  'base': 1274.51},
+            {'lower': 2330,    'upper': 2760,     'desc': 'Entre 2.330 € y 2.760 €',  'base': 1356.21},
+            {'lower': 2760,    'upper': 3190,     'desc': 'Entre 2.760 € y 3.190 €',  'base': 1437.91},
+            {'lower': 3190,    'upper': 3620,     'desc': 'Entre 3.190 € y 3.620 €',  'base': 1519.61},
+            {'lower': 3620,    'upper': 4050,     'desc': 'Entre 3.620 € y 4.050 €',  'base': 1601.31},
+            {'lower': 4050,    'upper': float('inf'), 'desc': 'Más de 4.050 €',       'base': 1601.31}
+        ]
         
-        # Use dynamic fixed expenses instead of hardcoded value
-        net_revenue_before_contrib = revenue - costaspine_fee - monthly_fixed_expenses
+        user_tax_brackets = current_user.tax_brackets or default_tax_brackets  # Fallback to default if not set
+        user_autonomo_rate = current_user.autonomo_contribution_rate or 0.314  # Default 31.4%
         
-        if user_contribution_base:
-            # If user has set a fixed contribution base, use it
-            monthly_contribution = user_contribution_base * AUTONOMO_CONTRIBUTION_RATE
-        else:
-            # Otherwise, calculate based on income brackets
-            bracket_info = find_bracket(net_revenue_before_contrib, current_brackets)
-            min_base = bracket_info.get('base', 0) if bracket_info else 0
-            monthly_contribution = min_base * AUTONOMO_CONTRIBUTION_RATE if min_base > 0 else 0
-        
-        total_autonomo_contribution += monthly_contribution
+        for month_data in monthly_data_autonomo:
+            revenue = month_data.monthly_total_revenue or 0
+            cs_revenue = month_data.monthly_costaspine_revenue or 0
+            costaspine_fee = cs_revenue * (clinic_percentage / 100.0) # Use dynamic percentage
+            
+            # Use dynamic fixed expenses instead of hardcoded value
+            net_revenue_before_contrib = revenue - costaspine_fee - monthly_fixed_expenses
+            
+            if user_contribution_base:
+                # If user has set a fixed contribution base, use it
+                monthly_contribution = user_contribution_base * user_autonomo_rate  # Use dynamic autonomo rate
+            else:
+                # Otherwise, calculate based on income brackets using dynamic brackets
+                bracket_info = find_bracket(net_revenue_before_contrib, user_tax_brackets)
+                min_base = bracket_info.get('base', 0) if bracket_info else 0
+                monthly_contribution = min_base * user_autonomo_rate if min_base > 0 else 0  # Use dynamic autonomo rate
+            
+            total_autonomo_contribution += monthly_contribution
     # --- End Summary Card Data Fetching ---
     
     # Render Template (Only pass data needed for cards and AI report)
@@ -2435,6 +2450,8 @@ def bulk_update_treatments():
 @login_required
 @physio_required # <<< ADD DECORATOR
 def financials():
+    print(f"🚀 FINANCIALS FUNCTION CALLED - User ID: {current_user.id}")
+    
     selected_year = request.args.get('year', str(datetime.now().year))
     try:
         year = int(selected_year)
@@ -2473,6 +2490,13 @@ def financials():
     user_fixed_costs = FixedCost.query.filter_by(user_id=current_user.id).all()
     total_fixed_monthly_expenses = sum(fc.monthly_amount for fc in user_fixed_costs)
 
+    # --- Check if user has configured tax settings ---
+    user_has_tax_config = bool(
+        current_user.tax_rate is not None or 
+        current_user.autonomo_contribution_rate is not None or 
+        current_user.tax_brackets is not None
+    )
+    
     # --- Initialize data structures ---
     quarterly_data = {
         'q1': {'revenue': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0},
@@ -2490,26 +2514,51 @@ def financials():
                 quarterly_data[period]['costaspine_fee'] = 0
     monthly_data = {} # Key will be month number (1-12)
 
-    tax_rate = 0.19
+    # --- Tax configuration setup (only if user has tax config) ---
+    if user_has_tax_config:
+        # Create default tax brackets only if user hasn't configured custom ones
+        default_tax_brackets = [
+            {'lower': 0,       'upper': 670,      'desc': 'Hasta 670 €',              'base': 653.59},
+            {'lower': 670,     'upper': 900,      'desc': 'Entre 670 € y 900 €',      'base': 718.95},
+            {'lower': 900,     'upper': 1125.90,  'desc': 'Entre 900 € y 1.125,90 €', 'base': 849.67},
+            {'lower': 1125.90, 'upper': 1300,     'desc': 'Entre 1.125,90 € y 1.300 €','base': 950.98},
+            {'lower': 1300,    'upper': 1500,     'desc': 'Entre 1.300 € y 1.500 €',  'base': 960.78},
+            {'lower': 1500,    'upper': 1700,     'desc': 'Entre 1.500 € y 1.700 €',  'base': 960.78},
+            {'lower': 1700,    'upper': 1850,     'desc': 'Entre 1.700 € y 1.850 €',  'base': 1143.79},
+            {'lower': 1850,    'upper': 2030,     'desc': 'Entre 1.850 € y 2.030 €',  'base': 1209.15},
+            {'lower': 2030,    'upper': 2330,     'desc': 'Entre 2.030 € y 2.330 €',  'base': 1274.51},
+            {'lower': 2330,    'upper': 2760,     'desc': 'Entre 2.330 € y 2.760 €',  'base': 1356.21},
+            {'lower': 2760,    'upper': 3190,     'desc': 'Entre 2.760 € y 3.190 €',  'base': 1437.91},
+            {'lower': 3190,    'upper': 3620,     'desc': 'Entre 3.190 € y 3.620 €',  'base': 1519.61},
+            {'lower': 3620,    'upper': 4050,     'desc': 'Entre 3.620 € y 4.050 €',  'base': 1601.31},
+            {'lower': 4050,    'upper': float('inf'), 'desc': 'Más de 4.050 €',       'base': 1601.31}
+        ]
+        
+        user_tax_brackets = current_user.tax_brackets or default_tax_brackets  # Fallback to default if not set
+        user_tax_rate = current_user.tax_rate or 0.19  # Default 19%
+        user_autonomo_rate = current_user.autonomo_contribution_rate or 0.314  # Default 31.4%
+        user_contribution_base = current_user.contribution_base  # Can be None
+
     clinic_fee_rate = current_user.clinic_fee_rate if current_user.clinic_fee_rate is not None else 0.30
     quarters_map = {1: 'q1', 2: 'q1', 3: 'q1',
                     4: 'q2', 5: 'q2', 6: 'q2',
                     7: 'q3', 8: 'q3', 9: 'q3',
                     10: 'q4', 11: 'q4', 12: 'q4'}
 
+    # --- Monthly calculations (always executed) ---
     for month in range(1, 13):
         current_month = datetime.now().month
         current_year = datetime.now().year
         if year == current_year and month > current_month:
             month_start_date = datetime(year, month, 1)
             monthly_data[month] = {
-                'month_name': month_start_date.strftime('%B'),
+                'month_name': get_translated_month_name(month),
                 'net_revenue': 0,
                 'bracket': '-',
                 'min_base': '-',
-                'monthly_contribution': 0,
-                'fixed_expenses': 0,
-                'net_revenue_final': 0,
+                'monthly_contribution': 'N/A' if not user_has_tax_config else 0,
+                'fixed_expenses': total_fixed_monthly_expenses,
+                'net_revenue_final': 'N/A' if not user_has_tax_config else 0,
                 'diff_to_upper': '-'
             }
             continue
@@ -2530,6 +2579,7 @@ def financials():
             monthly_treatments_query = monthly_treatments_query.join(Patient).filter(Patient.user_id == current_user.id)
         monthly_treatments = monthly_treatments_query.all()
 
+        # --- Revenue calculations (always executed) ---
         m_revenue = 0
         m_costaspine_revenue = 0
         m_costaspine_fee = 0
@@ -2548,58 +2598,66 @@ def financials():
                     if clinic_fee_enabled:
                         m_costaspine_fee += fee * clinic_fee_rate
             
-            # Calculate taxable card revenue
-            is_card = t.payment_method == 'Card'
-            if is_card:
-                if has_clinic_configured and clinic_fee_enabled:
-                    clinic_name_filter = current_user.clinic_name or 'CostaSpine Clinic'
-                    is_costaspine = t.location == clinic_name_filter
-                    if is_costaspine:
-                        m_taxable_card_revenue += fee * (1 - clinic_fee_rate)
+            # Calculate taxable card revenue (only if tax config exists)
+            if user_has_tax_config:
+                is_card = t.payment_method == 'Card'
+                if is_card:
+                    if has_clinic_configured and clinic_fee_enabled:
+                        clinic_name_filter = current_user.clinic_name or 'CostaSpine Clinic'
+                        is_costaspine = t.location == clinic_name_filter
+                        if is_costaspine:
+                            m_taxable_card_revenue += fee * (1 - clinic_fee_rate)
+                        else:
+                            m_taxable_card_revenue += fee
                     else:
                         m_taxable_card_revenue += fee
+
+        # --- Tax calculations (conditional on tax config) ---
+        if user_has_tax_config:
+            m_tax = m_taxable_card_revenue * user_tax_rate  # Use dynamic tax rate
+            m_net = m_revenue - m_costaspine_fee - m_tax
+
+            # Use user's contribution_base if set, otherwise calculate dynamically using user brackets
+            current_bracket = find_bracket(m_net, user_tax_brackets)  # Use dynamic brackets
+            bracket_desc = "-"
+            min_base_value = 0
+            min_base_display = "-"
+            diff_to_upper = "-"
+            monthly_contribution = 0
+
+            if user_contribution_base:
+                # If user has set a fixed contribution base, use it
+                bracket_desc = "Fixed Contribution Base (User Setting)"
+                min_base_value = user_contribution_base
+                min_base_display = f"€{min_base_value:,.2f}"
+                monthly_contribution = min_base_value * user_autonomo_rate  # Use dynamic autonomo rate
+                diff_to_upper = "Fixed Base"
+            elif current_bracket:
+                bracket_desc = current_bracket['desc']
+                min_base_value = current_bracket['base']
+                min_base_display = f"€{min_base_value:,.2f}"
+                monthly_contribution = min_base_value * user_autonomo_rate  # Use dynamic autonomo rate
+                upper_bound = current_bracket['upper']
+                if upper_bound == float('inf'):
+                    diff_to_upper = "Top Bracket"
                 else:
-                    m_taxable_card_revenue += fee
+                    diff = upper_bound - m_net
+                    diff_to_upper = f"€{diff:,.2f}"
+            elif m_net > 0:
+                bracket_desc = "Error: No bracket found"
 
-        m_tax = m_taxable_card_revenue * tax_rate
-        m_net = m_revenue - m_costaspine_fee - m_tax
-
-        # Use user's contribution_base if set, otherwise calculate dynamically
-        user_contribution_base = current_user.contribution_base
-        
-        current_bracket = find_bracket(m_net, TAX_BRACKETS_2025)
-        bracket_desc = "-"
-        min_base_value = 0
-        min_base_display = "-"
-        diff_to_upper = "-"
-        monthly_contribution = 0
-
-        if user_contribution_base:
-            # If user has set a fixed contribution base, use it
-            bracket_desc = "Fixed Contribution Base (User Setting)"
-            min_base_value = user_contribution_base
-            min_base_display = f"€{min_base_value:,.2f}"
-            monthly_contribution = min_base_value * 0.314
-            diff_to_upper = "Fixed Base"
-        elif current_bracket:
-            bracket_desc = current_bracket['desc']
-            min_base_value = current_bracket['base']
-            min_base_display = f"€{min_base_value:,.2f}"
-            monthly_contribution = min_base_value * 0.314
-            upper_bound = current_bracket['upper']
-            if upper_bound == float('inf'):
-                diff_to_upper = "Top Bracket"
-            else:
-                diff = upper_bound - m_net
-                diff_to_upper = f"€{diff:,.2f}"
-        elif m_net > 0:
-            bracket_desc = "Error: No bracket found"
-
-        m_net_final = m_net - monthly_contribution
+            m_net_final = m_net - monthly_contribution
+        else:
+            # No tax config - set tax-related values to N/A
+            bracket_desc = "N/A"
+            min_base_display = "N/A"
+            monthly_contribution = "N/A"
+            m_net_final = "N/A"
+            diff_to_upper = "N/A"
 
         monthly_data[month] = {
-            'month_name': month_start_date.strftime('%B'),
-            'net_revenue': m_net,
+            'month_name': get_translated_month_name(month),
+            'net_revenue': m_net if user_has_tax_config else m_revenue,  # Show gross revenue if no tax config
             'bracket': bracket_desc,
             'min_base': min_base_display,
             'monthly_contribution': monthly_contribution,
@@ -2608,33 +2666,62 @@ def financials():
             'diff_to_upper': diff_to_upper
         }
 
+        # --- Update quarterly data (always for revenue, conditionally for tax) ---
         quarterly_data[q_key]['revenue'] += m_revenue
         if has_clinic_configured:
             quarterly_data[q_key]['costaspine_revenue'] += m_costaspine_revenue
             if clinic_fee_enabled:
                 quarterly_data[q_key]['costaspine_fee'] += m_costaspine_fee
-        quarterly_data[q_key]['tax'] += monthly_contribution
-        quarterly_data[q_key]['fixed_expenses'] += total_fixed_monthly_expenses
-        quarterly_data[q_key]['net'] = quarterly_data[q_key]['revenue'] - (quarterly_data[q_key].get('costaspine_fee', 0)) - quarterly_data[q_key]['tax'] - quarterly_data[q_key]['fixed_expenses']
+        
+        if user_has_tax_config:
+            quarterly_data[q_key]['tax'] += monthly_contribution
+            quarterly_data[q_key]['fixed_expenses'] += total_fixed_monthly_expenses
+            quarterly_data[q_key]['net'] = quarterly_data[q_key]['revenue'] - (quarterly_data[q_key].get('costaspine_fee', 0)) - quarterly_data[q_key]['tax'] - quarterly_data[q_key]['fixed_expenses']
+        else:
+            # Set tax-related quarterly values to N/A
+            quarterly_data[q_key]['tax'] = 'N/A'
+            quarterly_data[q_key]['fixed_expenses'] = total_fixed_monthly_expenses * 3  # 3 months per quarter
+            quarterly_data[q_key]['net'] = 'N/A'
 
         quarterly_data['annual']['revenue'] += m_revenue
         if has_clinic_configured:
             quarterly_data['annual']['costaspine_revenue'] += m_costaspine_revenue
             if clinic_fee_enabled:
                 quarterly_data['annual']['costaspine_fee'] += m_costaspine_fee
-        quarterly_data['annual']['tax'] += monthly_contribution
-        quarterly_data['annual']['fixed_expenses'] += total_fixed_monthly_expenses
-        quarterly_data['annual']['net'] = quarterly_data['annual']['revenue'] - (quarterly_data['annual'].get('costaspine_fee', 0)) - quarterly_data['annual']['tax'] - quarterly_data['annual']['fixed_expenses']
+        
+        if user_has_tax_config:
+            quarterly_data['annual']['tax'] += monthly_contribution
+            quarterly_data['annual']['fixed_expenses'] += total_fixed_monthly_expenses
+            quarterly_data['annual']['net'] = quarterly_data['annual']['revenue'] - (quarterly_data['annual'].get('costaspine_fee', 0)) - quarterly_data['annual']['tax'] - quarterly_data['annual']['fixed_expenses']
+        else:
+            # Set tax-related annual values to N/A
+            quarterly_data['annual']['tax'] = 'N/A'
+            quarterly_data['annual']['fixed_expenses'] = total_fixed_monthly_expenses * 12  # 12 months per year
+            quarterly_data['annual']['net'] = 'N/A'
+
+    # --- Ensure all quarterly tax values are N/A when no tax config (regardless of processed months) ---
+    if not user_has_tax_config:
+        for period in ['q1', 'q2', 'q3', 'q4', 'annual']:
+            quarterly_data[period]['tax'] = 'N/A'
+            quarterly_data[period]['net'] = 'N/A'
+            if period != 'annual':
+                quarterly_data[period]['fixed_expenses'] = total_fixed_monthly_expenses * 3  # 3 months per quarter
+            else:
+                quarterly_data[period]['fixed_expenses'] = total_fixed_monthly_expenses * 12  # 12 months per year
 
     clinic_name = current_user.clinic_name or _('Clinic')
     clinic_fee_rate = current_user.clinic_fee_rate if current_user.clinic_fee_rate is not None else 0.30
     clinic_fee_label = f"{clinic_name} Fee ({int(clinic_fee_rate*100)}%)"
+    
+    # For the clinic revenue, we'll use a pattern that allows for translation
+    clinic_revenue_label = _('Clinic Revenue').replace('Clinic', clinic_name)
+    
     metrics_labels = {
         'revenue': _('Total Revenue'),
-        'costaspine_revenue': _(f'{clinic_name} Revenue'),
+        'costaspine_revenue': clinic_revenue_label,
         'costaspine_fee': _(clinic_fee_label),
         'fixed_expenses': _('Total Fixed Expenses (€)'),
-        'tax': _('Est. Autónomo Contribution (€)'),
+        'tax': _('Est. Self-Employed Tax Contribution (€)'),
         'net': _('Est. Net Revenue (Final)')
     }
     
@@ -2649,7 +2736,8 @@ def financials():
         clinic_fee_label=clinic_fee_label,
         metrics_labels=metrics_labels,
         has_clinic_configured=has_clinic_configured,
-        clinic_fee_enabled=clinic_fee_enabled
+        clinic_fee_enabled=clinic_fee_enabled,
+        user_has_tax_config=user_has_tax_config
     )
 
 # --- Review Missing Payments Route ---
@@ -2718,7 +2806,7 @@ def new_patient():
             # Repopulate form fields for clarity, though redirecting is simpler
             name = request.form['name']
             date_of_birth_str = request.form.get('date_of_birth')
-            contact = request.form['contact']
+            contact = request.form.get('contact', '')  # Hacer opcional
             diagnosis = request.form['diagnosis']
             treatment_plan = request.form.get('treatment_plan')
             notes = request.form.get('notes')
@@ -2826,7 +2914,7 @@ def new_patient():
         # Normal patient creation process (when limit is not reached)
         name = request.form['name']
         date_of_birth_str = request.form.get('date_of_birth')
-        contact = request.form['contact']
+        contact = request.form.get('contact', '')  # Hacer opcional
         diagnosis = request.form['diagnosis']
         treatment_plan = request.form.get('treatment_plan')
         notes = request.form.get('notes')
@@ -2973,7 +3061,7 @@ def edit_patient(id):
             patient.name = request.form['name']
             dob_str = request.form.get('date_of_birth')
             patient.date_of_birth = datetime.strptime(dob_str, '%Y-%m-%d').date() if dob_str else None
-            patient.contact = request.form['contact']
+            patient.contact = request.form.get('contact', '')
             patient.diagnosis = request.form['diagnosis']
             patient.treatment_plan = request.form['treatment_plan']
             patient.notes = request.form['notes']
@@ -3423,16 +3511,16 @@ def generate_new_analytics_report():
 
         # New Patients by Month
         new_patients_by_month_base_query = (db.session.query(
-            func.to_char(Patient.created_at, 'YYYY-MM').label('month'), # Corrected to Patient.created_at
+            func.to_char(Patient.created_at, 'YYYY-MM').label('month'),
             func.count(Patient.id).label('count')
-            ).filter(Patient.created_at >= twelve_months_ago)) # Corrected to Patient.created_at
+            ).filter(Patient.created_at >= twelve_months_ago))
 
         if not is_admin_generating:
             new_patients_by_month_base_query = new_patients_by_month_base_query.filter(Patient.user_id == user_generating_report.id)
 
         new_patients_by_month_query_result = (new_patients_by_month_base_query
-            .group_by(func.to_char(Patient.created_at, 'YYYY-MM')) # Corrected to Patient.created_at
-            .order_by(func.to_char(Patient.created_at, 'YYYY-MM').asc()).all()) # Corrected to Patient.created_at
+            .group_by(func.to_char(Patient.created_at, 'YYYY-MM'))
+            .order_by(func.to_char(Patient.created_at, 'YYYY-MM').asc()).all())
         new_patients_by_month = [
             {'month': format_month(p[0]), 'count': p[1]} for p in new_patients_by_month_query_result
         ]
@@ -4041,6 +4129,20 @@ def user_settings():
         elif 'submit_financial' in request.form:
             if financial_form.validate_on_submit():
                 current_user.contribution_base = financial_form.contribution_base.data
+                
+                # Handle tax configuration fields from the form
+                tax_rate = request.form.get('tax_rate')
+                autonomo_rate = request.form.get('autonomo_contribution_rate')
+                clinic_fee_rate = request.form.get('clinic_fee_rate')
+                
+                # Convert percentages to decimals and save
+                if tax_rate:
+                    current_user.tax_rate = float(tax_rate) / 100.0
+                if autonomo_rate:
+                    current_user.autonomo_contribution_rate = float(autonomo_rate) / 100.0
+                if clinic_fee_rate:
+                    current_user.clinic_fee_rate = float(clinic_fee_rate) / 100.0
+                
                 db.session.commit()
                 flash('Your financial settings have been updated.', 'success')
                 return redirect(url_for('main.user_settings'))
@@ -4314,6 +4416,24 @@ def format_month(month_str):
     except Exception:
         return month_str
 
+def get_translated_month_name(month_number):
+    """Get translated month name based on current locale"""
+    month_names = {
+        1: _('January'),
+        2: _('February'), 
+        3: _('March'),
+        4: _('April'),
+        5: _('May'),
+        6: _('June'),
+        7: _('July'),
+        8: _('August'),
+        9: _('September'),
+        10: _('October'),
+        11: _('November'),
+        12: _('December')
+    }
+    return month_names.get(month_number, str(month_number))
+
 @main.route('/api/analytics/inactive-patients') # Renamed endpoint
 @login_required
 @physio_required
@@ -4388,4 +4508,75 @@ def force_welcome():
     return render_template('debug_welcome.html', 
                          is_new_user=True,
                          welcome_form=welcome_form)
+
+@main.route('/api/patient/create', methods=['POST'])
+@login_required
+@physio_required
+def create_patient_ajax():
+    """Create a new patient via AJAX from appointment form"""
+    try:
+        # Handle CSRF validation manually for AJAX requests
+        from flask_wtf.csrf import validate_csrf
+        csrf_token = request.headers.get('X-CSRFToken')
+        if csrf_token:
+            try:
+                validate_csrf(csrf_token)
+            except Exception as e:
+                return jsonify({'success': False, 'message': 'CSRF token validation failed'}), 400
+        else:
+            return jsonify({'success': False, 'message': 'CSRF token missing'}), 400
+        
+        # Check if request is JSON
+        if request.is_json:
+            data = request.get_json()
+        else:
+            return jsonify({'success': False, 'message': 'Invalid request format'}), 400
+        
+        # Check patient limits
+        current_patients, patient_limit = current_user.patient_usage_details
+        if patient_limit is not None and current_patients >= patient_limit:
+            return jsonify({
+                'success': False, 
+                'message': f'You have reached your current patient limit of {patient_limit}. Please upgrade your plan to add more patients.'
+            }), 400
+        
+        # Validate required fields
+        name = data.get('name', '').strip()
+        phone = data.get('phone', '').strip()
+        
+        if not name or not phone:
+            return jsonify({
+                'success': False, 
+                'message': 'Name and phone number are required'
+            }), 400
+        
+        # Create new patient
+        new_patient = Patient(
+            name=name,
+            phone=phone,
+            email=data.get('email', '').strip(),
+            date_of_birth=datetime.strptime(data.get('date_of_birth'), '%Y-%m-%d').date() if data.get('date_of_birth') else None,
+            address_line1=data.get('address', '').strip(),
+            anamnesis='',  # Allow empty anamnesis for appointment booking
+            diagnosis='',  # Default empty diagnosis
+            treatment_plan='',  # Default empty treatment plan
+            notes=f'Patient created from appointment booking on {datetime.now().strftime("%Y-%m-%d %H:%M")}',
+            user_id=current_user.id,
+            status='Active'
+        )
+        
+        db.session.add(new_patient)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Patient {name} created successfully',
+            'patient_id': new_patient.id
+        })
+        
+    except ValueError as e:
+        return jsonify({'success': False, 'message': 'Invalid date format'}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error creating patient: {str(e)}'}), 500
 

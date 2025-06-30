@@ -10,7 +10,7 @@
                 <h2><i class="bi bi-clipboard-pulse"></i> Treatment Details</h2>
                     <div>
                     <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-primary">
-                            <i class="bi bi-pencil"></i> Edit Treatment
+                            <i class="bi bi-pencil"></i> {{ _('Edit Treatment') }}
                         </a>
                     <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-secondary ms-2">
                             <i class="bi bi-arrow-left"></i> Back to Patient
@@ -233,7 +233,7 @@
                         <i class="bi bi-arrow-left"></i> Back to Patient
                     </a>
                         <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-primary">
-                            <i class="bi bi-pencil"></i> Edit Treatment
+                            <i class="bi bi-pencil"></i> {{ _('Edit Treatment') }}
                         </a>
                     </div>
                 </div>

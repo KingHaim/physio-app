@@ -400,22 +400,101 @@ msgid "An error occurred while setting up your profile. Please try again."
 msgstr ""
 
 #: app/routes/main.py:2633
-#, fuzzy
 msgid "Total Revenue"
-msgstr "Revenus"
+msgstr "Revenus Totaux"
 
 #: app/routes/main.py:2636
 msgid "Total Fixed Expenses (€)"
-msgstr ""
+msgstr "Dépenses Fixes Totales (€)"
 
 #: app/routes/main.py:2637
-#, fuzzy
 msgid "Est. Autónomo Contribution (€)"
-msgstr "Contr. Totale Estimée Indépendant (€)"
+msgstr "Contrib. Travailleur Indépendant Estimée (€)"
 
 #: app/routes/main.py:2638
 msgid "Est. Net Revenue (Final)"
-msgstr ""
+msgstr "Revenus Nets Finaux Estimés"
+
+msgid "Clinic Revenue"
+msgstr "Revenus Clinique"
+
+msgid "January"
+msgstr "Janvier"
+
+msgid "February"
+msgstr "Février"
+
+msgid "March"
+msgstr "Mars"
+
+msgid "April"
+msgstr "Avril"
+
+msgid "May"
+msgstr "Mai"
+
+msgid "June"
+msgstr "Juin"
+
+msgid "July"
+msgstr "Juillet"
+
+msgid "August"
+msgstr "Août"
+
+msgid "September"
+msgstr "Septembre"
+
+msgid "October"
+msgstr "Octobre"
+
+msgid "November"
+msgstr "Novembre"
+
+msgid "December"
+msgstr "Décembre"
+
+msgid "+ New Patient"
+msgstr "+ Nouveau Patient"
+
+msgid "New Patient Information"
+msgstr "Informations Nouveau Patient"
+
+msgid "Full Name"
+msgstr "Nom Complet"
+
+msgid "Enter patient full name"
+msgstr "Entrez le nom complet du patient"
+
+msgid "Phone"
+msgstr "Téléphone"
+
+msgid "Phone number"
+msgstr "Numéro de téléphone"
+
+msgid "Email address (optional)"
+msgstr "Adresse email (optionnel)"
+
+msgid "Date of Birth"
+msgstr "Date de Naissance"
+
+msgid "Address"
+msgstr "Adresse"
+
+msgid "Patient address (optional)"
+msgstr "Adresse du patient (optionnel)"
+
+msgid "The clinical history (anamnesis) can be completed during the appointment."
+msgstr "L'histoire clinique (anamnèse) peut être complétée pendant le rendez-vous."
+
+msgid "Clinical History Incomplete"
+msgstr "Histoire Clinique Incomplète"
+
+msgid "This patient has not completed their clinical history (anamnesis). Please complete it before providing treatment."
+msgstr "Ce patient n'a pas complété son histoire clinique (anamnèse). Veuillez la compléter avant de fournir un traitement."
+
+msgid "Complete Clinical History"
+msgstr "Compléter l'Histoire Clinique"
 
 #: app/routes/main.py:3501
 msgid "You do not have permission to access this page."
@@ -1690,6 +1769,58 @@ msgstr "T4 (Oct-Déc)"
 #: app/templates/financials.html:35
 msgid "Annual Total"
 msgstr "Total Annuel"
+
+#: app/templates/financials.html:170
+#, python-brace-format
+msgid "Monthly Financial Breakdown & {} Contribution Analysis"
+msgstr "Détail Financier Mensuel et Analyse des Contributions {}"
+
+#: app/templates/financials.html:177
+msgid "Month"
+msgstr "Mois"
+
+#: app/templates/financials.html:178
+msgid "Net Revenue (before Contrib.)"
+msgstr "Revenus Nets (avant Contrib.)"
+
+#: app/templates/financials.html:179
+msgid "Fixed Expenses"
+msgstr "Dépenses Fixes"
+
+#: app/templates/financials.html:180
+msgid "Income Bracket (Tramo)"
+msgstr "Tranche de Revenus (Tramo)"
+
+#: app/templates/financials.html:181
+msgid "Min. Contribution Base (€)"
+msgstr "Base Contrib. Min. (€)"
+
+#: app/templates/financials.html:182
+msgid "Est. Monthly Contribution (€)"
+msgstr "Contrib. Mensuelle Estimée (€)"
+
+#: app/templates/financials.html:183
+msgid "Final Net Revenue (€)"
+msgstr "Revenus Nets Finaux (€)"
+
+#: app/templates/financials.html:184
+msgid "Room Before Next Bracket"
+msgstr "Marge Avant Prochaine Tranche"
+
+#: app/templates/financials.html:233
+#, python-brace-format
+msgid ""
+"*'Net Revenue (before Contrib.)' = Monthly Revenue{} - Fixed Expenses. "
+"This value determines the Income Bracket. 'Final Net Revenue' = Net "
+"Revenue (before Contrib.) - Est. Monthly Contribution. All expenses and "
+"contributions are in EUR. Income brackets and minimum contribution bases "
+"shown are for the Spanish Autónomo system for {}."
+msgstr ""
+"*'Revenus Nets (avant Contrib.)' = Revenus Mensuels{} - Dépenses Fixes. "
+"Cette valeur détermine la Tranche de Revenus. 'Revenus Nets Finaux' = Revenus "
+"Nets (avant Contrib.) - Contrib. Mensuelle Estimée. Toutes les dépenses et "
+"contributions sont en EUR. Les tranches de revenus et bases contributives minimales "
+"affichées sont pour le système Autónomo espagnol de {}."
 
 #: app/templates/index.html:216
 msgid "🚀 Welcome to TRXCKER! Let's get you set up."
@@ -4311,9 +4442,8 @@ msgstr ""
 
 #: app/templates/patient_detail.html:736
 #: app/templates/patient_detail_BACKUP.html:720
-#, fuzzy
 msgid "Edit Treatment"
-msgstr "Ajouter un Traitement"
+msgstr "Modifier le Traitement"
 
 #: app/templates/patient_detail.html:764
 #: app/templates/patient_detail_BACKUP.html:748
@@ -5557,472 +5687,128 @@ msgstr ""
 msgid "Delete Location"
 msgstr "Supprimer l'Emplacement"
 
-#~ msgid "Schedule with Calendly"
-#~ msgstr "Planifier avec Calendly"
+msgid "Recurring"
+msgstr "Récurrent"
 
-#~ msgid "Show Calendly"
-#~ msgstr "Afficher Calendly"
+msgid "AI Tools"
+msgstr "Outils IA"
 
-#~ msgid "Calendly Settings"
-#~ msgstr "Paramètres Calendly"
+msgid "Generate Exercises"
+msgstr "Générer Exercices"
 
-#~ msgid "Manage Calendly Settings"
-#~ msgstr "Gérer les Paramètres Calendly"
+msgid "Clinical Analysis"
+msgstr "Analyse Clinique"
 
-#~ msgid "Connect your Calendly account to see your personal pending bookings."
-#~ msgstr ""
-#~ "Connectez votre compte Calendly pour "
-#~ "voir vos réservations en attente "
-#~ "personnelles."
+msgid "Edit Treatment Session"
+msgstr "Modifier Séance de Traitement"
 
-#~ msgid "You can find your API token and User URI in your"
-#~ msgstr "Vous pouvez trouver votre jeton API et URI utilisateur dans votre"
+msgid "Back to Patient"
+msgstr "Retour au Patient"
 
-#~ msgid "Calendly API & Webhooks page"
-#~ msgstr "page API et Webhooks de Calendly"
+msgid "Editing Treatment for"
+msgstr "Modification du Traitement pour"
 
-#~ msgid "Calendly API Token"
-#~ msgstr "Jeton API Calendly"
+msgid "You are editing the treatment session from"
+msgstr "Vous modifiez la séance de traitement du"
 
-#~ msgid "Enter your Calendly API token"
-#~ msgstr "Entrez votre jeton API Calendly"
+msgid "Clinical Details"
+msgstr "Détails Cliniques"
 
-#~ msgid ""
-#~ "Your token will be stored securely. "
-#~ "Leave blank if you wish to not "
-#~ "update or remove it."
-#~ msgstr ""
-#~ "Votre jeton sera stocké en sécurité. "
-#~ "Laissez vide si vous ne souhaitez "
-#~ "pas le mettre à jour ou le "
-#~ "supprimer."
+msgid "Financial & Scheduling"
+msgstr "Financier et Planification"
 
-#~ msgid "Calendly User URI"
-#~ msgstr "URI Utilisateur Calendly"
+msgid "Clinical Information"
+msgstr "Informations Cliniques"
 
-#~ msgid "e.g., https://api.calendly.com/users/YOUR_USER_ID"
-#~ msgstr "ex., https://api.calendly.com/users/VOTRE_ID_UTILISATEUR"
+msgid "Treatment Date"
+msgstr "Date du Traitement"
 
-#~ msgid ""
-#~ "This is used to identify events "
-#~ "belonging to your Calendly account. "
-#~ "Example:"
-#~ msgstr ""
-#~ "Ceci est utilisé pour identifier les "
-#~ "événements appartenant à votre compte "
-#~ "Calendly. Exemple :"
+msgid "Treatment Description"
+msgstr "Description du Traitement"
 
-#~ msgid "Leave blank to remove."
-#~ msgstr "Laisser vide pour supprimer."
+msgid "In Progress"
+msgstr "En Cours"
 
-#~ msgid "You are currently not subscribed to a plan."
-#~ msgstr "Vous n'êtes actuellement abonné à aucun plan."
+msgid "Pain Level (1-10)"
+msgstr "Niveau de Douleur (1-10)"
 
-#~ msgid "View Plans"
-#~ msgstr "Voir les Plans"
+msgid "Movement Restriction"
+msgstr "Restriction de Mouvement"
 
-#~ msgid "The practitioner has not set up their Calendly link yet."
-#~ msgstr "Le praticien n'a pas encore configuré son lien Calendly."
+msgid "Progress Notes"
+msgstr "Notes de Progrès"
 
-#~ msgid "You do not have an active subscription."
-#~ msgstr "Vous n'avez pas d'abonnement actif."
+msgid "Body Chart & Trigger Points"
+msgstr "Carte Corporelle et Points Gâchettes"
 
-#~ msgid "Perfect for getting started and exploring the core features."
-#~ msgstr ""
+msgid "Body Map"
+msgstr "Carte Corporelle"
 
-#~ msgid "You are on the Free Plan"
-#~ msgstr ""
+msgid "Active"
+msgstr "Actif"
 
-#~ msgid "Get Started for Free"
-#~ msgstr "Commencer Gratuitement"
+msgid "Latent"
+msgstr "Latent"
 
-#~ msgid "Remember me"
-#~ msgstr "Se souvenir de moi"
+msgid "Satellite"
+msgstr "Satellite"
 
-#~ msgid "Continue on Free Plan"
-#~ msgstr "Continuer avec le Plan Gratuit"
+msgid "Click on the body map to add trigger points"
+msgstr "Cliquez sur la carte corporelle pour ajouter des points gâchettes"
 
-#~ msgid "Or remain on the Free Plan"
-#~ msgstr "Ou restez sur le Plan Gratuit"
+msgid "Trigger Points"
+msgstr "Points Gâchettes"
 
-#~ msgid "Free Plan"
-#~ msgstr "Plan Gratuit"
+msgid "Type"
+msgstr "Type"
 
-#~ msgid "Remember Me"
-#~ msgstr "Se souvenir de moi"
+msgid "Muscle"
+msgstr "Muscle"
 
-#~ msgid "CostaSpine Fee Breakdown (30%%)"
-#~ msgstr "Répartition des Frais CostaSpine (30%%)"
+msgid "Intensity"
+msgstr "Intensité"
 
-#~ msgid "AI Generated"
-#~ msgstr "Généré par IA"
+msgid "Symptoms"
+msgstr "Symptômes"
 
-#~ msgid "Inactive This Week"
-#~ msgstr "Inactifs Cette Semaine"
+msgid "Referral"
+msgstr "Référence"
 
-#~ msgid "Patients Made Inactive This Week"
-#~ msgstr "Patients Rendus Inactifs Cette Semaine"
+msgid "Financial & Scheduling Information"
+msgstr "Informations Financières et de Planification"
 
-#~ msgid "Pricing"
-#~ msgstr "Essai"
+msgid "Location"
+msgstr "Lieu"
 
-#~ msgid "Free while in beta"
-#~ msgstr ""
+msgid "Home Visit"
+msgstr "Visite à Domicile"
 
-#~ msgid "plans from"
-#~ msgstr ""
+msgid "Visit Type"
+msgstr "Type de Visite"
 
-#~ msgid "CostaSpine Clinic"
-#~ msgstr "Clinique CostaSpine"
+msgid "First Visit"
+msgstr "Première Visite"
 
-#~ msgid "Set Loc: CostaSpine"
-#~ msgstr "Lieu: CostaSpine"
+msgid "Fee Charged (€)"
+msgstr "Frais Facturés (€)"
 
-#~ msgid "Current Patients"
-#~ msgstr "Patients Actuels"
+msgid "Select location first"
+msgstr "Sélectionnez d'abord le lieu"
 
-#~ msgid "Remaining Capacity"
-#~ msgstr "Capacité Restante"
+msgid "Payment Method"
+msgstr "Méthode de Paiement"
 
-#~ msgid "Limit"
-#~ msgstr "Limite"
+msgid "Cash"
+msgstr "Espèces"
 
-#~ msgid "Over!"
-#~ msgstr "Dépassée !"
+msgid "Card"
+msgstr "Carte"
 
-#~ msgid "Error fetching results."
-#~ msgstr "Erreur lors de la récupération des résultats."
+msgid "Next Appointment Date"
+msgstr "Date du Prochain Rendez-vous"
 
-#~ msgid "No patients found."
-#~ msgstr "Aucun patient trouvé."
+msgid "Optional: Leave blank if no follow-up is scheduled yet"
+msgstr "Optionnel: Laissez vide si aucun suivi n'est encore programmé"
 
-#~ msgid "An error occurred."
-#~ msgstr "Une erreur s'est produite."
-
-#~ msgid "Spanish"
-#~ msgstr ""
-
-#~ msgid "English"
-#~ msgstr ""
-
-#~ msgid "Italian"
-#~ msgstr "Essai"
-
-#~ msgid "{editor}: Editing failed"
-#~ msgstr ""
-
-#~ msgid "{editor}: Editing failed: {e}"
-#~ msgstr ""
-
-#~ msgid "Aborted!"
-#~ msgstr ""
-
-#~ msgid "(Deprecated) {text}"
-#~ msgstr ""
-
-#~ msgid "Options"
-#~ msgstr ""
-
-#~ msgid "Got unexpected extra argument ({args})"
-#~ msgid_plural "Got unexpected extra arguments ({args})"
-#~ msgstr[0] ""
-#~ msgstr[1] ""
-
-#~ msgid "DeprecationWarning: The command {name!r} is deprecated."
-#~ msgstr ""
-
-#~ msgid "Commands"
-#~ msgstr ""
-
-#~ msgid "Missing command."
-#~ msgstr ""
-
-#~ msgid "No such command {name!r}."
-#~ msgstr ""
-
-#~ msgid "Value must be an iterable."
-#~ msgstr ""
-
-#~ msgid "Takes {nargs} values but 1 was given."
-#~ msgid_plural "Takes {nargs} values but {len} were given."
-#~ msgstr[0] ""
-#~ msgstr[1] ""
-
-#~ msgid "env var: {var}"
-#~ msgstr ""
-
-#~ msgid "(dynamic)"
-#~ msgstr ""
-
-#~ msgid "default: {default}"
-#~ msgstr ""
-
-#~ msgid "required"
-#~ msgstr ""
-
-#~ msgid "%(prog)s, version %(version)s"
-#~ msgstr ""
-
-#~ msgid "Show the version and exit."
-#~ msgstr ""
-
-#~ msgid "Show this message and exit."
-#~ msgstr ""
-
-#~ msgid "Error: {message}"
-#~ msgstr ""
-
-#~ msgid "Try '{command} {option}' for help."
-#~ msgstr ""
-
-#~ msgid "Invalid value: {message}"
-#~ msgstr ""
-
-#~ msgid "Invalid value for {param_hint}: {message}"
-#~ msgstr ""
-
-#~ msgid "Missing argument"
-#~ msgstr ""
-
-#~ msgid "Missing option"
-#~ msgstr ""
-
-#~ msgid "Missing parameter"
-#~ msgstr ""
-
-#~ msgid "Missing {param_type}"
-#~ msgstr ""
-
-#~ msgid "Missing parameter: {param_name}"
-#~ msgstr ""
-
-#~ msgid "No such option: {name}"
-#~ msgstr ""
-
-#~ msgid "Did you mean {possibility}?"
-#~ msgid_plural "(Possible options: {possibilities})"
-#~ msgstr[0] ""
-#~ msgstr[1] ""
-
-#~ msgid "unknown error"
-#~ msgstr ""
-
-#~ msgid "Could not open file {filename!r}: {message}"
-#~ msgstr ""
-
-#~ msgid "Argument {name!r} takes {nargs} values."
-#~ msgstr ""
-
-#~ msgid "Option {name!r} does not take a value."
-#~ msgstr ""
-
-#~ msgid "Option {name!r} requires an argument."
-#~ msgid_plural "Option {name!r} requires {nargs} arguments."
-#~ msgstr[0] ""
-#~ msgstr[1] ""
-
-#~ msgid "Shell completion is not supported for Bash versions older than 4.4."
-#~ msgstr ""
-
-#~ msgid "Couldn't detect Bash version, shell completion is not supported."
-#~ msgstr ""
-
-#~ msgid "Repeat for confirmation"
-#~ msgstr ""
-
-#~ msgid "Error: The value you entered was invalid."
-#~ msgstr ""
-
-#~ msgid "Error: {e.message}"
-#~ msgstr ""
-
-#~ msgid "Error: The two entered values do not match."
-#~ msgstr ""
-
-#~ msgid "Error: invalid input"
-#~ msgstr ""
-
-#~ msgid "Press any key to continue..."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Choose from:\n"
-#~ "\t{choices}"
-#~ msgstr ""
-
-#~ msgid "{value!r} is not {choice}."
-#~ msgid_plural "{value!r} is not one of {choices}."
-#~ msgstr[0] ""
-#~ msgstr[1] ""
-
-#~ msgid "{value!r} does not match the format {format}."
-#~ msgid_plural "{value!r} does not match the formats {formats}."
-#~ msgstr[0] ""
-#~ msgstr[1] ""
-
-#~ msgid "{value!r} is not a valid {number_type}."
-#~ msgstr ""
-
-#~ msgid "{value} is not in the range {range}."
-#~ msgstr ""
-
-#~ msgid "{value!r} is not a valid boolean."
-#~ msgstr ""
-
-#~ msgid "{value!r} is not a valid UUID."
-#~ msgstr ""
-
-#~ msgid "file"
-#~ msgstr ""
-
-#~ msgid "directory"
-#~ msgstr ""
-
-#~ msgid "path"
-#~ msgstr ""
-
-#~ msgid "{name} {filename!r} does not exist."
-#~ msgstr ""
-
-#~ msgid "{name} {filename!r} is a file."
-#~ msgstr ""
-
-#~ msgid "{name} {filename!r} is a directory."
-#~ msgstr ""
-
-#~ msgid "{name} {filename!r} is not readable."
-#~ msgstr ""
-
-#~ msgid "{name} {filename!r} is not writable."
-#~ msgstr ""
-
-#~ msgid "{name} {filename!r} is not executable."
-#~ msgstr ""
-
-#~ msgid "{len_type} values are required, but {len_value} was given."
-#~ msgid_plural "{len_type} values are required, but {len_value} were given."
-#~ msgstr[0] ""
-#~ msgstr[1] ""
-
-#~ msgid "This field is required."
-#~ msgstr ""
-
-#~ msgid "File does not have an approved extension: {extensions}"
-#~ msgstr ""
-
-#~ msgid "File does not have an approved extension."
-#~ msgstr ""
-
-#~ msgid "Invalid field name '%s'."
-#~ msgstr ""
-
-#~ msgid "Field must be equal to %(other_name)s."
-#~ msgstr ""
-
-#~ msgid "Field must be at least %(min)d character long."
-#~ msgid_plural "Field must be at least %(min)d characters long."
-#~ msgstr[0] ""
-#~ msgstr[1] ""
-
-#~ msgid "Field cannot be longer than %(max)d character."
-#~ msgid_plural "Field cannot be longer than %(max)d characters."
-#~ msgstr[0] ""
-#~ msgstr[1] ""
-
-#~ msgid "Field must be exactly %(max)d character long."
-#~ msgid_plural "Field must be exactly %(max)d characters long."
-#~ msgstr[0] ""
-#~ msgstr[1] ""
-
-#~ msgid "Field must be between %(min)d and %(max)d characters long."
-#~ msgstr ""
-
-#~ msgid "Number must be at least %(min)s."
-#~ msgstr ""
-
-#~ msgid "Number must be at most %(max)s."
-#~ msgstr ""
-
-#~ msgid "Number must be between %(min)s and %(max)s."
-#~ msgstr ""
-
-#~ msgid "Invalid input."
-#~ msgstr ""
-
-#~ msgid "Invalid email address."
-#~ msgstr ""
-
-#~ msgid "Invalid IP address."
-#~ msgstr ""
-
-#~ msgid "Invalid Mac address."
-#~ msgstr ""
-
-#~ msgid "Invalid URL."
-#~ msgstr ""
-
-#~ msgid "Invalid UUID."
-#~ msgstr ""
-
-#~ msgid "Invalid value, must be one of: %(values)s."
-#~ msgstr ""
-
-#~ msgid "Invalid value, can't be any of: %(values)s."
-#~ msgstr ""
-
-#~ msgid "This field cannot be edited."
-#~ msgstr ""
-
-#~ msgid "This field is disabled and cannot have a value."
-#~ msgstr ""
-
-#~ msgid "Invalid CSRF Token."
-#~ msgstr ""
-
-#~ msgid "CSRF token missing."
-#~ msgstr ""
-
-#~ msgid "CSRF failed."
-#~ msgstr ""
-
-#~ msgid "CSRF token expired."
-#~ msgstr ""
-
-#~ msgid "Invalid Choice: could not coerce."
-#~ msgstr ""
-
-#~ msgid "Choices cannot be None."
-#~ msgstr ""
-
-#~ msgid "Not a valid choice."
-#~ msgstr ""
-
-#~ msgid "Invalid choice(s): one or more data inputs could not be coerced."
-#~ msgstr ""
-
-#~ msgid "'%(value)s' is not a valid choice for this field."
-#~ msgid_plural "'%(value)s' are not valid choices for this field."
-#~ msgstr[0] ""
-#~ msgstr[1] ""
-
-#~ msgid "Not a valid datetime value."
-#~ msgstr ""
-
-#~ msgid "Not a valid date value."
-#~ msgstr ""
-
-#~ msgid "Not a valid time value."
-#~ msgstr ""
-
-#~ msgid "Not a valid week value."
-#~ msgstr ""
-
-#~ msgid "Not a valid integer value."
-#~ msgstr ""
-
-#~ msgid "Not a valid decimal value."
-#~ msgstr ""
-
-#~ msgid "Not a valid float value."
-#~ msgstr ""
-
+msgid "Save Changes"
+msgstr "Enregistrer les Modifications"

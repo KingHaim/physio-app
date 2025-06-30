@@ -41,7 +41,7 @@
                             </div>
                             
                             <!-- Anamnesis Tabs -->
-                            <ul class="nav nav-tabs" id="anamnesisTabs" role="tablist">
+                            <ul class="nav nav-tabs mb-4" id="anamnesisTabs" role="tablist">
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link active" id="personal-data-tab" data-bs-toggle="tab" data-bs-target="#personal-data" type="button" role="tab">
                                         <i class="bi bi-person"></i> {{ _('Patient Data') }}
@@ -95,16 +95,12 @@
                                             <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label for="contact" class="form-label">{{ _('Primary Contact') }} <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="contact" name="contact" placeholder="{{ _('Phone number or email') }}" required>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
                                             <label for="patient_contact_email" class="form-label">{{ _('Email Address') }}</label>
-                                            <input type="email" class="form-control" id="patient_contact_email" name="patient_contact_email" placeholder="patient@example.com">
+                                            <input type="email" class="form-control" id="patient_contact_email" name="patient_contact_email" placeholder="{{ _('patient@example.com') }}">
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label for="patient_contact_phone" class="form-label">{{ _('Phone Number') }}</label>
-                                            <input type="tel" class="form-control" id="patient_contact_phone" name="patient_contact_phone" placeholder="+34 600 123 456">
+                                            <input type="tel" class="form-control" id="patient_contact_phone" name="patient_contact_phone" placeholder="{{ _('+34 600 123 456') }}">
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label for="status" class="form-label">{{ _('Status') }}</label>
@@ -342,7 +338,7 @@
                                         <div id="surgeries-container">
                                             <div class="surgery-entry row mb-2">
                                                 <div class="col-md-6">
-                                                    <input type="text" class="form-control" name="surgery_description[]" placeholder="Tipo de cirugía">
+                                                    <input type="text" class="form-control" name="surgery_description[]" placeholder="{{ _("Type of surgery") }}">
                                                 </div>
                                                 <div class="col-md-4">
                                                     <input type="date" class="form-control" name="surgery_date[]">
@@ -939,17 +935,17 @@
                             <h5 class="mb-3">{{ _('Patient Portal Access (Optional)') }}</h5>
                             <div class="alert alert-info mb-3">
                                 <i class="bi bi-info-circle"></i> 
-                                <strong>Este paso es completamente opcional.</strong> 
-                                Si no deseas que el paciente tenga acceso al portal, simplemente haz clic en "Crear Paciente" sin rellenar nada.
+                                <strong>{{ _('This step is completely optional.') }}</strong> 
+                                {{ _('If you do not want the patient to have portal access, simply click "Create Patient" without filling anything.') }}
                             </div>
                             <p class="text-muted">{{ _('Enter an email and password if you want the patient to be able to log in and view their exercise prescriptions.') }}</p>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="patient_email" class="form-label">{{ _('Login Email') }} <span class="text-muted">(Opcional)</span></label>
-                                    <input type="email" class="form-control" id="patient_email" name="patient_email" placeholder="patient.login@example.com">
+                                    <label for="patient_email" class="form-label">{{ _('Login Email') }} <span class="text-muted">{{ _('(Optional)') }}</span></label>
+                                    <input type="email" class="form-control" id="patient_email" name="patient_email" placeholder="{{ _('patient@example.com') }}">
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="patient_password" class="form-label">{{ _('Password') }} <span class="text-muted">(Solo si proporcionas email)</span></label>
+                                    <label for="patient_password" class="form-label">{{ _('Password') }} <span class="text-muted">{{ _('(Only if you provide email)') }}</span></label>
                                     <input type="password" class="form-control" id="patient_password" name="patient_password" placeholder="{{ _('Set initial password') }}">
                                     <small class="form-text text-muted">{{ _('Leave blank if login email is not provided.') }}</small>
                                 </div>
@@ -961,7 +957,7 @@
                                 </button>
                                 <div class="d-flex gap-2">
                                     <button type="button" class="btn btn-outline-secondary" onclick="skipPortalAccess()">
-                                        <i class="bi bi-skip-forward"></i> Saltar Portal
+                                        <i class="bi bi-skip-forward"></i> {{ _('Skip Portal') }}
                                     </button>
                                     <button type="submit" class="btn btn-success" onclick="return validatePortalAccess()">
                                         <i class="bi bi-check-circle"></i> {{ _('Create Patient') }}
@@ -1152,7 +1148,7 @@ function addSurgery() {
     newSurgery.className = 'surgery-entry row mb-2';
     newSurgery.innerHTML = 
         '<div class="col-md-6">' +
-            '<input type="text" class="form-control" name="surgery_description[]" placeholder="Tipo de cirugía">' +
+            '<input type="text" class="form-control" name="surgery_description[]" placeholder="{{ _("Type of surgery") }}">' +
         '</div>' +
         '<div class="col-md-4">' +
             '<input type="date" class="form-control" name="surgery_date[]">' +
@@ -1541,7 +1537,7 @@ function addSurgery() {
     newSurgery.className = 'surgery-entry row mb-2';
     newSurgery.innerHTML = 
         '<div class="col-md-6">' +
-            '<input type="text" class="form-control" name="surgery_description[]" placeholder="Tipo de cirugía">' +
+            '<input type="text" class="form-control" name="surgery_description[]" placeholder="{{ _("Type of surgery") }}">' +
         '</div>' +
         '<div class="col-md-4">' +
             '<input type="date" class="form-control" name="surgery_date[]">' +

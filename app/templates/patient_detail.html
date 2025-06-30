@@ -192,6 +192,22 @@
     </div>
     {% endif %}
 
+    <!-- Clinical History Alert -->
+    {% if not patient.anamnesis or not patient.anamnesis.strip() %}
+    <div id="clinical-history-permanent-warning" style="background-color: #fff3cd; border: 2px solid #f39c12; border-radius: 8px; padding: 15px; margin-bottom: 20px; position: relative; z-index: 9999;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="bi bi-exclamation-triangle-fill" style="color: #856404; font-size: 20px;"></i>
+            <div>
+                <div style="color: #856404; font-weight: bold; font-size: 16px;">{{ _('Clinical History Incomplete') }}</div>
+                <div style="color: #856404; margin-top: 5px;">
+                    {{ _('This patient has not completed their clinical history (anamnesis). Please complete it before providing treatment.') }}
+                    <a href="{{ url_for('main.edit_patient', id=patient.id) }}" style="color: #664d03; text-decoration: underline; font-weight: bold;">{{ _('Complete Clinical History') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Patient Header -->
     <div class="row mb-4">
         <div class="col-md-8">
@@ -203,28 +219,52 @@
             </div>
         </div>
         <div class="col-md-4 text-md-end">
-            <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end">
-                <a href="{{ url_for('main.edit_patient', id=patient.id) }}" class="btn btn-primary">
+            <!-- Primary Actions - Most Used -->
+            <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end mb-2">
+                <a href="{{ url_for('main.edit_patient', id=patient.id) }}" class="btn btn-outline-primary btn-sm">
                     <i class="bi bi-pencil"></i> {{ _('Edit Patient') }}
                 </a>
                 <a href="{{ url_for('main.new_treatment_page', patient_id=patient.id) }}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> {{ _('Add Treatment') }}
+                    <i class="bi bi-plus-circle"></i> {{ _('New Appointment') }}
                 </a>
-                <a href="{{ url_for('main.new_recurring_appointment', patient_id=patient.id) }}" class="btn btn-secondary">
-                    <i class="bi bi-calendar-plus"></i> {{ _('Add Recurring') }}
+            </div>
+            
+            <!-- Secondary Actions Dropdown -->
+            <div class="d-flex justify-content-md-end gap-2">
+                <!-- Quick Actions -->
+                <a href="{{ url_for('main.new_recurring_appointment', patient_id=patient.id) }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-calendar-plus"></i> {{ _('Recurring') }}
                 </a>
-                <button id="generateReportBtn" class="btn btn-info">
-                    <i class="bi bi-file-earmark-text"></i> {{ _('Generate AI Report') }}
-                </button>
-                <button id="generateExerciseBtn" class="btn btn-warning">
-                    <i class="bi bi-clipboard-heart"></i> {{ _('Generate Exercise Homework') }}
-                </button>
-                <button id="generateClinicalAnalysisBtn" class="btn btn-outline-primary">
-                    <i class="bi bi-robot"></i> {{ _('AI Clinical Analysis') }}
-                </button>
-                <a href="{{ url_for('main.patient_reports_list', patient_id=patient.id) }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-file-text"></i> {{ _('View Latest Report') }}
-                </a>
+                
+                <!-- AI & Reports Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-robot"></i> {{ _('AI Tools') }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <button class="dropdown-item" id="generateReportBtn">
+                                <i class="bi bi-file-earmark-text text-info"></i> {{ _('Generate AI Report') }}
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item" id="generateExerciseBtn">
+                                <i class="bi bi-clipboard-heart text-warning"></i> {{ _('Generate Exercises') }}
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item" id="generateClinicalAnalysisBtn">
+                                <i class="bi bi-graph-up text-primary"></i> {{ _('Clinical Analysis') }}
+                            </button>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('main.patient_reports_list', patient_id=patient.id) }}">
+                                <i class="bi bi-file-text text-secondary"></i> {{ _('View All Reports') }}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

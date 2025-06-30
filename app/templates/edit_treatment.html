@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Edit Treatment Session{% endblock %}
+{% block title %}{{ _('Edit Treatment Session') }}{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -10,16 +10,16 @@
             <div class="card" data-has-past-treatments="{{ has_past_treatments | tojson }}">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
-                        <i class="bi bi-clipboard-plus"></i> Edit Treatment Session
+                        <i class="bi bi-clipboard-plus"></i> {{ _('Edit Treatment Session') }}
                     </h5>
                     <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-light btn-sm">
-                        <i class="bi bi-arrow-left"></i> Back to Patient
+                        <i class="bi bi-arrow-left"></i> {{ _('Back to Patient') }}
                     </a>
                 </div>
                 <div class="card-body">
                     <div style="background-color: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
-                        <h4><i class="bi bi-info-circle"></i> Editing Treatment for {{ patient.name }}</h4>
-                        <p>You are editing the treatment session from <strong>{{ treatment.created_at.strftime('%Y-%m-%d') }}</strong>.</p>
+                        <h4><i class="bi bi-info-circle"></i> {{ _('Editing Treatment for') }} {{ patient.name }}</h4>
+                        <p>{{ _('You are editing the treatment session from') }} <strong>{{ treatment.created_at.strftime('%Y-%m-%d') }}</strong>.</p>
                     </div>
                     
                     <form action="{{ url_for('main.edit_treatment', id=treatment.id) }}" method="POST" id="editTreatmentForm">
@@ -37,10 +37,10 @@
                         {# Tab Navigation #}
                         <ul class="nav nav-tabs mb-3" id="treatmentTab" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="clinical-tab" data-bs-toggle="tab" data-bs-target="#clinical" type="button" role="tab" aria-controls="clinical" aria-selected="true">Clinical Details</button>
+                                <button class="nav-link active" id="clinical-tab" data-bs-toggle="tab" data-bs-target="#clinical" type="button" role="tab" aria-controls="clinical" aria-selected="true">{{ _('Clinical Details') }}</button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial" type="button" role="tab" aria-controls="financial" aria-selected="false">Financial & Scheduling</button>
+                                <button class="nav-link" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial" type="button" role="tab" aria-controls="financial" aria-selected="false">{{ _('Financial & Scheduling') }}</button>
                             </li>
                         </ul>
 
@@ -51,17 +51,17 @@
                         <div class="row">
                                     <!-- Left Column: Clinical Fields -->
                             <div class="col-md-6">
-                                        <h5 class="mb-3">Clinical Information</h5>
-                                        <div class="mb-3"> <label for="date" class="form-label">Treatment Date</label> <input type="date" class="form-control" id="date" name="date" value="{{ treatment.created_at.strftime('%Y-%m-%d') }}" required> </div>
-                                        <div class="mb-3"> <label for="treatment_type" class="form-label">Treatment Description</label> <input type="text" class="form-control" id="treatment_type" name="treatment_type" value="{{ treatment.description }}" required> </div>
-                                        <div class="mb-3"> <label for="status" class="form-label">Status</label> <select class="form-select" id="status" name="status"> <option value="Scheduled" {% if treatment.status == 'Scheduled' %}selected{% endif %}>Scheduled</option> <option value="In Progress" {% if treatment.status == 'In Progress' %}selected{% endif %}>In Progress</option> <option value="Completed" {% if treatment.status == 'Completed' %}selected{% endif %}>Completed</option> <option value="Cancelled" {% if treatment.status == 'Cancelled' %}selected{% endif %}>Cancelled</option> </select> </div>
-                                        <div class="mb-3"> <label for="pain_level" class="form-label">Pain Level (1-10)</label> <input type="number" class="form-control" id="pain_level" name="pain_level" min="1" max="10" value="{{ treatment.pain_level or '' }}"> </div>
-                                        <div class="mb-3"> <label for="movement_restriction" class="form-label">Movement Restriction</label> <input type="text" class="form-control" id="movement_restriction" name="movement_restriction" value="{{ treatment.movement_restriction or '' }}"> </div>
+                                        <h5 class="mb-3">{{ _('Clinical Information') }}</h5>
+                                        <div class="mb-3"> <label for="date" class="form-label">{{ _('Treatment Date') }}</label> <input type="date" class="form-control" id="date" name="date" value="{{ treatment.created_at.strftime('%Y-%m-%d') }}" required> </div>
+                                        <div class="mb-3"> <label for="treatment_type" class="form-label">{{ _('Treatment Description') }}</label> <input type="text" class="form-control" id="treatment_type" name="treatment_type" value="{{ treatment.description }}" required> </div>
+                                        <div class="mb-3"> <label for="status" class="form-label">{{ _('Status') }}</label> <select class="form-select" id="status" name="status"> <option value="Scheduled" {% if treatment.status == 'Scheduled' %}selected{% endif %}>{{ _('Scheduled') }}</option> <option value="In Progress" {% if treatment.status == 'In Progress' %}selected{% endif %}>{{ _('In Progress') }}</option> <option value="Completed" {% if treatment.status == 'Completed' %}selected{% endif %}>{{ _('Completed') }}</option> <option value="Cancelled" {% if treatment.status == 'Cancelled' %}selected{% endif %}>{{ _('Cancelled') }}</option> </select> </div>
+                                        <div class="mb-3"> <label for="pain_level" class="form-label">{{ _('Pain Level (1-10)') }}</label> <input type="number" class="form-control" id="pain_level" name="pain_level" min="1" max="10" value="{{ treatment.pain_level or '' }}"> </div>
+                                        <div class="mb-3"> <label for="movement_restriction" class="form-label">{{ _('Movement Restriction') }}</label> <input type="text" class="form-control" id="movement_restriction" name="movement_restriction" value="{{ treatment.movement_restriction or '' }}"> </div>
                                 <div class="mb-3">
-                                            <label for="notes" class="form-label mb-0">Progress Notes</label>
+                                            <label for="notes" class="form-label mb-0">{{ _('Progress Notes') }}</label>
                                             <div class="btn-group" role="group" aria-label="Voice note actions">
                                                 <button type="button" id="recordNoteBtn" class="btn btn-sm btn-outline-secondary">
-                                                    <i class="bi bi-mic-fill"></i> Record
+                                                    <i class="bi bi-mic-fill"></i> {{ _('Record') }}
                                                 </button>
                                                 <div class="btn-group" role="group">
                                                     <button id="languageSelectBtn" type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-current-lang="en-GB">
@@ -81,14 +81,14 @@
                                     </div>
                                     <!-- Right Column: Body Chart -->
                                     <div class="col-md-6">
-                                        <h5 class="mb-3">Body Chart & Trigger Points</h5>
+                                        <h5 class="mb-3">{{ _('Body Chart & Trigger Points') }}</h5>
                                         <div class="card mb-3"> <!-- Body Map Card -->
-                                            <div class="card-header"> <div class="d-flex justify-content-between align-items-center"> <h6 class="mb-0">Body Map</h6> <div class="btn-group btn-group-sm" role="group"> <button type="button" class="btn btn-outline-danger active" data-point-type="active">Active</button> <button type="button" class="btn btn-outline-warning" data-point-type="latent">Latent</button> <button type="button" class="btn btn-outline-info" data-point-type="satellite">Satellite</button> </div> </div> </div>
-                                            <div class="card-body"> <div class="body-map-container"> <img src="{{ url_for('static', filename='images/bodychart.svg') }}" class="body-map" id="bodyMapImage" alt="Body chart"> <svg class="body-map-overlay" viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg"><g id="triggerPoints"></g></svg> </div> <div class="text-muted small mt-2">Click on the body map to add trigger points</div> </div>
+                                            <div class="card-header"> <div class="d-flex justify-content-between align-items-center"> <h6 class="mb-0">{{ _('Body Map') }}</h6> <div class="btn-group btn-group-sm" role="group"> <button type="button" class="btn btn-outline-danger active" data-point-type="active">{{ _('Active') }}</button> <button type="button" class="btn btn-outline-warning" data-point-type="latent">{{ _('Latent') }}</button> <button type="button" class="btn btn-outline-info" data-point-type="satellite">{{ _('Satellite') }}</button> </div> </div> </div>
+                                            <div class="card-body"> <div class="body-map-container"> <img src="{{ url_for('static', filename='images/bodychart.svg') }}" class="body-map" id="bodyMapImage" alt="Body chart"> <svg class="body-map-overlay" viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg"><g id="triggerPoints"></g></svg> </div> <div class="text-muted small mt-2">{{ _('Click on the body map to add trigger points') }}</div> </div>
                                         </div>
                                         <div class="card"> <!-- Trigger Points Table Card -->
-                                             <div class="card-header"> <h6 class="mb-0">Trigger Points</h6> </div>
-                                             <div class="card-body"> <div class="table-responsive"> <table class="table table-sm"> <thead><tr><th>Type</th><th>Muscle</th><th>Intensity</th><th>Symptoms</th><th>Referral</th><th></th></tr></thead> <tbody id="pointsTableBody"></tbody> </table> </div> </div>
+                                             <div class="card-header"> <h6 class="mb-0">{{ _('Trigger Points') }}</h6> </div>
+                                             <div class="card-body"> <div class="table-responsive"> <table class="table table-sm"> <thead><tr><th>{{ _('Type') }}</th><th>{{ _('Muscle') }}</th><th>{{ _('Intensity') }}</th><th>{{ _('Symptoms') }}</th><th>{{ _('Referral') }}</th><th></th></tr></thead> <tbody id="pointsTableBody"></tbody> </table> </div> </div>
                                         </div>
                                     </div>
                                     </div>
@@ -96,31 +96,31 @@
                                 
                             {# Financial & Scheduling Tab Pane #}
                             <div class="tab-pane fade" id="financial" role="tabpanel" aria-labelledby="financial-tab">
-                                <h5 class="mb-3">Financial & Scheduling Information</h5>
+                                <h5 class="mb-3">{{ _('Financial & Scheduling Information') }}</h5>
                                 <div class="row">
                                     <div class="col-md-6">
                                         {# --- Location Selection --- #}
-                                        <div class="mb-3"> <label class="form-label">Location</label> <div class="row g-2"> <div class="col"> <div class="location-card card card-body text-center" data-location="{{ current_user.clinic_name }}"> <i class="bi bi-hospital fs-1 mb-2"></i> <div>{{ current_user.clinic_name }}</div> </div> </div> <div class="col"> <div class="location-card card card-body text-center" data-location="Home Visit"> <i class="bi bi-house-door fs-1 mb-2"></i> <div>Home Visit</div> </div> </div> </div> </div>
+                                        <div class="mb-3"> <label class="form-label">{{ _('Location') }}</label> <div class="row g-2"> <div class="col"> <div class="location-card card card-body text-center" data-location="{{ current_user.clinic_name }}"> <i class="bi bi-hospital fs-1 mb-2"></i> <div>{{ current_user.clinic_name }}</div> </div> </div> <div class="col"> <div class="location-card card card-body text-center" data-location="Home Visit"> <i class="bi bi-house-door fs-1 mb-2"></i> <div>{{ _('Home Visit') }}</div> </div> </div> </div> </div>
                                         {# --- Conditional Visit Type/Fee Section --- #}
                                         <div id="costaspineOptions" class="mb-3 border p-3 rounded" style="display: none;">
-                                            <label class="form-label">Visit Type ({{ current_user.clinic_name }})</label>
+                                            <label class="form-label">{{ _('Visit Type') }} ({{ current_user.clinic_name }})</label>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="radio" name="costaspine_visit_type" id="firstVisitRadio" value="Initial" data-fee="{{ current_user.clinic_first_session_fee|default(80.00) }}">
-                                                <label class="form-check-label" for="firstVisitRadio">First Visit (€{{ current_user.clinic_first_session_fee|default(80.00) }})</label>
+                                                <label class="form-check-label" for="firstVisitRadio">{{ _('First Visit') }} (€{{ current_user.clinic_first_session_fee|default(80.00) }})</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="radio" name="costaspine_visit_type" id="followUpRadio" value="Follow-up" data-fee="{{ current_user.clinic_subsequent_session_fee|default(70.00) }}">
-                                                <label class="form-check-label" for="followUpRadio">Follow-up (€{{ current_user.clinic_subsequent_session_fee|default(70.00) }})</label>
+                                                <label class="form-check-label" for="followUpRadio">{{ _('Follow-up') }} (€{{ current_user.clinic_subsequent_session_fee|default(70.00) }})</label>
                                             </div>
                                         </div>
                                         {# --- Fee Charged --- #}
-                                        <div class="mb-3"> <label for="fee_charged" class="form-label">Fee Charged (€)</label> <input type="number" step="0.01" class="form-control" id="fee_charged" name="fee_charged" value="{{ treatment.fee_charged or '' }}" placeholder="Select location first"> </div>
+                                        <div class="mb-3"> <label for="fee_charged" class="form-label">{{ _('Fee Charged (€)') }}</label> <input type="number" step="0.01" class="form-control" id="fee_charged" name="fee_charged" value="{{ treatment.fee_charged or '' }}" placeholder="{{ _('Select location first') }}"> </div>
                                     </div>
                                     <div class="col-md-6">
                                         {# --- Payment Method Selection --- #}
-                                        <div class="mb-3"> <label class="form-label">Payment Method</label> <div class="row g-2"> <div class="col"> <div class="location-card payment-card card card-body text-center" data-payment="Cash"> <i class="bi bi-cash-coin fs-1 mb-2"></i> <div>Cash</div> </div> </div> <div class="col"> <div class="location-card payment-card card card-body text-center" data-payment="Card"> <i class="bi bi-credit-card fs-1 mb-2"></i> <div>Card</div> </div> </div> </div> </div>
+                                        <div class="mb-3"> <label class="form-label">{{ _('Payment Method') }}</label> <div class="row g-2"> <div class="col"> <div class="location-card payment-card card card-body text-center" data-payment="Cash"> <i class="bi bi-cash-coin fs-1 mb-2"></i> <div>{{ _('Cash') }}</div> </div> </div> <div class="col"> <div class="location-card payment-card card card-body text-center" data-payment="Card"> <i class="bi bi-credit-card fs-1 mb-2"></i> <div>{{ _('Card') }}</div> </div> </div> </div> </div>
                                         {# --- Next Appointment --- #}
-                                        <div class="mb-3"> <label for="next_appointment" class="form-label">Next Appointment Date</label> <input type="date" class="form-control" id="next_appointment" name="next_appointment" value="{{ treatment.created_at.strftime('%Y-%m-%d') if treatment.created_at else '' }}"> <div class="form-text">Optional: Leave blank if no follow-up is scheduled yet</div> </div>
+                                        <div class="mb-3"> <label for="next_appointment" class="form-label">{{ _('Next Appointment Date') }}</label> <input type="date" class="form-control" id="next_appointment" name="next_appointment" value="{{ treatment.created_at.strftime('%Y-%m-%d') if treatment.created_at else '' }}"> <div class="form-text">{{ _('Optional: Leave blank if no follow-up is scheduled yet') }}</div> </div>
                                     </div>
                                 </div>
                             </div>
@@ -130,10 +130,10 @@
                         {# Submit Button (outside tabs, inside form) #}
                         <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                             <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-x-circle"></i> Cancel
+                                <i class="bi bi-x-circle"></i> {{ _('Cancel') }}
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> Save Changes
+                                <i class="bi bi-check-circle"></i> {{ _('Save Changes') }}
                             </button>
                         </div>
                     </form>

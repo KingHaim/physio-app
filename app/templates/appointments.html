@@ -147,7 +147,7 @@
                                     {{ appointment.status }}
                                 </span>
                             </td>
-                            <td>{{ appointment.notes|truncate(30) }}</td>
+                            <td>{{ (appointment.notes or '')|truncate(30) }}</td>
                             <td class="text-end">
                                 <div class="btn-group">
                                     <!-- Edit button -->
@@ -186,42 +186,84 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="appointmentForm" method="POST">
-                    {{ csrf_token() }}
+                <form id="appointmentForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
                         <label class="form-label">{{ _('Patient') }}</label>
-                        <select class="form-select" name="patient_id" required>
+                        <select class="form-select" name="patient_id" id="appointmentPatient" required>
                             <option value="">{{ _('Select Patient') }}</option>
+                            <option value="new">{{ _('+ New Patient') }}</option>
                             {% for patient in patients %}
                                 <option value="{{ patient.id }}">{{ patient.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">{{ _('Date & Time') }}</label>
-                        <input type="datetime-local" class="form-control" name="appointment_datetime" required>
+                    
+                    <!-- New Patient Fields (initially hidden) -->
+                    <div id="newPatientFields" style="display: none;">
+                        <div class="card bg-light mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">{{ _('New Patient Information') }}</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ _('Full Name') }} *</label>
+                                        <input type="text" class="form-control" name="patient_name" id="patientName" placeholder="{{ _('Enter patient full name') }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ _('Phone') }} *</label>
+                                        <input type="tel" class="form-control" name="patient_phone" id="patientPhone" placeholder="{{ _('Phone number') }}">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ _('Email') }}</label>
+                                        <input type="email" class="form-control" name="patient_email" id="patientEmail" placeholder="{{ _('Email address (optional)') }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ _('Date of Birth') }}</label>
+                                        <input type="date" class="form-control" name="patient_dob" id="patientDob">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">{{ _('Address') }}</label>
+                                    <textarea class="form-control" name="patient_address" id="patientAddress" rows="2" placeholder="{{ _('Patient address (optional)') }}"></textarea>
+                                </div>
+                                <div class="alert alert-info">
+                                    <small><i class="bi bi-info-circle"></i> {{ _('The clinical history (anamnesis) can be completed during the appointment.') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ _('Date') }}</label>
+                            <input type="date" class="form-control" name="date" id="appointmentDate" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ _('Time') }}</label>
+                            <input type="time" class="form-control" name="time" id="appointmentTime" required>
+                        </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">{{ _('Type') }}</label>
-                        <select class="form-select" name="appointment_type" required>
-                            <option value="Initial Assessment">{{ _('Initial Assessment') }}</option>
-                            <option value="Follow-up">{{ _('Follow-up') }}</option>
-                            <option value="Treatment">{{ _('Treatment') }}</option>
-                            <option value="Review">{{ _('Review') }}</option>
+                        <label class="form-label">{{ _('Treatment Type') }}</label>
+                        <input type="text" class="form-control" name="treatment_type" id="appointmentTreatmentType" placeholder="{{ _('e.g., Initial Assessment, Follow-up') }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Location') }}</label>
+                        <select class="form-select" name="location" id="appointmentLocation">
+                            <option value="{{ current_user.clinic_name }}" selected>{{ current_user.clinic_name }}</option>
+                            <option value="Home Visit">{{ _('Home Visit') }}</option>
+                            <option value="Online">{{ _('Online') }}</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">{{ _('Duration') }}</label>
-                        <select class="form-select" name="duration" required>
-                            <option value="30">{{ _('30 minutes') }}</option>
-                            <option value="45">{{ _('45 minutes') }}</option>
-                            <option value="60">{{ _('1 hour') }}</option>
-                        </select>
+                        <label class="form-label">{{ _('Notes (Optional)') }}</label>
+                        <textarea class="form-control" name="notes" id="appointmentNotes" rows="3"></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">{{ _('Notes') }}</label>
-                        <textarea class="form-control" name="notes" rows="3"></textarea>
-                    </div>
+                    <!-- Hidden field for status, default to Scheduled -->
+                    <input type="hidden" name="status" value="Scheduled">
                 </form>
             </div>
             <div class="modal-footer">
@@ -414,6 +456,114 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.getElementById('filterDates').addEventListener('click', filterAppointments);
+
+    // Handle patient selection change to show/hide new patient fields
+    const patientSelect = document.getElementById('appointmentPatient');
+    const newPatientFields = document.getElementById('newPatientFields');
+    
+    if (patientSelect && newPatientFields) {
+        patientSelect.addEventListener('change', function() {
+            if (this.value === 'new') {
+                newPatientFields.style.display = 'block';
+                // Make new patient fields required
+                document.getElementById('patientName').required = true;
+                document.getElementById('patientPhone').required = true;
+            } else {
+                newPatientFields.style.display = 'none';
+                // Remove required from new patient fields
+                document.getElementById('patientName').required = false;
+                document.getElementById('patientPhone').required = false;
+            }
+        });
+    }
+
+    // Handle New Appointment Form Submission
+    const appointmentForm = document.getElementById('appointmentForm');
+    if (appointmentForm) {
+        appointmentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(appointmentForm);
+            const patientId = formData.get('patient_id');
+            
+            // Combine date and time for the 'date' field expected by add_treatment
+            const dateValue = formData.get('date');
+            const timeValue = formData.get('time');
+            formData.set('date', `${dateValue}T${timeValue}`); // Format as YYYY-MM-DDTHH:MM
+            formData.delete('time'); // Remove original time field as it's combined
+
+            if (patientId === 'new') {
+                // Create new patient first, then create appointment
+                const patientData = {
+                    name: formData.get('patient_name'),
+                    phone: formData.get('patient_phone'),
+                    email: formData.get('patient_email') || '',
+                    date_of_birth: formData.get('patient_dob') || '',
+                    address: formData.get('patient_address') || '',
+                    anamnesis: '' // Empty anamnesis for new patients
+                };
+
+                // Validate required fields
+                if (!patientData.name || !patientData.phone) {
+                    alert('Please fill in all required patient information (Name and Phone).');
+                    return;
+                }
+
+                // First create the patient
+                const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+                fetch('/api/patient/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify(patientData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Patient created successfully, now create appointment
+                        formData.set('patient_id', data.patient_id);
+                        return createAppointment(formData, data.patient_id);
+                    } else {
+                        throw new Error(data.message || 'Failed to create patient');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error creating patient: ' + error.message);
+                });
+            } else {
+                // Use existing patient
+                createAppointment(formData, patientId);
+            }
+        });
+    }
+
+    function createAppointment(formData, patientId) {
+        fetch(`/patient/${patientId}/treatment`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal and refresh page
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newAppointmentModal'));
+                modal.hide();
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.message || 'Failed to create appointment'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while creating the appointment.');
+        });
+    }
 
     // Handle mark as completed buttons
     document.querySelectorAll('.mark-completed-btn').forEach(button => {

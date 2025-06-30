@@ -625,11 +625,9 @@ body {
                 <a href="{{ url_for('auth.login') }}" class="btn btn-nav btn-nav-outline">
                     Sign In
                 </a>
-                {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('main.index') }}" class="btn btn-nav btn-nav-primary">Dashboard</a>
-                {% else %}
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-nav btn-nav-primary">Try Free</a>
-                {% endif %}
+                {% if current_user.is_authenticated %}<a href="{{ url_for('main.index') }}" class="btn btn-nav btn-nav-primary">Dashboard{% else %}<a href="{{ url_for('auth.register') }}" class="btn btn-nav btn-nav-primary">
+                    Try Free
+                </a>
             </div>
         </div>
     </div>

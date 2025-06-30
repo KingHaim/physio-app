@@ -1,0 +1,1179 @@
+{% extends "base_auth.html" %}
+
+{% block title %}TRXCKER - The All-in-One CRM for Modern Physiotherapists{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+:root {
+    --primary-color: #3b82f6;
+    --primary-dark: #2563eb;
+    --primary-light: #60a5fa;
+    --accent-color: #f59e0b;
+    --success-color: #10b981;
+    --text-dark: #1f2937;
+    --text-light: #6b7280;
+    --bg-light: #f9fafb;
+    --bg-section: #ffffff;
+    --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    --gradient-secondary: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: var(--text-dark);
+    overflow-x: hidden;
+}
+
+/* Navigation */
+.navbar-custom {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    padding: 1rem 0;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.navbar-brand {
+    font-weight: 800;
+    font-size: 1.8rem;
+    color: var(--primary-color) !important;
+    text-decoration: none;
+}
+
+.nav-link {
+    font-weight: 600;
+    color: var(--text-dark) !important;
+    margin: 0 0.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-link:hover {
+    color: var(--primary-color) !important;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--primary-color);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}
+
+.btn-nav {
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-nav-outline {
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    background: transparent;
+}
+
+.btn-nav-outline:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
+}
+
+.btn-nav-primary {
+    background: var(--primary-color);
+    color: white;
+    border: 2px solid var(--primary-color);
+}
+
+.btn-nav-primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
+}
+
+/* Hero Section */
+.hero {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    padding: 8rem 0 6rem;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:rgba(255,255,255,0.1)"/><stop offset="100%" style="stop-color:rgba(255,255,255,0.05)"/></linearGradient></defs><circle cx="900" cy="150" r="200" fill="url(%23grad)"/><circle cx="1100" cy="400" r="150" fill="url(%23grad)"/><circle cx="800" cy="600" r="100" fill="url(%23grad)"/></svg>') no-repeat center;
+    background-size: cover;
+    opacity: 0.3;
+    z-index: 0;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    color: white;
+}
+
+.hero h1 {
+    font-size: 4rem;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(45deg, #ffffff, #e0e7ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero .lead {
+    font-size: 1.4rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 2.5rem;
+    font-weight: 400;
+    max-width: 600px;
+}
+
+.hero-cta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 3rem;
+}
+
+.btn-hero {
+    padding: 1.2rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-hero-primary {
+    background: var(--accent-color);
+    color: white;
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4);
+}
+
+.btn-hero-primary:hover {
+    background: #d97706;
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(245, 158, 11, 0.5);
+    color: white;
+}
+
+.btn-hero-outline {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.btn-hero-outline:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    transform: translateY(-3px);
+}
+
+.hero-mockup {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+}
+
+.mockup-container {
+    position: relative;
+    display: inline-block;
+    margin-top: 2rem;
+}
+
+.mockup-screen {
+    width: 300px;
+    height: 200px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    margin: 0 auto;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.5s ease;
+}
+
+.mockup-content {
+    padding: 1rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: var(--text-dark);
+}
+
+.mockup-content h4 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.mockup-content p {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+/* Features Section */
+.features {
+    padding: 6rem 0;
+    background: var(--bg-light);
+}
+
+.section-title {
+    text-align: center;
+    margin-bottom: 4rem;
+}
+
+.section-title h2 {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+}
+
+.section-title p {
+    font-size: 1.2rem;
+    color: var(--text-light);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.feature-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem;
+    color: white;
+}
+
+.feature-card h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+}
+
+.feature-card p {
+    color: var(--text-light);
+    line-height: 1.6;
+}
+
+/* Demo Section */
+.demo {
+    padding: 6rem 0;
+    background: white;
+}
+
+.demo-container {
+    background: var(--bg-light);
+    border-radius: 20px;
+    padding: 3rem;
+    text-align: center;
+}
+
+.demo-video {
+    width: 100%;
+    max-width: 800px;
+    height: 450px;
+    background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    margin: 2rem auto;
+    position: relative;
+    overflow: hidden;
+}
+
+.demo-video::before {
+    content: '▶';
+    font-size: 3rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.8;
+}
+
+/* Target Audience */
+.audience {
+    padding: 6rem 0;
+    background: var(--bg-light);
+}
+
+.audience-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.audience-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.audience-icon {
+    font-size: 3rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.audience-card h4 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.audience-card p {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.logos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-top: 3rem;
+}
+
+.logo-item {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+    color: var(--text-dark);
+    transition: all 0.3s ease;
+}
+
+.logo-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Pricing Section */
+.pricing {
+    padding: 6rem 0;
+    background: white;
+}
+
+.pricing-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.pricing-card.featured {
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+.pricing-card.featured::before {
+    content: 'Most Popular';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--primary-color);
+    color: white;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.pricing-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.pricing-card.featured:hover {
+    transform: scale(1.05) translateY(-10px);
+}
+
+.pricing-header {
+    margin-bottom: 2rem;
+}
+
+.pricing-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.pricing-price {
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.pricing-period {
+    color: var(--text-light);
+    font-size: 1rem;
+}
+
+.pricing-features {
+    list-style: none;
+    margin: 2rem 0;
+    text-align: left;
+}
+
+.pricing-features li {
+    padding: 0.5rem 0;
+    color: var(--text-dark);
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.pricing-features li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--success-color);
+    font-weight: bold;
+}
+
+.btn-pricing {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 50px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-pricing-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-pricing-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
+}
+
+.btn-pricing-outline {
+    background: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+}
+
+.btn-pricing-outline:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Testimonials */
+.testimonials {
+    padding: 6rem 0;
+    background: var(--bg-light);
+}
+
+.testimonial-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.testimonial-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.testimonial-text {
+    font-style: italic;
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.testimonial-author {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.testimonial-location {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+/* CTA Section */
+.cta-section {
+    padding: 6rem 0;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    text-align: center;
+}
+
+.cta-section h2 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+}
+
+.cta-section p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.btn-cta {
+    padding: 1.2rem 3rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-radius: 50px;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-cta:hover {
+    background: #d97706;
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(245, 158, 11, 0.5);
+    color: white;
+}
+
+/* Sticky Bottom Bar */
+.sticky-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 1rem;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .sticky-bottom {
+        display: block;
+    }
+    
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+    
+    .hero .lead {
+        font-size: 1.1rem;
+    }
+    
+    .section-title h2 {
+        font-size: 2rem;
+    }
+    
+    .hero-cta {
+        flex-direction: column;
+    }
+    
+    .btn-hero {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Utility Classes */
+.text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.bg-gradient {
+    background: var(--gradient-primary);
+}
+
+.shadow-lg {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+    <div class="container">
+        <a class="navbar-brand fw-bold text-primary fs-4" href="{{ url_for('main.root') }}">
+            TRXCKER
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#features">Features</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#pricing">Pricing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#demo">Demo</a>
+                </li>
+            </ul>
+            
+            <div class="d-flex gap-2">
+                <a href="#loginModal" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#loginModal">
+                    Sign In
+                </a>
+                <a href="#registerModal" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerModal">
+                    Start Free Trial
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero bg-primary text-white py-5" style="margin-top: 76px;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    💪 The All-in-One CRM for Modern Physiotherapists
+                </h1>
+                <p class="lead mb-4">
+                    Streamline your practice. Empower your patients. Supercharge your income.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="#registerModal" class="btn btn-warning btn-lg" data-bs-toggle="modal" data-bs-target="#registerModal">
+                        👉 Start Free Trial
+                    </a>
+                    <a href="#demo" class="btn btn-outline-light btn-lg">
+                        📄 Book a Demo
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="bg-white rounded p-4 shadow">
+                    <h4>AI-Generated Report</h4>
+                    <p>Professional physiotherapy reports in seconds</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5 bg-light" id="features">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">Why TRXCKER?</h2>
+            <p class="lead">Show instant value. Speak benefits, not features.</p>
+                </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="card h-100 border-0 shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                            🧠
+            </div>
+                        <h3 class="h5 fw-bold">AI-Powered Reports</h3>
+                        <p class="text-muted">Instantly generate clear, professional reports based on your patient's treatment history, pain levels, and progress—ready to share or print in just a few clicks.</p>
+                </div>
+            </div>
+                </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="card h-100 border-0 shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                            📅
+            </div>
+                        <h3 class="h5 fw-bold">Smart Scheduling</h3>
+                        <p class="text-muted">From home visits to clinics, manage your calendar like a boss—with Calendly integration.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="card h-100 border-0 shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                            💸
+                        </div>
+                        <h3 class="h5 fw-bold">Financial Freedom</h3>
+                        <p class="text-muted">Track revenue, expenses, taxes. Bye spreadsheets, hello peace of mind.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="card h-100 border-0 shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                            🔐
+                        </div>
+                        <h3 class="h5 fw-bold">GDPR-Ready + Secure</h3>
+                        <p class="text-muted">AES-level encryption. Role-based access. Your data, locked and loaded.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Demo Section -->
+<section class="py-5" id="demo">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">📷 Quick Demo</h2>
+            <p class="lead">Visually prove the app's badassery.</p>
+        </div>
+        
+        <div class="bg-light rounded-3 p-5 text-center">
+            <div class="bg-primary text-white rounded-3 p-5 mx-auto" style="max-width: 800px;">
+                <h4 class="mb-3">Interactive Demo Coming Soon</h4>
+                <p class="mb-0">Patient profile creation • Treatment log with trigger point chart • AI-generated exercise recommendation • Stripe billing interface</p>
+                    </div>
+                </div>
+            </div>
+</section>
+
+<!-- Target Audience Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">💼 Who's it for?</h2>
+            <p class="lead">Niche down. Make the right physios feel seen.</p>
+                    </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="card border-0 shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="text-primary mb-3" style="font-size: 3rem;">✅</div>
+                        <h4 class="fw-bold">Independent Physios</h4>
+                        <p class="text-muted">Perfect for solo practitioners managing their own practice</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="card border-0 shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="text-primary mb-3" style="font-size: 3rem;">✅</div>
+                        <h4 class="fw-bold">Boutique Clinics</h4>
+                        <p class="text-muted">Ideal for small to medium-sized physiotherapy clinics</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="card border-0 shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="text-primary mb-3" style="font-size: 3rem;">✅</div>
+                        <h4 class="fw-bold">Sports Rehab Centers</h4>
+                        <p class="text-muted">Specialized for sports rehabilitation and performance centers</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="card border-0 shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="text-primary mb-3" style="font-size: 3rem;">✅</div>
+                        <h4 class="fw-bold">Mobile/Home Visit Specialists</h4>
+                        <p class="text-muted">Optimized for physiotherapists who provide home visits</p>
+                    </div>
+                </div>
+                </div>
+            </div>
+            
+        <div class="text-center mt-5">
+            <div class="d-flex justify-content-center gap-4 flex-wrap">
+                <div class="bg-white px-4 py-2 rounded shadow-sm">🇪🇸 Spanish Autónomo</div>
+                <div class="bg-white px-4 py-2 rounded shadow-sm">💳 Stripe</div>
+                <div class="bg-white px-4 py-2 rounded shadow-sm">📅 Calendly</div>
+                <div class="bg-white px-4 py-2 rounded shadow-sm">🤖 AI Reports</div>
+                    </div>
+                </div>
+            </div>
+</section>
+
+<!-- Pricing Section -->
+<section class="py-5" id="pricing">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">💸 Pricing Plans</h2>
+            <p class="lead">Keep it simple and freemium.</p>
+        </div>
+        
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-4 col-md-6">
+                <div class="card border-0 shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <h3 class="h4 fw-bold">👶 Starter</h3>
+                        <div class="display-4 fw-bold text-primary mb-2">Free</div>
+                        <p class="text-muted mb-4">Forever</p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li class="mb-2">✓ Up to 10 patients</li>
+                            <li class="mb-2">✓ Basic patient management</li>
+                            <li class="mb-2">✓ Treatment tracking</li>
+                            <li class="mb-2">✓ Basic reporting</li>
+                        </ul>
+                        <a href="#registerModal" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#registerModal">Start Free</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="card border-primary border-2 shadow h-100" style="transform: scale(1.05);">
+                    <div class="card-body text-center p-4">
+                        <div class="badge bg-primary mb-2">Most Popular</div>
+                        <h3 class="h4 fw-bold">🏋️ Pro</h3>
+                        <div class="display-4 fw-bold text-primary mb-2">€29</div>
+                        <p class="text-muted mb-4">per month</p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li class="mb-2">✓ Unlimited patients</li>
+                            <li class="mb-2">✓ AI reports</li>
+                            <li class="mb-2">✓ Billing tools</li>
+                            <li class="mb-2">✓ Calendly integration</li>
+                            <li class="mb-2">✓ Financial analytics</li>
+                            <li class="mb-2">✓ Priority support</li>
+                        </ul>
+                        <a href="#registerModal" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#registerModal">Start Free Trial</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="card border-0 shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <h3 class="h4 fw-bold">🏢 Clinic</h3>
+                        <div class="display-4 fw-bold text-primary mb-2">Custom</div>
+                        <p class="text-muted mb-4">Contact us</p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li class="mb-2">✓ Multi-user access</li>
+                            <li class="mb-2">✓ Admin dashboard</li>
+                            <li class="mb-2">✓ Custom integrations</li>
+                            <li class="mb-2">✓ Dedicated support</li>
+                            <li class="mb-2">✓ Custom features</li>
+                            <li class="mb-2">✓ SLA guarantee</li>
+                        </ul>
+                        <a href="#contact" class="btn btn-outline-primary w-100">Contact Sales</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">👏 Testimonials</h2>
+            <p class="lead">Keep them real, keep them short.</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card border-0 shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="text-muted mb-3" style="font-style: italic;">
+                            "TRXCKER saves me hours every week. My patients love the reports."
+                        </div>
+                        <div class="fw-bold text-primary">— Laura, Sports Physio</div>
+                        <div class="text-muted small">Málaga, Spain</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card border-0 shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="text-muted mb-3" style="font-style: italic;">
+                            "The AI reports are incredible. My patients are impressed with the professionalism."
+                        </div>
+                        <div class="fw-bold text-primary">— Carlos, Independent Physio</div>
+                        <div class="text-muted small">Madrid, Spain</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card border-0 shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="text-muted mb-3" style="font-style: italic;">
+                            "Finally, a system that understands Spanish autónomo requirements!"
+                        </div>
+                        <div class="fw-bold text-primary">— Ana, Clinic Owner</div>
+                        <div class="text-muted small">Barcelona, Spain</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white text-center">
+    <div class="container">
+        <h2 class="display-5 fw-bold mb-3">📞 Last Call + FOMO</h2>
+        <p class="lead mb-4">Still stuck on spreadsheets?</p>
+        <p class="mb-4">Let TRXCKER do the heavy lifting while you focus on healing.</p>
+        <a href="#registerModal" class="btn btn-warning btn-lg" data-bs-toggle="modal" data-bs-target="#registerModal">
+            🚀 Start your free trial now — no credit card required
+        </a>
+    </div>
+</section>
+
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="loginModalLabel">Welcome Back</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('auth.login') }}">
+                    {{ login_form.hidden_tag() }}
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        {{ login_form.email(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        {{ login_form.password(class="form-control") }}
+                    </div>
+                    <div class="mb-3 form-check">
+                        {{ login_form.remember_me(class="form-check-input") }}
+                        <label class="form-check-label" for="remember_me">Remember me</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                </form>
+                <div class="text-center mt-3">
+                    <small class="text-muted">Don't have an account? 
+                        <a href="#registerModal" data-bs-toggle="modal" data-bs-dismiss="modal">Sign up here</a>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Register Modal -->
+<div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="registerModalLabel">Start Your Free Trial</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3">🎉 What you'll get:</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">✓ 14-day free trial</li>
+                            <li class="mb-2">✓ Up to 10 patients</li>
+                            <li class="mb-2">✓ AI-powered reports</li>
+                            <li class="mb-2">✓ Calendly integration</li>
+                            <li class="mb-2">✓ No credit card required</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <form method="POST" action="{{ url_for('auth.register') }}">
+                            {{ register_form.hidden_tag() }}
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                {{ register_form.email(class="form-control") }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                {{ register_form.password(class="form-control") }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">Confirm Password</label>
+                                {{ register_form.confirm_password(class="form-control") }}
+                            </div>
+                            <div class="mb-3 form-check">
+                                {{ register_form.consent_checkbox(class="form-check-input") }}
+                                <label class="form-check-label" for="consent_checkbox">
+                                    I agree to the <a href="/privacy-policy" target="_blank">Privacy Policy</a> and <a href="/terms" target="_blank">Terms & Conditions</a>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Start Free Trial</button>
+                        </form>
+                        <div class="text-center mt-3">
+                            <small class="text-muted">Already have an account? 
+                                <a href="#loginModal" data-bs-toggle="modal" data-bs-dismiss="modal">Sign in here</a>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Bottom Bar for Mobile -->
+<div class="d-md-none position-fixed bottom-0 start-0 end-0 bg-white border-top p-3" style="z-index: 1000;">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong class="small">🎯 Need help choosing a plan?</strong>
+        </div>
+        <a href="#contact" class="btn btn-sm btn-primary">
+            💬 Live Chat
+        </a>
+    </div>
+</div>
+
+<script>
+// Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+        if (target && !this.getAttribute('href').includes('Modal')) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Navbar scroll effect
+window.addEventListener('scroll', function() {
+    const navbar = document.querySelector('.navbar');
+        if (window.scrollY > 50) {
+        navbar.classList.add('shadow');
+        } else {
+        navbar.classList.remove('shadow');
+    }
+});
+
+// Auto-focus on first input in modals
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('shown.bs.modal', function() {
+        const firstInput = this.querySelector('input');
+        if (firstInput) {
+            firstInput.focus();
+        }
+    });
+});
+</script>
+{% endblock %}
