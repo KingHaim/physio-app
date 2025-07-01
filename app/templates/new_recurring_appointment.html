@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Add Recurring Appointment - {{ patient.name }}{% endblock %}
+{% block title %}{{ _('Add Recurring Appointment') }} - {{ patient.name }}{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -8,108 +8,99 @@
         <div class="col-md-8">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-calendar-plus"></i> Add Recurring Appointment Rule</h5>
+                    <h5 class="mb-0"><i class="bi bi-calendar-plus"></i> {{ _('Add Recurring Appointment Rule') }}</h5>
                     <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-light btn-sm">
-                        <i class="bi bi-arrow-left"></i> Back to Patient
+                        <i class="bi bi-arrow-left"></i> {{ _('Back to Patient') }}
                     </a>
                 </div>
                 <div class="card-body">
-                    <h6 class="card-subtitle mb-3 text-muted">For patient: {{ patient.name }}</h6>
+                    <h6 class="card-subtitle mb-3 text-muted">{{ _('For patient:') }} {{ patient.name }}</h6>
                     
                     <form action="{{ url_for('main.new_recurring_appointment', patient_id=patient.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                <label for="start_date" class="form-label">{{ _('Start Date') }} <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" id="start_date" name="start_date" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="end_date" class="form-label">End Date (Optional)</label>
+                                <label for="end_date" class="form-label">{{ _('End Date') }} ({{ _('Optional') }})</label>
                                 <input type="date" class="form-control" id="end_date" name="end_date">
-                                <small class="form-text text-muted">Leave blank for indefinite recurrence.</small>
+                                <small class="form-text text-muted">{{ _('Leave blank for indefinite recurrence.') }}</small>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="recurrence_type" class="form-label">Recurrence Type <span class="text-danger">*</span></label>
+                                <label for="recurrence_type" class="form-label">{{ _('Recurrence Type') }} <span class="text-danger">*</span></label>
                                 <select class="form-select" id="recurrence_type" name="recurrence_type" required>
-                                    <option value="" disabled selected>Select frequency...</option>
-                                    <option value="daily-mon-fri">Daily (Mon-Fri)</option>
-                                    <option value="weekly">Weekly</option>
+                                    <option value="" disabled selected>{{ _('Select frequency...') }}</option>
+                                    <option value="daily-mon-fri">{{ _('Daily (Mon-Fri)') }}</option>
+                                    <option value="weekly">{{ _('Weekly') }}</option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="time_of_day" class="form-label">Time of Day <span class="text-danger">*</span></label>
+                                <label for="time_of_day" class="form-label">{{ _('Time of Day') }} <span class="text-danger">*</span></label>
                                 <input type="time" class="form-control" id="time_of_day" name="time_of_day" required>
                             </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="treatment_type" class="form-label">Default Treatment Type <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="treatment_type" name="treatment_type" value="Standard Session" required>
+                            <label for="treatment_type" class="form-label">{{ _('Default Treatment Type') }} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="treatment_type" name="treatment_type" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label">{{ _('Location') }}</label>
+                                <input type="text" class="form-control" id="location" name="location">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="fee_charged" class="form-label">{{ _('Fee') }} (€)</label>
+                                <input type="number" step="0.01" class="form-control" id="fee_charged" name="fee_charged">
+                            </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="notes" class="form-label">Default Notes (Optional)</label>
+                            <label for="notes" class="form-label">{{ _('Notes') }}</label>
                             <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
                         </div>
 
-                        {# --- Location Selection --- #}
-                        <div class="mb-3">
-                            <label class="form-label">Default Location (Optional)</label>
-                            <div class="row g-2">
-                                <div class="col">
-                                    <div class="location-card card card-body text-center" data-location="{{ current_user.clinic_name }}"> <i class="bi bi-hospital fs-1 mb-2"></i> <div>{{ current_user.clinic_name }}</div> </div>
-                                </div>
-                                <div class="col">
-                                    <div class="location-card card card-body text-center" data-location="Home Visit"> <i class="bi bi-house-door fs-1 mb-2"></i> <div>Home Visit</div> </div>
-                                </div>
-                            </div>
-                            <input type="hidden" id="location" name="location" value=""> {# Hidden input for location #}
-                        </div>
-                        
-                        {# --- Payment Method Selection --- #}
-                        <div class="mb-3">
-                             <label class="form-label">Default Payment Method (Optional)</label>
-                             <div class="row g-2">
-                                 <div class="col"> <div class="location-card payment-card card card-body text-center" data-payment="Cash"> <i class="bi bi-cash-coin fs-1 mb-2"></i> <div>Cash</div> </div> </div>
-                                 <div class="col"> <div class="location-card payment-card card card-body text-center" data-payment="Card"> <i class="bi bi-credit-card fs-1 mb-2"></i> <div>Card</div> </div> </div>
-                             </div>
-                             <input type="hidden" id="payment_method" name="payment_method" value=""> {# Hidden input for payment #}
-                        </div>
-
-                        {# --- Provider and Fee --- #}
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="provider" class="form-label">Default Provider (Optional)</label>
+                                <label for="provider" class="form-label">{{ _('Provider') }}</label>
                                 <input type="text" class="form-control" id="provider" name="provider">
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="fee_charged" class="form-label">Default Fee (€) (Optional)</label>
-                                <input type="number" step="0.01" class="form-control" id="fee_charged" name="fee_charged" placeholder="e.g., 70.00">
-                           </div>
+                                <label for="payment_method" class="form-label">{{ _('Payment Method') }}</label>
+                                <select class="form-select" id="payment_method" name="payment_method">
+                                    <option value="">{{ _('Select payment method...') }}</option>
+                                    <option value="cash">{{ _('Cash') }}</option>
+                                    <option value="card">{{ _('Card') }}</option>
+                                    <option value="transfer">{{ _('Bank Transfer') }}</option>
+                                </select>
+                            </div>
                         </div>
-                        
-                        {# --- Active Switch --- #}
+
                         <div class="row align-items-end">
-                             <div class="col-md-6 mb-3">
+                            <div class="col-md-6 mb-3">
                                 {# Placeholder if needed #}
-                             </div>
+                            </div>
                             <div class="col-md-6 mb-3">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
-                                    <label class="form-check-label" for="is_active">Active Rule</label>
-                                     <small class="form-text text-muted d-block">Uncheck to pause generating appointments from this rule.</small>
+                                    <label class="form-check-label" for="is_active">{{ _('Active Rule') }}</label>
+                                    <small class="form-text text-muted d-block">{{ _('Uncheck to pause generating appointments from this rule.') }}</small>
                                 </div>
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                             <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-x-circle"></i> Cancel
+                                <i class="bi bi-x-circle"></i> {{ _('Cancel') }}
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> Create Recurring Rule
+                                <i class="bi bi-check-circle"></i> {{ _('Create Recurring Rule') }}
                             </button>
                         </div>
                     </form>
@@ -122,38 +113,6 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // --- Location Selection Logic ---
-    const locationCards = document.querySelectorAll('.location-card[data-location]');
-    const hiddenLocationInput = document.getElementById('location');
-
-    locationCards.forEach(card => {
-        card.addEventListener('click', function() {
-            // Deselect all location cards first
-            locationCards.forEach(c => c.classList.remove('selected'));
-            // Select the clicked card
-            this.classList.add('selected');
-            // Update the hidden input value
-            hiddenLocationInput.value = this.dataset.location;
-            console.log('Location Selected:', hiddenLocationInput.value);
-        });
-    });
-
-    // --- Payment Method Selection Logic ---
-    const paymentCards = document.querySelectorAll('.payment-card[data-payment]'); 
-    const hiddenPaymentInput = document.getElementById('payment_method');
-
-    paymentCards.forEach(card => {
-        card.addEventListener('click', function() {
-            // Deselect all payment cards first
-            paymentCards.forEach(c => c.classList.remove('selected'));
-            // Select the clicked card
-            this.classList.add('selected');
-            // Update the hidden input value
-            hiddenPaymentInput.value = this.dataset.payment;
-            console.log('Payment Method Selected:', hiddenPaymentInput.value);
-        });
-    });
-});
+// Add any needed JavaScript here
 </script>
 {% endblock %} 

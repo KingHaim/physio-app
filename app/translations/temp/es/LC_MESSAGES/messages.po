@@ -1,0 +1,100 @@
+# Spanish translations for PROJECT.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-03-19 12:00+0100\n"
+"PO-Revision-Date: 2024-03-19 12:00+0100\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.12.1\n"
+
+msgid "Add Recurring Appointment"
+msgstr "Agregar Cita Recurrente"
+
+msgid "Add Recurring Appointment Rule"
+msgstr "Agregar Regla de Cita Recurrente"
+
+msgid "Back to Patient"
+msgstr "Volver al Paciente"
+
+msgid "For patient:"
+msgstr "Para paciente:"
+
+msgid "Start Date"
+msgstr "Fecha de Inicio"
+
+msgid "End Date"
+msgstr "Fecha de Fin"
+
+msgid "Optional"
+msgstr "Opcional"
+
+msgid "Leave blank for indefinite recurrence."
+msgstr "Dejar en blanco para recurrencia indefinida."
+
+msgid "Recurrence Type"
+msgstr "Tipo de Recurrencia"
+
+msgid "Select frequency..."
+msgstr "Seleccionar frecuencia..."
+
+msgid "Daily (Mon-Fri)"
+msgstr "Diario (Lun-Vie)"
+
+msgid "Weekly"
+msgstr "Semanal"
+
+msgid "Time of Day"
+msgstr "Hora del Día"
+
+msgid "Default Treatment Type"
+msgstr "Tipo de Tratamiento Predeterminado"
+
+msgid "Location"
+msgstr "Ubicación"
+
+msgid "Fee"
+msgstr "Tarifa"
+
+msgid "Notes"
+msgstr "Notas"
+
+msgid "Provider"
+msgstr "Proveedor"
+
+msgid "Payment Method"
+msgstr "Método de Pago"
+
+msgid "Select payment method..."
+msgstr "Seleccionar método de pago..."
+
+msgid "Cash"
+msgstr "Efectivo"
+
+msgid "Card"
+msgstr "Tarjeta"
+
+msgid "Bank Transfer"
+msgstr "Transferencia Bancaria"
+
+msgid "Active Rule"
+msgstr "Regla Activa"
+
+msgid "Uncheck to pause generating appointments from this rule."
+msgstr "Desmarcar para pausar la generación de citas de esta regla."
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Create Recurring Rule"
+msgstr "Crear Regla Recurrente" 

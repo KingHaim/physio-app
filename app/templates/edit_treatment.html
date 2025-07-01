@@ -59,7 +59,10 @@
                                         <div class="mb-3"> <label for="movement_restriction" class="form-label">{{ _('Movement Restriction') }}</label> <input type="text" class="form-control" id="movement_restriction" name="movement_restriction" value="{{ treatment.movement_restriction or '' }}"> </div>
                                 <div class="mb-3">
                                             <label for="notes" class="form-label mb-0">{{ _('Progress Notes') }}</label>
-                                            <div class="btn-group" role="group" aria-label="Voice note actions">
+                                            <div class="btn-group" role="group" aria-label="Note actions">
+                                                <button type="button" id="generateNotesBtn" class="btn btn-sm btn-outline-primary" data-patient-id="{{ patient.id }}">
+                                                    <i class="bi bi-file-text"></i> {{ _('Generate from Anamnesis') }}
+                                                </button>
                                                 <button type="button" id="recordNoteBtn" class="btn btn-sm btn-outline-secondary">
                                                     <i class="bi bi-mic-fill"></i> {{ _('Record') }}
                                                 </button>
@@ -596,6 +599,123 @@
         // ... (rest of trigger point code) ...
 
         updateFormData(); // Initialize hidden field for trigger points
+
+        // Handle generate notes button click
+        document.getElementById('generateNotesBtn').addEventListener('click', function() {
+            const patientId = this.dataset.patientId;
+            const notesTextarea = document.getElementById('notes');
+            const generateBtn = this;
+            
+            // Disable button and show loading state
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> {{ _("Generating...") }}';
+            
+            // Call API to generate notes
+            fetch(`/api/patient/${patientId}/generate-clinical-analysis`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Format suggestions into readable text
+                    let notesText = '';
+                    
+                    if (data.suggestions.clinical_notes && data.suggestions.clinical_notes.length > 0) {
+                        notesText += '{{ _("Clinical Notes:") }}\n';
+                        data.suggestions.clinical_notes.forEach(note => {
+                            notesText += `• ${note}\n`;
+                        });
+                        notesText += '\n';
+                    }
+                    
+                    if (data.suggestions.tests && data.suggestions.tests.length > 0) {
+                        notesText += '{{ _("Recommended Tests:") }}\n';
+                        data.suggestions.tests.forEach(test => {
+                            notesText += `• ${test}\n`;
+                        });
+                        notesText += '\n';
+                    }
+                    
+                    if (data.suggestions.red_flags && data.suggestions.red_flags.length > 0) {
+                        notesText += '{{ _("Red Flags to Monitor:") }}\n';
+                        data.suggestions.red_flags.forEach(flag => {
+                            notesText += `• ${flag}\n`;
+                        });
+                        notesText += '\n';
+                    }
+                    
+                    if (data.suggestions.yellow_flags && data.suggestions.yellow_flags.length > 0) {
+                        notesText += '{{ _("Psychosocial Considerations:") }}\n';
+                        data.suggestions.yellow_flags.forEach(flag => {
+                            notesText += `• ${flag}\n`;
+                        });
+                    }
+                    
+                    // Add the generated notes to the textarea
+                    notesTextarea.value = notesTextarea.value 
+                        ? notesTextarea.value + '\n\n' + notesText 
+                        : notesText;
+                        
+                    // Show success message
+                    showToast('{{ _("Success") }}', '{{ _("Clinical notes generated successfully") }}', 'success');
+                } else {
+                    // Show error message
+                    showToast('{{ _("Error") }}', data.error || '{{ _("Failed to generate clinical notes") }}', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('{{ _("Error") }}', '{{ _("Failed to generate clinical notes") }}', 'error');
+            })
+            .finally(() => {
+                // Reset button state
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="bi bi-file-text"></i> {{ _("Generate from Anamnesis") }}';
+            });
+        });
+
+        // Function to show toast notifications
+        function showToast(title, message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <strong>${title}</strong><br>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            // Remove toast after it's hidden
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+
+        // Function to create toast container if it doesn't exist
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            container.style.zIndex = '1050';
+            document.body.appendChild(container);
+            return container;
+        }
     });
 </script>
 {% endblock %} 

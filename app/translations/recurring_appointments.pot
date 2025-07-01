@@ -1,0 +1,125 @@
+# Translations template for recurring appointments.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-03-19 12:00+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.12.1\n"
+
+#: templates/new_recurring_appointment.html:4
+msgid "Add Recurring Appointment"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:11
+msgid "Add Recurring Appointment Rule"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:13
+msgid "Back to Patient"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:17
+msgid "For patient:"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:24
+msgid "Start Date"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:28
+msgid "End Date"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:28
+msgid "Optional"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:30
+msgid "Leave blank for indefinite recurrence."
+msgstr ""
+
+#: templates/new_recurring_appointment.html:36
+msgid "Recurrence Type"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:38
+msgid "Select frequency..."
+msgstr ""
+
+#: templates/new_recurring_appointment.html:39
+msgid "Daily (Mon-Fri)"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:40
+msgid "Weekly"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:44
+msgid "Time of Day"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:50
+msgid "Default Treatment Type"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:56
+msgid "Location"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:60
+msgid "Fee"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:66
+msgid "Notes"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:72
+msgid "Provider"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:76
+msgid "Payment Method"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:78
+msgid "Select payment method..."
+msgstr ""
+
+#: templates/new_recurring_appointment.html:79
+msgid "Cash"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:80
+msgid "Card"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:81
+msgid "Bank Transfer"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:91
+msgid "Active Rule"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:92
+msgid "Uncheck to pause generating appointments from this rule."
+msgstr ""
+
+#: templates/new_recurring_appointment.html:99
+msgid "Cancel"
+msgstr ""
+
+#: templates/new_recurring_appointment.html:102
+msgid "Create Recurring Rule"
+msgstr "" 

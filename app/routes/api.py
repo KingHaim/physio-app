@@ -1224,6 +1224,10 @@ def generate_patient_clinical_analysis(patient_id):
         current_app.logger.info(f"Found patient: {patient.name}, diagnosis: {patient.diagnosis}")
         current_app.logger.info(f"Patient anamnesis length: {len(patient.anamnesis) if patient.anamnesis else 0}")
         
+        # Get user's preferred language
+        user_language = getattr(current_user, 'language', 'es')
+        current_app.logger.info(f"Using user's preferred language: {user_language}")
+        
         # Collect all patient data for analysis
         clinical_context = {
             'chief_complaint': '',  # From anamnesis
@@ -1312,9 +1316,9 @@ def generate_patient_clinical_analysis(patient_id):
         else:
             current_app.logger.warning("No anamnesis data found for patient")
         
-        # Generate AI suggestions using the existing function
-        suggestions = generate_clinical_suggestions_ai(clinical_context)
-        
+                # Generate AI suggestions using the existing function with user's language
+        suggestions = generate_clinical_suggestions_ai(clinical_context, user_language)
+
         # Check if we have DeepSeek API configured to inform the user
         deepseek_api_key = current_app.config.get('DEEPSEEK_API_KEY')
         analysis_type = "AI-powered (DeepSeek)" if deepseek_api_key else "Rule-based (No AI key configured)"
@@ -1359,10 +1363,14 @@ def generate_patient_clinical_analysis(patient_id):
 @api.route('/generate-ai-suggestions', methods=['POST'])
 @login_required
 def generate_ai_suggestions():
-    """Generate clinical suggestions using AI based on anamnesis data"""
+    """Generate clinical suggestions using AI based on anamnesis data in the user's preferred language"""
     try:
         data = request.get_json()
         anamnesis_data = data.get('anamnesis_data', {})
+        
+        # Get user's preferred language
+        user_language = getattr(current_user, 'language', 'es')
+        current_app.logger.info(f"Using user's preferred language: {user_language}")
         
         # Prepare the clinical data for AI analysis
         clinical_context = {
@@ -1391,8 +1399,8 @@ def generate_ai_suggestions():
             }
         }
         
-        # Generate AI suggestions using DeepSeek or fallback
-        suggestions = generate_clinical_suggestions_ai(clinical_context)
+        # Generate AI suggestions using DeepSeek or fallback with user's language
+        suggestions = generate_clinical_suggestions_ai(clinical_context, user_language)
         
         return jsonify({
             'success': True,
@@ -1417,11 +1425,10 @@ def calculate_age_from_dob(dob_string):
     except:
         return None
 
-def generate_clinical_suggestions_ai(clinical_context):
-    """Generate clinical suggestions using DeepSeek AI based on clinical context data"""
+def generate_clinical_suggestions_ai(clinical_context, language='es'):
+    """Generate clinical suggestions using DeepSeek AI based on clinical context data in the user's preferred language"""
     try:
-        # Get user's preferred language (default to Spanish if not set)
-        user_language = getattr(current_user, 'language', 'es')
+        # Use the provided language or default to Spanish
         
         # Define language instructions for the AI
         language_instructions = {
@@ -1433,8 +1440,8 @@ def generate_clinical_suggestions_ai(clinical_context):
             'pt': "Por favor responda em português."
         }
         
-        language_instruction = language_instructions.get(user_language, language_instructions['es'])
-        current_app.logger.info(f"Generating clinical analysis in language: {user_language}")
+        language_instruction = language_instructions.get(language, language_instructions['es'])
+        current_app.logger.info(f"Generating clinical analysis in language: {language}")
         
         deepseek_api_key = current_app.config.get('DEEPSEEK_API_KEY')
         
@@ -1482,7 +1489,7 @@ def generate_clinical_suggestions_ai(clinical_context):
             prompt = f"""
 {language_instruction}
 
-As an experienced physiotherapist, analyze the following ANONYMIZED patient case and provide clinical recommendations:
+As an experienced physiotherapist, analyze the following ANONYMIZED patient case and provide clinical recommendations in {language.upper()}:
 
 CLINICAL PRESENTATION:
 - Chief Complaint: {anonymized_data['chief_complaint']}
@@ -1523,7 +1530,7 @@ Focus on evidence-based recommendations specific to the presented condition. Inc
             response = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
-                    {"role": "system", "content": f"You are an expert physiotherapist providing clinical recommendations based on ANONYMIZED patient assessment data. Always respond with valid JSON. Never request or use any personally identifiable information. {language_instruction}"},
+                    {"role": "system", "content": f"You are an expert physiotherapist providing clinical recommendations based on ANONYMIZED patient assessment data. Always respond with valid JSON in {language.upper()} language. Never request or use any personally identifiable information. {language_instruction}"},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=1000,
@@ -1544,23 +1551,23 @@ Focus on evidence-based recommendations specific to the presented condition. Inc
                 suggestions_json = json.loads(json_match.group())
                 
                 # Log anonymized analysis for compliance tracking
-                current_app.logger.info(f"AI clinical analysis completed for anonymized case: {anonymized_data['diagnosis']} - Age: {anonymized_data['age_range']} - Pain: {anonymized_data['pain_level']}/10 - Language: {user_language}")
+                current_app.logger.info(f"AI clinical analysis completed for anonymized case: {anonymized_data['diagnosis']} - Age: {anonymized_data['age_range']} - Pain: {anonymized_data['pain_level']}/10 - Language: {language}")
                 
                 return suggestions_json
             else:
                 current_app.logger.warning("Failed to parse JSON from DeepSeek response, using fallback")
                 # Fallback if JSON parsing fails
-                return generate_fallback_suggestions(clinical_context, user_language)
+                return generate_fallback_suggestions(clinical_context, language)
                 
         else:
             current_app.logger.info("No DeepSeek API key configured, using fallback suggestions")
             # Fallback to rule-based suggestions if no API key
-            return generate_fallback_suggestions(clinical_context, user_language)
+            return generate_fallback_suggestions(clinical_context, language)
             
     except Exception as e:
         current_app.logger.error(f"Error with AI suggestions: {str(e)}")
         current_app.logger.info("Using fallback suggestions due to error")
-        return generate_fallback_suggestions(clinical_context, getattr(current_user, 'language', 'es'))
+        return generate_fallback_suggestions(clinical_context, language)
 
 def anonymize_date(date_string):
     """Convert specific dates to relative time periods"""

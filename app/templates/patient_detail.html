@@ -320,7 +320,7 @@
                                         <div class="d-flex w-100 justify-content-between">
                                             <h6 class="mb-1">
                                                 {{ rule.treatment_type }} 
-                                                - {{ _(rule.recurrence_type|replace('-', ' ')|title) }}
+                                                - {% if rule.recurrence_type == 'daily-mon-fri' %}{{ _('Daily (Mon-Fri)') }}{% elif rule.recurrence_type == 'weekly' %}{{ _('Weekly') }}{% endif %}
                                             </h6>
                                             <small>
                                                 <span class="badge bg-{{ 'success' if rule.is_active else 'secondary' }}">
@@ -336,7 +336,7 @@
                                         <small class="text-muted">{{ _('Location:') }} {{ rule.location or 'N/A' }} | {{ _('Fee:') }} {{ ('€' + "{:.2f}".format(rule.fee_charged)) if rule.fee_charged else 'N/A' }}</small>
                                         <div class="mt-2">
                                             <a href="{{ url_for('main.edit_recurring_appointment', id=rule.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> {{ _('Edit') }}</a>
-                                            <form action="{{ url_for('main.delete_recurring_appointment', id=rule.id) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('{{ _('Are you sure you want to delete this recurring rule?') }}');">
+                                            <form action="{{ url_for('main.delete_recurring_appointment', id=rule.id) }}" method="POST" style="display: inline-block;" class="delete-recurring-form" data-confirm-message="{{ _('Are you sure you want to delete this recurring rule?') }}">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> {{ _('Delete') }}</button>
                                             </form>
                                         </div>
@@ -1633,6 +1633,17 @@ function getCurrentLang() {
       handleClinicalAnalysis(true);
     });
   }
+
+  // Handle delete recurring appointment forms
+  document.querySelectorAll('.delete-recurring-form').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+      const confirmMessage = this.getAttribute('data-confirm-message');
+      if (!confirm(confirmMessage)) {
+        e.preventDefault();
+        return false;
+      }
+    });
+  });
 });
 </script>
 {% endblock %}
