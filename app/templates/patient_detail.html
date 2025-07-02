@@ -173,6 +173,164 @@
         transform: translateY(0);
         box-shadow: 0 2px 6px rgba(52, 144, 220, 0.2);
     }
+
+    /* Improved Anamnesis Display Styles */
+    .anamnesis-section {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .section-title {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .section-content {
+        padding: 1.25rem;
+    }
+
+    .info-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        height: 100%;
+        transition: all 0.2s ease;
+    }
+
+    .info-card:hover {
+        background: #e9ecef;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .info-value {
+        font-size: 0.95rem;
+        color: #2c3e50;
+        line-height: 1.4;
+        word-wrap: break-word;
+    }
+
+    .info-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .info-badges .badge {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+    }
+
+    .pain-indicator {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .pain-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 50%;
+        min-width: 3.5rem;
+        height: 3.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .pain-desc {
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .formatted-anamnesis {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .formatted-text {
+        line-height: 1.6;
+        color: #2c3e50;
+    }
+
+    .formatted-text p {
+        margin-bottom: 1rem;
+    }
+
+    .formatted-text p:last-child {
+        margin-bottom: 0;
+    }
+
+    /* Empty state styling */
+    .info-value:empty::after {
+        content: '-';
+        color: #adb5bd;
+        font-style: italic;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .section-content {
+            padding: 1rem;
+        }
+        
+        .info-card {
+            padding: 0.75rem;
+        }
+        
+        .pain-number {
+            font-size: 1.5rem;
+            min-width: 3rem;
+            height: 3rem;
+        }
+    }
+
+    /* Print styles */
+    @media print {
+        .anamnesis-section {
+            break-inside: avoid;
+            box-shadow: none;
+            border: 1px solid #000;
+        }
+        
+        .info-card {
+            background: none !important;
+            border: 1px solid #000;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -504,8 +662,190 @@
                         </div>
                         <div class="card-body">
                             {% if patient.anamnesis %}
-                                <div class="anamnesis-content">
-                                    <pre class="anamnesis-text">{{ patient.anamnesis }}</pre>
+                                <div class="anamnesis-display">
+                                    <!-- Structured Anamnesis Display (populated by JavaScript) -->
+                                    <script type="application/json" id="anamnesis-data">{{ patient.anamnesis | tojson }}</script>
+                                    <div id="structured-anamnesis" style="display: none;">
+                                        <!-- Essential Information -->
+                                        <div class="anamnesis-section mb-4">
+                                            <div class="section-header">
+                                                <h6 class="section-title">
+                                                    <i class="bi bi-exclamation-circle-fill text-danger me-2"></i>
+                                                    {{ _('Chief Complaint & Pain Assessment') }}
+                                                </h6>
+                                            </div>
+                                            <div class="section-content">
+                                                <div class="row g-3">
+                                                    <div class="col-md-8">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Chief Complaint') }}</label>
+                                                            <div class="info-value" id="display-chief-complaint">-</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="info-card text-center">
+                                                            <label class="info-label">{{ _('Pain Level') }}</label>
+                                                            <div class="pain-indicator">
+                                                                <span class="pain-number" id="display-pain-scale">0</span>
+                                                                <small class="pain-desc" id="display-pain-desc">{{ _('No pain') }}</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row g-3 mt-2">
+                                                    <div class="col-md-4">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Onset Date') }}</label>
+                                                            <div class="info-value" id="display-onset-date">-</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Mechanism/How it happened') }}</label>
+                                                            <div class="info-value" id="display-mechanism">-</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Personal Information -->
+                                        <div class="anamnesis-section mb-4" id="personal-info-section" style="display: none;">
+                                            <div class="section-header">
+                                                <h6 class="section-title">
+                                                    <i class="bi bi-person-circle text-primary me-2"></i>
+                                                    {{ _('Personal Information') }}
+                                                </h6>
+                                            </div>
+                                            <div class="section-content">
+                                                <div class="row g-3">
+                                                    <div class="col-md-4">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Gender') }}</label>
+                                                            <div class="info-value" id="display-gender">-</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Occupation') }}</label>
+                                                            <div class="info-value" id="display-occupation">-</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Activity Level') }}</label>
+                                                            <div class="info-value" id="display-activity">-</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Medical History -->
+                                        <div class="anamnesis-section mb-4" id="medical-history-section" style="display: none;">
+                                            <div class="section-header">
+                                                <h6 class="section-title">
+                                                    <i class="bi bi-heart-pulse text-danger me-2"></i>
+                                                    {{ _('Medical History') }}
+                                                </h6>
+                                            </div>
+                                            <div class="section-content">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Previous Conditions') }}</label>
+                                                            <div class="info-badges" id="display-conditions"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Allergies') }}</label>
+                                                            <div class="info-badges" id="display-allergies"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row g-3 mt-2">
+                                                    <div class="col-12">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Current Medications') }}</label>
+                                                            <div class="info-value" id="display-medications">-</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Pain Details -->
+                                        <div class="anamnesis-section mb-4" id="pain-details-section" style="display: none;">
+                                            <div class="section-header">
+                                                <h6 class="section-title">
+                                                    <i class="bi bi-lightning-fill text-warning me-2"></i>
+                                                    {{ _('Pain & Symptoms Details') }}
+                                                </h6>
+                                            </div>
+                                            <div class="section-content">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Pain Location') }}</label>
+                                                            <div class="info-value" id="display-pain-location">-</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Pain Characteristics') }}</label>
+                                                            <div class="info-badges" id="display-pain-characteristics"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row g-3 mt-2">
+                                                    <div class="col-md-6">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Aggravating Factors') }}</label>
+                                                            <div class="info-value" id="display-pain-triggers">-</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Relieving Factors') }}</label>
+                                                            <div class="info-value" id="display-pain-relievers">-</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Functional Assessment -->
+                                        <div class="anamnesis-section mb-4" id="functional-section" style="display: none;">
+                                            <div class="section-header">
+                                                <h6 class="section-title">
+                                                    <i class="bi bi-activity text-success me-2"></i>
+                                                    {{ _('Functional Assessment') }}
+                                                </h6>
+                                            </div>
+                                            <div class="section-content">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Functional Limitations') }}</label>
+                                                            <div class="info-badges" id="display-limitations"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="info-card">
+                                                            <label class="info-label">{{ _('Additional Notes') }}</label>
+                                                            <div class="info-value" id="display-additional-notes">-</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Fallback: Formatted Plain Text -->
+                                    <div id="plain-text-anamnesis" style="display: none;">
+                                        <div class="formatted-anamnesis"></div>
+                                    </div>
                                 </div>
                             {% else %}
                                 <div class="text-center py-5">
@@ -1633,6 +1973,158 @@ function getCurrentLang() {
       handleClinicalAnalysis(true);
     });
   }
+
+  // Anamnesis Display Functions
+  function displayStructuredAnamnesis(anamnesisData) {
+    const structuredDiv = document.getElementById('structured-anamnesis');
+    const plainTextDiv = document.getElementById('plain-text-anamnesis');
+    
+    if (!anamnesisData || typeof anamnesisData !== 'object') {
+      plainTextDiv.style.display = 'block';
+      return;
+    }
+    
+    // Display essential information (always visible)
+    displayField('display-chief-complaint', anamnesisData.anamnesis_chief_complaint || anamnesisData.chief_complaint?.main_complaint);
+    displayPainLevel(anamnesisData.anamnesis_pain_scale || anamnesisData.current_pain?.pain_scale);
+    displayField('display-onset-date', anamnesisData.anamnesis_onset_date || anamnesisData.chief_complaint?.onset_date);
+    displayField('display-mechanism', anamnesisData.anamnesis_mechanism || anamnesisData.chief_complaint?.mechanism);
+    
+    // Personal Information
+    const personalData = anamnesisData.personal_data || {};
+    if (anamnesisData.anamnesis_gender || anamnesisData.anamnesis_occupation || anamnesisData.anamnesis_physical_activity || 
+        personalData.gender || personalData.occupation || personalData.activity_level) {
+      showSection('personal-info-section');
+      displayField('display-gender', anamnesisData.anamnesis_gender || personalData.gender);
+      displayField('display-occupation', anamnesisData.anamnesis_occupation || personalData.occupation);
+      displayField('display-activity', anamnesisData.anamnesis_physical_activity || personalData.activity_level);
+    }
+    
+    // Medical History
+    const medicalHistory = anamnesisData.medical_history || {};
+    if (anamnesisData.history_conditions || anamnesisData.allergies || anamnesisData.anamnesis_medications || 
+        medicalHistory.conditions || medicalHistory.allergies || medicalHistory.medications) {
+      showSection('medical-history-section');
+      displayBadges('display-conditions', anamnesisData.history_conditions || medicalHistory.conditions);
+      displayBadges('display-allergies', anamnesisData.allergies || medicalHistory.allergy_types);
+      displayField('display-medications', anamnesisData.anamnesis_medications || medicalHistory.medications);
+    }
+    
+    // Pain Details
+    const currentPain = anamnesisData.current_pain || {};
+    if (anamnesisData.anamnesis_pain_location || anamnesisData.pain_characteristics || 
+        anamnesisData.anamnesis_pain_triggers || anamnesisData.anamnesis_pain_relievers ||
+        currentPain.pain_location || currentPain.pain_type) {
+      showSection('pain-details-section');
+      displayField('display-pain-location', anamnesisData.anamnesis_pain_location || currentPain.pain_location);
+      displayBadges('display-pain-characteristics', anamnesisData.pain_characteristics || currentPain.pain_triggers);
+      displayField('display-pain-triggers', anamnesisData.anamnesis_pain_triggers || currentPain.pain_triggers);
+      displayField('display-pain-relievers', anamnesisData.anamnesis_pain_relievers || currentPain.pain_relievers);
+    }
+    
+    // Functional Assessment
+    if (anamnesisData.functional_limitations || anamnesisData.anamnesis_additional_notes) {
+      showSection('functional-section');
+      displayBadges('display-limitations', anamnesisData.functional_limitations);
+      displayField('display-additional-notes', anamnesisData.anamnesis_additional_notes);
+    }
+    
+    structuredDiv.style.display = 'block';
+  }
+  
+  function displayPlainTextAnamnesis(anamnesisText) {
+    const plainTextDiv = document.getElementById('plain-text-anamnesis');
+    const formattedDiv = plainTextDiv.querySelector('.formatted-anamnesis');
+    
+    // Better formatting for plain text
+    const formattedText = anamnesisText
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br>')
+      .replace(/^/, '<p>')
+      .replace(/$/, '</p>');
+      
+    formattedDiv.innerHTML = `
+      <div class="anamnesis-content">
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle me-2"></i>
+          {{ _('This anamnesis is in plain text format. For better organization, consider re-entering using the structured form.') }}
+        </div>
+        <div class="formatted-text">${formattedText}</div>
+      </div>
+    `;
+    
+    plainTextDiv.style.display = 'block';
+  }
+  
+  function displayField(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element && value) {
+      element.textContent = value;
+      element.parentElement.style.display = 'block';
+    }
+  }
+  
+  function displayBadges(elementId, items) {
+    const element = document.getElementById(elementId);
+    if (!element || !items) return;
+    
+    const itemsArray = Array.isArray(items) ? items : [items];
+    if (itemsArray.length === 0 || (itemsArray.length === 1 && (itemsArray[0] === 'none' || itemsArray[0] === ''))) {
+      element.innerHTML = '<span class="badge bg-success">{{ _("None") }}</span>';
+    } else {
+      const badges = itemsArray
+        .filter(item => item && item !== 'none')
+        .map(item => `<span class="badge bg-primary me-1">${item}</span>`)
+        .join('');
+      element.innerHTML = badges;
+    }
+    element.parentElement.style.display = 'block';
+  }
+  
+  function displayPainLevel(painLevel) {
+    const numberElement = document.getElementById('display-pain-scale');
+    const descElement = document.getElementById('display-pain-desc');
+    
+    if (!numberElement || !descElement || !painLevel) return;
+    
+    const level = parseInt(painLevel);
+    numberElement.textContent = level;
+    
+    // Update color and description based on pain level
+    if (level === 0) {
+      numberElement.className = 'pain-number bg-success';
+      descElement.textContent = '{{ _("No pain") }}';
+    } else if (level <= 3) {
+      numberElement.className = 'pain-number bg-info';
+      descElement.textContent = '{{ _("Mild pain") }}';
+    } else if (level <= 6) {
+      numberElement.className = 'pain-number bg-warning';
+      descElement.textContent = '{{ _("Moderate pain") }}';
+    } else {
+      numberElement.className = 'pain-number bg-danger';
+      descElement.textContent = '{{ _("Severe pain") }}';
+    }
+  }
+  
+  function showSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (section) {
+      section.style.display = 'block';
+    }
+  }
+  
+  // Initialize anamnesis display when page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    const anamnesisDataElement = document.getElementById('anamnesis-data');
+    if (anamnesisDataElement) {
+      try {
+        const anamnesisData = JSON.parse(anamnesisDataElement.textContent);
+        displayStructuredAnamnesis(anamnesisData);
+      } catch(e) {
+        displayPlainTextAnamnesis(anamnesisDataElement.textContent);
+      }
+    }
+  });
 
   // Handle delete recurring appointment forms
   document.querySelectorAll('.delete-recurring-form').forEach(function(form) {

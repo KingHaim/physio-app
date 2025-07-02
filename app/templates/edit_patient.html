@@ -70,96 +70,175 @@
                                 </div>
                             </div>
 
-                            <!-- Medical Information Section -->
-                            <div class="col-md-6">
-                                <h6 class="text-muted mb-3">{{ _('Medical Information') }}</h6>
-                                <div class="mb-3">
-                                    <label for="diagnosis" class="form-label">{{ _('Diagnosis') }}</label>
-                                    <input type="text" 
-                                           class="form-control" 
-                                           id="diagnosis" 
-                                           name="diagnosis" 
-                                           value="{{ patient.diagnosis }}" 
-                                           required>
+                            
                                 </div>
-
-                                <div class="mb-3">
-                                    <label for="treatment_plan" class="form-label">{{ _('Treatment Plan') }}</label>
-                                    <textarea class="form-control" 
-                                              id="treatment_plan" 
-                                              name="treatment_plan" 
-                                              rows="4">{{ patient.treatment_plan }}</textarea>
-                                    <div class="form-text">{{ _('Outline the proposed treatment strategy') }}</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="notes" class="form-label">{{ _('Additional Notes') }}</label>
-                                    <textarea class="form-control" 
-                                              id="notes" 
-                                              name="notes" 
-                                              rows="4">{{ patient.notes }}</textarea>
-                                    <div class="form-text">{{ _('Any additional information or observations') }}</div>
-                                </div>
-                            </div>
-                        </div>
 
                         <hr class="my-4">
 
-                        <!-- Anamnesis Section -->
+                        <!-- Anamnesis Section - Improved Design -->
                         <div class="row">
                             <div class="col-12">
-                                <h6 class="text-muted mb-3">{{ _('Clinical History / Anamnesis') }}</h6>
-                                
-                                <!-- Anamnesis Tabs -->
-                                <ul class="nav nav-tabs" id="editAnamnesisTabs" role="tablist">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" id="edit-personal-data-tab" data-bs-toggle="tab" data-bs-target="#edit-personal-data" type="button" role="tab">
-                                            <i class="bi bi-person"></i> {{ _('Personal Data') }}
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="edit-chief-complaint-tab" data-bs-toggle="tab" data-bs-target="#edit-chief-complaint" type="button" role="tab">
-                                            <i class="bi bi-chat-dots"></i> {{ _('Chief Complaint') }}
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="edit-medical-history-tab" data-bs-toggle="tab" data-bs-target="#edit-medical-history" type="button" role="tab">
-                                            <i class="bi bi-clipboard-heart"></i> {{ _('Medical History') }}
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="edit-family-history-tab" data-bs-toggle="tab" data-bs-target="#edit-family-history" type="button" role="tab">
-                                            <i class="bi bi-people"></i> {{ _('Family History') }}
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="edit-lifestyle-tab" data-bs-toggle="tab" data-bs-target="#edit-lifestyle" type="button" role="tab">
-                                            <i class="bi bi-heart-pulse"></i> {{ _('Lifestyle') }}
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="edit-current-pain-tab" data-bs-toggle="tab" data-bs-target="#edit-current-pain" type="button" role="tab">
-                                            <i class="bi bi-bandaid"></i> {{ _('Current Pain') }}
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="edit-functional-exam-tab" data-bs-toggle="tab" data-bs-target="#edit-functional-exam" type="button" role="tab">
-                                            <i class="bi bi-activity"></i> {{ _('Functional Exam') }}
-                                        </button>
-                                    </li>
-                                </ul>
+                                <div class="card shadow-sm border-0">
+                                    <div class="card-header bg-gradient-primary text-white">
+                                        <h5 class="mb-0">
+                                            <i class="bi bi-journal-medical me-2"></i>
+                                            {{ _('Clinical History (Anamnesis)') }}
+                                        </h5>
+                                        <small class="opacity-75">{{ _('Update the clinical assessment information') }}</small>
+                                </div>
+                                    <div class="card-body p-4">
+                                        
+                                        <!-- Progress Indicator -->
+                                        <div class="anamnesis-progress mb-4">
+                                            <div class="progress-header d-flex justify-content-between align-items-center mb-2">
+                                                <span class="text-muted">{{ _('Assessment Progress') }}</span>
+                                                <span class="badge bg-primary" id="edit-progress-percentage">0%</span>
+                                </div>
+                                            <div class="progress" style="height: 8px;">
+                                                <div class="progress-bar bg-success" role="progressbar" id="edit-anamnesis-progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
 
-                                <div class="tab-content mt-3" id="editAnamnesisTabContent">
-                                    <!-- Personal Data Tab -->
-                                    <div class="tab-pane fade show active" id="edit-personal-data" role="tabpanel">
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label for="edit_anamnesis_age" class="form-label">{{ _('Age') }}</label>
-                                                <input type="number" class="form-control" id="edit_anamnesis_age" name="anamnesis_age" min="0" max="120">
+                                        <!-- Essential Information (Always visible) -->
+                                        <div class="essential-info mb-4">
+                                            <h6 class="section-title">
+                                                <i class="bi bi-exclamation-circle-fill text-danger me-2"></i>
+                                                {{ _('Essential Information') }}
+                                                <span class="required-badge">{{ _('Required') }}</span>
+                                            </h6>
+                                            
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="edit_anamnesis_chief_complaint" class="form-label fw-semibold">
+                                                        <i class="bi bi-chat-dots text-primary me-1"></i>
+                                                        {{ _('Chief Complaint') }} <span class="text-danger">*</span>
+                                                    </label>
+                                                    <textarea class="form-control" id="edit_anamnesis_chief_complaint" name="anamnesis_chief_complaint" 
+                                                              rows="3" required
+                                                              placeholder="{{ _('What is the main reason for this visit? (e.g., Lower back pain for 2 weeks...)') }}"
+                                                              onchange="updateEditProgress()"></textarea>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="edit_anamnesis_pain_scale" class="form-label fw-semibold">
+                                                        <i class="bi bi-thermometer-half text-warning me-1"></i>
+                                                        {{ _('Current Pain Level') }} <span class="text-danger">*</span>
+                                                    </label>
+                                                    <div class="pain-scale-container">
+                                                        <input type="range" class="form-range" id="edit_anamnesis_pain_scale" name="anamnesis_pain_scale" 
+                                                               min="0" max="10" value="0" required
+                                                               oninput="updateEditPainDisplay(this.value); updateEditProgress()">
+                                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                                            <small class="text-muted">😊 0</small>
+                                                            <div class="text-center">
+                                                                <span id="edit-pain-display" class="badge bg-success fs-6">0</span>
+                                                                <div><small id="edit-pain-description">{{ _('No pain') }}</small></div>
+                                                            </div>
+                                                            <small class="text-muted">😵 10</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="col-md-6 mb-3">
+
+                                            <div class="row g-3 mt-2">
+                                                <div class="col-md-4">
+                                                    <label for="edit_anamnesis_onset_date" class="form-label fw-semibold">
+                                                        <i class="bi bi-calendar-event text-info me-1"></i>
+                                                        {{ _('When did it start?') }}
+                                                    </label>
+                                                    <input type="date" class="form-control" id="edit_anamnesis_onset_date" name="anamnesis_onset_date" 
+                                                           onchange="updateEditProgress()">
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <label for="edit_anamnesis_mechanism" class="form-label fw-semibold">
+                                                        <i class="bi bi-gear text-secondary me-1"></i>
+                                                        {{ _('How did it happen?') }}
+                                                    </label>
+                                                    <input type="text" class="form-control" id="edit_anamnesis_mechanism" name="anamnesis_mechanism" 
+                                                           placeholder="{{ _('e.g., Lifting heavy box, fell down stairs, gradual onset...') }}"
+                                                           onchange="updateEditProgress()">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Collapsible Sections -->
+                                        <div class="accordion anamnesis-accordion" id="editAnamnesisAccordion">
+
+                                            <!-- Clinical Assessment & Diagnosis -->
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header">
+                                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                                            data-bs-target="#edit-clinical-assessment" aria-expanded="true">
+                                                        <i class="bi bi-clipboard-pulse me-2 text-success"></i>
+                                                        <span class="me-auto">{{ _('Clinical Assessment & Diagnosis') }}</span>
+                                                        <span class="badge bg-warning ms-2">{{ _('Important') }}</span>
+                                        </button>
+                                                </h2>
+                                                <div id="edit-clinical-assessment" class="accordion-collapse collapse show" data-bs-parent="#editAnamnesisAccordion">
+                                                    <div class="accordion-body">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
+                                                                <label for="edit_diagnosis" class="form-label fw-semibold">
+                                                                    <i class="bi bi-clipboard-check text-success me-1"></i>
+                                                                    {{ _('Primary Diagnosis') }}
+                                                                </label>
+                                                                <input type="text" class="form-control" id="edit_diagnosis" name="diagnosis" 
+                                                                       value="{{ patient.diagnosis }}" required
+                                                                       placeholder="{{ _('e.g., Lower back pain, Cervical strain...') }}"
+                                                                       onchange="updateEditProgress()">
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="edit_assessment_date" class="form-label fw-semibold">
+                                                                    <i class="bi bi-calendar-check text-info me-1"></i>
+                                                                    {{ _('Assessment Date') }}
+                                                                </label>
+                                                                <input type="date" class="form-control" id="edit_assessment_date" name="assessment_date" 
+                                                                       value="{{ patient.created_at.strftime('%Y-%m-%d') if patient.created_at else '' }}"
+                                                                       onchange="updateEditProgress()">
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <label for="edit_treatment_plan" class="form-label fw-semibold">
+                                                                    <i class="bi bi-graph-up text-primary me-1"></i>
+                                                                    {{ _('Treatment Plan & Strategy') }}
+                                                                </label>
+                                                                <textarea class="form-control" id="edit_treatment_plan" name="treatment_plan" 
+                                                                          rows="4" placeholder="{{ _('Detailed treatment approach, goals, and expected timeline...') }}"
+                                                                          onchange="updateEditProgress()">{{ patient.treatment_plan }}</textarea>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <label for="edit_clinical_notes" class="form-label fw-semibold">
+                                                                    <i class="bi bi-journal-text text-secondary me-1"></i>
+                                                                    {{ _('Clinical Notes & Observations') }}
+                                                                </label>
+                                                                <textarea class="form-control" id="edit_clinical_notes" name="notes" 
+                                                                          rows="3" placeholder="{{ _('Additional clinical observations, progress notes...') }}"
+                                                                          onchange="updateEditProgress()">{{ patient.notes }}</textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Personal Information Accordion -->
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header">
+                                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                                            data-bs-target="#edit-personal-info" aria-expanded="false">
+                                                        <i class="bi bi-person-circle me-2 text-info"></i>
+                                                        <span class="me-auto">{{ _('Personal Information') }}</span>
+                                                        <span class="badge bg-secondary ms-2">{{ _('Optional') }}</span>
+                                                    </button>
+                                                </h2>
+                                                <div id="edit-personal-info" class="accordion-collapse collapse" data-bs-parent="#editAnamnesisAccordion">
+                                                    <div class="accordion-body">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-4">
+                                                <label for="edit_anamnesis_age" class="form-label">{{ _('Age') }}</label>
+                                                                <input type="number" class="form-control" id="edit_anamnesis_age" name="anamnesis_age" 
+                                                                       min="0" max="120" onchange="updateEditProgress()">
+                                            </div>
+                                                            <div class="col-md-4">
                                                 <label for="edit_anamnesis_gender" class="form-label">{{ _('Gender') }}</label>
-                                                <select class="form-select" id="edit_anamnesis_gender" name="anamnesis_gender">
+                                                                <select class="form-select" id="edit_anamnesis_gender" name="anamnesis_gender" onchange="updateEditProgress()">
                                                     <option value="">{{ _('Select gender') }}</option>
                                                     <option value="male">{{ _('Male') }}</option>
                                                     <option value="female">{{ _('Female') }}</option>
@@ -167,178 +246,166 @@
                                                     <option value="prefer_not_to_say">{{ _('Prefer not to say') }}</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-6 mb-3">
+                                                            <div class="col-md-4">
                                                 <label for="edit_anamnesis_occupation" class="form-label">{{ _('Occupation') }}</label>
-                                                <input type="text" class="form-control" id="edit_anamnesis_occupation" name="anamnesis_occupation" placeholder="{{ _('Current job/profession') }}">
+                                                                <input type="text" class="form-control" id="edit_anamnesis_occupation" name="anamnesis_occupation" 
+                                                                       placeholder="{{ _('Current job/profession') }}" onchange="updateEditProgress()">
                                             </div>
-                                            <div class="col-md-6 mb-3">
+                                                            <div class="col-12">
                                                 <label for="edit_anamnesis_emergency_contact" class="form-label">{{ _('Emergency Contact') }}</label>
-                                                <input type="text" class="form-control" id="edit_anamnesis_emergency_contact" name="anamnesis_emergency_contact" placeholder="{{ _('Name and phone number') }}">
+                                                                <input type="text" class="form-control" id="edit_anamnesis_emergency_contact" name="anamnesis_emergency_contact" 
+                                                                       placeholder="{{ _('Name and phone number') }}" onchange="updateEditProgress()">
                                             </div>
                                         </div>
                                     </div>
-
-                                    <!-- Chief Complaint Tab -->
-                                    <div class="tab-pane fade" id="edit-chief-complaint" role="tabpanel">
-                                        <div class="mb-3">
-                                            <label for="edit_anamnesis_chief_complaint" class="form-label">
-                                                {{ _('Main reason for consultation') }} <span class="text-danger">*</span>
-                                            </label>
-                                            <textarea class="form-control" id="edit_anamnesis_chief_complaint" name="anamnesis_chief_complaint" rows="3" 
-                                                      placeholder="{{ _('What brought you here today? Describe your main concern or symptom.') }}" required></textarea>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label for="edit_anamnesis_onset" class="form-label">{{ _('When did it start?') }}</label>
-                                                <input type="text" class="form-control" id="edit_anamnesis_onset" name="anamnesis_onset" 
-                                                       placeholder="{{ _('e.g., 2 weeks ago, after lifting heavy box') }}">
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label for="edit_anamnesis_mechanism" class="form-label">{{ _('How did it happen?') }}</label>
-                                                <input type="text" class="form-control" id="edit_anamnesis_mechanism" name="anamnesis_mechanism" 
-                                                       placeholder="{{ _('e.g., sudden, gradual, after activity') }}">
-                                            </div>
                                         </div>
                                     </div>
 
-                                    <!-- Medical History Tab -->
-                                    <div class="tab-pane fade" id="edit-medical-history" role="tabpanel">
-                                        <div class="mb-3">
-                                            <label for="edit_anamnesis_previous_conditions" class="form-label">{{ _('Previous illnesses/conditions') }}</label>
-                                            <textarea class="form-control" id="edit_anamnesis_previous_conditions" name="anamnesis_previous_conditions" rows="3" 
-                                                      placeholder="{{ _('List any previous medical conditions, diagnoses, or chronic illnesses') }}"></textarea>
+                                            <!-- Medical History Accordion -->
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header">
+                                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                                            data-bs-target="#edit-medical-history" aria-expanded="false">
+                                                        <i class="bi bi-clipboard-heart me-2 text-danger"></i>
+                                                        <span class="me-auto">{{ _('Medical History') }}</span>
+                                                        <span class="badge bg-warning ms-2">{{ _('Important') }}</span>
+                                                    </button>
+                                                </h2>
+                                                <div id="edit-medical-history" class="accordion-collapse collapse" data-bs-parent="#editAnamnesisAccordion">
+                                                    <div class="accordion-body">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
+                                                                <label for="edit_anamnesis_previous_conditions" class="form-label">{{ _('Previous conditions') }}</label>
+                                                                <textarea class="form-control" id="edit_anamnesis_previous_conditions" name="anamnesis_previous_conditions" 
+                                                                          rows="3" placeholder="{{ _('Previous medical conditions, diagnoses...') }}" 
+                                                                          onchange="updateEditProgress()"></textarea>
                                         </div>
-                                        <div class="mb-3">
+                                                            <div class="col-md-6">
                                             <label for="edit_anamnesis_surgeries" class="form-label">{{ _('Previous surgeries') }}</label>
-                                            <textarea class="form-control" id="edit_anamnesis_surgeries" name="anamnesis_surgeries" rows="2" 
-                                                      placeholder="{{ _('List any surgeries with approximate dates') }}"></textarea>
+                                                                <textarea class="form-control" id="edit_anamnesis_surgeries" name="anamnesis_surgeries" 
+                                                                          rows="3" placeholder="{{ _('List any surgeries with dates...') }}" 
+                                                                          onchange="updateEditProgress()"></textarea>
                                         </div>
-                                        <div class="mb-3">
+                                                            <div class="col-md-6">
                                             <label for="edit_anamnesis_medications" class="form-label">{{ _('Current medications') }}</label>
-                                            <textarea class="form-control" id="edit_anamnesis_medications" name="anamnesis_medications" rows="3" 
-                                                      placeholder="{{ _('Include prescription drugs, supplements, and over-the-counter medications') }}"></textarea>
+                                                                <textarea class="form-control" id="edit_anamnesis_medications" name="anamnesis_medications" 
+                                                                          rows="3" placeholder="{{ _('Prescription drugs, supplements...') }}" 
+                                                                          onchange="updateEditProgress()"></textarea>
                                         </div>
-                                        <div class="mb-3">
+                                                            <div class="col-md-6">
                                             <label for="edit_anamnesis_allergies" class="form-label">{{ _('Allergies') }}</label>
-                                            <textarea class="form-control" id="edit_anamnesis_allergies" name="anamnesis_allergies" rows="2" 
-                                                      placeholder="{{ _('Food, medication, environmental allergies') }}"></textarea>
+                                                                <textarea class="form-control" id="edit_anamnesis_allergies" name="anamnesis_allergies" 
+                                                                          rows="3" placeholder="{{ _('Food, medication, environmental...') }}" 
+                                                                          onchange="updateEditProgress()"></textarea>
+                                        </div>
+                                    </div>
+                                        </div>
                                         </div>
                                     </div>
 
-                                    <!-- Family History Tab -->
-                                    <div class="tab-pane fade" id="edit-family-history" role="tabpanel">
-                                        <div class="mb-3">
-                                            <label for="edit_anamnesis_family_history" class="form-label">{{ _('Relevant family medical history') }}</label>
-                                            <textarea class="form-control" id="edit_anamnesis_family_history" name="anamnesis_family_history" rows="4" 
-                                                      placeholder="{{ _('Include: diabetes, heart disease, cancer, musculoskeletal conditions, genetic disorders, etc.') }}"></textarea>
-                                        </div>
-                                    </div>
-
-                                    <!-- Lifestyle Tab -->
-                                    <div class="tab-pane fade" id="edit-lifestyle" role="tabpanel">
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label for="edit_anamnesis_physical_activity" class="form-label">{{ _('Physical activity level') }}</label>
-                                                <select class="form-select" id="edit_anamnesis_physical_activity" name="anamnesis_physical_activity">
-                                                    <option value="">{{ _('Select activity level') }}</option>
-                                                    <option value="sedentary">{{ _('Sedentary (little to no exercise)') }}</option>
-                                                    <option value="light">{{ _('Light (1-3 days/week)') }}</option>
-                                                    <option value="moderate">{{ _('Moderate (3-5 days/week)') }}</option>
-                                                    <option value="active">{{ _('Very active (6-7 days/week)') }}</option>
-                                                    <option value="athlete">{{ _('Athlete (multiple sessions/day)') }}</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label for="edit_anamnesis_sleep" class="form-label">{{ _('Sleep quality') }}</label>
-                                                <select class="form-select" id="edit_anamnesis_sleep" name="anamnesis_sleep">
-                                                    <option value="">{{ _('Select sleep quality') }}</option>
-                                                    <option value="excellent">{{ _('Excellent (7-9h, refreshing)') }}</option>
-                                                    <option value="good">{{ _('Good (6-8h, mostly refreshing)') }}</option>
-                                                    <option value="fair">{{ _('Fair (5-7h, sometimes tired)') }}</option>
-                                                    <option value="poor">{{ _('Poor (<6h, often tired)') }}</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label for="edit_anamnesis_work_posture" class="form-label">{{ _('Work posture/environment') }}</label>
-                                                <input type="text" class="form-control" id="edit_anamnesis_work_posture" name="anamnesis_work_posture" 
-                                                       placeholder="{{ _('e.g., desk job, standing, physical labor') }}">
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label for="edit_anamnesis_stress_level" class="form-label">{{ _('Stress level (1-10)') }}</label>
-                                                <input type="number" class="form-control" id="edit_anamnesis_stress_level" name="anamnesis_stress_level" min="1" max="10">
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="edit_anamnesis_diet_habits" class="form-label">{{ _('Diet and nutrition habits') }}</label>
-                                            <textarea class="form-control" id="edit_anamnesis_diet_habits" name="anamnesis_diet_habits" rows="2" 
-                                                      placeholder="{{ _('General eating patterns, dietary restrictions, hydration') }}"></textarea>
-                                        </div>
-                                    </div>
-
-                                    <!-- Current Pain Tab -->
-                                    <div class="tab-pane fade" id="edit-current-pain" role="tabpanel">
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label for="edit_anamnesis_pain_scale" class="form-label">{{ _('Pain scale (0-10)') }}</label>
-                                                <input type="number" class="form-control" id="edit_anamnesis_pain_scale" name="anamnesis_pain_scale" min="0" max="10">
-                                                <div class="form-text">{{ _('0 = No pain, 10 = Worst pain imaginable') }}</div>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
+                                            <!-- Pain & Symptoms Details Accordion -->
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header">
+                                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                                            data-bs-target="#edit-pain-details" aria-expanded="false">
+                                                        <i class="bi bi-bandaid me-2 text-warning"></i>
+                                                        <span class="me-auto">{{ _('Pain & Symptoms Details') }}</span>
+                                                        <span class="badge bg-info ms-2">{{ _('Helpful') }}</span>
+                                                    </button>
+                                                </h2>
+                                                <div id="edit-pain-details" class="accordion-collapse collapse" data-bs-parent="#editAnamnesisAccordion">
+                                                    <div class="accordion-body">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
                                                 <label for="edit_anamnesis_pain_type" class="form-label">{{ _('Type of pain') }}</label>
                                                 <input type="text" class="form-control" id="edit_anamnesis_pain_type" name="anamnesis_pain_type" 
-                                                       placeholder="{{ _('e.g., sharp, dull, burning, throbbing') }}">
+                                                                       placeholder="{{ _('e.g., sharp, dull, burning, throbbing') }}" onchange="updateEditProgress()">
                                             </div>
-                                            <div class="col-md-6 mb-3">
+                                                            <div class="col-md-6">
+                                                                <label for="edit_anamnesis_pain_location" class="form-label">{{ _('Pain location') }}</label>
+                                                                <input type="text" class="form-control" id="edit_anamnesis_pain_location" name="anamnesis_pain_location" 
+                                                                       placeholder="{{ _('Where is the pain located?') }}" onchange="updateEditProgress()">
+                                                            </div>
+                                                            <div class="col-md-6">
                                                 <label for="edit_anamnesis_pain_triggers" class="form-label">{{ _('What makes it worse?') }}</label>
                                                 <input type="text" class="form-control" id="edit_anamnesis_pain_triggers" name="anamnesis_pain_triggers" 
-                                                       placeholder="{{ _('Activities, positions, times of day') }}">
+                                                                       placeholder="{{ _('Activities, positions, times...') }}" onchange="updateEditProgress()">
                                             </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label for="edit_anamnesis_pain_relievers" class="form-label">{{ _('What makes it better?') }}</label>
+                                                            <div class="col-md-6">
+                                                                <label for="edit_anamnesis_pain_relievers" class="form-label">{{ _('What helps?') }}</label>
                                                 <input type="text" class="form-control" id="edit_anamnesis_pain_relievers" name="anamnesis_pain_relievers" 
-                                                       placeholder="{{ _('Rest, heat, cold, positions, medications') }}">
+                                                                       placeholder="{{ _('Rest, heat, cold, positions...') }}" onchange="updateEditProgress()">
                                             </div>
                                         </div>
-                                        <div class="mb-3">
-                                            <label for="edit_anamnesis_pain_location" class="form-label">{{ _('Pain location and radiation') }}</label>
-                                            <textarea class="form-control" id="edit_anamnesis_pain_location" name="anamnesis_pain_location" rows="2" 
-                                                      placeholder="{{ _('Describe where the pain is located and if it radiates anywhere') }}"></textarea>
+                                                    </div>
                                         </div>
                                     </div>
 
-                                    <!-- Functional Examination Tab -->
-                                    <div class="tab-pane fade" id="edit-functional-exam" role="tabpanel">
-                                        <div class="mb-3">
+                                            <!-- Functional Assessment Accordion -->
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header">
+                                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                                            data-bs-target="#edit-functional-assessment" aria-expanded="false">
+                                                        <i class="bi bi-activity me-2 text-success"></i>
+                                                        <span class="me-auto">{{ _('Functional Assessment') }}</span>
+                                                        <span class="badge bg-secondary ms-2">{{ _('Optional') }}</span>
+                                                    </button>
+                                                </h2>
+                                                <div id="edit-functional-assessment" class="accordion-collapse collapse" data-bs-parent="#editAnamnesisAccordion">
+                                                    <div class="accordion-body">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
                                             <label for="edit_anamnesis_functional_limitations" class="form-label">{{ _('Functional limitations') }}</label>
-                                            <textarea class="form-control" id="edit_anamnesis_functional_limitations" name="anamnesis_functional_limitations" rows="3" 
-                                                      placeholder="{{ _('What activities are difficult or impossible to perform?') }}"></textarea>
+                                                                <textarea class="form-control" id="edit_anamnesis_functional_limitations" name="anamnesis_functional_limitations" 
+                                                                          rows="3" placeholder="{{ _('Activities that are difficult...') }}" 
+                                                                          onchange="updateEditProgress()"></textarea>
                                         </div>
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label for="edit_anamnesis_rom_limitations" class="form-label">{{ _('Range of motion limitations') }}</label>
-                                                <textarea class="form-control" id="edit_anamnesis_rom_limitations" name="anamnesis_rom_limitations" rows="2" 
-                                                          placeholder="{{ _('Which movements are limited?') }}"></textarea>
+                                                            <div class="col-md-6">
+                                                                <label for="edit_anamnesis_physical_activity" class="form-label">{{ _('Activity level') }}</label>
+                                                                <select class="form-select" id="edit_anamnesis_physical_activity" name="anamnesis_physical_activity" onchange="updateEditProgress()">
+                                                                    <option value="">{{ _('Select activity level') }}</option>
+                                                                    <option value="sedentary">{{ _('Sedentary') }}</option>
+                                                                    <option value="light">{{ _('Light (1-3 days/week)') }}</option>
+                                                                    <option value="moderate">{{ _('Moderate (3-5 days/week)') }}</option>
+                                                                    <option value="active">{{ _('Very active (6-7 days/week)') }}</option>
+                                                                </select>
                                             </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label for="edit_anamnesis_strength_deficits" class="form-label">{{ _('Strength deficits') }}</label>
-                                                <textarea class="form-control" id="edit_anamnesis_strength_deficits" name="anamnesis_strength_deficits" rows="2" 
-                                                          placeholder="{{ _('Areas of weakness or strength loss') }}"></textarea>
+                                                            <div class="col-md-6">
+                                                                <label for="edit_anamnesis_work_posture" class="form-label">{{ _('Work environment') }}</label>
+                                                                <input type="text" class="form-control" id="edit_anamnesis_work_posture" name="anamnesis_work_posture" 
+                                                                       placeholder="{{ _('e.g., desk job, standing, physical labor') }}" onchange="updateEditProgress()">
                                             </div>
+                                                            <div class="col-md-6">
+                                                                <label for="edit_anamnesis_sleep" class="form-label">{{ _('Sleep quality') }}</label>
+                                                                <select class="form-select" id="edit_anamnesis_sleep" name="anamnesis_sleep" onchange="updateEditProgress()">
+                                                                    <option value="">{{ _('Select sleep quality') }}</option>
+                                                                    <option value="excellent">{{ _('Excellent') }}</option>
+                                                                    <option value="good">{{ _('Good') }}</option>
+                                                                    <option value="fair">{{ _('Fair') }}</option>
+                                                                    <option value="poor">{{ _('Poor') }}</option>
+                                                                </select>
                                         </div>
-                                        <div class="mb-3">
-                                            <label for="edit_anamnesis_special_tests" class="form-label">{{ _('Special tests and observations') }}</label>
-                                            <textarea class="form-control" id="edit_anamnesis_special_tests" name="anamnesis_special_tests" rows="3" 
-                                                      placeholder="{{ _('Results of specific tests, postural observations, gait analysis, etc.') }}"></textarea>
+                                                        </div>
+                                                    </div>
                                         </div>
                                     </div>
                                 </div>
+
+                                        <!-- Progress Summary -->
+                                        <div class="anamnesis-summary mt-4 p-3 bg-light rounded">
+                                            <h6 class="text-muted mb-2">{{ _('Assessment Summary') }}</h6>
+                                            <div id="edit-summary-content" class="text-muted small">
+                                                {{ _('Complete the essential information above to see a summary...') }}
+                                            </div>
+                                        </div>
 
                                 <!-- Hidden field to store compiled anamnesis -->
                                 <input type="hidden" id="edit_compiled_anamnesis" name="anamnesis">
-                                
-                                <div class="form-text mt-2">
-                                    <strong class="text-warning">{{ _('Comprehensive clinical history is mandatory before creating any treatment records.') }}</strong>
+                                    </div>
                                 </div>
+                            </div>
+                        </div>
+
                             </div>
                         </div>
 
@@ -753,53 +820,255 @@
             }
         });
 
-        // Add tab completion indicators
-        const tabs = [
-            'edit-personal-data', 'edit-chief-complaint', 'edit-medical-history', 
-            'edit-family-history', 'edit-lifestyle', 'edit-current-pain', 'edit-functional-exam'
-        ];
-        
-        tabs.forEach(function(tabId) {
-            const tabPane = document.getElementById(tabId);
-            const inputs = tabPane.querySelectorAll('input, textarea, select');
-            const tab = document.getElementById(tabId + '-tab');
-            
-            inputs.forEach(function(input) {
-                input.addEventListener('change', function() {
-                    updateTabCompletion(tabId, tab);
-                });
-            });
-            
-            // Initial check
-            updateTabCompletion(tabId, tab);
-        });
+        // Initialize edit form anamnesis functionality
+        initializeEditAnamnesisForm();
     });
 
-    function updateTabCompletion(tabId, tab) {
-        const tabPane = document.getElementById(tabId);
-        const inputs = tabPane.querySelectorAll('input, textarea, select');
-        
-        let hasContent = false;
-        inputs.forEach(function(input) {
-            if (input.value.trim() !== '') {
-                hasContent = true;
-            }
-        });
-        
-        if (hasContent) {
-            tab.classList.add('text-success');
-            if (!tab.querySelector('.bi-check-circle')) {
-                const icon = document.createElement('i');
-                icon.className = 'bi bi-check-circle ms-1';
-                tab.appendChild(icon);
-            }
-        } else {
-            tab.classList.remove('text-success');
-            const checkIcon = tab.querySelector('.bi-check-circle');
-            if (checkIcon) {
-                checkIcon.remove();
+    // Edit form anamnesis functions
+    function initializeEditAnamnesisForm() {
+        // Parse existing anamnesis data if available
+        const anamnesisField = document.getElementById('edit_compiled_anamnesis');
+        if (anamnesisField && anamnesisField.value) {
+            try {
+                const existingData = JSON.parse(anamnesisField.value);
+                populateEditFormFromAnamnesis(existingData);
+            } catch (e) {
+                console.log('Legacy anamnesis format, keeping as-is');
             }
         }
+        
+        // Initial progress update
+        updateEditProgress();
+    }
+
+    function populateEditFormFromAnamnesis(data) {
+        // Essential Information
+        if (data.chief_complaint) document.getElementById('edit_anamnesis_chief_complaint').value = data.chief_complaint;
+        if (data.pain_scale !== undefined) {
+            document.getElementById('edit_anamnesis_pain_scale').value = data.pain_scale;
+            updateEditPainDisplay(data.pain_scale);
+        }
+        if (data.onset_date) document.getElementById('edit_anamnesis_onset_date').value = data.onset_date;
+        if (data.mechanism) document.getElementById('edit_anamnesis_mechanism').value = data.mechanism;
+        
+        // Personal Information
+        if (data.age) document.getElementById('edit_anamnesis_age').value = data.age;
+        if (data.gender) document.getElementById('edit_anamnesis_gender').value = data.gender;
+        if (data.occupation) document.getElementById('edit_anamnesis_occupation').value = data.occupation;
+        if (data.emergency_contact) document.getElementById('edit_anamnesis_emergency_contact').value = data.emergency_contact;
+        
+        // Medical History
+        if (data.previous_conditions) document.getElementById('edit_anamnesis_previous_conditions').value = data.previous_conditions;
+        if (data.surgeries) document.getElementById('edit_anamnesis_surgeries').value = data.surgeries;
+        if (data.medications) document.getElementById('edit_anamnesis_medications').value = data.medications;
+        if (data.allergies) document.getElementById('edit_anamnesis_allergies').value = data.allergies;
+        
+        // Pain Details
+        if (data.pain_type) document.getElementById('edit_anamnesis_pain_type').value = data.pain_type;
+        if (data.pain_location) document.getElementById('edit_anamnesis_pain_location').value = data.pain_location;
+        if (data.pain_triggers) document.getElementById('edit_anamnesis_pain_triggers').value = data.pain_triggers;
+        if (data.pain_relievers) document.getElementById('edit_anamnesis_pain_relievers').value = data.pain_relievers;
+        
+        // Functional Assessment
+        if (data.functional_limitations) document.getElementById('edit_anamnesis_functional_limitations').value = data.functional_limitations;
+        if (data.physical_activity) document.getElementById('edit_anamnesis_physical_activity').value = data.physical_activity;
+        if (data.work_posture) document.getElementById('edit_anamnesis_work_posture').value = data.work_posture;
+        if (data.sleep) document.getElementById('edit_anamnesis_sleep').value = data.sleep;
+    }
+
+    function updateEditProgress() {
+        const essentialFields = [
+            'edit_anamnesis_chief_complaint',
+            'edit_anamnesis_pain_scale'
+        ];
+        
+        const importantFields = [
+            'edit_diagnosis',
+            'edit_treatment_plan',
+            'edit_anamnesis_onset_date',
+            'edit_anamnesis_mechanism',
+            'edit_anamnesis_previous_conditions',
+            'edit_anamnesis_medications'
+        ];
+        
+        const helpfulFields = [
+            'edit_clinical_notes',
+            'edit_assessment_date',
+            'edit_anamnesis_pain_type',
+            'edit_anamnesis_pain_location',
+            'edit_anamnesis_pain_triggers',
+            'edit_anamnesis_pain_relievers'
+        ];
+        
+        const optionalFields = [
+            'edit_anamnesis_age',
+            'edit_anamnesis_gender',
+            'edit_anamnesis_occupation',
+            'edit_anamnesis_functional_limitations',
+            'edit_anamnesis_physical_activity'
+        ];
+        
+        let essentialCount = 0;
+        let importantCount = 0;
+        let helpfulCount = 0;
+        let optionalCount = 0;
+        
+        essentialFields.forEach(id => {
+            const field = document.getElementById(id);
+            if (field && field.value.trim()) essentialCount++;
+        });
+        
+        importantFields.forEach(id => {
+            const field = document.getElementById(id);
+            if (field && field.value.trim()) importantCount++;
+        });
+        
+        helpfulFields.forEach(id => {
+            const field = document.getElementById(id);
+            if (field && field.value.trim()) helpfulCount++;
+        });
+        
+        optionalFields.forEach(id => {
+            const field = document.getElementById(id);
+            if (field && field.value.trim()) optionalCount++;
+        });
+        
+        const totalFields = essentialFields.length + importantFields.length + helpfulFields.length + optionalFields.length;
+        const filledFields = essentialCount + importantCount + helpfulCount + optionalCount;
+        const percentage = Math.round((filledFields / totalFields) * 100);
+        
+        const progressBar = document.getElementById('edit-anamnesis-progress-bar');
+        const progressText = document.getElementById('edit-progress-percentage');
+        
+        if (progressBar) {
+            progressBar.style.width = percentage + '%';
+            progressBar.setAttribute('aria-valuenow', percentage);
+        }
+        
+        if (progressText) {
+            progressText.textContent = percentage + '%';
+            progressText.className = 'badge ' + (percentage >= 70 ? 'bg-success' : percentage >= 40 ? 'bg-warning' : 'bg-danger');
+        }
+        
+        updateEditSummary();
+        updateEditCompiledAnamnesis();
+    }
+
+    function updateEditPainDisplay(value) {
+        const display = document.getElementById('edit-pain-display');
+        const description = document.getElementById('edit-pain-description');
+        
+        if (!display || !description) return;
+        
+        const painLevels = [
+            { range: [0, 0], label: 'No pain', class: 'bg-success', emoji: '😊' },
+            { range: [1, 3], label: 'Mild pain', class: 'bg-info', emoji: '😐' },
+            { range: [4, 6], label: 'Moderate pain', class: 'bg-warning', emoji: '😟' },
+            { range: [7, 8], label: 'Severe pain', class: 'bg-danger', emoji: '😫' },
+            { range: [9, 10], label: 'Extreme pain', class: 'bg-dark', emoji: '😵' }
+        ];
+        
+        const level = painLevels.find(l => value >= l.range[0] && value <= l.range[1]);
+        
+        display.textContent = value;
+        display.className = 'badge fs-6 ' + level.class;
+        description.textContent = level.emoji + ' ' + level.label;
+    }
+
+    function updateEditSummary() {
+        const chiefComplaint = document.getElementById('edit_anamnesis_chief_complaint').value.trim();
+        const painScale = document.getElementById('edit_anamnesis_pain_scale').value;
+        const diagnosis = document.getElementById('edit_diagnosis').value.trim();
+        const treatmentPlan = document.getElementById('edit_treatment_plan').value.trim();
+        const onset = document.getElementById('edit_anamnesis_onset_date').value;
+        const mechanism = document.getElementById('edit_anamnesis_mechanism').value.trim();
+        
+        const summaryElement = document.getElementById('edit-summary-content');
+        if (!summaryElement) return;
+        
+        if (!chiefComplaint && !diagnosis && !painScale) {
+            summaryElement.innerHTML = '<em class="text-muted">Complete the essential information above to see a summary...</em>';
+            return;
+        }
+        
+        let summary = '<div class="row g-2">';
+        
+        if (diagnosis) {
+            summary += `<div class="col-md-6"><strong>🩺 Diagnosis:</strong> ${diagnosis}</div>`;
+        }
+        
+        if (chiefComplaint) {
+            summary += `<div class="col-md-6"><strong>💬 Chief complaint:</strong> ${chiefComplaint.substring(0, 50)}${chiefComplaint.length > 50 ? '...' : ''}</div>`;
+        }
+        
+        if (painScale) {
+            const painLevel = painScale == 0 ? 'No pain' : painScale <= 3 ? 'Mild' : painScale <= 6 ? 'Moderate' : painScale <= 8 ? 'Severe' : 'Extreme';
+            summary += `<div class="col-md-6"><strong>⚡ Pain level:</strong> ${painScale}/10 (${painLevel})</div>`;
+        }
+        
+        if (treatmentPlan) {
+            summary += `<div class="col-md-6"><strong>📋 Treatment:</strong> ${treatmentPlan.substring(0, 50)}${treatmentPlan.length > 50 ? '...' : ''}</div>`;
+        }
+        
+        if (onset) {
+            summary += `<div class="col-md-6"><strong>📅 Onset:</strong> ${new Date(onset).toLocaleDateString()}</div>`;
+        }
+        
+        if (mechanism) {
+            summary += `<div class="col-md-6"><strong>⚙️ Mechanism:</strong> ${mechanism}</div>`;
+        }
+        
+        summary += '</div>';
+        summaryElement.innerHTML = summary;
+    }
+
+    function updateEditCompiledAnamnesis() {
+        const compiledField = document.getElementById('edit_compiled_anamnesis');
+        if (!compiledField) return;
+        
+        const anamnesisData = {
+            // Clinical Assessment
+            diagnosis: document.getElementById('edit_diagnosis').value.trim(),
+            treatment_plan: document.getElementById('edit_treatment_plan').value.trim(),
+            clinical_notes: document.getElementById('edit_clinical_notes').value.trim(),
+            assessment_date: document.getElementById('edit_assessment_date').value,
+            
+            // Essential Information
+            chief_complaint: document.getElementById('edit_anamnesis_chief_complaint').value.trim(),
+            pain_scale: parseInt(document.getElementById('edit_anamnesis_pain_scale').value) || 0,
+            onset_date: document.getElementById('edit_anamnesis_onset_date').value,
+            mechanism: document.getElementById('edit_anamnesis_mechanism').value.trim(),
+            
+            // Personal Information
+            age: document.getElementById('edit_anamnesis_age').value,
+            gender: document.getElementById('edit_anamnesis_gender').value,
+            occupation: document.getElementById('edit_anamnesis_occupation').value.trim(),
+            emergency_contact: document.getElementById('edit_anamnesis_emergency_contact').value.trim(),
+            
+            // Medical History
+            previous_conditions: document.getElementById('edit_anamnesis_previous_conditions').value.trim(),
+            surgeries: document.getElementById('edit_anamnesis_surgeries').value.trim(),
+            medications: document.getElementById('edit_anamnesis_medications').value.trim(),
+            allergies: document.getElementById('edit_anamnesis_allergies').value.trim(),
+            
+            // Pain Details
+            pain_type: document.getElementById('edit_anamnesis_pain_type').value.trim(),
+            pain_location: document.getElementById('edit_anamnesis_pain_location').value.trim(),
+            pain_triggers: document.getElementById('edit_anamnesis_pain_triggers').value.trim(),
+            pain_relievers: document.getElementById('edit_anamnesis_pain_relievers').value.trim(),
+            
+            // Functional Assessment
+            functional_limitations: document.getElementById('edit_anamnesis_functional_limitations').value.trim(),
+            physical_activity: document.getElementById('edit_anamnesis_physical_activity').value,
+            work_posture: document.getElementById('edit_anamnesis_work_posture').value.trim(),
+            sleep: document.getElementById('edit_anamnesis_sleep').value,
+            
+            // Metadata
+            timestamp: new Date().toISOString(),
+            version: '2.0'
+        };
+        
+        compiledField.value = JSON.stringify(anamnesisData);
     }
 
     // Date validation - prevent future dates for date of birth

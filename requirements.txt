@@ -27,3 +27,8 @@ stripe>=7.0,<8.0
 Flask-Babel>=4.0
 cryptography>=41.0.0
 sentry-sdk[flask]>=1.40.0
+# Google OAuth dependencies
+Authlib>=1.2.0
+google-auth>=2.0.0
+google-auth-oauthlib>=1.0.0
+google-auth-httplib2>=0.2.0

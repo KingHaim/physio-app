@@ -446,6 +446,11 @@ class User(db.Model, UserMixin):
     consent_given = db.Column(db.Boolean, default=False)
     consent_date = db.Column(db.DateTime, nullable=True)
     
+    # OAuth fields
+    oauth_provider = db.Column(db.String(50), nullable=True)  # 'google', 'facebook', etc.
+    oauth_id = db.Column(db.String(255), nullable=True, index=True)  # OAuth provider's user ID
+    avatar_url = db.Column(db.String(255), nullable=True)  # Profile picture URL
+    
     # Soft delete
     is_deleted = db.Column(db.Boolean, default=False)
     

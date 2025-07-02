@@ -5,6 +5,8 @@ from app.forms import RegistrationForm, LoginForm
 from app.email_utils import send_verification_email, send_welcome_email
 from datetime import datetime
 import logging
+from authlib.integrations.flask_client import OAuth
+import secrets
 
 # If the above import fails, try this alternative:
 # from werkzeug.utils import url_parse
@@ -25,6 +27,30 @@ def is_safe_url(target):
     return target.startswith(ref_url) if target else False
 
 auth = Blueprint('auth', __name__)
+
+# OAuth configuration
+oauth = OAuth()
+
+def init_oauth(app):
+    """Initialize OAuth with the Flask app"""
+    oauth.init_app(app)
+    
+    google = oauth.register(
+        name='google',
+        client_id=app.config['GOOGLE_CLIENT_ID'],
+        client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+        authorize_url='https://accounts.google.com/o/oauth2/auth',
+        authorize_params=None,
+        access_token_url='https://oauth2.googleapis.com/token',
+        access_token_params=None,
+        refresh_token_url=None,
+        redirect_uri=None,
+        client_kwargs={
+            'scope': 'openid email profile',
+            'prompt': 'select_account'
+        },
+    )
+    return google
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -214,4 +240,111 @@ def resend_verification():
         
         return redirect(url_for('auth.login'))
     
-    return render_template('auth/resend_verification.html') 
+    return render_template('auth/resend_verification.html')
+
+@auth.route('/login/google')
+def google_login():
+    """Initiate Google OAuth login"""
+    if not current_app.config.get('GOOGLE_CLIENT_ID'):
+        flash('Google login is not configured.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    google = oauth.google
+    redirect_uri = url_for('auth.google_callback', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@auth.route('/callback/google')
+def google_callback():
+    """Handle Google OAuth callback"""
+    try:
+        google = oauth.google
+        token = google.authorize_access_token()
+        
+        # Get user info from Google using the access token
+        import requests
+        access_token = token.get('access_token')
+        if not access_token:
+            flash('Failed to get access token from Google.', 'error')
+            return redirect(url_for('auth.login'))
+        
+        # Fetch user info from Google API
+        user_info_response = requests.get(
+            'https://www.googleapis.com/oauth2/v2/userinfo',
+            headers={'Authorization': f'Bearer {access_token}'}
+        )
+        
+        if user_info_response.status_code != 200:
+            flash('Failed to get user information from Google.', 'error')
+            return redirect(url_for('auth.login'))
+        
+        user_info = user_info_response.json()
+        if user_info:
+            email = user_info.get('email')
+            name = user_info.get('name', '')
+            google_id = user_info.get('id')  # Changed from 'sub' to 'id' for v2 API
+            avatar_url = user_info.get('picture')
+            
+            if not email or not google_id:
+                flash('Failed to get user information from Google.', 'error')
+                return redirect(url_for('auth.login'))
+            
+            # Check if user exists with this Google ID
+            user = User.query.filter_by(oauth_provider='google', oauth_id=google_id).first()
+            
+            if not user:
+                # Check if user exists with this email (for account linking)
+                user = User.query.filter_by(email=email).first()
+                if user:
+                    # Link existing account with Google
+                    user.oauth_provider = 'google'
+                    user.oauth_id = google_id
+                    user.avatar_url = avatar_url
+                    user.email_verified = True  # Google emails are verified
+                else:
+                    # Create new user
+                    # Split name into first and last name
+                    name_parts = name.split(' ', 1)
+                    first_name = name_parts[0] if name_parts else ''
+                    last_name = name_parts[1] if len(name_parts) > 1 else ''
+                    
+                    user = User(
+                        username=email,
+                        email=email,
+                        first_name=first_name,
+                        last_name=last_name,
+                        oauth_provider='google',
+                        oauth_id=google_id,
+                        avatar_url=avatar_url,
+                        email_verified=True,  # Google emails are verified
+                        role='physio'
+                    )
+                    
+                    # Make the first registered user an admin
+                    if User.query.count() == 0:
+                        user.is_admin = True
+                        user.role = 'admin'
+                    
+                    db.session.add(user)
+            
+            db.session.commit()
+            
+            # Log the user in
+            login_user(user, remember=True)
+            
+            # Set user's preferred language in session if available
+            if user.language:
+                session['lang'] = user.language
+            
+            current_app.logger.info(f"Google OAuth login successful for user: {user.email}")
+            flash('Successfully logged in with Google!', 'success')
+            
+            next_page = request.args.get('next')
+            if not next_page or not is_safe_url(next_page):
+                next_page = url_for('main.index')
+            return redirect(next_page)
+            
+    except Exception as e:
+        current_app.logger.error(f"Google OAuth error: {str(e)}")
+        flash('Authentication failed. Please try again.', 'error')
+    
+    return redirect(url_for('auth.login')) 

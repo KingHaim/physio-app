@@ -1,0 +1,125 @@
+/* Patient Forms Styling */
+
+/* Card styling improvements */
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1.25rem;
+}
+
+/* Form controls */
+.form-control, .form-select {
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Labels */
+.form-label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+/* Accordion styling */
+.accordion-item {
+    border: 1px solid #e0e0e0;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.accordion-button {
+    padding: 1.25rem;
+    background-color: #f8f9fa;
+    font-weight: 500;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #e7f1ff;
+    color: #0d6efd;
+}
+
+.accordion-body {
+    padding: 1.5rem;
+    background-color: #fff;
+}
+
+/* Progress bar */
+.anamnesis-progress .progress {
+    border-radius: 1rem;
+    background-color: #e9ecef;
+}
+
+.anamnesis-progress .progress-bar {
+    border-radius: 1rem;
+    transition: width 0.3s ease;
+}
+
+/* Section titles and badges */
+.section-title {
+    color: #495057;
+    margin-bottom: 1.25rem;
+}
+
+.required-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 0.25rem;
+    margin-left: 0.5rem;
+}
+
+/* Pain scale styling */
+.pain-scale-container {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+
+.pain-scale-container .form-range {
+    height: 1.5rem;
+}
+
+.pain-scale-container .badge {
+    padding: 0.5rem 1rem;
+}
+
+/* Essential information section */
+.essential-info {
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e0e0e0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .accordion-body {
+        padding: 1rem;
+    }
+    
+    .essential-info {
+        padding: 1rem;
+    }
+}
+
+/* Icons styling */
+.bi {
+    vertical-align: -0.125em;
+} 

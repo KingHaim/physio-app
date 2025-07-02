@@ -743,9 +743,8 @@ msgstr ""
 
 #: app/templates/appointments.html:63 app/templates/calendar.html:50
 #: app/templates/index.html:432 app/templates/patient_detail.html:228
-#, fuzzy
 msgid "New Appointment"
-msgstr "Agregar Cita Recurrente"
+msgstr "Nueva Cita"
 
 #: app/templates/appointments.html:70
 msgid "Controls"
@@ -4287,18 +4286,16 @@ msgstr ""
 
 #: app/templates/patient_detail.html:225
 #: app/templates/patient_detail_BACKUP.html:178
-#, fuzzy
 msgid "Edit Patient"
-msgstr "Para paciente:"
+msgstr "Editar Paciente"
 
 #: app/templates/patient_detail.html:236
-#, fuzzy
 msgid "Recurring"
-msgstr "Crear Regla Recurrente"
+msgstr "Recurrente"
 
 #: app/templates/patient_detail.html:242
 msgid "AI Tools"
-msgstr ""
+msgstr "Herramientas IA"
 
 #: app/templates/patient_detail.html:247
 #: app/templates/patient_detail_BACKUP.html:187

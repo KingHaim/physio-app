@@ -7,508 +7,490 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-10">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title mb-0">{{ _('New Patient') }}</h2>
-                    <p class="text-muted mb-0">{{ _('Complete the anamnesis (clinical history) before proceeding to patient data') }}</p>
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-journal-medical me-2"></i>
+                        {{ _('Clinical History (Anamnesis)') }}
+                    </h5>
+                    <small class="opacity-75">{{ _('Complete the clinical assessment step by step') }}</small>
                 </div>
-                <div class="card-body">
-                    <!-- Progress Steps -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="progress-steps">
-                                <div class="step active" id="step1-indicator">
-                                    <div class="step-number">1</div>
-                                    <div class="step-title">{{ _('Anamnesis & Patient Data') }}</div>
+                <div class="card-body p-4">
+                    
+                    <!-- Progress Indicator -->
+                    <div class="anamnesis-progress mb-4">
+                        <div class="progress-header d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">{{ _('Assessment Progress') }}</span>
+                            <span class="badge bg-primary" id="progress-percentage">0%</span>
                                 </div>
-                                <div class="step" id="step2-indicator">
-                                    <div class="step-number">2</div>
-                                    <div class="step-title">{{ _('Portal Access') }}</div>
-                                </div>
-                            </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" id="anamnesis-progress-bar" style="width: 0%"></div>
                         </div>
                     </div>
 
-                    <form action="{{ url_for('main.new_patient') }}" method="POST" id="newPatientForm">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <!-- Essential Information (Always visible) -->
+                    <div class="essential-info mb-4">
+                        <h6 class="section-title">
+                            <i class="bi bi-exclamation-circle-fill text-danger me-2"></i>
+                            {{ _('Essential Information') }}
+                            <span class="required-badge">{{ _('Required') }}</span>
+                        </h6>
                         
-                        <!-- Step 1: Anamnesis & Patient Data -->
-                        <div class="step-content active" id="step1">
-                            <div class="alert alert-info">
-                                <i class="bi bi-info-circle"></i>
-                                <strong>{{ _('Complete Patient Information & Clinical History') }}</strong><br>
-                                {{ _('Fill in patient data and clinical history. This information is essential for proper treatment planning.') }}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="anamnesis_chief_complaint" class="form-label fw-semibold">
+                                    <i class="bi bi-chat-dots text-primary me-1"></i>
+                                    {{ _('Chief Complaint') }} <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" id="anamnesis_chief_complaint" name="anamnesis_chief_complaint" 
+                                          rows="3" required
+                                          placeholder="{{ _('What is the main reason for this visit? (e.g., Lower back pain for 2 weeks...)') }}"
+                                          onchange="updateProgress()"></textarea>
                             </div>
-                            
-                            <!-- Anamnesis Tabs -->
-                            <ul class="nav nav-tabs mb-4" id="anamnesisTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="personal-data-tab" data-bs-toggle="tab" data-bs-target="#personal-data" type="button" role="tab">
-                                        <i class="bi bi-person"></i> {{ _('Patient Data') }}
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="chief-complaint-tab" data-bs-toggle="tab" data-bs-target="#chief-complaint" type="button" role="tab">
-                                        <i class="bi bi-chat-dots"></i> {{ _('Chief Complaint') }}
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="medical-history-tab" data-bs-toggle="tab" data-bs-target="#medical-history" type="button" role="tab">
-                                        <i class="bi bi-clipboard-heart"></i> {{ _('Medical History') }}
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="family-history-tab" data-bs-toggle="tab" data-bs-target="#family-history" type="button" role="tab">
-                                        <i class="bi bi-people"></i> {{ _('Family History') }}
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="lifestyle-tab" data-bs-toggle="tab" data-bs-target="#lifestyle" type="button" role="tab">
-                                        <i class="bi bi-heart-pulse"></i> {{ _('Lifestyle') }}
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="current-pain-tab" data-bs-toggle="tab" data-bs-target="#current-pain" type="button" role="tab">
-                                        <i class="bi bi-bandaid"></i> {{ _('Current Pain') }}
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="functional-exam-tab" data-bs-toggle="tab" data-bs-target="#functional-exam" type="button" role="tab">
-                                        <i class="bi bi-activity"></i> {{ _('Functional Exam') }}
-                                    </button>
-                                </li>
-                            </ul>
-
-                            <div class="tab-content mt-3" id="anamnesisTabContent">
-                                <!-- Patient Data Tab (combining personal info + basic patient data) -->
-                                <div class="tab-pane fade show active" id="personal-data" role="tabpanel">
-                                    <h6 class="mb-3">{{ _('Basic Patient Information') }}</h6>
-                                    
-                                    <!-- Essential Patient Data -->
-                                    <div class="row mb-4">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="name" class="form-label">{{ _('Full Name') }} <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="name" name="name" required>
+                            <div class="col-md-6">
+                                <label for="anamnesis_pain_scale" class="form-label fw-semibold">
+                                    <i class="bi bi-thermometer-half text-warning me-1"></i>
+                                    {{ _('Current Pain Level') }} <span class="text-danger">*</span>
+                                </label>
+                                <div class="pain-scale-container">
+                                    <input type="range" class="form-range" id="anamnesis_pain_scale" name="anamnesis_pain_scale" 
+                                           min="0" max="10" value="0" required
+                                           oninput="updatePainDisplay(this.value); updateProgress()">
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <small class="text-muted">😊 0</small>
+                                        <div class="text-center">
+                                            <span id="pain-display" class="badge bg-success fs-6">0</span>
+                                            <div><small id="pain-description">{{ _('No pain') }}</small></div>
                                         </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="date_of_birth" class="form-label">{{ _('Date of Birth') }} <span class="text-danger">*</span></label>
-                                            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
+                                        <small class="text-muted">😵 10</small>
                                         </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="patient_contact_email" class="form-label">{{ _('Email Address') }}</label>
-                                            <input type="email" class="form-control" id="patient_contact_email" name="patient_contact_email" placeholder="{{ _('patient@example.com') }}">
                                         </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="patient_contact_phone" class="form-label">{{ _('Phone Number') }}</label>
-                                            <input type="tel" class="form-control" id="patient_contact_phone" name="patient_contact_phone" placeholder="{{ _('+34 600 123 456') }}">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="status" class="form-label">{{ _('Status') }}</label>
-                                            <select class="form-select" id="status" name="status">
-                                                <option value="Active">{{ _('Active') }}</option>
-                                                <option value="Inactive">{{ _('Inactive') }}</option>
-                                                <option value="Completed">{{ _('Treatment Completed') }}</option>
-                                            </select>
                                         </div>
                                     </div>
 
-                                    <!-- Address Information -->
-                                    <h6 class="mb-3">{{ _('Address Information') }}</h6>
-                                    <div class="row mb-4">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="address_line1" class="form-label">{{ _('Address Line 1') }}</label>
-                                            <input type="text" class="form-control" id="address_line1" name="address_line1" placeholder="{{ _('Street address') }}">
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-4">
+                                <label for="anamnesis_onset_date" class="form-label fw-semibold">
+                                    <i class="bi bi-calendar-event text-info me-1"></i>
+                                    {{ _('When did it start?') }}
+                                </label>
+                                <input type="date" class="form-control" id="anamnesis_onset_date" name="anamnesis_onset_date" 
+                                       onchange="updateProgress()">
                                         </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="address_line2" class="form-label">{{ _('Address Line 2') }}</label>
-                                            <input type="text" class="form-control" id="address_line2" name="address_line2" placeholder="{{ _('Apartment, suite, etc.') }}">
+                            <div class="col-md-8">
+                                <label for="anamnesis_mechanism" class="form-label fw-semibold">
+                                    <i class="bi bi-gear text-secondary me-1"></i>
+                                    {{ _('How did it happen?') }}
+                                </label>
+                                <input type="text" class="form-control" id="anamnesis_mechanism" name="anamnesis_mechanism" 
+                                       placeholder="{{ _('e.g., Lifting heavy box, fell down stairs, gradual onset...') }}"
+                                       onchange="updateProgress()">
                                         </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label for="city" class="form-label">{{ _('City') }}</label>
-                                            <input type="text" class="form-control" id="city" name="city">
-                                        </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label for="postcode" class="form-label">{{ _('Postal Code') }}</label>
-                                            <input type="text" class="form-control" id="postcode" name="postcode">
-                                        </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label for="preferred_location" class="form-label">{{ _('Preferred Treatment Location') }}</label>
-                                            <select class="form-select" id="preferred_location" name="preferred_location">
-                                                <option value="">{{ _('Select location') }}</option>
-                                                {% for location in current_user.locations %}
-                                                <option value="{{ location.name }}">{{ location.name }}</option>
-                                                {% endfor %}
-                                            </select>
                                         </div>
                                     </div>
 
-                                    <!-- Medical Basic Info -->
-                                    <h6 class="mb-3">{{ _('Basic Medical Information') }}</h6>
-                                    <div class="row mb-4">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="diagnosis" class="form-label">{{ _('Primary Diagnosis') }} <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="diagnosis" name="diagnosis" placeholder="{{ _('Primary condition being treated') }}" required>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
+                    <!-- Collapsible Sections -->
+                    <div class="accordion anamnesis-accordion" id="anamnesisAccordion">
+                        
+                        <!-- Personal Information -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#personalInfo" aria-expanded="false">
+                                    <i class="bi bi-person-circle text-primary me-2"></i>
+                                    <span class="fw-semibold">{{ _('Personal Information') }}</span>
+                                    <span class="badge bg-light text-dark ms-2" id="personal-info-status">{{ _('Optional') }}</span>
+                                </button>
+                            </h2>
+                            <div id="personalInfo" class="accordion-collapse collapse" data-bs-parent="#anamnesisAccordion">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
                                             <label for="anamnesis_gender" class="form-label">{{ _('Gender') }}</label>
-                                            <select class="form-select" id="anamnesis_gender" name="anamnesis_gender">
-                                                <option value="">{{ _('Select gender') }}</option>
+                                            <select class="form-select" id="anamnesis_gender" name="anamnesis_gender" onchange="updateProgress()">
+                                                <option value="">{{ _('Select...') }}</option>
                                                 <option value="male">{{ _('Male') }}</option>
                                                 <option value="female">{{ _('Female') }}</option>
                                                 <option value="other">{{ _('Other') }}</option>
                                                 <option value="prefer_not_to_say">{{ _('Prefer not to say') }}</option>
                                             </select>
                                         </div>
-                                    </div>
-
-                                    <!-- Personal Details -->
-                                    <h6 class="mb-3">{{ _('Personal Details') }}</h6>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
+                                        <div class="col-md-4">
                                             <label for="anamnesis_occupation" class="form-label">{{ _('Occupation') }}</label>
-                                            <input type="text" class="form-control" id="anamnesis_occupation" name="anamnesis_occupation" placeholder="{{ _('Current job/profession') }}">
+                                            <input type="text" class="form-control" id="anamnesis_occupation" name="anamnesis_occupation" 
+                                                   placeholder="{{ _('Current job or profession') }}" onchange="updateProgress()">
                                         </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="anamnesis_emergency_contact" class="form-label">{{ _('Emergency Contact') }}</label>
-                                            <input type="text" class="form-control" id="anamnesis_emergency_contact" name="anamnesis_emergency_contact" placeholder="{{ _('Name and phone number') }}">
-                                        </div>
-                                    </div>
-
-                                    <!-- Treatment Planning -->
-                                    <h6 class="mb-3">{{ _('Treatment Planning') }}</h6>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="treatment_plan" class="form-label">{{ _('Treatment Plan') }}</label>
-                                            <textarea class="form-control" id="treatment_plan" name="treatment_plan" rows="3" placeholder="{{ _('Initial treatment strategy and goals') }}"></textarea>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="notes" class="form-label">{{ _('Additional Notes') }}</label>
-                                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="{{ _('Any other relevant information') }}"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Chief Complaint Tab -->
-                                <div class="tab-pane fade" id="chief-complaint" role="tabpanel">
-                                    <h6 class="mb-3">{{ _('Reason for Todays Visit') }}</h6>
-                                    
-                                    <!-- Quick Diagnosis Selector -->
-                                    <div class="mb-3">
-                                        <label for="quick_diagnosis" class="form-label">
-                                            <i class="bi bi-lightning-charge"></i> {{ _('Quick Diagnosis Selection') }}
-                                        </label>
-                                        <select class="form-select" id="quick_diagnosis" onchange="fillDiagnosisFromQuick()">
-                                            <option value="">{{ _('Select a common diagnosis...') }}</option>
-                                            <optgroup label="{{ _('Musculoskeletal') }}">
-                                                <option value="tendinopathy">{{ _('Tendinopathy') }}</option>
-                                                <option value="grade2_sprain">{{ _('Grade II Sprain') }}</option>
-                                                <option value="grade1_sprain">{{ _('Grade I Sprain') }}</option>
-                                                <option value="muscle_strain">{{ _('Muscle Strain') }}</option>
-                                                <option value="joint_stiffness">{{ _('Joint Stiffness') }}</option>
-                                                <option value="chronic_pain">{{ _('Chronic Pain') }}</option>
-                                            </optgroup>
-                                            <optgroup label="{{ _('Spine') }}">
-                                                <option value="lower_back_pain">{{ _('Lower Back Pain') }}</option>
-                                                <option value="cervical_pain">{{ _('Cervical Pain') }}</option>
-                                                <option value="herniated_disc">{{ _('Herniated Disc') }}</option>
-                                                <option value="sciatica">{{ _('Sciatica') }}</option>
-                                                <option value="whiplash">{{ _('Whiplash') }}</option>
-                                            </optgroup>
-                                            <optgroup label="{{ _('Sports Injuries') }}">
-                                                <option value="runners_knee">{{ _('Runners Knee') }}</option>
-                                                <option value="tennis_elbow">{{ _('Tennis Elbow') }}</option>
-                                                <option value="shoulder_impingement">{{ _('Shoulder Impingement') }}</option>
-                                                <option value="acl_injury">{{ _('ACL Injury') }}</option>
-                                                <option value="rotator_cuff">{{ _('Rotator Cuff Injury') }}</option>
-                                            </optgroup>
-                                            <optgroup label="{{ _('Post-Surgical') }}">
-                                                <option value="post_surgery_knee">{{ _('Post-Surgery Knee Rehabilitation') }}</option>
-                                                <option value="post_surgery_shoulder">{{ _('Post-Surgery Shoulder Rehabilitation') }}</option>
-                                                <option value="post_surgery_hip">{{ _('Post-Surgery Hip Rehabilitation') }}</option>
-                                            </optgroup>
-                                        </select>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="anamnesis_chief_complaint" class="form-label">
-                                            {{ _('Main reason for consultation') }} <span class="text-danger">*</span>
-                                        </label>
-                                        <textarea class="form-control" id="anamnesis_chief_complaint" name="anamnesis_chief_complaint" rows="3" 
-                                                  placeholder="{{ _('What brought you here today? Describe your main concern or symptom.') }}" required></textarea>
-                                    </div>
-                                    
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="anamnesis_onset_date" class="form-label">
-                                                <i class="bi bi-calendar-event"></i> {{ _('When did it start?') }}
-                                            </label>
-                                            <input type="date" class="form-control" id="anamnesis_onset_date" name="anamnesis_onset_date">
-                                            <small class="form-text text-muted">{{ _('Approximate date when symptoms began') }}</small>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="anamnesis_mechanism" class="form-label">{{ _('How did it happen?') }}</label>
-                                            <select class="form-select" id="anamnesis_mechanism" name="anamnesis_mechanism">
-                                                <option value="">{{ _('Select mechanism...') }}</option>
-                                                <option value="sudden">{{ _('Sudden onset') }}</option>
-                                                <option value="gradual">{{ _('Gradual onset') }}</option>
-                                                <option value="trauma">{{ _('Trauma/Accident') }}</option>
-                                                <option value="overuse">{{ _('Overuse/Repetitive') }}</option>
-                                                <option value="sport">{{ _('Sports activity') }}</option>
-                                                <option value="work">{{ _('Work-related') }}</option>
-                                                <option value="unknown">{{ _('Unknown/Idiopathic') }}</option>
+                                        <div class="col-md-4">
+                                            <label for="anamnesis_physical_activity" class="form-label">{{ _('Activity Level') }}</label>
+                                            <select class="form-select" id="anamnesis_physical_activity" name="anamnesis_physical_activity" onchange="updateProgress()">
+                                                <option value="">{{ _('Select...') }}</option>
+                                                <option value="sedentary">🪑 {{ _('Sedentary') }}</option>
+                                                <option value="light">🚶 {{ _('Light') }}</option>
+                                                <option value="moderate">🏃 {{ _('Moderate') }}</option>
+                                                <option value="active">💪 {{ _('Very active') }}</option>
                                             </select>
                                         </div>
                                     </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="anamnesis_onset_description" class="form-label">{{ _('Additional onset details') }}</label>
-                                        <textarea class="form-control" id="anamnesis_onset_description" name="anamnesis_onset_description" rows="2" 
-                                                  placeholder="{{ _('e.g., after lifting heavy box, during morning run, working at computer...') }}"></textarea>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Medical History Tab -->
-                                <div class="tab-pane fade" id="medical-history" role="tabpanel">
-                                    <h6 class="mb-3">{{ _('Previous Medical History') }}</h6>
+                        <!-- Medical History -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#medicalHistory" aria-expanded="false">
+                                    <i class="bi bi-heart-pulse text-danger me-2"></i>
+                                    <span class="fw-semibold">{{ _('Medical History') }}</span>
+                                    <span class="badge bg-warning text-dark ms-2">{{ _('Important') }}</span>
+                                </button>
+                            </h2>
+                            <div id="medicalHistory" class="accordion-collapse collapse" data-bs-parent="#anamnesisAccordion">
+                                <div class="accordion-body">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">{{ _('Previous Conditions') }}</label>
+                                        <div class="condition-grid">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="history_diabetes" name="history_conditions" value="diabetes" onchange="updateProgress()">
+                                                <label class="form-check-label" for="history_diabetes">{{ _('Diabetes') }}</label>
+                                    </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="history_hypertension" name="history_conditions" value="hypertension" onchange="updateProgress()">
+                                                <label class="form-check-label" for="history_hypertension">{{ _('Hypertension') }}</label>
+                                    </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="history_heart_disease" name="history_conditions" value="heart_disease" onchange="updateProgress()">
+                                                <label class="form-check-label" for="history_heart_disease">{{ _('Heart Disease') }}</label>
+                                        </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="history_arthritis" name="history_conditions" value="arthritis" onchange="updateProgress()">
+                                                <label class="form-check-label" for="history_arthritis">{{ _('Arthritis') }}</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="history_none" name="history_conditions" value="none" onchange="toggleNoConditions(this); updateProgress()">
+                                                <label class="form-check-label fw-semibold" for="history_none">{{ _('No previous conditions') }}</label>
+                                            </div>
+                                        </div>
+                                    </div>
                                     
-                                    <!-- Common Conditions Checkboxes -->
-                                    <div class="mb-4">
-                                        <label class="form-label">
-                                            <i class="bi bi-check2-square"></i> {{ _('Common Previous Conditions') }}
-                                        </label>
-                                        <div class="row">
-                                            <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="anamnesis_medications" class="form-label">{{ _('Current Medications') }}</label>
+                                        <textarea class="form-control" id="anamnesis_medications" name="anamnesis_medications" 
+                                                  rows="2" placeholder="{{ _('List any medications, supplements, or treatments...') }}"
+                                                  onchange="updateProgress()"></textarea>
+                                </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ _('Allergies') }}</label>
+                                        <div class="allergy-grid">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="history_diabetes" name="history_conditions" value="diabetes">
-                                                    <label class="form-check-label" for="history_diabetes">{{ _('Diabetes') }}</label>
+                                                <input class="form-check-input" type="checkbox" id="allergy_medications" name="allergies" value="medications" onchange="updateProgress()">
+                                                <label class="form-check-label" for="allergy_medications">{{ _('Medications') }}</label>
                                                 </div>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="history_hypertension" name="history_conditions" value="hypertension">
-                                                    <label class="form-check-label" for="history_hypertension">{{ _('Hypertension') }}</label>
+                                                <input class="form-check-input" type="checkbox" id="allergy_latex" name="allergies" value="latex" onchange="updateProgress()">
+                                                <label class="form-check-label" for="allergy_latex">{{ _('Latex') }}</label>
                                                 </div>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="history_arthritis" name="history_conditions" value="arthritis">
-                                                    <label class="form-check-label" for="history_arthritis">{{ _('Arthritis') }}</label>
+                                                <input class="form-check-input" type="checkbox" id="allergy_food" name="allergies" value="food" onchange="updateProgress()">
+                                                <label class="form-check-label" for="allergy_food">{{ _('Food') }}</label>
                                                 </div>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="history_osteoporosis" name="history_conditions" value="osteoporosis">
-                                                    <label class="form-check-label" for="history_osteoporosis">{{ _('Osteoporosis') }}</label>
+                                                <input class="form-check-input" type="checkbox" id="allergy_none" name="allergies" value="none" onchange="toggleNoAllergies(this); updateProgress()">
+                                                <label class="form-check-label fw-semibold" for="allergy_none">{{ _('No known allergies') }}</label>
                                                 </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="history_fibromyalgia" name="history_conditions" value="fibromyalgia">
-                                                    <label class="form-check-label" for="history_fibromyalgia">{{ _('Fibromyalgia') }}</label>
                                                 </div>
                                             </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pain Details -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#painDetails" aria-expanded="false">
+                                    <i class="bi bi-lightning-fill text-warning me-2"></i>
+                                    <span class="fw-semibold">{{ _('Pain & Symptoms Details') }}</span>
+                                    <span class="badge bg-info ms-2">{{ _('Helpful') }}</span>
+                                </button>
+                            </h2>
+                            <div id="painDetails" class="accordion-collapse collapse" data-bs-parent="#anamnesisAccordion">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
                                             <div class="col-md-6">
+                                            <label for="anamnesis_pain_location" class="form-label">{{ _('Pain Location') }}</label>
+                                            <select class="form-select" id="anamnesis_pain_location" name="anamnesis_pain_location" onchange="updateProgress()">
+                                                <option value="">{{ _('Select location...') }}</option>
+                                                <option value="neck">🦒 {{ _('Neck') }}</option>
+                                                <option value="shoulder">🤷 {{ _('Shoulder') }}</option>
+                                                <option value="upper_back">🎒 {{ _('Upper back') }}</option>
+                                                <option value="lower_back">🏃‍♂️ {{ _('Lower back') }}</option>
+                                                <option value="hip">🦴 {{ _('Hip') }}</option>
+                                                <option value="knee">🦵 {{ _('Knee') }}</option>
+                                                <option value="ankle">🦶 {{ _('Ankle/Foot') }}</option>
+                                                <option value="other">{{ _('Other') }}</option>
+                                            </select>
+                                                </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">{{ _('Pain Type') }}</label>
+                                            <div class="pain-type-grid">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="history_heart_disease" name="history_conditions" value="heart_disease">
-                                                    <label class="form-check-label" for="history_heart_disease">{{ _('Heart Disease') }}</label>
+                                                    <input class="form-check-input" type="checkbox" id="pain_sharp" name="pain_characteristics" value="sharp" onchange="updateProgress()">
+                                                    <label class="form-check-label" for="pain_sharp">⚡ {{ _('Sharp') }}</label>
                                                 </div>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="history_asthma" name="history_conditions" value="asthma">
-                                                    <label class="form-check-label" for="history_asthma">{{ _('Asthma') }}</label>
+                                                    <input class="form-check-input" type="checkbox" id="pain_dull" name="pain_characteristics" value="dull" onchange="updateProgress()">
+                                                    <label class="form-check-label" for="pain_dull">🟤 {{ _('Dull') }}</label>
                                                 </div>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="history_depression" name="history_conditions" value="depression">
-                                                    <label class="form-check-label" for="history_depression">{{ _('Depression/Anxiety') }}</label>
+                                                    <input class="form-check-input" type="checkbox" id="pain_burning" name="pain_characteristics" value="burning" onchange="updateProgress()">
+                                                    <label class="form-check-label" for="pain_burning">🔥 {{ _('Burning') }}</label>
                                                 </div>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="history_thyroid" name="history_conditions" value="thyroid">
-                                                    <label class="form-check-label" for="history_thyroid">{{ _('Thyroid Disorders') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="history_chronic_pain" name="history_conditions" value="chronic_pain">
-                                                    <label class="form-check-label" for="history_chronic_pain">{{ _('Chronic Pain') }}</label>
+                                                    <input class="form-check-input" type="checkbox" id="pain_throbbing" name="pain_characteristics" value="throbbing" onchange="updateProgress()">
+                                                    <label class="form-check-label" for="pain_throbbing">💓 {{ _('Throbbing') }}</label>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="mb-3">
-                                        <label for="anamnesis_previous_conditions" class="form-label">{{ _('Other previous conditions') }}</label>
-                                        <textarea class="form-control" id="anamnesis_previous_conditions" name="anamnesis_previous_conditions" rows="2" 
-                                                  placeholder="{{ _('Any other medical conditions not listed above...') }}"></textarea>
+                                    <div class="row g-3 mt-3">
+                                        <div class="col-md-6">
+                                            <label for="anamnesis_pain_triggers" class="form-label">{{ _('What makes it worse?') }}</label>
+                                            <textarea class="form-control" id="anamnesis_pain_triggers" name="anamnesis_pain_triggers" 
+                                                      rows="2" placeholder="{{ _('Movement, sitting, weather...') }}"
+                                                      onchange="updateProgress()"></textarea>
                                     </div>
-                                    
-                                    <!-- Surgeries with Dates -->
-                                    <div class="mb-3">
-                                        <label class="form-label">
-                                            <i class="bi bi-scissors"></i> {{ _('Previous surgeries') }}
-                                        </label>
-                                        <div id="surgeries-container">
-                                            <div class="surgery-entry row mb-2">
                                                 <div class="col-md-6">
-                                                    <input type="text" class="form-control" name="surgery_description[]" placeholder="{{ _("Type of surgery") }}">
+                                            <label for="anamnesis_pain_relievers" class="form-label">{{ _('What makes it better?') }}</label>
+                                            <textarea class="form-control" id="anamnesis_pain_relievers" name="anamnesis_pain_relievers" 
+                                                      rows="2" placeholder="{{ _('Rest, heat, cold, medication...') }}"
+                                                      onchange="updateProgress()"></textarea>
                                                 </div>
-                                                <div class="col-md-4">
-                                                    <input type="date" class="form-control" name="surgery_date[]">
                                                 </div>
-                                                <div class="col-md-2">
-                                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSurgery(this)">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
+                                                </div>
+                                            </div>
+                                    </div>
+                                    
+                        <!-- Functional Assessment -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#functionalAssessment" aria-expanded="false">
+                                    <i class="bi bi-activity text-success me-2"></i>
+                                    <span class="fw-semibold">{{ _('Functional Assessment') }}</span>
+                                    <span class="badge bg-light text-dark ms-2">{{ _('Optional') }}</span>
+                                </button>
+                            </h2>
+                            <div id="functionalAssessment" class="accordion-collapse collapse" data-bs-parent="#anamnesisAccordion">
+                                <div class="accordion-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ _('Current Limitations') }}</label>
+                                        <div class="limitations-grid">
+                                                <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="limit_walking" name="functional_limitations" value="walking" onchange="updateProgress()">
+                                                <label class="form-check-label" for="limit_walking">🚶 {{ _('Walking') }}</label>
+                                                </div>
+                                                <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="limit_sitting" name="functional_limitations" value="sitting" onchange="updateProgress()">
+                                                <label class="form-check-label" for="limit_sitting">🪑 {{ _('Sitting') }}</label>
+                                                </div>
+                                                <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="limit_lifting" name="functional_limitations" value="lifting" onchange="updateProgress()">
+                                                <label class="form-check-label" for="limit_lifting">🏋️ {{ _('Lifting') }}</label>
+                                                </div>
+                                                <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="limit_sleep" name="functional_limitations" value="sleep" onchange="updateProgress()">
+                                                <label class="form-check-label" for="limit_sleep">😴 {{ _('Sleep') }}</label>
+                                                </div>
+                                                <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="limit_none" name="functional_limitations" value="none" onchange="toggleNoLimitations(this); updateProgress()">
+                                                <label class="form-check-label fw-semibold" for="limit_none">{{ _('No limitations') }}</label>
+                                                </div>
+                                                </div>
+                                            </div>
+
+                                    <div class="mb-3">
+                                        <label for="anamnesis_additional_notes" class="form-label">{{ _('Additional Notes') }}</label>
+                                        <textarea class="form-control" id="anamnesis_additional_notes" name="anamnesis_additional_notes" 
+                                                  rows="3" placeholder="{{ _('Any other relevant information...') }}"
+                                                  onchange="updateProgress()"></textarea>
+                                                </div>
+                                                </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <button type="button" class="btn btn-outline-success btn-sm mt-2" onclick="addSurgery()">
-                                            <i class="bi bi-plus"></i> {{ _('Add Surgery') }}
-                                        </button>
-                                    </div>
-                                    
-                                    <!-- Current Medications -->
-                                    <div class="mb-3">
-                                        <label for="anamnesis_medications" class="form-label">
-                                            <i class="bi bi-capsule"></i> {{ _('Current medications') }}
-                                        </label>
-                                        <textarea class="form-control" id="anamnesis_medications" name="anamnesis_medications" rows="3" 
-                                                  placeholder="{{ _('Include prescription drugs, supplements, and over-the-counter medications with dosages...') }}"></textarea>
-                                    </div>
-                                    
-                                    <!-- Common Allergies Checkboxes -->
-                                    <div class="mb-3">
-                                        <label class="form-label">
-                                            <i class="bi bi-exclamation-triangle"></i> {{ _('Known allergies') }}
-                                        </label>
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="allergy_penicillin" name="allergies" value="penicillin">
-                                                    <label class="form-check-label" for="allergy_penicillin">{{ _('Penicillin') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="allergy_nsaids" name="allergies" value="nsaids">
-                                                    <label class="form-check-label" for="allergy_nsaids">{{ _('NSAIDs') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="allergy_latex" name="allergies" value="latex">
-                                                    <label class="form-check-label" for="allergy_latex">{{ _('Latex') }}</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="allergy_nuts" name="allergies" value="nuts">
-                                                    <label class="form-check-label" for="allergy_nuts">{{ _('Nuts') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="allergy_shellfish" name="allergies" value="shellfish">
-                                                    <label class="form-check-label" for="allergy_shellfish">{{ _('Shellfish') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="allergy_dairy" name="allergies" value="dairy">
-                                                    <label class="form-check-label" for="allergy_dairy">{{ _('Dairy') }}</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="allergy_pollen" name="allergies" value="pollen">
-                                                    <label class="form-check-label" for="allergy_pollen">{{ _('Pollen') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="allergy_dust" name="allergies" value="dust">
-                                                    <label class="form-check-label" for="allergy_dust">{{ _('Dust mites') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="allergy_none" name="allergies" value="none" onchange="toggleNoAllergies(this)">
-                                                    <label class="form-check-label" for="allergy_none"><strong>{{ _('No known allergies') }}</strong></label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="mt-2">
-                                            <textarea class="form-control" id="anamnesis_allergies" name="anamnesis_allergies" rows="2" 
-                                                      placeholder="{{ _('Other allergies or specific reactions...') }}"></textarea>
+
+                    <!-- Hidden field to store compiled anamnesis -->
+                    <input type="hidden" id="compiled_anamnesis" name="anamnesis">
+                    
+                    <!-- Smart Summary -->
+                    <div class="anamnesis-summary mt-4 p-3 bg-light rounded" id="anamnesis-summary" style="display: none;">
+                        <h6 class="text-primary mb-2">
+                            <i class="bi bi-check-circle-fill me-2"></i>{{ _('Assessment Summary') }}
+                        </h6>
+                        <div id="summary-content" class="small text-muted"></div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Family History Tab -->
-                                <div class="tab-pane fade" id="family-history" role="tabpanel">
-                                    <h6 class="mb-3">{{ _('Family Medical History') }}</h6>
-                                    
-                                    <!-- Common Family Conditions -->
-                                    <div class="mb-4">
-                                        <label class="form-label">
-                                            <i class="bi bi-people"></i> {{ _('Common family conditions') }}
+            <!-- Clinical Assessment Section -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-gradient-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-pulse me-2"></i>
+                        {{ _('Clinical Assessment') }}
+                    </h5>
+                    <small class="opacity-75">{{ _('Initial diagnosis and treatment plan (optional at this stage)') }}</small>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <div class="small">
+                            {{ _('This section is optional for new patients. You can complete it now if you already have a diagnosis, or come back to edit it later after the initial consultation.') }}
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="diagnosis" class="form-label fw-semibold">
+                                <i class="bi bi-clipboard-check text-success me-1"></i>
+                                {{ _('Primary Diagnosis') }}
                                         </label>
-                                        <div class="row">
+                            <input type="text" class="form-control" id="diagnosis" name="diagnosis" 
+                                   placeholder="{{ _('e.g., Lower back pain, Cervical strain...') }}">
+                            <div class="form-text">{{ _('Leave blank if diagnosis is pending') }}</div>
+                        </div>
                                             <div class="col-md-6">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="family_diabetes" name="family_conditions" value="diabetes">
-                                                    <label class="form-check-label" for="family_diabetes">{{ _('Diabetes') }}</label>
+                            <label for="assessment_date" class="form-label fw-semibold">
+                                <i class="bi bi-calendar-check text-info me-1"></i>
+                                {{ _('Assessment Date') }}
+                            </label>
+                            <input type="date" class="form-control" id="assessment_date" name="assessment_date">
                                                 </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="family_heart_disease" name="family_conditions" value="heart_disease">
-                                                    <label class="form-check-label" for="family_heart_disease">{{ _('Heart Disease') }}</label>
+                        <div class="col-12">
+                            <label for="treatment_plan" class="form-label fw-semibold">
+                                <i class="bi bi-graph-up text-primary me-1"></i>
+                                {{ _('Preliminary Treatment Plan') }}
+                            </label>
+                            <textarea class="form-control" id="treatment_plan" name="treatment_plan" 
+                                      rows="4" placeholder="{{ _('Initial treatment approach, goals, and expected timeline...') }}"></textarea>
+                            <div class="form-text">{{ _('Can be updated after further evaluation') }}</div>
                                                 </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="family_cancer" name="family_conditions" value="cancer">
-                                                    <label class="form-check-label" for="family_cancer">{{ _('Cancer') }}</label>
+                        <div class="col-12">
+                            <label for="notes" class="form-label fw-semibold">
+                                <i class="bi bi-journal-text text-secondary me-1"></i>
+                                {{ _('Initial Clinical Notes') }}
+                            </label>
+                            <textarea class="form-control" id="notes" name="notes" 
+                                      rows="3" placeholder="{{ _('Initial observations, referral notes, or important considerations...') }}"></textarea>
                                                 </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="family_stroke" name="family_conditions" value="stroke">
-                                                    <label class="form-check-label" for="family_stroke">{{ _('Stroke') }}</label>
                                                 </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="family_hypertension" name="family_conditions" value="hypertension">
-                                                    <label class="form-check-label" for="family_hypertension">{{ _('Hypertension') }}</label>
                                                 </div>
                                             </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-circle me-2"></i>
+                        {{ _('Patient Data') }}
+                    </h5>
+                    <small class="opacity-75">{{ _('Complete the patient data step by step') }}</small>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
                                             <div class="col-md-6">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="family_arthritis" name="family_conditions" value="arthritis">
-                                                    <label class="form-check-label" for="family_arthritis">{{ _('Arthritis') }}</label>
+                            <label for="name" class="form-label">{{ _('Full Name') }} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required>
                                                 </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="family_osteoporosis" name="family_conditions" value="osteoporosis">
-                                                    <label class="form-check-label" for="family_osteoporosis">{{ _('Osteoporosis') }}</label>
+                        <div class="col-md-6">
+                            <label for="date_of_birth" class="form-label">{{ _('Date of Birth') }} <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
                                                 </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="family_mental_health" name="family_conditions" value="mental_health">
-                                                    <label class="form-check-label" for="family_mental_health">{{ _('Mental Health Disorders') }}</label>
+                        <div class="col-md-6">
+                            <label for="patient_contact_email" class="form-label">{{ _('Email Address') }}</label>
+                            <input type="email" class="form-control" id="patient_contact_email" name="patient_contact_email" placeholder="{{ _('patient@example.com') }}">
                                                 </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="family_autoimmune" name="family_conditions" value="autoimmune">
-                                                    <label class="form-check-label" for="family_autoimmune">{{ _('Autoimmune Disorders') }}</label>
+                        <div class="col-md-6">
+                            <label for="patient_contact_phone" class="form-label">{{ _('Phone Number') }}</label>
+                            <input type="tel" class="form-control" id="patient_contact_phone" name="patient_contact_phone" placeholder="{{ _('+34 600 123 456') }}">
                                                 </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="family_none" name="family_conditions" value="none" onchange="toggleNoFamilyHistory(this)">
-                                                    <label class="form-check-label" for="family_none"><strong>{{ _('No significant family history') }}</strong></label>
+                        <div class="col-md-6">
+                            <label for="status" class="form-label">{{ _('Status') }}</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="Active">{{ _('Active') }}</option>
+                                <option value="Inactive">{{ _('Inactive') }}</option>
+                                <option value="Completed">{{ _('Treatment Completed') }}</option>
+                            </select>
                                                 </div>
                                             </div>
+
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <label for="address_line1" class="form-label">{{ _('Address Line 1') }}</label>
+                            <input type="text" class="form-control" id="address_line1" name="address_line1" placeholder="{{ _('Street address') }}">
                                         </div>
+                        <div class="col-md-6">
+                            <label for="address_line2" class="form-label">{{ _('Address Line 2') }}</label>
+                            <input type="text" class="form-control" id="address_line2" name="address_line2" placeholder="{{ _('Apartment, suite, etc.') }}">
                                     </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="anamnesis_family_history" class="form-label">{{ _('Additional family history details') }}</label>
-                                        <textarea class="form-control" id="anamnesis_family_history" name="anamnesis_family_history" rows="3" 
-                                                  placeholder="{{ _('Include specific family member relationships, ages of onset, genetic disorders, etc.') }}"></textarea>
+                        <div class="col-md-4">
+                            <label for="city" class="form-label">{{ _('City') }}</label>
+                            <input type="text" class="form-control" id="city" name="city">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="postcode" class="form-label">{{ _('Postal Code') }}</label>
+                            <input type="text" class="form-control" id="postcode" name="postcode">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="preferred_location" class="form-label">{{ _('Preferred Treatment Location') }}</label>
+                            <select class="form-select" id="preferred_location" name="preferred_location">
+                                <option value="">{{ _('Select location') }}</option>
+                                {% for location in current_user.locations %}
+                                <option value="{{ location.name }}">{{ location.name }}</option>
+                                {% endfor %}
+                            </select>
                                     </div>
                                 </div>
 
-                                <!-- Lifestyle Tab -->
-                                <div class="tab-pane fade" id="lifestyle" role="tabpanel">
-                                    <h6 class="mb-3">{{ _('Lifestyle and Habits') }}</h6>
-                                    
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="anamnesis_physical_activity" class="form-label">
-                                                <i class="bi bi-heart-pulse"></i> {{ _('Physical activity level') }}
-                                            </label>
-                                            <select class="form-select" id="anamnesis_physical_activity" name="anamnesis_physical_activity" onchange="showActivityDetails(this.value)">
-                                                <option value="">{{ _('Select activity level') }}</option>
-                                                <option value="sedentary">🪑 {{ _('Sedentary (little to no exercise)') }}</option>
-                                                <option value="light">🚶 {{ _('Light (1-3 days/week)') }}</option>
-                                                <option value="moderate">🏃 {{ _('Moderate (3-5 days/week)') }}</option>
-                                                <option value="active">💪 {{ _('Very active (6-7 days/week)') }}</option>
-                                                <option value="athlete">🏆 {{ _('Athlete (multiple sessions/day)') }}</option>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <label for="anamnesis_gender" class="form-label">{{ _('Gender') }}</label>
+                            <select class="form-select" id="anamnesis_gender" name="anamnesis_gender">
+                                <option value="">{{ _('Select...') }}</option>
+                                <option value="male">{{ _('Male') }}</option>
+                                <option value="female">{{ _('Female') }}</option>
+                                <option value="other">{{ _('Other') }}</option>
+                                <option value="prefer_not_to_say">{{ _('Prefer not to say') }}</option>
                                             </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="anamnesis_occupation" class="form-label">{{ _('Occupation') }}</label>
+                            <input type="text" class="form-control" id="anamnesis_occupation" name="anamnesis_occupation" 
+                                   placeholder="{{ _('Current job or profession') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="anamnesis_physical_activity" class="form-label">{{ _('Activity Level') }}</label>
+                            <select class="form-select" id="anamnesis_physical_activity" name="anamnesis_physical_activity">
+                                <option value="">{{ _('Select...') }}</option>
+                                <option value="sedentary">🪑 {{ _('Sedentary') }}</option>
+                                <option value="light">🚶 {{ _('Light') }}</option>
+                                <option value="moderate">🏃 {{ _('Moderate') }}</option>
+                                <option value="active">💪 {{ _('Very active') }}</option>
+                            </select>
+                        </div>
                                         </div>
                                         
-                                        <div class="col-md-6 mb-3">
-                                            <label for="anamnesis_sleep" class="form-label">
-                                                <i class="bi bi-moon"></i> {{ _('Sleep quality') }}
-                                            </label>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <label for="anamnesis_emergency_contact" class="form-label">{{ _('Emergency Contact') }}</label>
+                            <input type="text" class="form-control" id="anamnesis_emergency_contact" name="anamnesis_emergency_contact" placeholder="{{ _('Name and phone number') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="anamnesis_sleep" class="form-label">{{ _('Sleep Quality') }}</label>
                                             <select class="form-select" id="anamnesis_sleep" name="anamnesis_sleep">
-                                                <option value="">{{ _('Select sleep quality') }}</option>
+                                <option value="">{{ _('Select...') }}</option>
                                                 <option value="excellent">😴 {{ _('Excellent (7-9h, refreshing)') }}</option>
                                                 <option value="good">😊 {{ _('Good (6-8h, mostly refreshing)') }}</option>
                                                 <option value="fair">😐 {{ _('Fair (5-7h, sometimes tired)') }}</option>
@@ -517,19 +499,11 @@
                                         </div>
                                     </div>
                                     
-                                    <div id="activity-details" class="mb-3" style="display: none;">
-                                        <label for="activity_details" class="form-label">{{ _('Activity details') }}</label>
-                                        <textarea class="form-control" id="activity_details" name="activity_details" rows="2" 
-                                                  placeholder="{{ _('What types of activities do you do? How often? Any sports or specific exercises?') }}"></textarea>
-                                    </div>
-                                    
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="anamnesis_work_posture" class="form-label">
-                                                <i class="bi bi-briefcase"></i> {{ _('Work environment') }}
-                                            </label>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <label for="anamnesis_work_posture" class="form-label">{{ _('Work Environment') }}</label>
                                             <select class="form-select" id="anamnesis_work_posture" name="anamnesis_work_posture">
-                                                <option value="">{{ _('Select work type...') }}</option>
+                                <option value="">{{ _('Select...') }}</option>
                                                 <option value="desk">💻 {{ _('Desk job (computer work)') }}</option>
                                                 <option value="standing">🧍 {{ _('Standing work') }}</option>
                                                 <option value="physical">🏗️ {{ _('Physical labor') }}</option>
@@ -539,11 +513,8 @@
                                                 <option value="retired">🏡 {{ _('Retired') }}</option>
                                             </select>
                                         </div>
-                                        
-                                        <div class="col-md-6 mb-3">
-                                            <label for="anamnesis_stress_level" class="form-label">
-                                                <i class="bi bi-thermometer-half"></i> {{ _('Stress level (1-10)') }}
-                                            </label>
+                        <div class="col-md-6">
+                            <label for="anamnesis_stress_level" class="form-label">{{ _('Stress Level (1-10)') }}</label>
                                             <input type="range" class="form-range" id="anamnesis_stress_level" name="anamnesis_stress_level" min="1" max="10" 
                                                    oninput="updateStressDisplay(this.value)">
                                             <div class="d-flex justify-content-between">
@@ -554,373 +525,83 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Habits Checkboxes -->
-                                    <div class="mb-3">
-                                        <label class="form-label">
-                                            <i class="bi bi-cup-hot"></i> {{ _('Lifestyle habits') }}
-                                        </label>
-                                        <div class="row">
+                    <div class="row g-3 mt-2">
                                             <div class="col-md-6">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="habit_smoking" name="lifestyle_habits" value="smoking">
-                                                    <label class="form-check-label" for="habit_smoking">🚬 {{ _('Smoking') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="habit_alcohol" name="lifestyle_habits" value="alcohol">
-                                                    <label class="form-check-label" for="habit_alcohol">🍷 {{ _('Regular alcohol consumption') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="habit_caffeine" name="lifestyle_habits" value="caffeine">
-                                                    <label class="form-check-label" for="habit_caffeine">☕ {{ _('High caffeine intake') }}</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="habit_healthy_diet" name="lifestyle_habits" value="healthy_diet">
-                                                    <label class="form-check-label" for="habit_healthy_diet">🥗 {{ _('Healthy balanced diet') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="habit_hydration" name="lifestyle_habits" value="good_hydration">
-                                                    <label class="form-check-label" for="habit_hydration">💧 {{ _('Good hydration (>2L/day)') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="habit_supplements" name="lifestyle_habits" value="supplements">
-                                                    <label class="form-check-label" for="habit_supplements">💊 {{ _('Takes supplements') }}</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="anamnesis_diet_habits" class="form-label">{{ _('Additional lifestyle notes') }}</label>
+                            <label for="anamnesis_diet_habits" class="form-label">{{ _('Dietary Habits') }}</label>
                                         <textarea class="form-control" id="anamnesis_diet_habits" name="anamnesis_diet_habits" rows="2" 
                                                   placeholder="{{ _('Any dietary restrictions, special habits, or lifestyle factors affecting health...') }}"></textarea>
                                     </div>
-                                </div>
-
-                                <!-- Current Pain Tab -->
-                                <div class="tab-pane fade" id="current-pain" role="tabpanel">
-                                    <h6 class="mb-3">{{ _('Current Pain Assessment') }}</h6>
-                                    
-                                    <!-- Pain Scale with Visual -->
-                                    <div class="mb-4">
-                                        <label for="anamnesis_pain_scale" class="form-label">
-                                            <i class="bi bi-emoji-dizzy"></i> {{ _('Pain level (0-10)') }}
-                                        </label>
-                                        <input type="range" class="form-range" id="anamnesis_pain_scale" name="anamnesis_pain_scale" 
-                                               min="0" max="10" value="0" oninput="updatePainDisplay(this.value)">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <small>😊 0</small>
-                                            <div class="text-center">
-                                                <span id="pain-display" class="badge bg-success fs-6">0</span>
-                                                <div><small id="pain-description">{{ _('No pain') }}</small></div>
-                                            </div>
-                                            <small>😵 10</small>
+                                            <div class="col-md-6">
+                            <label for="anamnesis_allergies" class="form-label">{{ _('Allergies') }}</label>
+                            <textarea class="form-control" id="anamnesis_allergies" name="anamnesis_allergies" rows="2" 
+                                      placeholder="{{ _('Other allergies or specific reactions...') }}"></textarea>
+                                                </div>
+                                                </div>
                                         </div>
                                     </div>
 
-                                    <!-- Pain Characteristics -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people-fill me-2"></i>
+                        {{ _('Family History') }}
+                    </h5>
+                    <small class="opacity-75">{{ _('Complete the family history step by step') }}</small>
+                                        </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Family Medical History') }}</label>
+                        <div class="family-conditions-grid">
+                                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="family_diabetes" name="family_conditions" value="diabetes" onchange="updateProgress()">
+                                <label class="form-check-label" for="family_diabetes">{{ _('Diabetes') }}</label>
+                                                </div>
+                                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="family_heart_disease" name="family_conditions" value="heart_disease" onchange="updateProgress()">
+                                <label class="form-check-label" for="family_heart_disease">{{ _('Heart Disease') }}</label>
+                                                </div>
+                                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="family_cancer" name="family_conditions" value="cancer" onchange="updateProgress()">
+                                <label class="form-check-label" for="family_cancer">{{ _('Cancer') }}</label>
+                                                </div>
+                                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="family_stroke" name="family_conditions" value="stroke" onchange="updateProgress()">
+                                <label class="form-check-label" for="family_stroke">{{ _('Stroke') }}</label>
+                                                </div>
+                                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="family_hypertension" name="family_conditions" value="hypertension" onchange="updateProgress()">
+                                <label class="form-check-label" for="family_hypertension">{{ _('Hypertension') }}</label>
+                                                </div>
+                                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="family_arthritis" name="family_conditions" value="arthritis" onchange="updateProgress()">
+                                <label class="form-check-label" for="family_arthritis">{{ _('Arthritis') }}</label>
+                                                </div>
+                                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="family_osteoporosis" name="family_conditions" value="osteoporosis" onchange="updateProgress()">
+                                <label class="form-check-label" for="family_osteoporosis">{{ _('Osteoporosis') }}</label>
+                                                </div>
+                                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="family_mental_health" name="family_conditions" value="mental_health" onchange="updateProgress()">
+                                <label class="form-check-label" for="family_mental_health">{{ _('Mental Health Disorders') }}</label>
+                                                </div>
+                                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="family_autoimmune" name="family_conditions" value="autoimmune" onchange="updateProgress()">
+                                <label class="form-check-label" for="family_autoimmune">{{ _('Autoimmune Disorders') }}</label>
+                                                </div>
+                                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="family_none" name="family_conditions" value="none" onchange="toggleNoFamilyHistory(this); updateProgress()">
+                                <label class="form-check-label fw-semibold" for="family_none">{{ _('No significant family history') }}</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div class="mb-3">
-                                        <label class="form-label">
-                                            <i class="bi bi-lightning"></i> {{ _('Pain characteristics') }}
-                                        </label>
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="pain_sharp" name="pain_characteristics" value="sharp">
-                                                    <label class="form-check-label" for="pain_sharp">⚡ {{ _('Sharp/Stabbing') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="pain_dull" name="pain_characteristics" value="dull">
-                                                    <label class="form-check-label" for="pain_dull">🟤 {{ _('Dull/Aching') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="pain_burning" name="pain_characteristics" value="burning">
-                                                    <label class="form-check-label" for="pain_burning">🔥 {{ _('Burning') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="pain_throbbing" name="pain_characteristics" value="throbbing">
-                                                    <label class="form-check-label" for="pain_throbbing">💓 {{ _('Throbbing') }}</label>
-                                                </div>
+                        <label for="anamnesis_family_history" class="form-label">{{ _('Additional Family History Details') }}</label>
+                        <textarea class="form-control" id="anamnesis_family_history" name="anamnesis_family_history" rows="3" 
+                                  placeholder="{{ _('Include specific family member relationships, ages of onset, genetic disorders, etc.') }}"></textarea>
                                             </div>
-                                            <div class="col-md-6">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="pain_tingling" name="pain_characteristics" value="tingling">
-                                                    <label class="form-check-label" for="pain_tingling">✨ {{ _('Tingling/Pins & needles') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="pain_numbness" name="pain_characteristics" value="numbness">
-                                                    <label class="form-check-label" for="pain_numbness">🔘 {{ _('Numbness') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="pain_stiffness" name="pain_characteristics" value="stiffness">
-                                                    <label class="form-check-label" for="pain_stiffness">🔒 {{ _('Stiffness') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="pain_cramping" name="pain_characteristics" value="cramping">
-                                                    <label class="form-check-label" for="pain_cramping">🌀 {{ _('Cramping/Spasms') }}</label>
-                                                </div>
                                             </div>
-                                        </div>
                                     </div>
-
-                                    <!-- Pain Timing -->
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="anamnesis_pain_timing" class="form-label">
-                                                <i class="bi bi-clock"></i> {{ _('When is pain worse?') }}
-                                            </label>
-                                            <select class="form-select" id="anamnesis_pain_timing" name="anamnesis_pain_timing" multiple>
-                                                <option value="morning">🌅 {{ _('Morning') }}</option>
-                                                <option value="afternoon">☀️ {{ _('Afternoon') }}</option>
-                                                <option value="evening">🌆 {{ _('Evening') }}</option>
-                                                <option value="night">🌙 {{ _('Night') }}</option>
-                                                <option value="movement">🚶 {{ _('With movement') }}</option>
-                                                <option value="rest">🛋️ {{ _('At rest') }}</option>
-                                                <option value="weather">⛈️ {{ _('Weather changes') }}</option>
-                                                <option value="stress">😰 {{ _('During stress') }}</option>
-                                            </select>
-                                            <small class="form-text text-muted">{{ _('Hold Ctrl/Cmd to select multiple') }}</small>
-                                        </div>
-
-                                        <div class="col-md-6 mb-3">
-                                            <label for="anamnesis_pain_location" class="form-label">
-                                                <i class="bi bi-geo-alt"></i> {{ _('Pain location') }}
-                                            </label>
-                                            <select class="form-select" id="anamnesis_pain_location" name="anamnesis_pain_location">
-                                                <option value="">{{ _('Select primary location...') }}</option>
-                                                <optgroup label="{{ _('Head & Neck') }}">
-                                                    <option value="head">🧠 {{ _('Head/Headache') }}</option>
-                                                    <option value="neck">🦒 {{ _('Neck') }}</option>
-                                                    <option value="jaw">😮 {{ _('Jaw/TMJ') }}</option>
-                                                </optgroup>
-                                                <optgroup label="{{ _('Upper Body') }}">
-                                                    <option value="shoulder">🤷 {{ _('Shoulder') }}</option>
-                                                    <option value="arm">💪 {{ _('Arm') }}</option>
-                                                    <option value="elbow">🤏 {{ _('Elbow') }}</option>
-                                                    <option value="wrist">🤲 {{ _('Wrist/Hand') }}</option>
-                                                    <option value="upper_back">🎒 {{ _('Upper back') }}</option>
-                                                </optgroup>
-                                                <optgroup label="{{ _('Core & Spine') }}">
-                                                    <option value="chest">🫁 {{ _('Chest') }}</option>
-                                                    <option value="mid_back">📐 {{ _('Mid back') }}</option>
-                                                    <option value="lower_back">🏃‍♂️ {{ _('Lower back') }}</option>
-                                                    <option value="pelvis">🦴 {{ _('Pelvis/Hip') }}</option>
-                                                </optgroup>
-                                                <optgroup label="{{ _('Lower Body') }}">
-                                                    <option value="thigh">🦵 {{ _('Thigh') }}</option>
-                                                    <option value="knee">🦵 {{ _('Knee') }}</option>
-                                                    <option value="calf">🦵 {{ _('Calf/Shin') }}</option>
-                                                    <option value="ankle">🦶 {{ _('Ankle/Foot') }}</option>
-                                                </optgroup>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Aggravating and Relieving Factors -->
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="anamnesis_aggravating_factors" class="form-label">
-                                                <i class="bi bi-arrow-up-circle text-danger"></i> {{ _('What makes it worse?') }}
-                                            </label>
-                                            <textarea class="form-control" id="anamnesis_aggravating_factors" name="anamnesis_aggravating_factors" rows="3" 
-                                                      placeholder="{{ _('Activities, positions, or movements that increase pain...') }}"></textarea>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="anamnesis_relieving_factors" class="form-label">
-                                                <i class="bi bi-arrow-down-circle text-success"></i> {{ _('What makes it better?') }}
-                                            </label>
-                                            <textarea class="form-control" id="anamnesis_relieving_factors" name="anamnesis_relieving_factors" rows="3" 
-                                                      placeholder="{{ _('Rest, medications, positions, or treatments that help...') }}"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Functional Examination Tab -->
-                                <div class="tab-pane fade" id="functional-exam" role="tabpanel">
-                                    <h6 class="mb-3">{{ _('Functional Assessment') }}</h6>
-                                    
-                                    <!-- Functional Limitations -->
-                                    <div class="mb-4">
-                                        <label class="form-label">
-                                            <i class="bi bi-person-x"></i> {{ _('Current functional limitations') }}
-                                        </label>
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="limit_walking" name="functional_limitations" value="walking">
-                                                    <label class="form-check-label" for="limit_walking">🚶 {{ _('Walking difficulties') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="limit_stairs" name="functional_limitations" value="stairs">
-                                                    <label class="form-check-label" for="limit_stairs">🪜 {{ _('Stair climbing') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="limit_sitting" name="functional_limitations" value="sitting">
-                                                    <label class="form-check-label" for="limit_sitting">🪑 {{ _('Prolonged sitting') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="limit_standing" name="functional_limitations" value="standing">
-                                                    <label class="form-check-label" for="limit_standing">🧍 {{ _('Prolonged standing') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="limit_lifting" name="functional_limitations" value="lifting">
-                                                    <label class="form-check-label" for="limit_lifting">🏋️ {{ _('Lifting/Carrying') }}</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="limit_reaching" name="functional_limitations" value="reaching">
-                                                    <label class="form-check-label" for="limit_reaching">🙋 {{ _('Reaching overhead') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="limit_bending" name="functional_limitations" value="bending">
-                                                    <label class="form-check-label" for="limit_bending">🤸 {{ _('Bending/Stooping') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="limit_sleep" name="functional_limitations" value="sleep">
-                                                    <label class="form-check-label" for="limit_sleep">😴 {{ _('Sleep disruption') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="limit_work" name="functional_limitations" value="work">
-                                                    <label class="form-check-label" for="limit_work">💼 {{ _('Work activities') }}</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="limit_sports" name="functional_limitations" value="sports">
-                                                    <label class="form-check-label" for="limit_sports">⚽ {{ _('Sports/Recreation') }}</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- ROM Assessment -->
-                                    <div class="mb-3">
-                                        <label for="anamnesis_rom_assessment" class="form-label">
-                                            <i class="bi bi-arrow-clockwise"></i> {{ _('Range of Motion observations') }}
-                                        </label>
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <select class="form-select mb-2" id="rom_area" name="rom_area">
-                                                    <option value="">{{ _('Select area to assess...') }}</option>
-                                                    <option value="cervical">🦒 {{ _('Cervical spine') }}</option>
-                                                    <option value="thoracic">📐 {{ _('Thoracic spine') }}</option>
-                                                    <option value="lumbar">🏃‍♂️ {{ _('Lumbar spine') }}</option>
-                                                    <option value="shoulder">🤷 {{ _('Shoulder') }}</option>
-                                                    <option value="elbow">🤏 {{ _('Elbow') }}</option>
-                                                    <option value="wrist">🤲 {{ _('Wrist') }}</option>
-                                                    <option value="hip">🦴 {{ _('Hip') }}</option>
-                                                    <option value="knee">🦵 {{ _('Knee') }}</option>
-                                                    <option value="ankle">🦶 {{ _('Ankle') }}</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <select class="form-select mb-2" id="rom_quality" name="rom_quality">
-                                                    <option value="">{{ _('ROM quality...') }}</option>
-                                                    <option value="normal">✅ {{ _('Normal/Full') }}</option>
-                                                    <option value="limited">⚠️ {{ _('Limited') }}</option>
-                                                    <option value="painful">😣 {{ _('Painful') }}</option>
-                                                    <option value="restricted">🚫 {{ _('Severely restricted') }}</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <textarea class="form-control" id="anamnesis_rom_assessment" name="anamnesis_rom_assessment" rows="3" 
-                                                  placeholder="{{ _('Specific ROM findings, measurements, or movement patterns observed...') }}"></textarea>
-                                    </div>
-                                    
-                                    <!-- Strength Assessment -->
-                                    <div class="mb-3">
-                                        <label for="anamnesis_strength_assessment" class="form-label">
-                                            <i class="bi bi-lightning-charge-fill"></i> {{ _('Strength observations') }}
-                                        </label>
-                                        <div class="row mb-2">
-                                            <div class="col-md-6">
-                                                <select class="form-select" id="strength_area" name="strength_area">
-                                                    <option value="">{{ _('Select muscle group...') }}</option>
-                                                    <option value="neck">🦒 {{ _('Neck muscles') }}</option>
-                                                    <option value="shoulder_girdle">🎒 {{ _('Shoulder girdle') }}</option>
-                                                    <option value="arm">💪 {{ _('Arm muscles') }}</option>
-                                                    <option value="core">🎯 {{ _('Core/Trunk') }}</option>
-                                                    <option value="hip">🦴 {{ _('Hip muscles') }}</option>
-                                                    <option value="thigh">🦵 {{ _('Thigh muscles') }}</option>
-                                                    <option value="calf">🦵 {{ _('Calf muscles') }}</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <select class="form-select" id="strength_grade" name="strength_grade">
-                                                    <option value="">{{ _('Strength grade...') }}</option>
-                                                    <option value="5">💪 5/5 - {{ _('Normal') }}</option>
-                                                    <option value="4">💪 4/5 - {{ _('Good') }}</option>
-                                                    <option value="3">💪 3/5 - {{ _('Fair') }}</option>
-                                                    <option value="2">💪 2/5 - {{ _('Poor') }}</option>
-                                                    <option value="1">💪 1/5 - {{ _('Trace') }}</option>
-                                                    <option value="0">💪 0/5 - {{ _('None') }}</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <textarea class="form-control" id="anamnesis_strength_assessment" name="anamnesis_strength_assessment" rows="3" 
-                                                  placeholder="{{ _('Manual muscle testing results, weakness patterns, compensations noted...') }}"></textarea>
-                                    </div>
-                                    
-                                    <!-- Special Tests -->
-                                    <div class="mb-3">
-                                        <label for="anamnesis_special_tests" class="form-label">
-                                            <i class="bi bi-clipboard-check"></i> {{ _('Special tests performed') }}
-                                        </label>
-                                        <div class="row mb-2">
-                                            <div class="col-md-8">
-                                                <select class="form-select" id="special_test_name" name="special_test_name">
-                                                    <option value="">{{ _('Select a common test...') }}</option>
-                                                    <optgroup label="{{ _('Spine Tests') }}">
-                                                        <option value="slr">{{ _('Straight Leg Raise (SLR)') }}</option>
-                                                        <option value="spurling">{{ _('Spurling\'s Test') }}</option>
-                                                        <option value="distraction">{{ _('Cervical Distraction') }}</option>
-                                                        <option value="slump">{{ _('Slump Test') }}</option>
-                                                    </optgroup>
-                                                    <optgroup label="{{ _('Shoulder Tests') }}">
-                                                        <option value="impingement">{{ _('Impingement Tests') }}</option>
-                                                        <option value="apprehension">{{ _('Apprehension Test') }}</option>
-                                                        <option value="drop_arm">{{ _('Drop Arm Test') }}</option>
-                                                        <option value="crossover">{{ _('Cross-over Test') }}</option>
-                                                    </optgroup>
-                                                    <optgroup label="{{ _('Knee Tests') }}">
-                                                        <option value="mcmurray">{{ _('McMurray Test') }}</option>
-                                                        <option value="lachman">{{ _('Lachman Test') }}</option>
-                                                        <option value="drawer">{{ _('Drawer Test') }}</option>
-                                                        <option value="valgus_varus">{{ _('Valgus/Varus Stress') }}</option>
-                                                    </optgroup>
-                                                    <optgroup label="{{ _('Hip Tests') }}">
-                                                        <option value="thomas">{{ _('Thomas Test') }}</option>
-                                                        <option value="faber">{{ _('FABER Test') }}</option>
-                                                        <option value="trendelenburg">{{ _('Trendelenburg Test') }}</option>
-                                                    </optgroup>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <select class="form-select" id="test_result" name="test_result">
-                                                    <option value="">{{ _('Result...') }}</option>
-                                                    <option value="positive">✅ {{ _('Positive') }}</option>
-                                                    <option value="negative">❌ {{ _('Negative') }}</option>
-                                                    <option value="inconclusive">❓ {{ _('Inconclusive') }}</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <textarea class="form-control" id="anamnesis_special_tests" name="anamnesis_special_tests" rows="3" 
-                                                  placeholder="{{ _('Document special tests performed, results, and clinical relevance...') }}"></textarea>
-                                    </div>
-                                    
-                                    <!-- Additional Clinical Notes -->
-                                    <div class="mb-3">
-                                        <label for="anamnesis_additional_notes" class="form-label">
-                                            <i class="bi bi-journal-text"></i> {{ _('Additional examination findings') }}
-                                        </label>
-                                        <textarea class="form-control" id="anamnesis_additional_notes" name="anamnesis_additional_notes" rows="4" 
-                                                  placeholder="{{ _('Posture, gait, neurological findings, palpation, clinical impression, red flags, etc.') }}"></textarea>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Hidden field to store compiled anamnesis -->
-                            <input type="hidden" id="compiled_anamnesis" name="anamnesis">
                             
                             <div class="d-flex justify-content-between mt-4">
                                 <a href="{{ url_for('main.index') }}" class="btn btn-secondary">{{ _('Cancel') }}</a>
@@ -966,10 +647,6 @@
                             </div>
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <style>
@@ -1181,12 +858,18 @@ function toggleNoFamilyHistory(checkbox) {
     }
 }
 
-// Function to compile all anamnesis fields into one
+// Function to compile all anamnesis fields into one (updated for simplified form)
 function compileAnamnesis() {
     // Helper function to safely get element value
     function safeGetValue(elementId) {
         const element = document.getElementById(elementId);
-        return element ? element.value : '';
+        return element ? element.value.trim() : '';
+    }
+    
+    // Helper function to get selected checkboxes
+    function getSelectedCheckboxes(name) {
+        const checkboxes = document.querySelectorAll(`input[name="${name}"]:checked`);
+        return Array.from(checkboxes).map(cb => cb.value).filter(value => value && value !== 'none');
     }
     
     // Calculate age from date of birth
@@ -1202,164 +885,118 @@ function compileAnamnesis() {
         return age.toString();
     }
 
-    // Helper function to get selected checkboxes
-    function getSelectedCheckboxes(name) {
-        const checkboxes = document.querySelectorAll(`input[name="${name}"]:checked`);
-        return Array.from(checkboxes).map(cb => cb.value);
-    }
-
-    // Helper function to compile surgeries
-    function compileSurgeries() {
-        const descriptions = document.querySelectorAll('input[name="surgery_description[]"]');
-        const dates = document.querySelectorAll('input[name="surgery_date[]"]');
-        const surgeries = [];
-        
-        for (let i = 0; i < descriptions.length; i++) {
-            if (descriptions[i].value.trim()) {
-                const surgery = descriptions[i].value.trim();
-                const date = dates[i] ? dates[i].value : '';
-                surgeries.push(date ? `${surgery} (${date})` : surgery);
-            }
-        }
-        return surgeries.join('; ');
-    }
-
+    // Create simplified anamnesis data structure for new form
     const anamnesisData = {
-        personal_data: {
-            age: calculateAge(safeGetValue('date_of_birth')),
-            gender: safeGetValue('anamnesis_gender'),
-            occupation: safeGetValue('anamnesis_occupation'),
-            emergency_contact: safeGetValue('anamnesis_emergency_contact')
-        },
-        chief_complaint: {
-            main_complaint: safeGetValue('anamnesis_chief_complaint'),
-            onset_date: safeGetValue('anamnesis_onset_date'),
-            mechanism: safeGetValue('anamnesis_mechanism'),
-            onset_description: safeGetValue('anamnesis_onset_description')
-        },
-        medical_history: {
-            previous_conditions: safeGetValue('anamnesis_previous_conditions'),
+        // Essential Information (always included)
+        anamnesis_chief_complaint: safeGetValue('anamnesis_chief_complaint'),
+        anamnesis_pain_scale: safeGetValue('anamnesis_pain_scale'),
+        anamnesis_onset_date: safeGetValue('anamnesis_onset_date'),
+        anamnesis_mechanism: safeGetValue('anamnesis_mechanism'),
+        
+        // Personal Information
+        anamnesis_gender: safeGetValue('anamnesis_gender'),
+        anamnesis_occupation: safeGetValue('anamnesis_occupation'),
+        anamnesis_physical_activity: safeGetValue('anamnesis_physical_activity'),
+        
+        // Medical History
             history_conditions: getSelectedCheckboxes('history_conditions'),
-            surgeries: compileSurgeries(),
-            medications: safeGetValue('anamnesis_medications'),
-            allergies: safeGetValue('anamnesis_allergies'),
-            allergy_types: getSelectedCheckboxes('allergies')
-        },
-        family_history: {
-            family_history: safeGetValue('anamnesis_family_history'),
-            family_conditions: getSelectedCheckboxes('family_conditions')
-        },
-        lifestyle: {
-            physical_activity: safeGetValue('anamnesis_physical_activity'),
-            sleep_quality: safeGetValue('anamnesis_sleep_quality'),
-            work_posture: safeGetValue('anamnesis_work_posture'),
-            stress_level: safeGetValue('anamnesis_stress_level'),
-            diet_habits: safeGetValue('anamnesis_diet_habits')
-        },
-        current_pain: {
-            pain_scale: safeGetValue('anamnesis_pain_scale'),
-            pain_type: safeGetValue('anamnesis_pain_type'),
-            pain_triggers: safeGetValue('anamnesis_pain_triggers'),
-            pain_relievers: safeGetValue('anamnesis_pain_relievers'),
-            pain_location: safeGetValue('anamnesis_pain_location')
-        },
-        functional_exam: {
-            functional_limitations: safeGetValue('anamnesis_functional_limitations'),
-            rom_limitations: safeGetValue('anamnesis_rom_limitations'),
-            strength_deficits: safeGetValue('anamnesis_strength_deficits'),
-            special_tests: safeGetValue('anamnesis_special_tests')
-        }
+        anamnesis_medications: safeGetValue('anamnesis_medications'),
+        allergies: getSelectedCheckboxes('allergies'),
+        
+        // Pain Details
+        anamnesis_pain_location: safeGetValue('anamnesis_pain_location'),
+        pain_characteristics: getSelectedCheckboxes('pain_characteristics'),
+        anamnesis_pain_triggers: safeGetValue('anamnesis_pain_triggers'),
+        anamnesis_pain_relievers: safeGetValue('anamnesis_pain_relievers'),
+        
+        // Functional Assessment
+        functional_limitations: getSelectedCheckboxes('functional_limitations'),
+        anamnesis_additional_notes: safeGetValue('anamnesis_additional_notes'),
+        
+        // Metadata
+        form_version: '2.0_simplified',
+        created_date: new Date().toISOString(),
+        patient_age: calculateAge(safeGetValue('date_of_birth'))
     };
 
-    // Create formatted text from the data
+    // Create both structured JSON and formatted text for backwards compatibility
     let compiledText = '';
     
-    if (anamnesisData.personal_data.age || anamnesisData.personal_data.gender || anamnesisData.personal_data.occupation || anamnesisData.personal_data.emergency_contact) {
-        compiledText += '=== DATOS PERSONALES ===\n';
-        if (anamnesisData.personal_data.age) compiledText += `Edad: ${anamnesisData.personal_data.age} años\n`;
-        if (anamnesisData.personal_data.gender) compiledText += `Género: ${anamnesisData.personal_data.gender}\n`;
-        if (anamnesisData.personal_data.occupation) compiledText += `Ocupación: ${anamnesisData.personal_data.occupation}\n`;
-        if (anamnesisData.personal_data.emergency_contact) compiledText += `Contacto de emergencia: ${anamnesisData.personal_data.emergency_contact}\n`;
+    // Essential Information (always shown)
+    if (anamnesisData.anamnesis_chief_complaint || anamnesisData.anamnesis_pain_scale) {
+        compiledText += '=== INFORMACIÓN ESENCIAL ===\n';
+        if (anamnesisData.anamnesis_chief_complaint) compiledText += `Motivo principal: ${anamnesisData.anamnesis_chief_complaint}\n`;
+        if (anamnesisData.anamnesis_pain_scale) compiledText += `Escala de dolor: ${anamnesisData.anamnesis_pain_scale}/10\n`;
+        if (anamnesisData.anamnesis_onset_date) compiledText += `Fecha de inicio: ${anamnesisData.anamnesis_onset_date}\n`;
+        if (anamnesisData.anamnesis_mechanism) compiledText += `Mecanismo: ${anamnesisData.anamnesis_mechanism}\n`;
         compiledText += '\n';
     }
     
-    if (anamnesisData.chief_complaint.main_complaint) {
-        compiledText += '=== MOTIVO DE CONSULTA ===\n';
-        compiledText += `Motivo principal: ${anamnesisData.chief_complaint.main_complaint}\n`;
-        if (anamnesisData.chief_complaint.onset_date) compiledText += `Fecha de inicio: ${anamnesisData.chief_complaint.onset_date}\n`;
-        if (anamnesisData.chief_complaint.mechanism) compiledText += `Mecanismo: ${anamnesisData.chief_complaint.mechanism}\n`;
-        if (anamnesisData.chief_complaint.onset_description) compiledText += `Detalles del inicio: ${anamnesisData.chief_complaint.onset_description}\n`;
+    // Personal Information
+    if (anamnesisData.anamnesis_gender || anamnesisData.anamnesis_occupation || anamnesisData.anamnesis_physical_activity) {
+        compiledText += '=== INFORMACIÓN PERSONAL ===\n';
+        if (anamnesisData.anamnesis_gender) compiledText += `Género: ${anamnesisData.anamnesis_gender}\n`;
+        if (anamnesisData.anamnesis_occupation) compiledText += `Ocupación: ${anamnesisData.anamnesis_occupation}\n`;
+        if (anamnesisData.anamnesis_physical_activity) compiledText += `Nivel de actividad: ${anamnesisData.anamnesis_physical_activity}\n`;
         compiledText += '\n';
     }
     
-    if (anamnesisData.medical_history.previous_conditions || anamnesisData.medical_history.history_conditions.length > 0 || anamnesisData.medical_history.surgeries || anamnesisData.medical_history.medications || anamnesisData.medical_history.allergies || anamnesisData.medical_history.allergy_types.length > 0) {
+    // Medical History
+    if (anamnesisData.history_conditions.length > 0 || anamnesisData.anamnesis_medications || anamnesisData.allergies.length > 0) {
         compiledText += '=== HISTORIA MÉDICA ===\n';
-        if (anamnesisData.medical_history.history_conditions.length > 0) {
-            compiledText += `Condiciones comunes: ${anamnesisData.medical_history.history_conditions.join(', ')}\n`;
+        if (anamnesisData.history_conditions.length > 0) {
+            compiledText += `Condiciones previas: ${anamnesisData.history_conditions.join(', ')}\n`;
         }
-        if (anamnesisData.medical_history.previous_conditions) compiledText += `Otras condiciones: ${anamnesisData.medical_history.previous_conditions}\n`;
-        if (anamnesisData.medical_history.surgeries) compiledText += `Cirugías: ${anamnesisData.medical_history.surgeries}\n`;
-        if (anamnesisData.medical_history.medications) compiledText += `Medicación actual: ${anamnesisData.medical_history.medications}\n`;
-        if (anamnesisData.medical_history.allergy_types.length > 0) {
-            compiledText += `Alergias conocidas: ${anamnesisData.medical_history.allergy_types.join(', ')}\n`;
+        if (anamnesisData.anamnesis_medications) compiledText += `Medicamentos actuales: ${anamnesisData.anamnesis_medications}\n`;
+        if (anamnesisData.allergies.length > 0) {
+            compiledText += `Alergias: ${anamnesisData.allergies.join(', ')}\n`;
         }
-        if (anamnesisData.medical_history.allergies) compiledText += `Otras alergias: ${anamnesisData.medical_history.allergies}\n`;
         compiledText += '\n';
     }
     
-    if (anamnesisData.family_history.family_history || anamnesisData.family_history.family_conditions.length > 0) {
-        compiledText += '=== ANTECEDENTES FAMILIARES ===\n';
-        if (anamnesisData.family_history.family_conditions.length > 0) {
-            compiledText += `Condiciones familiares: ${anamnesisData.family_history.family_conditions.join(', ')}\n`;
+    // Pain Details
+    if (anamnesisData.anamnesis_pain_location || anamnesisData.pain_characteristics.length > 0 || anamnesisData.anamnesis_pain_triggers || anamnesisData.anamnesis_pain_relievers) {
+        compiledText += '=== DETALLES DEL DOLOR ===\n';
+        if (anamnesisData.anamnesis_pain_location) compiledText += `Localización: ${anamnesisData.anamnesis_pain_location}\n`;
+        if (anamnesisData.pain_characteristics.length > 0) {
+            compiledText += `Características: ${anamnesisData.pain_characteristics.join(', ')}\n`;
         }
-        if (anamnesisData.family_history.family_history) compiledText += `Detalles adicionales: ${anamnesisData.family_history.family_history}\n`;
+        if (anamnesisData.anamnesis_pain_triggers) compiledText += `Factores agravantes: ${anamnesisData.anamnesis_pain_triggers}\n`;
+        if (anamnesisData.anamnesis_pain_relievers) compiledText += `Factores aliviantes: ${anamnesisData.anamnesis_pain_relievers}\n`;
         compiledText += '\n';
     }
     
-    if (anamnesisData.lifestyle.physical_activity || anamnesisData.lifestyle.sleep_quality || anamnesisData.lifestyle.work_posture || anamnesisData.lifestyle.stress_level || anamnesisData.lifestyle.diet_habits) {
-        compiledText += '=== ESTILO DE VIDA ===\n';
-        if (anamnesisData.lifestyle.physical_activity) compiledText += `Actividad física: ${anamnesisData.lifestyle.physical_activity}\n`;
-        if (anamnesisData.lifestyle.sleep_quality) compiledText += `Calidad del sueño: ${anamnesisData.lifestyle.sleep_quality}\n`;
-        if (anamnesisData.lifestyle.work_posture) compiledText += `Postura de trabajo: ${anamnesisData.lifestyle.work_posture}\n`;
-        if (anamnesisData.lifestyle.stress_level) compiledText += `Nivel de estrés: ${anamnesisData.lifestyle.stress_level}/10\n`;
-        if (anamnesisData.lifestyle.diet_habits) compiledText += `Hábitos alimentarios: ${anamnesisData.lifestyle.diet_habits}\n`;
-        compiledText += '\n';
-    }
-    
-    if (anamnesisData.current_pain.pain_scale || anamnesisData.current_pain.pain_type || anamnesisData.current_pain.pain_triggers || anamnesisData.current_pain.pain_relievers || anamnesisData.current_pain.pain_location) {
-        compiledText += '=== DOLOR ACTUAL ===\n';
-        if (anamnesisData.current_pain.pain_scale) compiledText += `Escala de dolor: ${anamnesisData.current_pain.pain_scale}/10\n`;
-        if (anamnesisData.current_pain.pain_type) compiledText += `Tipo de dolor: ${anamnesisData.current_pain.pain_type}\n`;
-        if (anamnesisData.current_pain.pain_location) compiledText += `Localización: ${anamnesisData.current_pain.pain_location}\n`;
-        if (anamnesisData.current_pain.pain_triggers) compiledText += `Factores que empeoran: ${anamnesisData.current_pain.pain_triggers}\n`;
-        if (anamnesisData.current_pain.pain_relievers) compiledText += `Factores que mejoran: ${anamnesisData.current_pain.pain_relievers}\n`;
-        compiledText += '\n';
-    }
-    
-    if (anamnesisData.functional_exam.functional_limitations || anamnesisData.functional_exam.rom_limitations || anamnesisData.functional_exam.strength_deficits || anamnesisData.functional_exam.special_tests) {
-        compiledText += '=== EXPLORACIÓN FUNCIONAL ===\n';
-        if (anamnesisData.functional_exam.functional_limitations) compiledText += `Limitaciones funcionales: ${anamnesisData.functional_exam.functional_limitations}\n`;
-        if (anamnesisData.functional_exam.rom_limitations) compiledText += `Limitaciones ROM: ${anamnesisData.functional_exam.rom_limitations}\n`;
-        if (anamnesisData.functional_exam.strength_deficits) compiledText += `Déficits de fuerza: ${anamnesisData.functional_exam.strength_deficits}\n`;
-        if (anamnesisData.functional_exam.special_tests) compiledText += `Pruebas especiales: ${anamnesisData.functional_exam.special_tests}\n`;
+    // Functional Assessment
+    if (anamnesisData.functional_limitations.length > 0 || anamnesisData.anamnesis_additional_notes) {
+        compiledText += '=== EVALUACIÓN FUNCIONAL ===\n';
+        if (anamnesisData.functional_limitations.length > 0) {
+            compiledText += `Limitaciones funcionales: ${anamnesisData.functional_limitations.join(', ')}\n`;
+        }
+        if (anamnesisData.anamnesis_additional_notes) compiledText += `Notas adicionales: ${anamnesisData.anamnesis_additional_notes}\n`;
         compiledText += '\n';
     }
     
     // If no sections were filled, at least add the chief complaint if it exists
-    if (!compiledText && anamnesisData.chief_complaint.main_complaint) {
-        compiledText = `=== MOTIVO DE CONSULTA ===\nMotivo principal: ${anamnesisData.chief_complaint.main_complaint}\n`;
+    if (!compiledText && anamnesisData.anamnesis_chief_complaint) {
+        compiledText = `MOTIVO DE CONSULTA: ${anamnesisData.anamnesis_chief_complaint}\n`;
     }
     
-    // Set the compiled anamnesis in the hidden field
+    // Create final compiled data (JSON with formatted text for backwards compatibility)
+    const finalData = {
+        ...anamnesisData,
+        formatted_text: compiledText
+    };
+    
+    // Set the compiled anamnesis in the hidden field (store as JSON)
     const compiledField = document.getElementById('compiled_anamnesis');
     if (compiledField) {
-        compiledField.value = compiledText;
-        console.log('DEBUG: Anamnesis compiled successfully. Length:', compiledText.length);
+        compiledField.value = JSON.stringify(finalData, null, 2);
+        console.log('DEBUG: Anamnesis compiled successfully. Length:', JSON.stringify(finalData).length);
     } else {
         console.error('ERROR: compiled_anamnesis field not found!');
     }
     
-    return compiledText;
+    return JSON.stringify(finalData, null, 2);
 }
 
 function nextStep(step) {
@@ -1623,5 +1260,358 @@ function skipPortalAccess() {
     document.getElementById('newPatientForm').submit();
 }
 
+// New improved anamnesis functionality
+function updateProgress() {
+    const progressBar = document.getElementById('anamnesis-progress-bar');
+    const progressPercentage = document.getElementById('progress-percentage');
+    const summary = document.getElementById('anamnesis-summary');
+    const summaryContent = document.getElementById('summary-content');
+    
+    // Calculate completion percentage
+    const essentialFields = [
+        'anamnesis_chief_complaint',
+        'anamnesis_pain_scale'
+    ];
+    
+    const optionalFields = [
+        'anamnesis_onset_date',
+        'anamnesis_mechanism',
+        'anamnesis_gender',
+        'anamnesis_occupation',
+        'anamnesis_physical_activity',
+        'anamnesis_medications',
+        'anamnesis_pain_location'
+    ];
+    
+    let completedEssential = 0;
+    let completedOptional = 0;
+    
+    // Check essential fields
+    essentialFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field && field.value.trim() !== '') {
+            completedEssential++;
+        }
+    });
+    
+    // Check optional fields
+    optionalFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field && field.value.trim() !== '') {
+            completedOptional++;
+        }
+    });
+    
+    // Check checkboxes
+    const checkboxGroups = ['history_conditions', 'allergies', 'pain_characteristics', 'functional_limitations'];
+    checkboxGroups.forEach(groupName => {
+        const checkboxes = document.querySelectorAll(`input[name="${groupName}"]:checked`);
+        if (checkboxes.length > 0) {
+            completedOptional++;
+        }
+    });
+    
+    // Calculate percentage (essential fields count more)
+    const essentialWeight = 60; // 60% for essential fields
+    const optionalWeight = 40;  // 40% for optional fields
+    
+    const essentialPercent = (completedEssential / essentialFields.length) * essentialWeight;
+    const optionalPercent = (completedOptional / (optionalFields.length + checkboxGroups.length)) * optionalWeight;
+    
+    const totalPercent = Math.round(essentialPercent + optionalPercent);
+    
+    // Update progress bar
+    progressBar.style.width = totalPercent + '%';
+    progressPercentage.textContent = totalPercent + '%';
+    
+    // Update progress bar color based on completion
+    if (totalPercent < 30) {
+        progressBar.className = 'progress-bar bg-danger';
+    } else if (totalPercent < 70) {
+        progressBar.className = 'progress-bar bg-warning';
+    } else {
+        progressBar.className = 'progress-bar bg-success';
+    }
+    
+    // Show summary if significant progress
+    if (totalPercent > 20) {
+        summary.style.display = 'block';
+        updateSummary();
+    } else {
+        summary.style.display = 'none';
+    }
+    
+    // Compile anamnesis
+    compileAnamnesis();
+}
+
+function updateSummary() {
+    const summaryContent = document.getElementById('summary-content');
+    let summaryText = '';
+    
+    const chiefComplaint = document.getElementById('anamnesis_chief_complaint').value.trim();
+    const painScale = document.getElementById('anamnesis_pain_scale').value;
+    const onsetDate = document.getElementById('anamnesis_onset_date').value;
+    const mechanism = document.getElementById('anamnesis_mechanism').value.trim();
+    
+    if (chiefComplaint) {
+        summaryText += `<strong>{{ _('Chief Complaint') }}:</strong> ${chiefComplaint}<br>`;
+    }
+    
+    if (painScale > 0) {
+        summaryText += `<strong>{{ _('Pain Level') }}:</strong> ${painScale}/10<br>`;
+    }
+    
+    if (onsetDate) {
+        summaryText += `<strong>{{ _('Onset') }}:</strong> ${onsetDate}<br>`;
+    }
+    
+    if (mechanism) {
+        summaryText += `<strong>{{ _('Mechanism') }}:</strong> ${mechanism}<br>`;
+    }
+    
+    summaryContent.innerHTML = summaryText || '{{ _("Continue filling out the form to see a summary...") }}';
+}
+
+function updatePainDisplay(value) {
+    const display = document.getElementById('pain-display');
+    const description = document.getElementById('pain-description');
+    
+    display.textContent = value;
+    
+    // Update color and description based on pain level
+    if (value == 0) {
+        display.className = 'badge bg-success fs-6';
+        description.textContent = '{{ _("No pain") }}';
+    } else if (value <= 3) {
+        display.className = 'badge bg-info fs-6';
+        description.textContent = '{{ _("Mild pain") }}';
+    } else if (value <= 6) {
+        display.className = 'badge bg-warning fs-6';
+        description.textContent = '{{ _("Moderate pain") }}';
+    } else {
+        display.className = 'badge bg-danger fs-6';
+        description.textContent = '{{ _("Severe pain") }}';
+    }
+}
+
+// Toggle functions for exclusive checkboxes
+function toggleNoConditions(checkbox) {
+    if (checkbox.checked) {
+        const otherCheckboxes = document.querySelectorAll('input[name="history_conditions"]:not(#history_none)');
+        otherCheckboxes.forEach(cb => cb.checked = false);
+    }
+    updateProgress();
+}
+
+function toggleNoAllergies(checkbox) {
+    if (checkbox.checked) {
+        const otherCheckboxes = document.querySelectorAll('input[name="allergies"]:not(#allergy_none)');
+        otherCheckboxes.forEach(cb => cb.checked = false);
+    }
+    updateProgress();
+}
+
+function toggleNoLimitations(checkbox) {
+    if (checkbox.checked) {
+        const otherCheckboxes = document.querySelectorAll('input[name="functional_limitations"]:not(#limit_none)');
+        otherCheckboxes.forEach(cb => cb.checked = false);
+    }
+    updateProgress();
+}
+
+// Initialize progress tracking
+document.addEventListener('DOMContentLoaded', function() {
+    updateProgress();
+    updatePainDisplay(0);
+    
+    // Add event listeners to all form fields
+    const allInputs = document.querySelectorAll('#anamnesis-form input, #anamnesis-form select, #anamnesis-form textarea');
+    allInputs.forEach(input => {
+        input.addEventListener('change', updateProgress);
+        input.addEventListener('input', updateProgress);
+    });
+});
+
 </script>
+
+<style>
+/* Improved Anamnesis Styles */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.required-badge {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    margin-left: auto;
+    font-weight: 500;
+}
+
+.anamnesis-progress {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.progress {
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.anamnesis-accordion .accordion-button {
+    padding: 1rem 1.25rem;
+    background: #f8f9fa;
+    border: none;
+    border-radius: 8px !important;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.anamnesis-accordion .accordion-button:not(.collapsed) {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.anamnesis-accordion .accordion-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.anamnesis-accordion .accordion-item {
+    border: none;
+    margin-bottom: 1rem;
+}
+
+.anamnesis-accordion .accordion-collapse {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.anamnesis-accordion .accordion-body {
+    background: white;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.condition-grid, .allergy-grid, .pain-type-grid, .limitations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.form-check {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 0.75rem;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.form-check:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+}
+
+.form-check-input:checked + .form-check-label {
+    font-weight: 600;
+    color: #0d6efd;
+}
+
+.pain-scale-container {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+}
+
+.form-range {
+    margin: 0.5rem 0;
+}
+
+.anamnesis-summary {
+    border-left: 4px solid #28a745;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.essential-info {
+    background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 2px solid #feb2b2;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .condition-grid, .allergy-grid, .pain-type-grid, .limitations-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .anamnesis-accordion .accordion-button {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .essential-info {
+        padding: 1rem;
+    }
+}
+
+/* Enhanced form styling */
+.form-control:focus, .form-select:focus {
+    border-color: #4285f4;
+    box-shadow: 0 0 0 0.2rem rgba(66, 133, 244, 0.25);
+}
+
+.btn {
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.card {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.badge {
+    font-weight: 500;
+}
+</style>
+
 {% endblock %}

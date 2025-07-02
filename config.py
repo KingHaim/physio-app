@@ -48,6 +48,18 @@ class Config:
     # Sentry DSN for error monitoring
     SENTRY_DSN = os.environ.get('SENTRY_DSN')
     
+    # Google OAuth configuration
+    GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+    GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+    
+    # OAuth configuration
+    OAUTH_CREDENTIALS = {
+        'google': {
+            'id': os.environ.get('GOOGLE_CLIENT_ID'),
+            'secret': os.environ.get('GOOGLE_CLIENT_SECRET')
+        }
+    }
+    
     # Session configuration
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
     SESSION_COOKIE_SECURE = False

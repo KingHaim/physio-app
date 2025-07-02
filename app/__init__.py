@@ -209,8 +209,15 @@ def create_app(config_class=Config):
     from app.routes.api import api as api_blueprint
     app.register_blueprint(api_blueprint, url_prefix='/api')
 
-    from app.routes.auth import auth as auth_blueprint
+    from app.routes.auth import auth as auth_blueprint, init_oauth
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
+    
+    # Initialize OAuth
+    if app.config.get('GOOGLE_CLIENT_ID') and app.config.get('GOOGLE_CLIENT_SECRET'):
+        init_oauth(app)
+        app.logger.info("Google OAuth initialized successfully.")
+    else:
+        app.logger.warning("Google OAuth not configured - GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET missing.")
 
     from app.routes.webhooks import webhook_bp
     app.register_blueprint(webhook_bp)
