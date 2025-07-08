@@ -65,10 +65,10 @@ def login():
         if user and user.check_password(form.password.data):
             current_app.logger.info(f"Password verified for user: {user.email} (ID: {user.id})")
             
-            # TEMPORAL: Email verification disabled - skip email verification check
-            # if not user.email_verified:
-            #     flash('Por favor verifica tu email antes de iniciar sesión. Revisa tu bandeja de entrada.', 'warning')
-            #     return render_template('auth/login.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
+            # Check if email is verified
+            if not user.email_verified:
+                flash('Por favor verifica tu email antes de iniciar sesión. Revisa tu bandeja de entrada.', 'warning')
+                return render_template('auth/login.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
             
             # Set session as permanent if remember me is checked
             if form.remember_me.data:
@@ -88,13 +88,17 @@ def login():
             
             next_page = request.args.get('next')
             if not next_page or not is_safe_url(next_page):
-                next_page = url_for('main.index')
+                if current_user.is_new_user:  # Check for new user
+                    next_page = url_for('main.welcome_onboarding')
+                else:
+                    next_page = url_for('main.index')
+            
             current_app.logger.info(f"Redirecting to: {next_page}")
             return redirect(next_page)
         else:
             current_app.logger.warning(f"Failed login attempt for email: {form.email.data}")
-        flash('Invalid email or password', 'danger')
-    
+            flash('Invalid email or password', 'danger')
+
     return render_template('auth/login.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
 
 @auth.route('/logout')
@@ -139,29 +143,26 @@ def register():
         if User.query.count() == 0:
             user.is_admin = True
             user.role = 'admin'
-            user.email_verified = True  # TEMPORAL: Auto-verify new users until email system is configured
+            user.email_verified = True  # First admin user is auto-verified
         else:
             user.role = 'physio'
-            user.email_verified = True  # TEMPORAL: Auto-verify new users until email system is configured
+            user.email_verified = False  # New users must verify their email
         
         db.session.add(user)
         db.session.commit()
         
-        # TEMPORAL: Skip verification email sending until email system is configured
         # Send verification email (unless it's the first admin user)
-        # if not user.is_admin:
-        #     try:
-        #         if send_verification_email(user):
-        #             flash('¡Registro exitoso! Te hemos enviado un email de verificación. Revisa tu bandeja de entrada.', 'success')
-        #         else:
-        #             flash('Registro exitoso, pero hubo un problema enviando el email de verificación. Contacta al soporte.', 'warning')
-        #     except Exception as e:
-        #         current_app.logger.error(f"Error sending verification email: {str(e)}")
-        #         flash('Registro exitoso, pero hubo un problema enviando el email de verificación. Contacta al soporte.', 'warning')
-        # else:
-        #     flash('Registration successful! You can now log in.', 'success')
-        
-        flash('¡Registro exitoso! Ya puedes iniciar sesión.', 'success')
+        if not user.is_admin:
+            try:
+                if send_verification_email(user):
+                    flash('¡Registro exitoso! Te hemos enviado un email de verificación. Revisa tu bandeja de entrada.', 'success')
+                else:
+                    flash('Registro exitoso, pero hubo un problema enviando el email de verificación. Contacta al soporte.', 'warning')
+            except Exception as e:
+                current_app.logger.error(f"Error sending verification email: {str(e)}")
+                flash('Registro exitoso, pero hubo un problema enviando el email de verificación. Contacta al soporte.', 'warning')
+        else:
+            flash('¡Registro exitoso! Ya puedes iniciar sesión.', 'success')
         
         return redirect(url_for('auth.login'))
     elif request.method == 'POST':

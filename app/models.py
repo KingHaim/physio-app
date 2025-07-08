@@ -336,7 +336,7 @@ class PracticeReport(db.Model):
     user = db.relationship('User', backref=db.backref('practice_reports', lazy=True))
 
     def __repr__(self):
-        return f'<PracticeReport {self.id} generated at {self.generated_at.strftime("%Y-%m-%d %H:%M")}>'
+        return f'<PracticeReport {self.id}>'
 # --- End NEW Model ---
 
 # Subscription Models
@@ -629,6 +629,157 @@ class User(db.Model, UserMixin):
             return limit
         return None
 
+    # --- Clinic-related methods ---
+    
+    @property
+    def active_clinic_membership(self) -> Optional['ClinicMembership']:
+        """Get the user's active clinic membership"""
+        from sqlalchemy import and_
+        return db.session.query(ClinicMembership).filter(
+            and_(
+                ClinicMembership.user_id == self.id,
+                ClinicMembership.is_active == True
+            )
+        ).first()
+    
+    @property
+    def clinic(self) -> Optional['Clinic']:
+        """Get the clinic this user belongs to"""
+        membership = self.active_clinic_membership
+        return membership.clinic if membership else None
+    
+    @property
+    def clinic_role(self) -> Optional[str]:
+        """Get the user's role in their clinic"""
+        membership = self.active_clinic_membership
+        return membership.role if membership else None
+    
+    @property
+    def is_clinic_admin(self) -> bool:
+        """Check if user is a clinic admin"""
+        membership = self.active_clinic_membership
+        return membership.is_admin() if membership else False
+    
+    @property
+    def is_clinic_practitioner(self) -> bool:
+        """Check if user is a clinic practitioner (includes admin)"""
+        membership = self.active_clinic_membership
+        return membership.is_practitioner() if membership else False
+    
+    @property
+    def is_in_clinic(self) -> bool:
+        """Check if user is part of a clinic"""
+        return self.active_clinic_membership is not None
+    
+    def can_manage_clinic_patients(self) -> bool:
+        """Check if user can manage patients in their clinic"""
+        membership = self.active_clinic_membership
+        return membership.can_manage_patients if membership else False
+    
+    def can_manage_clinic_practitioners(self) -> bool:
+        """Check if user can manage practitioners in their clinic"""
+        membership = self.active_clinic_membership
+        return membership.can_manage_practitioners if membership else False
+    
+    def can_manage_clinic_billing(self) -> bool:
+        """Check if user can manage billing in their clinic"""
+        membership = self.active_clinic_membership
+        return membership.can_manage_billing if membership else False
+    
+    def can_view_clinic_reports(self) -> bool:
+        """Check if user can view clinic reports"""
+        membership = self.active_clinic_membership
+        return membership.can_view_reports if membership else False
+    
+    def can_manage_clinic_settings(self) -> bool:
+        """Check if user can manage clinic settings"""
+        membership = self.active_clinic_membership
+        return membership.can_manage_settings if membership else False
+    
+    def get_accessible_patients(self):
+        """Get all patients accessible to this user (own patients or clinic patients)"""
+        if self.is_admin:
+            return Patient.query.all()
+        
+        if self.is_in_clinic and self.can_manage_clinic_patients():
+            # Get all patients from clinic members
+            clinic = self.clinic
+            if clinic:
+                clinic_user_ids = [m.user_id for m in clinic.active_members]
+                return Patient.query.filter(Patient.user_id.in_(clinic_user_ids)).all()
+        
+        # Default: only own patients
+        return self.patients.all()
+    
+    def get_effective_patient_limit(self) -> Optional[int]:
+        """Get the effective patient limit (clinic-level if in clinic, otherwise individual)"""
+        if self.is_admin or self.has_unlimited_access:
+            return None
+        
+        if self.is_in_clinic:
+            clinic = self.clinic
+            if clinic and clinic.active_plan:
+                return clinic.active_plan.patient_limit
+        
+        # Individual plan
+        plan = self.active_plan
+        if plan:
+            return plan.patient_limit
+        
+        return 10  # Default free plan limit
+    
+    def get_effective_plan(self) -> Optional['Plan']:
+        """Get the effective plan (clinic plan if in clinic, otherwise individual plan)"""
+        if self.is_in_clinic:
+            clinic = self.clinic
+            if clinic:
+                return clinic.active_plan
+        
+        return self.active_plan
+    
+    def has_reached_effective_patient_limit(self) -> bool:
+        """Check if effective patient limit has been reached"""
+        if self.is_admin or self.has_unlimited_access:
+            return False
+        
+        limit = self.get_effective_patient_limit()
+        if limit is None:
+            return False
+        
+        if self.is_in_clinic:
+            clinic = self.clinic
+            if clinic:
+                return clinic.patient_count >= limit
+        
+        # Individual limit
+        current_patient_count = self.patients.count()
+        return current_patient_count >= limit
+    
+    def can_add_patient(self) -> bool:
+        """Check if user can add a new patient"""
+        # Check if they have permission to manage patients
+        if not (self.is_admin or self.can_manage_clinic_patients() or not self.is_in_clinic):
+            return False
+        
+        # Check patient limit
+        return not self.has_reached_effective_patient_limit()
+    
+    def can_use_clinic_feature(self, feature_key: str) -> bool:
+        """Check if user can use a feature based on clinic or individual plan"""
+        if self.is_admin:
+            return True
+        
+        plan = self.get_effective_plan()
+        if not plan or not plan.features:
+            return False
+        
+        if isinstance(plan.features.get(feature_key), bool):
+            return plan.features.get(feature_key, False)
+        
+        return feature_key in plan.features
+    
+    # --- End clinic-related methods ---
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
         
@@ -673,6 +824,46 @@ class User(db.Model, UserMixin):
             return True
             
         return False
+
+    def get_practitioner_color(self) -> str:
+        """Get a unique color for this practitioner based on their ID"""
+        # Define a set of distinct colors for practitioners
+        colors = [
+            '#3498db',  # Blue
+            '#e74c3c',  # Red
+            '#2ecc71',  # Green
+            '#f39c12',  # Orange
+            '#9b59b6',  # Purple
+            '#1abc9c',  # Turquoise
+            '#34495e',  # Dark Blue Gray
+            '#e67e22',  # Carrot Orange
+            '#16a085',  # Dark Turquoise
+            '#27ae60',  # Dark Green
+            '#8e44ad',  # Dark Purple
+            '#2c3e50',  # Dark Blue
+            '#f1c40f',  # Yellow
+            '#d35400',  # Pumpkin
+            '#c0392b',  # Dark Red
+        ]
+        
+        # Use user ID to consistently assign the same color to the same practitioner
+        color_index = (self.id - 1) % len(colors)
+        return colors[color_index]
+
+    def get_clinic_practitioner_colors(self) -> dict:
+        """Get a mapping of practitioner IDs to their colors within the clinic"""
+        if not self.is_in_clinic:
+            return {}
+        
+        clinic = self.clinic
+        practitioners = clinic.practitioners.all()
+        
+        color_mapping = {}
+        for membership in practitioners:
+            if membership.user:
+                color_mapping[membership.user.id] = membership.user.get_practitioner_color()
+        
+        return color_mapping
 
 class FixedCost(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -735,3 +926,219 @@ class SecurityBreach(db.Model):
     notification_date = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+# --- Clinic Models ---
+
+class Clinic(db.Model):
+    """Clinic organization model for multi-practitioner support"""
+    __tablename__ = 'clinics'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    
+    # Contact information
+    address = db.Column(db.String(200), nullable=True)
+    phone = db.Column(db.String(30), nullable=True)
+    email = db.Column(db.String(120), nullable=True)
+    website = db.Column(db.String(120), nullable=True)
+    
+    # Financial settings
+    clinic_first_session_fee = db.Column(db.Float, nullable=True)
+    clinic_subsequent_session_fee = db.Column(db.Float, nullable=True)
+    clinic_percentage_agreement = db.Column(db.Boolean, default=False)
+    clinic_percentage_amount = db.Column(db.Float, nullable=True)
+    
+    # Clinic settings
+    timezone = db.Column(db.String(50), default='Europe/Madrid')
+    default_language = db.Column(db.String(5), default='en')
+    
+    # Subscription and billing
+    stripe_customer_id = db.Column(db.String(255), nullable=True, unique=True, index=True)
+    
+    # Status and metadata
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    memberships = db.relationship('ClinicMembership', backref='clinic', lazy='dynamic', cascade='all, delete-orphan')
+    subscriptions = db.relationship('ClinicSubscription', backref='clinic', lazy='dynamic', order_by='ClinicSubscription.created_at.desc()')
+    
+    @property
+    def owner(self):
+        """Get the clinic owner (admin)"""
+        return self.memberships.filter_by(role='admin', is_active=True).first()
+    
+    @property
+    def active_members(self):
+        """Get all active clinic members"""
+        return self.memberships.filter_by(is_active=True)
+    
+    @property
+    def practitioners(self):
+        """Get all active practitioners in the clinic"""
+        return self.memberships.filter(ClinicMembership.role.in_(['admin', 'practitioner']), ClinicMembership.is_active == True)
+    
+    @property
+    def patient_count(self):
+        """Get total number of patients in the clinic"""
+        from sqlalchemy import func
+        return db.session.query(func.count(Patient.id)).join(
+            User, Patient.user_id == User.id
+        ).join(
+            ClinicMembership, User.id == ClinicMembership.user_id
+        ).filter(
+            ClinicMembership.clinic_id == self.id,
+            ClinicMembership.is_active == True
+        ).scalar() or 0
+    
+    @property
+    def current_subscription(self) -> Optional['ClinicSubscription']:
+        """Returns the clinic's current active subscription"""
+        return self.subscriptions.filter(
+            ClinicSubscription.status.in_(['active', 'trialing']),
+            ClinicSubscription.ended_at.is_(None)
+        ).first()
+    
+    @property
+    def active_plan(self) -> Optional['Plan']:
+        """Returns the Plan object for the current active subscription"""
+        sub = self.current_subscription
+        return sub.plan if sub else None
+    
+    def has_reached_patient_limit(self) -> bool:
+        """Check if clinic has reached patient limit"""
+        plan = self.active_plan
+        if not plan or plan.patient_limit is None:
+            return False
+        return self.patient_count >= plan.patient_limit
+    
+    def has_reached_practitioner_limit(self) -> bool:
+        """Check if clinic has reached practitioner limit"""
+        plan = self.active_plan
+        if not plan or plan.practitioner_limit is None:
+            return False
+        return self.practitioners.count() >= plan.practitioner_limit
+    
+    def can_add_practitioner(self) -> bool:
+        """Check if clinic can add another practitioner"""
+        return not self.has_reached_practitioner_limit()
+    
+    def can_add_patient(self) -> bool:
+        """Check if clinic can add another patient"""
+        return not self.has_reached_patient_limit()
+    
+    def __repr__(self):
+        return f'<Clinic {self.name}>'
+
+
+class ClinicMembership(db.Model):
+    """Association table for users and clinics with roles"""
+    __tablename__ = 'clinic_memberships'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True, index=True)
+    clinic_id = db.Column(db.Integer, db.ForeignKey('clinics.id'), nullable=False, index=True)
+    
+    # Role in the clinic
+    role = db.Column(db.String(20), nullable=False, default='practitioner')  # 'admin', 'practitioner', 'assistant'
+    
+    # Permissions
+    can_manage_patients = db.Column(db.Boolean, default=True)
+    can_manage_practitioners = db.Column(db.Boolean, default=False)
+    can_manage_billing = db.Column(db.Boolean, default=False)
+    can_view_reports = db.Column(db.Boolean, default=True)
+    can_manage_settings = db.Column(db.Boolean, default=False)
+    
+    # Status and metadata
+    is_active = db.Column(db.Boolean, default=True)
+    invited_at = db.Column(db.DateTime, default=datetime.utcnow)
+    joined_at = db.Column(db.DateTime, nullable=True)
+    left_at = db.Column(db.DateTime, nullable=True)
+    
+    # Invitation details
+    invitation_token = db.Column(db.String(255), nullable=True, unique=True)
+    invitation_expires_at = db.Column(db.DateTime, nullable=True)
+    invited_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    invited_email = db.Column(db.String(120), nullable=True)  # Store email for invitations to non-users
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', foreign_keys=[user_id], backref='clinic_memberships')
+    invited_by = db.relationship('User', foreign_keys=[invited_by_user_id])
+    
+    # Unique constraint to prevent duplicate memberships (only for active users, not pending invitations)
+    __table_args__ = (
+        db.Index('idx_user_clinic_active', 'user_id', 'clinic_id', postgresql_where=db.text('user_id IS NOT NULL')),
+    )
+    
+    def set_permissions_by_role(self):
+        """Set default permissions based on role"""
+        if self.role == 'admin':
+            self.can_manage_patients = True
+            self.can_manage_practitioners = True
+            self.can_manage_billing = True
+            self.can_view_reports = True
+            self.can_manage_settings = True
+        elif self.role == 'practitioner':
+            self.can_manage_patients = True
+            self.can_manage_practitioners = False
+            self.can_manage_billing = False
+            self.can_view_reports = False  # Changed: No analytics access by default
+            self.can_manage_settings = False
+        elif self.role == 'assistant':
+            self.can_manage_patients = False
+            self.can_manage_practitioners = False
+            self.can_manage_billing = False
+            self.can_view_reports = False
+            self.can_manage_settings = False
+    
+    def is_admin(self) -> bool:
+        """Check if user is clinic admin"""
+        return self.role == 'admin' and self.is_active
+    
+    def is_practitioner(self) -> bool:
+        """Check if user is practitioner or admin"""
+        return self.role in ['admin', 'practitioner'] and self.is_active
+    
+    def __repr__(self):
+        return f'<ClinicMembership {self.user_id} - {self.clinic_id} ({self.role})>'
+
+
+class ClinicSubscription(db.Model):
+    """Subscription model for clinic-level subscriptions"""
+    __tablename__ = 'clinic_subscriptions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    clinic_id = db.Column(db.Integer, db.ForeignKey('clinics.id'), nullable=False, index=True)
+    plan_id = db.Column(db.Integer, db.ForeignKey('plans.id'), nullable=False)
+    
+    # Stripe integration
+    stripe_subscription_id = db.Column(db.String(255), unique=True, nullable=True, index=True)
+    status = db.Column(db.String(50), nullable=False, default='pending')  # 'trialing', 'active', 'past_due', 'canceled', 'unpaid', 'pending'
+    
+    # Subscription periods
+    trial_starts_at = db.Column(db.DateTime, nullable=True)
+    trial_ends_at = db.Column(db.DateTime, nullable=True)
+    current_period_starts_at = db.Column(db.DateTime, nullable=True)
+    current_period_ends_at = db.Column(db.DateTime, nullable=True)
+    
+    # Cancellation
+    cancel_at_period_end = db.Column(db.Boolean, default=False, nullable=False)
+    canceled_at = db.Column(db.DateTime, nullable=True)
+    ended_at = db.Column(db.DateTime, nullable=True)
+    
+    # Metadata
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    plan = db.relationship('Plan', backref='clinic_subscriptions')
+    
+    def __repr__(self):
+        return f'<ClinicSubscription {self.id} - Clinic {self.clinic_id} - Plan {self.plan_id} - Status {self.status}>'
+
+# --- End Clinic Models ---

@@ -360,23 +360,69 @@ def index():
             db.session.rollback()
             flash(_('An error occurred while setting up your profile. Please try again.'), 'danger')
     
-    # Get current user's subscription info
+    # Get current user's subscription info and patient limits
     current_plan_name = 'Free Plan'
     current_subscription_status = None
     current_subscription_ends_at = None
-    patient_plan_limit = None
-    current_patients_count = Patient.query.filter_by(user_id=current_user.id).count()
-    active_patients = Patient.query.filter_by(user_id=current_user.id, status='Active').count()
+    
+    # Use clinic-aware patient limits and counts
+    if current_user.is_in_clinic:
+        clinic = current_user.clinic
+        if clinic:
+            # Use clinic's plan and patient count
+            effective_plan = clinic.active_plan
+            current_patients_count = clinic.patient_count
+            patient_plan_limit = effective_plan.patient_limit if effective_plan else None
+            if effective_plan:
+                current_plan_name = f"{effective_plan.name} (Clinic)"
+                # Get clinic subscription for status info
+                clinic_subscription = clinic.current_subscription
+                if clinic_subscription:
+                    current_subscription_status = clinic_subscription.status
+                    current_subscription_ends_at = clinic_subscription.current_period_ends_at
+        else:
+            # Fallback if clinic not found
+            current_patients_count = len(current_user.get_accessible_patients())
+            patient_plan_limit = 10 if not current_user.is_admin else None
+    else:
+        # Individual user logic
+        accessible_patients = current_user.get_accessible_patients()
+        current_patients_count = len(accessible_patients)
+        active_patients = len([p for p in accessible_patients if p.status == 'Active'])
+        
+        # Get user's individual subscription
+        subscription = UserSubscription.query.filter_by(user_id=current_user.id).first()
+        if subscription and subscription.plan:
+            current_plan_name = subscription.plan.name
+            current_subscription_status = subscription.status
+            current_subscription_ends_at = subscription.current_period_ends_at
+            patient_plan_limit = subscription.plan.patient_limit if not current_user.is_admin else None
+        else:
+            patient_plan_limit = 10 if not current_user.is_admin else None
+    
+    # Get accessible patients for all logic
+    accessible_patients = current_user.get_accessible_patients()
+    
+    # Calculate active patients for display
+    # For clinic members, show only their own patients, not all clinic patients
+    if current_user.is_in_clinic:
+        # Get only the user's own patients for the dashboard display
+        user_patients = current_user.patients.filter_by(status='Active').all()
+        active_patients = len(user_patients)
+    else:
+        # For solo practitioners, show all their accessible patients
+        active_patients = len([p for p in accessible_patients if p.status == 'Active'])
     
     # Calcular citas de hoy
     today = datetime.utcnow().date()
-    today_appointments = Treatment.query.filter_by(provider=current_user.username).filter(
+    today_appointments = Treatment.query.filter_by(provider=current_user.email).filter(
         func.date(Treatment.created_at) == today
     ).count()
     
-    # Get upcoming appointments for the dashboard
-    upcoming_appointments_query = Treatment.query.join(Patient).filter(
-        Patient.user_id == current_user.id,
+    # Get upcoming appointments for the dashboard (from accessible patients)
+    accessible_patient_ids = [p.id for p in accessible_patients]
+    upcoming_appointments_query = Treatment.query.filter(
+        Treatment.patient_id.in_(accessible_patient_ids),
         Treatment.status == 'Scheduled',
         Treatment.created_at >= datetime.utcnow()
     ).order_by(Treatment.created_at.asc()).limit(10)
@@ -401,21 +447,8 @@ def index():
             'time': treatment.created_at.strftime('%H:%M')
         })
     
-    # Get user's subscription if exists
-    subscription = UserSubscription.query.filter_by(user_id=current_user.id).first()
-    if subscription and subscription.plan:
-        current_plan_name = subscription.plan.name
-        current_subscription_status = subscription.status
-        current_subscription_ends_at = subscription.current_period_ends_at  # Changed to use current_period_ends_at
-        if not current_user.is_admin:
-            patient_plan_limit = subscription.plan.patient_limit
-        else:
-            patient_plan_limit = None
-    else:
-        if not current_user.is_admin:
-            patient_plan_limit = 10  # Default Free Plan limit
-        else:
-            patient_plan_limit = None
+    # Show welcome flow for new users who haven't completed basic setup
+    show_welcome_flow = is_new_user and not current_user.is_in_clinic
     
     return render_template('index.html',
                          current_plan_name=current_plan_name,
@@ -427,6 +460,7 @@ def index():
                          today_appointments=today_appointments,
                          upcoming_appointments=upcoming_appointments,
                          is_new_user=is_new_user,
+                         show_welcome_flow=show_welcome_flow,
                          welcome_form=welcome_form)
 
 @main.route('/welcome')
@@ -442,6 +476,12 @@ def get_treatment_details(id):
     # Add access check: Only physio or the correct patient
     if current_user.role == 'patient' and current_user.patient_id != treatment.patient_id:
         return jsonify({'error': 'Forbidden'}), 403
+    elif current_user.role == 'physio' and not current_user.is_admin:
+        # Check if physio can access this patient (own patients or clinic patients)
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        if treatment.patient_id not in patient_ids:
+            return jsonify({'error': 'Forbidden'}), 403
     try:
         # --- Fix Indentation Start --- Removed extra comment line
         # Get trigger points for this treatment
@@ -514,8 +554,10 @@ def patient_detail(id):
     # --- Access Control ---
     if not current_user.is_admin:  # Admins have full access
         if current_user.role == 'physio':
-            # Physios can only access patients linked to their user_id
-            if patient.user_id != current_user.id:
+            # Physios can access their own patients or clinic patients
+            accessible_patients = current_user.get_accessible_patients()
+            patient_ids = [p.id for p in accessible_patients]
+            if patient.id not in patient_ids:
                 flash('You do not have permission to view this patient\'s details.', 'danger') # Indented
                 return redirect(url_for('main.patients_list')) # Indented
         elif current_user.role == 'patient':
@@ -552,13 +594,32 @@ def patient_detail(id):
     # Check if this is the first visit
     is_first_visit = not treatments
 
+    # Get practitioner names for treatments
+    practitioners = {}
+    for treatment in treatments:
+        if treatment.provider and treatment.provider not in practitioners:
+            # Try to find user by email first, then by username
+            practitioner_user = User.query.filter_by(email=treatment.provider).first()
+            if not practitioner_user:
+                practitioner_user = User.query.filter_by(username=treatment.provider).first()
+            
+            if practitioner_user:
+                # Try to get full name, fall back to email
+                if practitioner_user.first_name and practitioner_user.last_name:
+                    practitioners[treatment.provider] = f"{practitioner_user.first_name} {practitioner_user.last_name}"
+                else:
+                    practitioners[treatment.provider] = practitioner_user.email
+            else:
+                practitioners[treatment.provider] = treatment.provider
+
     return render_template('patient_detail.html', 
                          patient=patient, 
                          treatments=treatments,
                          past_treatments=past_treatments,
                          today=today,
                          form=form,
-                         is_first_visit=is_first_visit)
+                         is_first_visit=is_first_visit,
+                         practitioners=practitioners)
 
 @main.route('/patient/<int:patient_id>/treatment', methods=['POST'])
 @login_required
@@ -588,7 +649,7 @@ def add_treatment(patient_id):
     print(f"DEBUG: notes = {notes}")
     status = request.form.get('status')
     print(f"DEBUG: status = {status}")
-    provider = request.form.get('provider')
+    provider = request.form.get('provider') or current_user.email
     print(f"DEBUG: provider = {provider}")
     
     # --- Location Logic ---
@@ -843,10 +904,13 @@ def edit_recurring_appointment(id):
     rule = RecurringAppointment.query.get_or_404(id)
     patient = Patient.query.get_or_404(rule.patient_id)
 
-    # Ensure the current user owns this patient/rule
-    if patient.user_id != current_user.id:
-        flash('You are not authorized to edit this recurring appointment.', 'danger')
-        return redirect(url_for('main.patients_list'))
+    # Ensure the current user can access this patient/rule
+    if not current_user.is_admin:
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        if patient.id not in patient_ids:
+            flash('You are not authorized to edit this recurring appointment.', 'danger')
+            return redirect(url_for('main.patients_list'))
 
     if request.method == 'POST':
         # ... (POST logic remains the same)
@@ -905,12 +969,28 @@ def appointments():
     end_date = request.args.get('end_date',
                              (datetime.now() + timedelta(days=30)).date().isoformat())
 
+    # Convert date strings to datetime objects for proper filtering
+    try:
+        start_date_obj = date.fromisoformat(start_date)
+        end_date_obj = date.fromisoformat(end_date)
+        start_dt = datetime.combine(start_date_obj, time.min)
+        end_dt = datetime.combine(end_date_obj, time.max)  # Include full end date
+    except ValueError:
+        # Fallback to current date range if invalid dates
+        start_dt = datetime.combine(datetime.now().date(), time.min)
+        end_dt = datetime.combine(datetime.now().date() + timedelta(days=30), time.max)
+
     # Filter appointments based on user role
     appointments_query = Treatment.query.filter(
-        Treatment.created_at.between(start_date, end_date)
-    )
+        Treatment.created_at >= start_dt,
+        Treatment.created_at <= end_dt
+    ).options(joinedload(Treatment.patient))
+    
     if not current_user.is_admin and current_user.role == 'physio':
-        appointments_query = appointments_query.join(Patient).filter(Patient.user_id == current_user.id)
+        # Get accessible patients (own patients or clinic patients)
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        appointments_query = appointments_query.filter(Treatment.patient_id.in_(patient_ids))
     
     appointments = appointments_query.order_by(Treatment.created_at).all()
 
@@ -919,7 +999,9 @@ def appointments():
         patients = Patient.query.filter_by(status='Active').all()
         patients.sort(key=lambda p: p.name.lower() if p.name else '')
     elif current_user.role == 'physio':
-        patients = Patient.query.filter_by(user_id=current_user.id, status='Active').all()
+        # Get accessible patients (own patients or clinic patients)
+        accessible_patients = current_user.get_accessible_patients()
+        patients = [p for p in accessible_patients if p.status == 'Active']
         patients.sort(key=lambda p: p.name.lower() if p.name else '')
     else: # Should not happen due to @physio_required, but as a fallback
         patients = []
@@ -974,21 +1056,37 @@ def get_appointments():
     ).options(joinedload(Treatment.patient)) # Eager load patient
     
     if not current_user.is_admin and current_user.role == 'physio':
-        treatments_query = treatments_query.join(Patient).filter(Patient.user_id == current_user.id)
+        # Get accessible patients (own patients or clinic patients)
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        treatments_query = treatments_query.filter(Treatment.patient_id.in_(patient_ids))
     
     treatments = treatments_query.all()
 
     for apt in treatments:
         # Use patient name safely
         patient_name = apt.patient.name if apt.patient else "Unknown Patient"
-        # Determine color based on status
-        color = '#2980b9' # Default/Scheduled Blue
+        
+        # Determine color based on practitioner (patient's user_id)
+        if apt.patient and apt.patient.user_id:
+            # Get the practitioner's color
+            practitioner = User.query.get(apt.patient.user_id)
+            if practitioner:
+                color = practitioner.get_practitioner_color()
+            else:
+                color = '#2980b9' # Default blue
+        else:
+            color = '#2980b9' # Default blue
+        
+        # Modify color based on status (darken or lighten)
         if apt.status == 'Completed':
-            color = '#27ae60' # Green
+            # Add transparency to show completion
+            color = color + '80'  # Add 50% transparency
         elif apt.status == 'Cancelled':
-             color = '#e74c3c' # Red
+             color = '#e74c3c' # Override with red for cancelled
         elif apt.status == 'In Progress':
-             color = '#f1c40f' # Yellow
+             # Keep practitioner color but make it brighter
+             color = color
 
         events.append({
         'id': apt.id,
@@ -1001,7 +1099,8 @@ def get_appointments():
                 'status': apt.status,
                 'isRecurring': False,
                 'treatmentId': apt.id, # Add real ID here
-                'patientId': apt.patient_id
+                'patientId': apt.patient_id,
+                'practitionerId': apt.patient.user_id if apt.patient else None
             }
         })
         # Store the combination of patient_id and datetime to check against recurring ones
@@ -1011,7 +1110,10 @@ def get_appointments():
     recurring_query = RecurringAppointment.query.filter_by(is_active=True).options(joinedload(RecurringAppointment.patient))
     
     if not current_user.is_admin and current_user.role == 'physio':
-        recurring_query = recurring_query.join(Patient).filter(Patient.user_id == current_user.id)
+        # Get accessible patients (own patients or clinic patients)
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        recurring_query = recurring_query.filter(RecurringAppointment.patient_id.in_(patient_ids))
     
     active_rules = recurring_query.all()
 
@@ -1051,20 +1153,34 @@ def get_appointments():
                     
                     # Check if a real treatment already exists for this patient/datetime
                     if (rule.patient_id, occurrence_datetime) not in existing_treatments_datetimes:
+                        # Determine color based on practitioner (patient's user_id)
+                        if rule.patient and rule.patient.user_id:
+                            # Get the practitioner's color
+                            practitioner = User.query.get(rule.patient.user_id)
+                            if practitioner:
+                                color = practitioner.get_practitioner_color()
+                                # Make recurring appointments slightly more transparent
+                                color = color + 'CC'  # Add 80% opacity
+                            else:
+                                color = '#f39c12CC' # Default orange with transparency
+                        else:
+                            color = '#f39c12CC' # Default orange with transparency
+                        
                         # Create event object for this potential/recurring occurrence
                         events.append({
                             'id': f'recurring_{rule.id}_{current_check_date.isoformat()}', # Unique ID for potential events
                             'title': f"{patient_name} - {rule.treatment_type} (Recurring)",
                             'start': occurrence_datetime.isoformat(),
                             'end': (occurrence_datetime + timedelta(minutes=45)).isoformat(), # Assuming 45 min duration
-                            'color': '#f39c12', # Orange for recurring potential
+                            'color': color,
                             'textColor': 'white',
                             'display': 'block', # Ensures it's treated like a normal event visually
                             'extendedProps': {
                                 'status': 'Recurring (Potential)',
                                 'isRecurring': True,
                                 'ruleId': rule.id,
-                                'patientId': rule.patient_id
+                                'patientId': rule.patient_id,
+                                'practitionerId': rule.patient.user_id if rule.patient else None
                             }
                             # Note: These events are not directly editable/deletable via standard event handlers
                             # unless specific JS logic is added to handle 'recurring_*' IDs
@@ -1190,7 +1306,10 @@ def patient_treatments(id):
     # --- Access Control ---
     if not current_user.is_admin: # Admins have full access
         if current_user.role == 'physio':
-            if patient.user_id != current_user.id:
+            # Physios can access their own patients or clinic patients
+            accessible_patients = current_user.get_accessible_patients()
+            patient_ids = [p.id for p in accessible_patients]
+            if patient.id not in patient_ids:
                 flash('You do not have permission to view these treatments.', 'danger')
                 return redirect(url_for('main.patients_list'))
         elif current_user.role == 'patient':
@@ -1217,12 +1336,21 @@ def search():
         return jsonify([]) # Return empty list for patients
     # --- End Access Control ---
     query = request.args.get('q', '')
-    patients = Patient.query.filter(
-        or_(
-            Patient.name.ilike(f'%{query}%'),
-            Patient.diagnosis.ilike(f'%{query}%')
-        )
-    ).all()
+    
+    # Get accessible patients (own patients or clinic patients)
+    accessible_patients = current_user.get_accessible_patients()
+    
+    # Filter by search query
+    if query:
+        query_lower = query.lower()
+        patients = [
+            p for p in accessible_patients 
+            if (p.name and query_lower in p.name.lower()) or
+               (p.diagnosis and query_lower in p.diagnosis.lower())
+        ]
+    else:
+        patients = accessible_patients
+        
     return jsonify([{
         'id': p.id,
         'name': p.name,
@@ -1237,21 +1365,40 @@ def patients_list():
     search = request.args.get('search', '')
     status_filter = request.args.get('status', 'all')
     
-    # Get patient usage details for the current user
+    # Get patient usage details using clinic-aware limits
     current_patients_count = 0
     patient_plan_limit = None
     if current_user.is_authenticated: # Should always be true due to @login_required
-        current_patients_count, patient_plan_limit = current_user.patient_usage_details
+        if current_user.is_in_clinic:
+            clinic = current_user.clinic
+            if clinic:
+                # Use clinic's plan and patient count
+                effective_plan = clinic.active_plan
+                current_patients_count = clinic.patient_count
+                patient_plan_limit = effective_plan.patient_limit if effective_plan else None
+            else:
+                # Fallback if clinic not found
+                accessible_patients = current_user.get_accessible_patients()
+                current_patients_count = len(accessible_patients)
+                patient_plan_limit = 10 if not current_user.is_admin else None
+        else:
+            # Individual user logic
+            accessible_patients = current_user.get_accessible_patients()
+            current_patients_count = len(accessible_patients)
+            
+            # Get user's individual subscription
+            subscription = UserSubscription.query.filter_by(user_id=current_user.id).first()
+            if subscription and subscription.plan:
+                patient_plan_limit = subscription.plan.patient_limit if not current_user.is_admin else None
+            else:
+                patient_plan_limit = 10 if not current_user.is_admin else None
 
-    # Query only patients belonging to the current user
-    query = Patient.query.filter_by(user_id=current_user.id)
+    # Get accessible patients (own patients or clinic patients)
+    patients = current_user.get_accessible_patients()
 
     # Apply status filter if specified
     if status_filter != 'all':
-        query = query.filter(Patient.status == status_filter)
-
-    # Get all patients first
-    patients = query.all()
+        patients = [p for p in patients if p.status == status_filter]
     
     # Apply search filter in Python (since Patient.name is a property)
     if search:
@@ -1279,13 +1426,24 @@ def patients_list():
 @login_required
 def patient_reports_list(patient_id):
     patient = Patient.query.get_or_404(patient_id)
-    # Basic access control (similar to patient_detail)
-    if not current_user.is_admin and current_user.role == 'physio' and patient.user_id != current_user.id:
-        flash('You do not have permission to view these reports.', 'danger')
-        return redirect(url_for('main.patients_list'))
-    elif current_user.role == 'patient' and (not current_user.patient_record or current_user.patient_record.id != patient_id):
-        flash('You do not have permission to view these reports.', 'danger')
-        return redirect(url_for('main.patient_dashboard'))
+    
+    # --- Access Control ---
+    if not current_user.is_admin:
+        if current_user.role == 'physio':
+            # Physios can access their own patients or clinic patients
+            accessible_patients = current_user.get_accessible_patients()
+            patient_ids = [p.id for p in accessible_patients]
+            if patient.id not in patient_ids:
+                flash('You do not have permission to view these reports.', 'danger')
+                return redirect(url_for('main.patients_list'))
+        elif current_user.role == 'patient':
+            if not current_user.patient_record or current_user.patient_record.id != patient_id:
+                flash('You do not have permission to view these reports.', 'danger')
+                return redirect(url_for('main.patient_dashboard'))
+        else:
+            flash('Access Denied.', 'danger')
+            return redirect(url_for('main.index'))
+    # --- End Access Control ---
 
     report_id = request.args.get('report_id', type=int)
     selected_report = None
@@ -1357,10 +1515,13 @@ def match_booking_to_patient(booking_id):
             return redirect(url_for('main.match_booking_to_patient', booking_id=booking_id))
 
         patient = Patient.query.get_or_404(patient_id)
-        # Ensure selected patient belongs to the current user if not admin
-        if not current_user.is_admin and patient.user_id != current_user.id:
-            flash('Invalid patient selection.', 'danger')
-            return redirect(url_for('main.match_booking_to_patient', booking_id=booking_id))
+        # Ensure selected patient is accessible to the current user
+        if not current_user.is_admin:
+            accessible_patients = current_user.get_accessible_patients()
+            patient_ids = [p.id for p in accessible_patients]
+            if patient.id not in patient_ids:
+                flash('Invalid patient selection.', 'danger')
+                return redirect(url_for('main.match_booking_to_patient', booking_id=booking_id))
 
         try:
             booking.matched_patient_id = patient.id
@@ -1372,7 +1533,7 @@ def match_booking_to_patient(booking_id):
                 treatment_type=booking.event_type or "Calendly Booking", 
                 notes=f"Booked via Calendly. Invitee: {booking.name} ({booking.email}). Matched by {current_user.username}.",
                 status='Scheduled', # Or determine based on booking.start_time
-                provider=current_user.username, # Or map from booking if available
+                provider=current_user.email, # Or map from booking if available
                 created_at=booking.start_time or datetime.utcnow(), # Use booking start_time
                 calendly_invitee_uri=booking.calendly_invitee_id # Assuming you store the URI or a unique ID from Calendly
             )
@@ -1445,7 +1606,7 @@ def create_patient_from_booking(booking_id):
             treatment_type=booking.event_type or "Calendly Booking",
             notes=f"Booked via Calendly. Invitee: {booking.name} ({booking.email}). Auto-created/matched by {current_user.username}.",
             status='Scheduled', # Or determine based on booking.start_time
-            provider=current_user.username, # Or map from booking if available
+            provider=current_user.email, # Or map from booking if available
             created_at=booking.start_time or datetime.utcnow(), # Use booking start_time
             calendly_invitee_uri=booking.calendly_invitee_id # Store unique calendly ID
         )
@@ -1672,7 +1833,10 @@ def view_treatment(id):
     # --- Access Control --- 
     if not current_user.is_admin: # Admins have full access
         if current_user.role == 'physio':
-            if patient.user_id != current_user.id:
+            # Physios can access their own patients or clinic patients
+            accessible_patients = current_user.get_accessible_patients()
+            patient_ids = [p.id for p in accessible_patients]
+            if patient.id not in patient_ids:
                 flash('You do not have permission to view this treatment.', 'danger')
                 return redirect(url_for('main.patients_list'))
         elif current_user.role == 'patient':
@@ -1929,6 +2093,10 @@ def calculate_age(born):
 @login_required
 @physio_required
 def analytics():
+    # Check if user has permission to view analytics
+    if current_user.is_in_clinic and not current_user.can_view_clinic_reports():
+        flash('You do not have permission to view analytics.', 'error')
+        return redirect(url_for('main.index'))
     # Fetch latest AI report from the database
     latest_report = PracticeReport.query.filter_by(
         user_id=current_user.id
@@ -2262,7 +2430,10 @@ def download_report_pdf(report_id):
     # --- Access Control ---
     if not current_user.is_admin: # Admins have full access
         if current_user.role == 'physio':
-            if patient.user_id != current_user.id:
+            # Physios can access their own patients or clinic patients
+            accessible_patients = current_user.get_accessible_patients()
+            patient_ids = [p.id for p in accessible_patients]
+            if patient.id not in patient_ids:
                 flash('You do not have permission to download this report.', 'danger')
                 return redirect(url_for('main.patients_list'))
         elif current_user.role == 'patient':
@@ -2339,8 +2510,12 @@ def view_homework(report_id):
     
     # If current_user is the clinician for this patient:
     is_clinician_of_patient = False
-    if current_user.role == 'physio' and report.patient.user_id == current_user.id: # Assuming Patient.user_id links to clinician
-        is_clinician_of_patient = True
+    if current_user.role == 'physio':
+        # Check if patient is accessible to current user (own patients or clinic patients)
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        if report.patient_id in patient_ids:
+            is_clinician_of_patient = True
 
     if not is_patient_self and not is_clinician_of_patient and not current_user.is_admin:
         flash('You do not have permission to view this report.', 'danger')
@@ -2450,6 +2625,11 @@ def bulk_update_treatments():
 @login_required
 @physio_required # <<< ADD DECORATOR
 def financials():
+    # Check if user has permission to view finances
+    if current_user.is_in_clinic and not current_user.can_manage_clinic_billing():
+        flash('You do not have permission to view financial reports.', 'error')
+        return redirect(url_for('main.index'))
+    
     print(f"🚀 FINANCIALS FUNCTION CALLED - User ID: {current_user.id}")
     
     selected_year = request.args.get('year', str(datetime.now().year))
@@ -2482,9 +2662,12 @@ def financials():
              year = int(selected_year)
              available_years = [year]
 
-    # --- Check clinic configuration ---
+    # --- Check clinic configuration and permissions ---
     has_clinic_configured = bool(current_user.clinic_name and current_user.clinic_name.strip())
     clinic_fee_enabled = current_user.clinic_percentage_agreement or False
+    
+    # Only show clinic financial data if user can manage billing
+    show_clinic_financial_data = has_clinic_configured and current_user.can_manage_clinic_billing()
     
     # --- Obtener gastos fijos del usuario autenticado ---
     user_fixed_costs = FixedCost.query.filter_by(user_id=current_user.id).all()
@@ -2506,8 +2689,8 @@ def financials():
         'annual': {'revenue': 0, 'tax': 0, 'fixed_expenses': 0, 'net': 0}
     }
     
-    # Add clinic fields only if clinic is configured
-    if has_clinic_configured:
+    # Add clinic fields only if user can manage billing
+    if show_clinic_financial_data:
         for period in ['q1', 'q2', 'q3', 'q4', 'annual']:
             quarterly_data[period]['costaspine_revenue'] = 0
             if clinic_fee_enabled:
@@ -2589,8 +2772,8 @@ def financials():
             fee = t.fee_charged or 0
             m_revenue += fee
             
-            # Only process clinic data if clinic is configured
-            if has_clinic_configured:
+            # Only process clinic data if user can manage billing
+            if show_clinic_financial_data:
                 clinic_name_filter = current_user.clinic_name or 'CostaSpine Clinic'
                 is_costaspine = t.location == clinic_name_filter
                 if is_costaspine:
@@ -2602,7 +2785,7 @@ def financials():
             if user_has_tax_config:
                 is_card = t.payment_method == 'Card'
                 if is_card:
-                    if has_clinic_configured and clinic_fee_enabled:
+                    if show_clinic_financial_data and clinic_fee_enabled:
                         clinic_name_filter = current_user.clinic_name or 'CostaSpine Clinic'
                         is_costaspine = t.location == clinic_name_filter
                         if is_costaspine:
@@ -2668,7 +2851,7 @@ def financials():
 
         # --- Update quarterly data (always for revenue, conditionally for tax) ---
         quarterly_data[q_key]['revenue'] += m_revenue
-        if has_clinic_configured:
+        if show_clinic_financial_data:
             quarterly_data[q_key]['costaspine_revenue'] += m_costaspine_revenue
             if clinic_fee_enabled:
                 quarterly_data[q_key]['costaspine_fee'] += m_costaspine_fee
@@ -2684,7 +2867,7 @@ def financials():
             quarterly_data[q_key]['net'] = 'N/A'
 
         quarterly_data['annual']['revenue'] += m_revenue
-        if has_clinic_configured:
+        if show_clinic_financial_data:
             quarterly_data['annual']['costaspine_revenue'] += m_costaspine_revenue
             if clinic_fee_enabled:
                 quarterly_data['annual']['costaspine_fee'] += m_costaspine_fee
@@ -2735,7 +2918,7 @@ def financials():
         clinic_name=clinic_name,
         clinic_fee_label=clinic_fee_label,
         metrics_labels=metrics_labels,
-        has_clinic_configured=has_clinic_configured,
+        has_clinic_configured=show_clinic_financial_data,
         clinic_fee_enabled=clinic_fee_enabled,
         user_has_tax_config=user_has_tax_config
     )
@@ -2786,7 +2969,28 @@ def review_payments():
 @login_required
 @physio_required # Or your equivalent decorator for physio access
 def new_patient():
-    current_patients, patient_limit = current_user.patient_usage_details
+    # Use clinic-aware patient limits
+    if current_user.is_in_clinic:
+        clinic = current_user.clinic
+        if clinic:
+            effective_plan = clinic.active_plan
+            current_patients = clinic.patient_count
+            patient_limit = effective_plan.patient_limit if effective_plan else None
+        else:
+            accessible_patients = current_user.get_accessible_patients()
+            current_patients = len(accessible_patients)
+            patient_limit = 10 if not current_user.is_admin else None
+    else:
+        # Individual user logic
+        accessible_patients = current_user.get_accessible_patients()
+        current_patients = len(accessible_patients)
+        
+        # Get user's individual subscription
+        subscription = UserSubscription.query.filter_by(user_id=current_user.id).first()
+        if subscription and subscription.plan:
+            patient_limit = subscription.plan.patient_limit if not current_user.is_admin else None
+        else:
+            patient_limit = 10 if not current_user.is_admin else None
 
     if patient_limit is not None and current_patients >= patient_limit:
         flash(f"You have reached your current patient limit of {patient_limit}. Please upgrade your plan to add more patients.", 'warning')
@@ -2800,7 +3004,28 @@ def new_patient():
         print("=====================================")
         
         # Re-check just before creating, as a safeguard
-        current_patients_post, patient_limit_post = current_user.patient_usage_details
+        if current_user.is_in_clinic:
+            clinic = current_user.clinic
+            if clinic:
+                effective_plan = clinic.active_plan
+                current_patients_post = clinic.patient_count
+                patient_limit_post = effective_plan.patient_limit if effective_plan else None
+            else:
+                accessible_patients = current_user.get_accessible_patients()
+                current_patients_post = len(accessible_patients)
+                patient_limit_post = 10 if not current_user.is_admin else None
+        else:
+            # Individual user logic
+            accessible_patients = current_user.get_accessible_patients()
+            current_patients_post = len(accessible_patients)
+            
+            # Get user's individual subscription
+            subscription = UserSubscription.query.filter_by(user_id=current_user.id).first()
+            if subscription and subscription.plan:
+                patient_limit_post = subscription.plan.patient_limit if not current_user.is_admin else None
+            else:
+                patient_limit_post = 10 if not current_user.is_admin else None
+        
         if patient_limit_post is not None and current_patients_post >= patient_limit_post:
             flash(f"You have reached your current patient limit of {patient_limit_post} while trying to save. Please upgrade your plan.", 'warning')
             # Repopulate form fields for clarity, though redirecting is simpler
@@ -3039,7 +3264,10 @@ def edit_patient(id):
     # --- Access Control ---
     if not current_user.is_admin:
         if current_user.role == 'physio':
-            if patient.user_id != current_user.id:
+            # Physios can access their own patients or clinic patients
+            accessible_patients = current_user.get_accessible_patients()
+            patient_ids = [p.id for p in accessible_patients]
+            if patient.id not in patient_ids:
                 flash('You do not have permission to edit this patient\'s details.', 'danger')
                 return redirect(url_for('main.patients_list'))
         elif current_user.role == 'patient':
@@ -3162,9 +3390,13 @@ def delete_patient(id):
     """Delete a patient and all associated records."""
     patient = Patient.query.get_or_404(id)
 
-    if not current_user.is_admin and patient.user_id != current_user.id:
-        flash('You do not have permission to delete this patient.', 'danger')
-        return redirect(url_for('main.patients_list'))
+    # Check if user can access this patient
+    if not current_user.is_admin:
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        if patient.id not in patient_ids:
+            flash('You do not have permission to delete this patient.', 'danger')
+            return redirect(url_for('main.patients_list'))
 
     try:
         # Delete treatments and their trigger points
@@ -3211,7 +3443,9 @@ def merge_patient(id):
         
         # Access control - ensure user can access both patients
         if not current_user.is_admin:
-            if source_patient.user_id != current_user.id or target_patient.user_id != current_user.id:
+            accessible_patients = current_user.get_accessible_patients()
+            patient_ids = [p.id for p in accessible_patients]
+            if source_patient.id not in patient_ids or target_patient.id not in patient_ids:
                 return jsonify({'success': False, 'error': 'You do not have permission to merge these patients'}), 403
         
         # Prevent merging a patient with itself
@@ -3746,9 +3980,29 @@ def my_account():
                 if existing_user:
                     flash('That email address is already in use. Please choose a different one.', 'danger')
                 else:
+                    # Update email and mark as unverified
                     current_user.email = email_form.email.data
-                    db.session.commit()
-                    flash('Your email address has been updated successfully.', 'success')
+                    current_user.email_verified = False  # Require re-verification for new email
+                    current_user.email_verification_token = None  # Clear old token
+                    current_user.email_verification_sent_at = None
+                    
+                    # Send verification email to new address
+                    try:
+                        from app.email_utils import send_verification_email
+                        if send_verification_email(current_user):
+                            db.session.commit()
+                            flash('Tu dirección de email ha sido actualizada. Te hemos enviado un email de verificación a la nueva dirección.', 'success')
+                            # Log the user out to force re-verification
+                            logout_user()
+                            return redirect(url_for('auth.login'))
+                        else:
+                            flash('Email actualizado, pero hubo un problema enviando el email de verificación. Contacta al soporte.', 'warning')
+                            db.session.commit()
+                    except Exception as e:
+                        current_app.logger.error(f"Error sending verification email: {str(e)}")
+                        flash('Email actualizado, pero hubo un problema enviando el email de verificación. Contacta al soporte.', 'warning')
+                        db.session.commit()
+                    
                     return redirect(url_for('main.my_account', _anchor='profile-tab-pane')) 
             else:
                 flash('The new email is the same as your current one.', 'info')
@@ -3799,12 +4053,13 @@ def change_password():
 @physio_required # Assuming only physios/admins should access the main calendar view
 def calendar_page():
     """Renders the main calendar page."""
-    # Fetch ALL patients for the new appointment modal
+    # Fetch accessible patients for the new appointment modal
     if current_user.is_admin:
         patients = Patient.query.all() # Removed status filter
         patients.sort(key=lambda p: p.name.lower() if p.name else '')
     else: # Physio role (guaranteed by @physio_required)
-        patients = Patient.query.filter_by(user_id=current_user.id).all() # Removed status filter
+        # Get accessible patients (own patients or clinic patients)
+        patients = current_user.get_accessible_patients()
         patients.sort(key=lambda p: p.name.lower() if p.name else '')
     
     return render_template('calendar.html', title="Calendar", patients=patients)
@@ -3838,12 +4093,23 @@ def get_calendar_appointments():
         return jsonify({"error": "Invalid date format for start or end parameters"}), 400
 
     # 1. Fetch standard (non-recurring) treatments
-    treatments_query = Treatment.query.join(Patient).filter(
-        Patient.user_id == current_user.id,
-        Treatment.status == 'Scheduled',
-        Treatment.created_at >= start_date_dt,
-        Treatment.created_at < end_date_dt
-    )
+    if current_user.is_admin:
+        treatments_query = Treatment.query.filter(
+            Treatment.status == 'Scheduled',
+            Treatment.created_at >= start_date_dt,
+            Treatment.created_at < end_date_dt
+        )
+    else:
+        # Get accessible patients (own patients or clinic patients)
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        treatments_query = Treatment.query.filter(
+            Treatment.patient_id.in_(patient_ids),
+            Treatment.status == 'Scheduled',
+            Treatment.created_at >= start_date_dt,
+            Treatment.created_at < end_date_dt
+        )
+    
     scheduled_treatments = treatments_query.all()
 
     for treatment in scheduled_treatments:
@@ -3851,10 +4117,24 @@ def get_calendar_appointments():
         event_end = (treatment.created_at + timedelta(hours=1)).isoformat()
 
         title = f"{treatment.patient.name} - {treatment.treatment_type if treatment.treatment_type else 'Appointment'}"
-        color = '#007bff' # Default blue
-        if treatment.treatment_type:
-            if "Initial Assessment" in treatment.treatment_type: color = '#28a745'
-            elif "Follow-up" in treatment.treatment_type: color = '#17a2b8'
+        
+        # Determine color based on practitioner (patient's user_id)
+        if treatment.patient and treatment.patient.user_id:
+            # Get the practitioner's color
+            practitioner = User.query.get(treatment.patient.user_id)
+            if practitioner:
+                color = practitioner.get_practitioner_color()
+            else:
+                color = '#007bff' # Default blue
+        else:
+            color = '#007bff' # Default blue
+        
+        # Modify color based on status
+        if treatment.status == 'Completed':
+            # Add transparency to show completion
+            color = color + '80'  # Add 50% transparency
+        elif treatment.status == 'Cancelled':
+             color = '#e74c3c' # Override with red for cancelled
         
         events.append({
             'id': str(treatment.id), # Ensure ID is string for FullCalendar
@@ -3869,14 +4149,21 @@ def get_calendar_appointments():
                 'patient_name': treatment.patient.name,
                 'treatment_type': treatment.treatment_type,
                 'status': treatment.status,
-                'notes': treatment.notes
+                'notes': treatment.notes,
+                'practitioner_id': treatment.patient.user_id if treatment.patient else None
             }
         })
 
     # 2. Fetch and process recurring appointments
-    recurring_appointments = RecurringAppointment.query.join(Patient).filter(
-        Patient.user_id == current_user.id
-    ).options(joinedload(RecurringAppointment.patient)).all()
+    if current_user.is_admin:
+        recurring_appointments = RecurringAppointment.query.options(joinedload(RecurringAppointment.patient)).all()
+    else:
+        # Get accessible patients (own patients or clinic patients)
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        recurring_appointments = RecurringAppointment.query.filter(
+            RecurringAppointment.patient_id.in_(patient_ids)
+        ).options(joinedload(RecurringAppointment.patient)).all()
 
     # day_mapping removed as RecurringAppointment model uses recurrence_type
 
@@ -3941,13 +4228,26 @@ def get_calendar_appointments():
                 
                 title = f"{ra.patient.name} - {ra.treatment_type} (Recurring)"
 
+                # Determine color based on practitioner (patient's user_id)
+                if ra.patient and ra.patient.user_id:
+                    # Get the practitioner's color
+                    practitioner = User.query.get(ra.patient.user_id)
+                    if practitioner:
+                        color = practitioner.get_practitioner_color()
+                        # Make recurring appointments slightly more transparent
+                        color = color + 'CC'  # Add 80% opacity
+                    else:
+                        color = '#fd7e14CC' # Default orange with transparency
+                else:
+                    color = '#fd7e14CC' # Default orange with transparency
+
                 events.append({
                     'id': f"recurring_{ra.id}_{current_iter_date.strftime('%Y%m%d')}",
                     'title': title,
                     'start': event_start_iso,
                     'end': event_end_iso,
                     'allDay': False,
-                    'color': '#fd7e14',
+                    'color': color,
                     'extendedProps': {
                         'type': 'recurring_instance',
                         'recurring_appointment_id': ra.id,
@@ -3957,7 +4257,8 @@ def get_calendar_appointments():
                         'recurrence_type': ra.recurrence_type,
                         'series_start': ra.start_date.isoformat(),
                         # Handle if ra.end_date (series_end_date_from_db) is None for the extendedProps
-                        'series_end': series_end_date_from_db.isoformat() if series_end_date_from_db else None 
+                        'series_end': series_end_date_from_db.isoformat() if series_end_date_from_db else None,
+                        'practitioner_id': ra.patient.user_id if ra.patient else None
                     }
                 })
             current_iter_date += timedelta(days=1)
@@ -4532,8 +4833,29 @@ def create_patient_ajax():
         else:
             return jsonify({'success': False, 'message': 'Invalid request format'}), 400
         
-        # Check patient limits
-        current_patients, patient_limit = current_user.patient_usage_details
+        # Check patient limits using clinic-aware logic
+        if current_user.is_in_clinic:
+            clinic = current_user.clinic
+            if clinic:
+                effective_plan = clinic.active_plan
+                current_patients = clinic.patient_count
+                patient_limit = effective_plan.patient_limit if effective_plan else None
+            else:
+                accessible_patients = current_user.get_accessible_patients()
+                current_patients = len(accessible_patients)
+                patient_limit = 10 if not current_user.is_admin else None
+        else:
+            # Individual user logic
+            accessible_patients = current_user.get_accessible_patients()
+            current_patients = len(accessible_patients)
+            
+            # Get user's individual subscription
+            subscription = UserSubscription.query.filter_by(user_id=current_user.id).first()
+            if subscription and subscription.plan:
+                patient_limit = subscription.plan.patient_limit if not current_user.is_admin else None
+            else:
+                patient_limit = 10 if not current_user.is_admin else None
+        
         if patient_limit is not None and current_patients >= patient_limit:
             return jsonify({
                 'success': False, 

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Join') }} {{ clinic.name }} - {{ _('Create Account') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">
+                        <i class="bi bi-person-plus me-2"></i>
+                        {{ _('Join') }} {{ clinic.name }}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Invitation Details -->
+                    <div class="text-center mb-4">
+                        <div class="alert alert-info">
+                            <i class="bi bi-envelope-open me-2"></i>
+                            <strong>{{ invited_by.first_name }} {{ invited_by.last_name }}</strong> {{ _('has invited you to join') }} 
+                            <strong>{{ clinic.name }}</strong> {{ _('as a') }} <strong>{{ invitation.role.title() }}</strong>
+                        </div>
+                    </div>
+
+                    <!-- Registration Form -->
+                    <form action="{{ url_for('clinic.complete_registration', token=invitation.invitation_token) }}" method="POST">
+                        {% if form %}
+                            {{ form.hidden_tag() }}
+                        {% else %}
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">{{ _('Email') }}</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ email }}" readonly>
+                            <div class="form-text">{{ _('This email was specified in the invitation') }}</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="first_name" class="form-label">{{ _('First Name') }}</label>
+                                    <input type="text" class="form-control {% if form and form.first_name.errors %}is-invalid{% endif %}" 
+                                           id="first_name" name="first_name" value="{{ form.first_name.data if form else '' }}" required>
+                                    {% if form and form.first_name.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.first_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="last_name" class="form-label">{{ _('Last Name') }}</label>
+                                    <input type="text" class="form-control {% if form and form.last_name.errors %}is-invalid{% endif %}" 
+                                           id="last_name" name="last_name" value="{{ form.last_name.data if form else '' }}" required>
+                                    {% if form and form.last_name.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.last_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">{{ _('Username') }}</label>
+                            <input type="text" class="form-control {% if form and form.username.errors %}is-invalid{% endif %}" 
+                                   id="username" name="username" value="{{ form.username.data if form else '' }}" required>
+                            {% if form and form.username.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.username.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">{{ _('Password') }}</label>
+                            <input type="password" class="form-control {% if form and form.password.errors %}is-invalid{% endif %}" 
+                                   id="password" name="password" required>
+                            {% if form and form.password.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.password.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password2" class="form-label">{{ _('Confirm Password') }}</label>
+                            <input type="password" class="form-control {% if form and form.password2.errors %}is-invalid{% endif %}" 
+                                   id="password2" name="password2" required>
+                            {% if form and form.password2.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.password2.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-person-check me-2"></i>
+                                {{ _('Create Account & Join Clinic') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center text-muted">
+                    <small>
+                        <i class="bi bi-clock me-1"></i>
+                        {{ _('This invitation expires on') }} {{ invitation.invitation_expires_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

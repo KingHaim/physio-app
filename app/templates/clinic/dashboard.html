@@ -1,0 +1,459 @@
+{% extends "base.html" %}
+
+{% block title %}{{ clinic.name }} - {{ _('Clinic Dashboard') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Clinic Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-1">
+                                <i class="bi bi-building me-2"></i>
+                                {{ clinic.name }}
+                            </h2>
+                            <p class="mb-0 opacity-75">
+                                {{ _('Your Role:') }} 
+                                <span class="badge bg-light text-dark">{{ membership.role.title() }}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group" role="group">
+                                {% if membership.can_manage_practitioners %}
+                                <a href="{{ url_for('clinic.members') }}" class="btn btn-light">
+                                    <i class="bi bi-people me-2"></i>
+                                    {{ _('Members') }}
+                                </a>
+                                {% endif %}
+                                {% if membership.can_manage_settings %}
+                                <a href="{{ url_for('main.user_settings', tab='clinic') }}" class="btn btn-light">
+                                    <i class="bi bi-gear me-2"></i>
+                                    {{ _('Settings') }}
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-people-fill display-4 text-primary mb-2"></i>
+                    <h3 class="mb-1">{{ members|length }}</h3>
+                    <p class="text-muted mb-0">{{ _('Active Members') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-person-badge-fill display-4 text-success mb-2"></i>
+                    <h3 class="mb-1">{{ practitioners|length }}</h3>
+                    <p class="text-muted mb-0">{{ _('Practitioners') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-heart-pulse-fill display-4 text-info mb-2"></i>
+                    <h3 class="mb-1">{{ total_patients }}</h3>
+                    <p class="text-muted mb-0">{{ _('Total Patients') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-graph-up-arrow display-4 text-warning mb-2"></i>
+                    <h3 class="mb-1">
+                        {% if clinic.active_plan %}
+                            {{ clinic.active_plan.name }}
+                        {% else %}
+                            {{ _('No Plan') }}
+                        {% endif %}
+                    </h3>
+                    <p class="text-muted mb-0">{{ _('Current Plan') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Clinic Members -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people me-2"></i>
+                        {{ _('Clinic Members') }}
+                    </h5>
+                    {% if membership.can_manage_practitioners %}
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#inviteModal">
+                        <i class="bi bi-person-plus me-2"></i>
+                        {{ _('Invite Member') }}
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if members %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Name') }}</th>
+                                    <th>{{ _('Email') }}</th>
+                                    <th>{{ _('Role') }}</th>
+                                    <th>{{ _('Joined') }}</th>
+                                    <th>{{ _('Status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in members %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-person-circle me-2"></i>
+                                            {{ member.user.first_name or member.user.email.split('@')[0] }}
+                                            {{ member.user.last_name or '' }}
+                                        </div>
+                                    </td>
+                                    <td>{{ member.user.email }}</td>
+                                    <td>
+                                        <span class="badge {% if member.role == 'admin' %}bg-danger{% elif member.role == 'practitioner' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                            {{ member.role.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if member.joined_at %}
+                                            {{ member.joined_at.strftime('%d %b %Y') }}
+                                        {% else %}
+                                            <span class="text-muted">{{ _('Pending') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if member.is_active %}
+                                            <span class="badge bg-success">{{ _('Active') }}</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">{{ _('Inactive') }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-people display-4 text-muted"></i>
+                        <p class="text-muted mt-2">{{ _('No members yet') }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Clinic Info -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        {{ _('Clinic Information') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if clinic.description %}
+                    <p class="text-muted">{{ clinic.description }}</p>
+                    {% endif %}
+                    
+                    {% if clinic.address %}
+                    <div class="mb-3">
+                        <strong>{{ _('Address:') }}</strong><br>
+                        <small>{{ clinic.address }}</small>
+                    </div>
+                    {% endif %}
+                    
+                    {% if clinic.phone %}
+                    <div class="mb-3">
+                        <strong>{{ _('Phone:') }}</strong><br>
+                        <small>{{ clinic.phone }}</small>
+                    </div>
+                    {% endif %}
+                    
+                    {% if clinic.email %}
+                    <div class="mb-3">
+                        <strong>{{ _('Email:') }}</strong><br>
+                        <small>{{ clinic.email }}</small>
+                    </div>
+                    {% endif %}
+                    
+                    {% if clinic.website %}
+                    <div class="mb-3">
+                        <strong>{{ _('Website:') }}</strong><br>
+                        <small><a href="{{ clinic.website }}" target="_blank">{{ clinic.website }}</a></small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <strong>{{ _('Created:') }}</strong><br>
+                        <small>{{ clinic.created_at.strftime('%d %b %Y') }}</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>
+                        {{ _('Quick Actions') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if membership.can_manage_patients %}
+                        <a href="{{ url_for('main.new_patient') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-person-plus me-2"></i>
+                            {{ _('Add Patient') }}
+                        </a>
+                        {% endif %}
+                        
+                        {% if membership.can_view_reports %}
+                        <a href="{{ url_for('main.analytics') }}" class="btn btn-outline-info">
+                            <i class="bi bi-graph-up me-2"></i>
+                            {{ _('View Reports') }}
+                        </a>
+                        {% endif %}
+                        
+                        {% if membership.can_manage_billing %}
+                        <a href="{{ url_for('main.manage_subscription') }}" class="btn btn-outline-success">
+                            <i class="bi bi-credit-card me-2"></i>
+                            {{ _('Manage Billing') }}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Member Modal -->
+{% if membership.can_manage_practitioners %}
+<div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inviteModalLabel">{{ _('Invite New Member') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Invitation Form -->
+                <div id="inviteFormStep">
+                    <form id="inviteForm">
+                        <div class="mb-3">
+                            <label for="inviteEmail" class="form-label">{{ _('Email Address') }}</label>
+                            <input type="email" class="form-control" id="inviteEmail" required>
+                            <div class="form-text">{{ _('Enter the email of the person you want to invite') }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="inviteRole" class="form-label">{{ _('Role') }}</label>
+                            <select class="form-select" id="inviteRole" required>
+                                <option value="practitioner">{{ _('Practitioner') }}</option>
+                                <option value="assistant">{{ _('Assistant') }}</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Success Step with Link -->
+                <div id="inviteSuccessStep" style="display: none;">
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>{{ _('Invitation Created Successfully!') }}</strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{{ _('Share this invitation link:') }}</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="invitationLink" readonly>
+                            <button class="btn btn-outline-secondary" type="button" id="copyLinkBtn">
+                                <i class="bi bi-clipboard"></i> {{ _('Copy') }}
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{ _('Send this link to the person you want to invite. The link expires in 7 days.') }}
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>{{ _('Instructions:') }}</strong><br>
+                            • {{ _('If they already have an account, they can join immediately') }}<br>
+                            • {{ _('If they don\'t have an account, they can register and join automatically') }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <!-- Form Step Footer -->
+                <div id="inviteFormFooter">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                    <button type="button" class="btn btn-primary" id="sendInvite">
+                        <i class="bi bi-person-plus-fill me-1"></i>{{ _('Generate Invitation Link') }}
+                    </button>
+                </div>
+
+                <!-- Success Step Footer -->
+                <div id="inviteSuccessFooter" style="display: none;">
+                    <button type="button" class="btn btn-secondary" id="createAnotherBtn">
+                        <i class="bi bi-plus-circle me-1"></i>{{ _('Create Another') }}
+                    </button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{{ _('Done') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- JavaScript for invite functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sendInviteBtn = document.getElementById('sendInvite');
+    const inviteForm = document.getElementById('inviteForm');
+    const inviteFormStep = document.getElementById('inviteFormStep');
+    const inviteSuccessStep = document.getElementById('inviteSuccessStep');
+    const inviteFormFooter = document.getElementById('inviteFormFooter');
+    const inviteSuccessFooter = document.getElementById('inviteSuccessFooter');
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const createAnotherBtn = document.getElementById('createAnotherBtn');
+    const invitationLink = document.getElementById('invitationLink');
+    
+    // Reset modal when opened
+    document.getElementById('inviteModal').addEventListener('show.bs.modal', function() {
+        resetToFormStep();
+    });
+    
+    function resetToFormStep() {
+        inviteFormStep.style.display = 'block';
+        inviteSuccessStep.style.display = 'none';
+        inviteFormFooter.style.display = 'block';
+        inviteSuccessFooter.style.display = 'none';
+        
+        // Reset form
+        document.getElementById('inviteEmail').value = '';
+        document.getElementById('inviteRole').value = 'practitioner';
+        invitationLink.value = '';
+    }
+    
+    function showSuccessStep(link) {
+        inviteFormStep.style.display = 'none';
+        inviteSuccessStep.style.display = 'block';
+        inviteFormFooter.style.display = 'none';
+        inviteSuccessFooter.style.display = 'block';
+        
+        invitationLink.value = link;
+    }
+    
+    // Send invitation
+    if (sendInviteBtn) {
+        sendInviteBtn.addEventListener('click', function() {
+            const email = document.getElementById('inviteEmail').value;
+            const role = document.getElementById('inviteRole').value;
+            
+            if (!email || !role) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            // Disable button during request
+            sendInviteBtn.disabled = true;
+            sendInviteBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>{{ _("Generating...") }}';
+            
+            fetch('{{ url_for("clinic.invite_practitioner") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    role: role
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessStep(data.invitation_link);
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while creating the invitation');
+            })
+            .finally(() => {
+                sendInviteBtn.disabled = false;
+                sendInviteBtn.innerHTML = '<i class="bi bi-person-plus-fill me-1"></i>{{ _("Generate Invitation Link") }}';
+            });
+        });
+    }
+    
+    // Copy invitation link
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', function() {
+            invitationLink.select();
+            invitationLink.setSelectionRange(0, 99999); // For mobile devices
+            navigator.clipboard.writeText(invitationLink.value).then(function() {
+                copyLinkBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>{{ _("Copied!") }}';
+                copyLinkBtn.classList.remove('btn-outline-secondary');
+                copyLinkBtn.classList.add('btn-success');
+                
+                setTimeout(function() {
+                    copyLinkBtn.innerHTML = '<i class="bi bi-clipboard"></i> {{ _("Copy") }}';
+                    copyLinkBtn.classList.remove('btn-success');
+                    copyLinkBtn.classList.add('btn-outline-secondary');
+                }, 2000);
+            }).catch(function() {
+                // Fallback for older browsers
+                try {
+                    document.execCommand('copy');
+                    copyLinkBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>{{ _("Copied!") }}';
+                    copyLinkBtn.classList.remove('btn-outline-secondary');
+                    copyLinkBtn.classList.add('btn-success');
+                    
+                    setTimeout(function() {
+                        copyLinkBtn.innerHTML = '<i class="bi bi-clipboard"></i> {{ _("Copy") }}';
+                        copyLinkBtn.classList.remove('btn-success');
+                        copyLinkBtn.classList.add('btn-outline-secondary');
+                    }, 2000);
+                } catch (err) {
+                    alert('Unable to copy to clipboard. Please copy the link manually.');
+                }
+            });
+        });
+    }
+    
+    // Create another invitation
+    if (createAnotherBtn) {
+        createAnotherBtn.addEventListener('click', function() {
+            resetToFormStep();
+        });
+    }
+});
+</script>
+{% endblock %} 

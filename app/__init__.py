@@ -128,9 +128,16 @@ def before_sentry_send(event, hint, app):
     
     return event
 
-def create_app(config_class=Config):
+def create_app(config_class=None):
     app = Flask(__name__)
-    app.config.from_object(Config)
+    
+    # Determine which config to use based on environment
+    if config_class is None:
+        from config import config
+        config_name = os.environ.get('FLASK_ENV', 'development')
+        config_class = config.get(config_name, config['default'])
+    
+    app.config.from_object(config_class)
 
     # Configure session
     app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
@@ -234,6 +241,9 @@ def create_app(config_class=Config):
     from app.routes.onboarding import onboarding as onboarding_blueprint
     app.register_blueprint(onboarding_blueprint)
 
+    from app.routes.clinic import clinic as clinic_blueprint
+    app.register_blueprint(clinic_blueprint, url_prefix='/clinic')
+
     # Create all tables
     # with app.app_context():
     #     db.create_all()
@@ -284,15 +294,17 @@ def create_app(config_class=Config):
         
         count = 0
         if current_user.is_authenticated:
-            if current_user.is_admin:
-                count = UnmatchedCalendlyBooking.query.filter_by(status='Pending').count()
-            elif current_user.role == 'physio': # Non-admin physio
-                if current_user.calendly_api_token and current_user.calendly_user_uri:
+            # Only show pending reviews if user has Calendly configured
+            if current_user.calendly_api_token and current_user.calendly_user_uri:
+                if current_user.is_admin:
+                    # Admin sees all pending bookings when Calendly is configured
+                    count = UnmatchedCalendlyBooking.query.filter_by(status='Pending').count()
+                elif current_user.role == 'physio':
+                    # Regular physio sees only their own pending bookings
                     count = UnmatchedCalendlyBooking.query.filter_by(
                         status='Pending',
                         user_id=current_user.id
                     ).count()
-                # Else, count remains 0 if Calendly not configured for non-admin physio
         return dict(pending_review_count=count)
 
     @app.context_processor

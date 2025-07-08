@@ -575,6 +575,7 @@
                                                 <th><input class="form-check-input" type="checkbox" id="selectAllCheckbox"></th>
                                                 <th>{{ _('Date') }}</th>
                                                 <th>{{ _('Type') }}</th>
+                                                <th>{{ _('Practitioner') }}</th>
                                                 <th>{{ _('Status') }}</th>
                                                 <th>{{ _('Pain Level') }}</th>
                                                 <th>{{ _('Fee (€)') }}</th>
@@ -591,6 +592,13 @@
                                                     <td><input class="form-check-input treatment-checkbox" type="checkbox" value="{{ treatment.id }}"></td>
                                                     <td>{{ treatment.created_at.strftime('%Y-%m-%d %H:%M') if treatment.created_at else 'N/A' }}</td>
                                                     <td>{{ treatment.treatment_type or 'N/A' }}</td>
+                                                    <td>
+                                                        {% if treatment.provider %}
+                                                            <span class="text-dark small">{{ practitioners.get(treatment.provider, treatment.provider) }}</span>
+                                                        {% else %}
+                                                            <span class="text-muted">-</span>
+                                                        {% endif %}
+                                                    </td>
                                                     <td>
                                                         <span class="badge {% if treatment.status == 'Completed' %}bg-primary{% elif treatment.status == 'Scheduled' %}bg-info text-dark{% elif treatment.status == 'Cancelled' %}bg-danger{% else %}bg-secondary{% endif %} status-badge" id="status-{{ treatment.id }}">
                                                             {{ _(treatment.status) if treatment.status else 'N/A' }}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Clinic Plan') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="text-center mb-5">
+                <h1 class="display-4 mb-3">
+                    <i class="bi bi-building text-primary me-3"></i>
+                    {{ _('Welcome to Clinic Plans') }}
+                </h1>
+                <p class="lead text-muted">
+                    {{ _('Collaborate with other practitioners in a shared clinic environment') }}
+                </p>
+            </div>
+
+            <!-- Feature Overview -->
+            <div class="row mb-5">
+                <div class="col-md-4 text-center mb-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-people-fill display-4 text-primary"></i>
+                    </div>
+                    <h5>{{ _('Multi-Practitioner') }}</h5>
+                    <p class="text-muted">{{ _('Work with multiple practitioners under one clinic') }}</p>
+                </div>
+                <div class="col-md-4 text-center mb-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-share-fill display-4 text-success"></i>
+                    </div>
+                    <h5>{{ _('Shared Patients') }}</h5>
+                    <p class="text-muted">{{ _('Share patient records and collaborate on treatments') }}</p>
+                </div>
+                <div class="col-md-4 text-center mb-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-credit-card-fill display-4 text-info"></i>
+                    </div>
+                    <h5>{{ _('Centralized Billing') }}</h5>
+                    <p class="text-muted">{{ _('Manage subscriptions and billing at the clinic level') }}</p>
+                </div>
+            </div>
+
+            <!-- Action Cards -->
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="mb-3">
+                                <i class="bi bi-plus-circle-fill display-3 text-primary"></i>
+                            </div>
+                            <h4 class="card-title">{{ _('Create New Clinic') }}</h4>
+                            <p class="card-text text-muted">
+                                {{ _('Start your own clinic and invite other practitioners to join') }}
+                            </p>
+                            <ul class="list-unstyled text-start mb-4">
+                                <li><i class="bi bi-check-circle text-success me-2"></i>{{ _('Become clinic administrator') }}</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>{{ _('Invite practitioners') }}</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>{{ _('Manage clinic settings') }}</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>{{ _('Control billing and subscriptions') }}</li>
+                            </ul>
+                            <a href="{{ url_for('main.user_settings', tab='clinic') }}" class="btn btn-primary btn-lg">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                {{ _('Create Clinic') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="mb-3">
+                                <i class="bi bi-box-arrow-in-right display-3 text-success"></i>
+                            </div>
+                            <h4 class="card-title">{{ _('Join Existing Clinic') }}</h4>
+                            <p class="card-text text-muted">
+                                {{ _('Join an existing clinic using an invitation link') }}
+                            </p>
+                            <ul class="list-unstyled text-start mb-4">
+                                <li><i class="bi bi-check-circle text-success me-2"></i>{{ _('Access shared patients') }}</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>{{ _('Collaborate with team') }}</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>{{ _('Use clinic features') }}</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>{{ _('Benefit from clinic plan') }}</li>
+                            </ul>
+                            <a href="{{ url_for('clinic.join') }}" class="btn btn-success btn-lg">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>
+                                {{ _('Join Clinic') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Continue Solo Option -->
+            <div class="text-center mt-5">
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <p class="mb-2">{{ _('Not ready for a clinic plan?') }}</p>
+                        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            {{ _('Continue with individual plan') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

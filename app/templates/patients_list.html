@@ -19,7 +19,9 @@
                 <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>{{ _('Active') }}</option>
                 <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>{{ _('Inactive') }}</option>
                 <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>{{ _('Completed') }}</option>
+                {% if current_user and current_user.is_admin or (current_user and current_user.calendly_api_token and current_user.calendly_user_uri) %}
                 <option value="Pending Review" {% if status_filter == 'Pending Review' %}selected{% endif %}>{{ _('Pending Review') }}</option>
+                {% endif %}
             </select>
         </div>
         <div class="col-md-3 text-md-end mt-2 mt-md-0">
@@ -77,10 +79,12 @@
                     <li><a class="dropdown-item text-danger" href="#" onclick="bulkDeletePatients()">
                         <i class="bi bi-trash"></i> {{ _('Delete Selected Patients') }}
                     </a></li>
+                    {% if current_user and current_user.is_admin or (current_user and current_user.calendly_api_token and current_user.calendly_user_uri) %}
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="#" onclick="selectAllPendingReview()">
                         {{ _('Select All Pending Review') }}
                     </a></li>
+                    {% endif %}
                 </ul>
             </div>
         </div>

@@ -14,6 +14,14 @@ class RegistrationForm(FlaskForm):
     # plan = RadioField('Choose Your Plan', choices=[('free', 'Free Plan'), ('pro', 'Pro Plan ($19.99/month)')], default='free')
     submit = SubmitField(_l('Register'))
 
+class ClinicRegistrationForm(FlaskForm):
+    username = StringField(_l('Username'), validators=[DataRequired(), Length(max=64)])
+    first_name = StringField(_l('First Name'), validators=[DataRequired(), Length(max=64)])
+    last_name = StringField(_l('Last Name'), validators=[DataRequired(), Length(max=64)])
+    password = PasswordField(_l('Password'), validators=[DataRequired(), Length(min=6)])
+    password2 = PasswordField(_l('Confirm Password'), validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField(_l('Create Account & Join Clinic'))
+
 class LoginForm(FlaskForm):
     email = StringField(_l('Email'), validators=[DataRequired(), Email()])
     password = PasswordField(_l('Password'), validators=[DataRequired()])

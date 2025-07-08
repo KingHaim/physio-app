@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Clinic Members') }} - {{ clinic.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="bi bi-people me-2"></i>
+                    {{ _('Clinic Members') }}
+                </h2>
+                {% if membership.can_manage_practitioners %}
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#inviteModal">
+                    <i class="bi bi-person-plus me-2"></i>
+                    {{ _('Invite Member') }}
+                </button>
+                {% endif %}
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    {% if members %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Name') }}</th>
+                                    <th>{{ _('Email') }}</th>
+                                    <th>{{ _('Role') }}</th>
+                                    <th>{{ _('Joined') }}</th>
+                                    <th>{{ _('Status') }}</th>
+                                    <th>{{ _('Permissions') }}</th>
+                                    <th>{{ _('Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in members %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-person-circle me-2"></i>
+                                            {{ member.user.first_name or member.user.email.split('@')[0] }}
+                                            {{ member.user.last_name or '' }}
+                                        </div>
+                                    </td>
+                                    <td>{{ member.user.email }}</td>
+                                    <td>
+                                        <span class="badge {% if member.role == 'admin' %}bg-danger{% elif member.role == 'practitioner' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                            {{ member.role.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if member.joined_at %}
+                                            {{ member.joined_at.strftime('%d %b %Y') }}
+                                        {% else %}
+                                            <span class="text-muted">{{ _('Pending') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if member.is_active %}
+                                            <span class="badge bg-success">{{ _('Active') }}</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">{{ _('Pending') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            {% if member.can_manage_patients %}
+                                            <span class="badge bg-info">{{ _('Patients') }}</span>
+                                            {% endif %}
+                                            {% if member.can_manage_practitioners %}
+                                            <span class="badge bg-warning">{{ _('Members') }}</span>
+                                            {% endif %}
+                                            {% if member.can_manage_billing %}
+                                            <span class="badge bg-success">{{ _('Billing') }}</span>
+                                            {% endif %}
+                                            {% if member.can_view_reports %}
+                                            <span class="badge bg-secondary">{{ _('Analytics') }}</span>
+                                            {% endif %}
+                                            {% if member.can_manage_settings %}
+                                            <span class="badge bg-danger">{{ _('Settings') }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if membership.can_manage_practitioners and member.role != 'admin' %}
+                                        <button class="btn btn-sm btn-outline-primary edit-permissions-btn" 
+                                                data-member-id="{{ member.id }}"
+                                                data-member-name="{{ member.user.first_name or member.user.email.split('@')[0] }}"
+                                                data-can-manage-patients="{{ member.can_manage_patients|lower }}"
+                                                data-can-view-reports="{{ member.can_view_reports|lower }}"
+                                                data-can-manage-billing="{{ member.can_manage_billing|lower }}">
+                                            <i class="bi bi-pencil me-1"></i>{{ _('Edit') }}
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-people display-4 text-muted"></i>
+                        <p class="text-muted mt-2">{{ _('No members yet') }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <a href="{{ url_for('clinic.dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    {{ _('Back to Dashboard') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Member Modal -->
+{% if membership.can_manage_practitioners %}
+<div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inviteModalLabel">{{ _('Invite New Member') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="inviteForm">
+                    <div class="mb-3">
+                        <label for="inviteEmail" class="form-label">{{ _('Email Address') }}</label>
+                        <input type="email" class="form-control" id="inviteEmail" required>
+                        <div class="form-text">{{ _('They must already have an account on the platform') }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inviteRole" class="form-label">{{ _('Role') }}</label>
+                        <select class="form-select" id="inviteRole" required>
+                            <option value="practitioner">{{ _('Practitioner') }}</option>
+                            <option value="assistant">{{ _('Assistant') }}</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                <button type="button" class="btn btn-primary" id="sendInvite">{{ _('Send Invitation') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sendInviteBtn = document.getElementById('sendInvite');
+    
+    if (sendInviteBtn) {
+        sendInviteBtn.addEventListener('click', function() {
+            const email = document.getElementById('inviteEmail').value;
+            const role = document.getElementById('inviteRole').value;
+            
+            if (!email || !role) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            sendInviteBtn.disabled = true;
+            sendInviteBtn.textContent = 'Sending...';
+            
+            fetch('{{ url_for("clinic.invite_practitioner") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    role: role
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message + '\n\nInvitation link: ' + data.invitation_link);
+                    bootstrap.Modal.getInstance(document.getElementById('inviteModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while sending the invitation');
+            })
+            .finally(() => {
+                sendInviteBtn.disabled = false;
+                sendInviteBtn.textContent = 'Send Invitation';
+            });
+        });
+    }
+});
+</script>
+{% endif %}
+
+<!-- Edit Permissions Modal -->
+{% if membership.can_manage_practitioners %}
+<div class="modal fade" id="editPermissionsModal" tabindex="-1" aria-labelledby="editPermissionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPermissionsModalLabel">{{ _('Edit Permissions') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPermissionsForm">
+                    <input type="hidden" id="editMemberId" name="member_id">
+                    <div class="mb-3">
+                        <h6 id="editMemberName" class="mb-3"></h6>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editCanManagePatients" name="can_manage_patients">
+                            <label class="form-check-label" for="editCanManagePatients">
+                                {{ _('Can manage patients') }}
+                            </label>
+                            <div class="form-text">{{ _('View, create, and edit patient records') }}</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editCanViewReports" name="can_view_reports">
+                            <label class="form-check-label" for="editCanViewReports">
+                                {{ _('Can view analytics') }}
+                            </label>
+                            <div class="form-text">{{ _('Access to practice analytics and reports') }}</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editCanManageBilling" name="can_manage_billing">
+                            <label class="form-check-label" for="editCanManageBilling">
+                                {{ _('Can manage finances') }}
+                            </label>
+                            <div class="form-text">{{ _('Access to financial reports and billing information') }}</div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <small>{{ _('Note: By default, new practitioners only have access to patient management. Additional permissions must be granted manually.') }}</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                <button type="button" class="btn btn-primary" id="savePermissions">{{ _('Save Changes') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editPermissionsButtons = document.querySelectorAll('.edit-permissions-btn');
+    const editPermissionsModal = document.getElementById('editPermissionsModal');
+    const savePermissionsBtn = document.getElementById('savePermissions');
+    
+    editPermissionsButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const memberId = this.dataset.memberId;
+            const memberName = this.dataset.memberName;
+            const canManagePatients = this.dataset.canManagePatients === 'true';
+            const canViewReports = this.dataset.canViewReports === 'true';
+            const canManageBilling = this.dataset.canManageBilling === 'true';
+            
+            document.getElementById('editMemberId').value = memberId;
+            document.getElementById('editMemberName').textContent = 'Edit permissions for ' + memberName;
+            document.getElementById('editCanManagePatients').checked = canManagePatients;
+            document.getElementById('editCanViewReports').checked = canViewReports;
+            document.getElementById('editCanManageBilling').checked = canManageBilling;
+            
+            new bootstrap.Modal(editPermissionsModal).show();
+        });
+    });
+    
+    if (savePermissionsBtn) {
+        savePermissionsBtn.addEventListener('click', function() {
+            const memberId = document.getElementById('editMemberId').value;
+            const permissions = {
+                can_manage_patients: document.getElementById('editCanManagePatients').checked,
+                can_view_reports: document.getElementById('editCanViewReports').checked,
+                can_manage_billing: document.getElementById('editCanManageBilling').checked
+            };
+            
+            savePermissionsBtn.disabled = true;
+            savePermissionsBtn.textContent = 'Saving...';
+            
+            fetch('{{ url_for("clinic.update_member_permissions") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    member_id: memberId,
+                    permissions: permissions
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Permissions updated successfully');
+                    bootstrap.Modal.getInstance(editPermissionsModal).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating permissions');
+            })
+            .finally(() => {
+                savePermissionsBtn.disabled = false;
+                savePermissionsBtn.textContent = 'Save Changes';
+            });
+        });
+    }
+});
+</script>
+{% endif %}
+{% endblock %} 

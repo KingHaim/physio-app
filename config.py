@@ -19,7 +19,7 @@ class Config:
         raise RuntimeError("FERNET_SECRET_KEY environment variable is required for data encryption")
     
     # Use absolute path for database
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///" + os.path.join(basedir, 'instance', 'physio.db'))
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///" + os.path.join(basedir, 'instance', 'physio-2.db'))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Database connection pool settings
@@ -29,6 +29,19 @@ class Config:
         'pool_pre_ping': True,
         'max_overflow': 20
     }
+    
+    # Server configuration for email URL generation (overridden in subclasses)
+    SERVER_NAME = 'localhost:5000'  # Default for development
+    PREFERRED_URL_SCHEME = 'http'
+    
+    # Email configuration
+    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
+    MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER') or 'noreply@trxcker.com'
+    MAIL_SUBJECT_PREFIX = '[TRXCKER] '
     
     # Calendly API configuration
     CALENDLY_API_TOKEN = os.environ.get('CALENDLY_API_TOKEN', '')
@@ -88,14 +101,24 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_ECHO = True
+    
+    # Override server name for local development
+    SERVER_NAME = 'localhost:5000'
+    PREFERRED_URL_SCHEME = 'http'
 
 class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_ECHO = False
     
-    # Production-specific settings
-    if not os.getenv("DATABASE_URL"):
-        raise RuntimeError("DATABASE_URL environment variable is required for production")
+    # Use production domain from environment or default
+    SERVER_NAME = os.environ.get('SERVER_NAME') or 'trxck.tech'
+    PREFERRED_URL_SCHEME = 'https'
+    
+    # Production-specific settings - only check at runtime, not import time
+    def __init__(self):
+        super().__init__()
+        if not os.getenv("DATABASE_URL"):
+            raise RuntimeError("DATABASE_URL environment variable is required for production")
 
 class TestConfig(Config):
     TESTING = True

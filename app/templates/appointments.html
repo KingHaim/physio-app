@@ -122,23 +122,23 @@
                             <th>{{ _('Time') }}</th>
                             <th>{{ _('Patient') }}</th>
                             <th>{{ _('Type') }}</th>
-                            <th>{{ _('Duration') }}</th>
                             <th>{{ _('Status') }}</th>
-                            <th>{{ _('Notes') }}</th>
                             <th>{{ _('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for appointment in appointments %}
                         <tr>
-                            <td>{{ appointment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <div>{{ appointment.created_at.strftime('%Y-%m-%d') }}</div>
+                                <div class="text-muted small">{{ appointment.created_at.strftime('%H:%M') }}</div>
+                            </td>
                             <td>
                                 <a href="{{ url_for('main.patient_detail', id=appointment.patient.id) }}">
                                     {{ appointment.patient.name }}
                                 </a>
                             </td>
                             <td>{{ appointment.treatment_type }}</td>
-                            <td>30 min</td>
                             <td>
                                 <span class="badge bg-{% if appointment.status == 'Scheduled' %}primary
                                                     {% elif appointment.status == 'Completed' %}success
@@ -147,7 +147,6 @@
                                     {{ appointment.status }}
                                 </span>
                             </td>
-                            <td>{{ (appointment.notes or '')|truncate(30) }}</td>
                             <td class="text-end">
                                 <div class="btn-group">
                                     <!-- Edit button -->
@@ -302,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 100);
 
     // Quick filter buttons
-    document.querySelectorAll('.quick-filters button').forEach(button => {
+    document.querySelectorAll('[data-period]').forEach(button => {
         button.addEventListener('click', function() {
             const period = this.dataset.period;
             const start = new Date();
@@ -310,6 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             switch(period) {
                 case 'today':
+                    end.setDate(end.getDate()); // Same day
                     break;
                 case 'week':
                     end.setDate(end.getDate() + 7);
@@ -356,6 +356,8 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (view === 'list') {
                 document.getElementById('calendarView').style.display = 'none';
                 document.getElementById('listView').style.display = 'block';
+                // Load appointments for list view
+                loadListViewAppointments();
             }
         });
     });
@@ -382,12 +384,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
-            events: {
-                url: '/api/appointments',
-                failure: function(error) {
+            events: function(info, successCallback, failureCallback) {
+                fetch('/api/appointments?' + new URLSearchParams({
+                    start: info.start.toISOString(),
+                    end: info.end.toISOString()
+                }), {
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(events => successCallback(events))
+                .catch(error => {
                     console.error('Failed to load calendar events:', error);
-                    alert('Failed to load calendar events. Please check the console for details.');
-                }
+                    failureCallback(error);
+                });
             },
             loading: function(isLoading) {
                 console.log('Calendar loading:', isLoading);
@@ -446,13 +458,112 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // Filter form submission
+    // Load appointments for list view
+    function loadListViewAppointments() {
+        const startDate = startDateInput.value || new Date().toISOString().split('T')[0];
+        const endDate = endDateInput.value || new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0];
+        
+        // Convert to datetime format for API call
+        const startDateTime = `${startDate}T00:00:00`;
+        const endDateTime = `${endDate}T23:59:59`;
+        
+        const url = `/api/appointments?start=${startDateTime}&end=${endDateTime}`;
+        
+        fetch(url, {
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(events => {
+                updateListViewTable(events);
+            })
+            .catch(error => {
+                console.error('Error loading appointments for list view:', error);
+                document.querySelector('#listView tbody').innerHTML = 
+                    '<tr><td colspan="5" class="text-center text-danger">Error loading appointments</td></tr>';
+            });
+    }
+    
+    // Update the list view table with appointment data
+    function updateListViewTable(events) {
+        const tbody = document.querySelector('#listView tbody');
+        if (!tbody) return;
+        
+        if (events.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No appointments found for the selected date range</td></tr>';
+            return;
+        }
+        
+        // Sort events by start time
+        events.sort((a, b) => new Date(a.start) - new Date(b.start));
+        
+        tbody.innerHTML = events.map(event => {
+            const startDate = new Date(event.start);
+            const isRecurring = event.extendedProps?.isRecurring || false;
+            const status = event.extendedProps?.status || 'Scheduled';
+            const treatmentId = event.extendedProps?.treatmentId || event.id;
+            const patientId = event.extendedProps?.patientId;
+            
+            // Extract patient name from title (format: "Patient Name - Treatment Type")
+            const titleParts = event.title.split(' - ');
+            const patientName = titleParts[0] || 'Unknown';
+            const treatmentType = titleParts.slice(1).join(' - ') || 'Unknown';
+            
+            // Status badge color
+            let statusClass = 'primary';
+            if (status === 'Completed') statusClass = 'success';
+            else if (status === 'Cancelled') statusClass = 'danger';
+            else if (status === 'In Progress') statusClass = 'warning';
+            else if (isRecurring) statusClass = 'info';
+            
+            // Create clickable patient name if we have patient ID
+            const patientNameDisplay = patientId ? 
+                `<a href="/patient/${patientId}" class="text-decoration-none text-dark fw-medium">${patientName}</a>` : 
+                patientName;
+            
+            // Format date and time separately
+            const dateOnly = startDate.toLocaleDateString();
+            const timeOnly = startDate.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+            
+            return `
+                <tr>
+                    <td>
+                        <div>${dateOnly}</div>
+                        <div class="text-muted small">${timeOnly}</div>
+                    </td>
+                    <td>${patientNameDisplay}</td>
+                    <td>${treatmentType}</td>
+                    <td><span class="badge bg-${statusClass}">${status}</span></td>
+                    <td>
+                        ${!isRecurring && treatmentId ? `
+                            <a href="/treatment/${treatmentId}/view" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="/treatment/${treatmentId}/edit" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        ` : '<small class="text-muted">Recurring</small>'}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Filter form submission - now updates both views
     function filterAppointments() {
-        const params = new URLSearchParams({
-            start_date: startDateInput.value,
-            end_date: endDateInput.value
-        });
-        window.location.href = `/appointments?${params.toString()}`;
+        if (document.getElementById('listView').style.display !== 'none') {
+            // If list view is active, just reload the list data
+            loadListViewAppointments();
+        } else {
+            // If calendar view is active, reload the page to update calendar
+            const params = new URLSearchParams({
+                start_date: startDateInput.value,
+                end_date: endDateInput.value
+            });
+            window.location.href = `/appointments?${params.toString()}`;
+        }
     }
 
     document.getElementById('filterDates').addEventListener('click', filterAppointments);
