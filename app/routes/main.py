@@ -999,8 +999,8 @@ def appointments():
         patients = Patient.query.filter_by(status='Active').all()
         patients.sort(key=lambda p: p.name.lower() if p.name else '')
     elif current_user.role == 'physio':
-        # Get accessible patients (own patients or clinic patients)
-        accessible_patients = current_user.get_accessible_patients()
+        # Get only own patients for appointment dropdown (for privacy)
+        accessible_patients = current_user.get_accessible_patients()  # This now defaults to own patients only
         patients = [p for p in accessible_patients if p.status == 'Active']
         patients.sort(key=lambda p: p.name.lower() if p.name else '')
     else: # Should not happen due to @physio_required, but as a fallback
@@ -1393,7 +1393,7 @@ def patients_list():
             else:
                 patient_plan_limit = 10 if not current_user.is_admin else None
 
-    # Get accessible patients (own patients or clinic patients)
+    # Get only own patients by default for privacy (use include_clinic_patients=True if needed for clinic management)
     patients = current_user.get_accessible_patients()
 
     # Apply status filter if specified
@@ -4058,8 +4058,8 @@ def calendar_page():
         patients = Patient.query.all() # Removed status filter
         patients.sort(key=lambda p: p.name.lower() if p.name else '')
     else: # Physio role (guaranteed by @physio_required)
-        # Get accessible patients (own patients or clinic patients)
-        patients = current_user.get_accessible_patients()
+        # Get only own patients for calendar dropdown (for privacy)
+        patients = current_user.get_accessible_patients()  # This now defaults to own patients only
         patients.sort(key=lambda p: p.name.lower() if p.name else '')
     
     return render_template('calendar.html', title="Calendar", patients=patients)
@@ -4845,8 +4845,8 @@ def create_patient_ajax():
                 current_patients = len(accessible_patients)
                 patient_limit = 10 if not current_user.is_admin else None
         else:
-            # Individual user logic
-            accessible_patients = current_user.get_accessible_patients()
+            # Individual user logic - count only own patients
+            accessible_patients = current_user.get_accessible_patients()  # Defaults to own patients only
             current_patients = len(accessible_patients)
             
             # Get user's individual subscription

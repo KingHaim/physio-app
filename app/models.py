@@ -696,19 +696,24 @@ class User(db.Model, UserMixin):
         membership = self.active_clinic_membership
         return membership.can_manage_settings if membership else False
     
-    def get_accessible_patients(self):
-        """Get all patients accessible to this user (own patients or clinic patients)"""
+    def get_accessible_patients(self, include_clinic_patients=False):
+        """Get all patients accessible to this user
+        
+        Args:
+            include_clinic_patients (bool): If True, include patients from other clinic members
+                                          If False, only return own patients (default for privacy)
+        """
         if self.is_admin:
             return Patient.query.all()
         
-        if self.is_in_clinic and self.can_manage_clinic_patients():
-            # Get all patients from clinic members
+        if include_clinic_patients and self.is_in_clinic and self.can_manage_clinic_patients():
+            # Get all patients from clinic members (only when explicitly requested)
             clinic = self.clinic
             if clinic:
                 clinic_user_ids = [m.user_id for m in clinic.active_members]
                 return Patient.query.filter(Patient.user_id.in_(clinic_user_ids)).all()
         
-        # Default: only own patients
+        # Default: only own patients (safer for privacy)
         return self.patients.all()
     
     def get_effective_patient_limit(self) -> Optional[int]:
