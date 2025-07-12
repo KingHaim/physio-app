@@ -398,14 +398,22 @@ def index():
         current_patients_count = len(accessible_patients)
         active_patients = len([p for p in accessible_patients if p.status == 'Active'])
         
-        # Get user's individual subscription
-        subscription = UserSubscription.query.filter_by(user_id=current_user.id).first()
-        if subscription and subscription.plan:
-            current_plan_name = subscription.plan.name
-            current_subscription_status = subscription.status
-            current_subscription_ends_at = subscription.current_period_ends_at
-            patient_plan_limit = subscription.plan.patient_limit if not current_user.is_admin else None
-        else:
+        # Get user's individual subscription (with error handling for missing columns)
+        try:
+            subscription = UserSubscription.query.filter_by(user_id=current_user.id).first()
+            if subscription and subscription.plan:
+                current_plan_name = subscription.plan.name
+                current_subscription_status = subscription.status
+                current_subscription_ends_at = subscription.current_period_ends_at
+                patient_plan_limit = subscription.plan.patient_limit if not current_user.is_admin else None
+            else:
+                patient_plan_limit = 10 if not current_user.is_admin else None
+        except Exception as e:
+            # Handle database schema mismatch (missing columns)
+            current_app.logger.warning(f"Subscription query error (schema mismatch): {e}")
+            current_plan_name = "Free Plan"
+            current_subscription_status = "active"
+            current_subscription_ends_at = None
             patient_plan_limit = 10 if not current_user.is_admin else None
     
     # Get accessible patients for all logic

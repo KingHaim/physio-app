@@ -88,7 +88,10 @@ def login():
             
             next_page = request.args.get('next')
             if not next_page or not is_safe_url(next_page):
-                next_page = url_for('main.index')
+                if current_user.is_new_user:  # Check for new user
+                    next_page = url_for('main.landing_page')
+                else:
+                    next_page = url_for('main.index')
             
             current_app.logger.info(f"Redirecting to: {next_page}")
             return redirect(next_page)
@@ -338,7 +341,10 @@ def google_callback():
             
             next_page = request.args.get('next')
             if not next_page or not is_safe_url(next_page):
-                next_page = url_for('main.index')
+                if current_user.is_new_user:  # Check for new user
+                    next_page = url_for('main.landing_page')
+                else:
+                    next_page = url_for('main.index')
             return redirect(next_page)
             
     except Exception as e:
