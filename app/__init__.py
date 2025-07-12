@@ -1,7 +1,7 @@
 # app/__init__.py
 import os
-from flask import Flask
-from app.security import SecurityMiddleware, request, session
+from flask import Flask, request, session
+from app.security import SecurityMiddleware
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from config import Config
