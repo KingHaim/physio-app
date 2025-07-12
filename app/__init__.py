@@ -369,10 +369,16 @@ def create_app(config_class=None):
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
         
-        # Block specific tracking domains
-        if 'doubleclick.net' in response.get_data(as_text=True):
-            app.logger.warning("🚨 Blocked doubleclick.net tracking attempt")
-            response.set_data(response.get_data(as_text=True).replace('doubleclick.net', 'blocked-tracking'))
+        # Block specific tracking domains (only for non-static files)
+        try:
+            if not request.path.startswith('/static/'):
+                response_data = response.get_data(as_text=True)
+                if 'doubleclick.net' in response_data:
+                    app.logger.warning("🚨 Blocked doubleclick.net tracking attempt")
+                    response.set_data(response_data.replace('doubleclick.net', 'blocked-tracking'))
+        except RuntimeError:
+            # Skip processing for static files in direct passthrough mode
+            pass
         
         return response
 
