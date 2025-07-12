@@ -43,8 +43,9 @@
                                     <input type="text" class="form-control" id="name" name="name" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="date_of_birth" class="form-label">{{ _('Date of Birth') }} <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
+                                                            <label for="date_of_birth" class="form-label">{{ _('Date of Birth') }} <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" 
+                               min="1900-01-01" max="2025-12-31" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="patient_contact_email" class="form-label">{{ _('Email Address') }}</label>
@@ -506,15 +507,26 @@
                             <!-- Hidden field to store compiled anamnesis -->
                             <input type="hidden" id="compiled_anamnesis" name="anamnesis">
                             
-                            <!-- Smart Summary -->
-                            <div class="anamnesis-summary mt-4 p-3 bg-light rounded" id="anamnesis-summary" style="display: none;">
-                                <h6 class="text-primary mb-2">
-                                    <i class="bi bi-check-circle-fill me-2"></i>{{ _('Assessment Summary') }}
-                                </h6>
-                                <div id="summary-content" class="small text-muted"></div>
-                            </div>
-                        </div>
-                    </div>
+                                        <!-- Smart Summary -->
+            <div class="anamnesis-summary mt-4 p-3 bg-light rounded" id="anamnesis-summary" style="display: none;">
+                <h6 class="text-primary mb-2">
+                    <i class="bi bi-check-circle-fill me-2"></i>{{ _('Assessment Summary') }}
+                </h6>
+                <div id="summary-content" class="small text-muted"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation buttons for Step 2 -->
+    <div class="d-flex justify-content-between mt-4">
+        <button type="button" class="btn btn-secondary" onclick="prevStep(1)">
+            <i class="bi bi-arrow-left"></i> {{ _('Back: Patient Data') }}
+        </button>
+        <button type="button" class="btn btn-primary" onclick="nextStep(3)" id="step2-next">
+            {{ _('Next: Portal Access') }} <i class="bi bi-arrow-right"></i>
+        </button>
+    </div>
+</div>
 
                     <!-- Step 3: Portal Access -->
                     <div class="step-content" id="step3">
@@ -646,12 +658,13 @@ let isSkippingPortal = false; // Variable global para controlar cuando saltamos 
 
 // ==== INTERACTIVE FUNCTIONS FOR SEXY ANAMNESIS ====
 
-// Quick diagnosis selection auto-fill
+// Quick diagnosis selection auto-fill (disabled - diagnosis field not available)
 function fillDiagnosisFromQuick() {
     const quickSelect = document.getElementById('quick_diagnosis');
     const diagnosisField = document.getElementById('diagnosis');
     
-    if (quickSelect.value && diagnosisField) {
+    // Diagnosis field not available in current form structure
+    if (false && quickSelect.value && diagnosisField) {
         const diagnosisMap = {
             'tendinopathy': 'Tendinopatía',
             'grade2_sprain': 'Esguince Grado II',
@@ -913,37 +926,35 @@ function nextStep(step) {
         // Check required patient data fields first
         const name = document.getElementById('name').value.trim();
         const dob = document.getElementById('date_of_birth').value;
-        const contact = document.getElementById('contact').value.trim();
-        const diagnosis = document.getElementById('diagnosis').value.trim();
+        const email = document.getElementById('patient_contact_email').value.trim();
+        const phone = document.getElementById('patient_contact_phone').value.trim();
         
         // Debug: Log field values
         console.log('Validation Debug:');
         console.log('Name:', name, '(length:', name.length, ')');
         console.log('DOB:', dob, '(length:', dob.length, ')');
-        console.log('Contact:', contact, '(length:', contact.length, ')');
-        console.log('Diagnosis:', diagnosis, '(length:', diagnosis.length, ')');
+        console.log('Email:', email, '(length:', email.length, ')');
+        console.log('Phone:', phone, '(length:', phone.length, ')');
         
         let missingFields = [];
         if (!name) missingFields.push('Nombre');
         if (!dob) missingFields.push('Fecha de Nacimiento');
-        if (!contact) missingFields.push('Contacto');
-        if (!diagnosis) missingFields.push('Diagnóstico');
+        // Contact is not required anymore since we have separate email/phone fields
         
         if (missingFields.length > 0) {
             alert('Faltan los siguientes campos obligatorios: ' + missingFields.join(', '));
-            // Switch to the patient data tab
-            const personalDataTab = new bootstrap.Tab(document.getElementById('personal-data-tab'));
-            personalDataTab.show();
             return;
         }
         
-        // Check if at least the chief complaint is filled
+        // No additional validation needed for Step 1 to Step 2
+        // Chief complaint validation will happen when moving from Step 2 to Step 3
+    }
+    
+    if (currentStep === 2) {
+        // Check if at least the chief complaint is filled before going to Step 3
         const chiefComplaint = document.getElementById('anamnesis_chief_complaint').value.trim();
         if (!chiefComplaint) {
             alert('{{ _("Please complete at least the main reason for consultation before proceeding.") }}');
-            // Switch to the chief complaint tab
-            const chiefComplaintTab = new bootstrap.Tab(document.getElementById('chief-complaint-tab'));
-            chiefComplaintTab.show();
             return;
         }
         // Compile anamnesis data
@@ -1092,7 +1103,8 @@ function fillDiagnosisFromQuick() {
     const quickSelect = document.getElementById('quick_diagnosis');
     const diagnosisField = document.getElementById('diagnosis');
     
-    if (quickSelect.value && diagnosisField) {
+    // Diagnosis field not available in current form structure
+    if (false && quickSelect.value && diagnosisField) {
         const diagnosisMap = {
             'tendinopathy': 'Tendinopatía',
             'grade2_sprain': 'Esguince Grado II',

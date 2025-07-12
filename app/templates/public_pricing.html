@@ -110,59 +110,61 @@
 <div class="container py-5">
     <div class="text-center mb-5">
         <h1 class="display-4 fw-bold text-primary mb-3">Simple, Transparent Pricing</h1>
-        <p class="lead text-muted">Choose the perfect plan for your practice</p>
+        <p class="lead text-muted">Choose the perfect plan for your practice. Try any plan free for 14 days.</p>
     </div>
 
     <div class="row row-cols-1 row-cols-md-3 g-4 justify-content-center">
-        <!-- Free Plan -->
-        <div class="col">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <h5 class="card-title text-primary mb-4">Free</h5>
-                    <h2 class="display-4 fw-bold mb-4">$0<small class="fs-6 text-muted">/month</small></h2>
-                    <ul class="list-unstyled mb-4">
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Up to 5 patients</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Basic exercise library</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Email support</li>
-                    </ul>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100">Get Started</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pro Plan -->
+        <!-- Basic Plan -->
         <div class="col">
             <div class="card h-100 border-0 shadow">
                 <div class="card-body p-4">
                     <div class="ribbon ribbon-top-right"><span>POPULAR</span></div>
-                    <h5 class="card-title text-primary mb-4">Pro</h5>
-                    <h2 class="display-4 fw-bold mb-4">$29<small class="fs-6 text-muted">/month</small></h2>
+                    <h5 class="card-title text-primary mb-4">Basic</h5>
+                    <h2 class="display-4 fw-bold mb-4">$15<small class="fs-6 text-muted">/month</small></h2>
                     <ul class="list-unstyled mb-4">
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Unlimited patients</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Full exercise library</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Priority support</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Custom exercise creation</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Advanced analytics</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Up to 50 patients</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Standard scheduling</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Basic billing & reporting</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Email support</li>
                     </ul>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary w-100">Get Started</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary w-100">Try 14 Days Free</a>
                 </div>
             </div>
         </div>
 
-        <!-- Enterprise Plan -->
+        <!-- Standard Plan -->
         <div class="col">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body p-4">
-                    <h5 class="card-title text-primary mb-4">Enterprise</h5>
-                    <h2 class="display-4 fw-bold mb-4">$99<small class="fs-6 text-muted">/month</small></h2>
+                    <h5 class="card-title text-primary mb-4">Standard</h5>
+                    <h2 class="display-4 fw-bold mb-4">$30<small class="fs-6 text-muted">/month</small></h2>
                     <ul class="list-unstyled mb-4">
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Everything in Pro</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Multiple locations</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Team management</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Custom integrations</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Up to 250 patients</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Patient portal</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Basic telehealth</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Multi-practitioner (up to 5)</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Priority support</li>
+                    </ul>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100">Try 14 Days Free</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Premium Plan -->
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title text-primary mb-4">Premium</h5>
+                    <h2 class="display-4 fw-bold mb-4">$60<small class="fs-6 text-muted">/month</small></h2>
+                    <ul class="list-unstyled mb-4">
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Unlimited patients</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>AI-powered reports</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Advanced telehealth</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Multi-location support</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>API access</li>
                         <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Dedicated support</li>
                     </ul>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100">Contact Sales</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100">Try 14 Days Free</a>
                 </div>
             </div>
         </div>
@@ -170,6 +172,7 @@
 
     <div class="text-center mt-5">
         <p class="text-muted">All plans include a 14-day free trial. No credit card required.</p>
+        <p class="text-muted"><small>Choose any plan and experience all features during your trial period.</small></p>
     </div>
 </div>
 {% endblock %} 

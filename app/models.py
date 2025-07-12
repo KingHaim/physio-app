@@ -373,6 +373,11 @@ class UserSubscription(db.Model):
     trial_starts_at = db.Column(db.DateTime, nullable=True)
     trial_ends_at = db.Column(db.DateTime, nullable=True)
     
+    # Trial reminder email tracking
+    trial_reminder_7_days_sent = db.Column(db.Boolean, default=False)
+    trial_reminder_2_days_sent = db.Column(db.Boolean, default=False)
+    trial_reminder_1_day_sent = db.Column(db.Boolean, default=False)
+    
     current_period_starts_at = db.Column(db.DateTime, nullable=True)
     current_period_ends_at = db.Column(db.DateTime, nullable=True) # When the subscription renews or expires
     
@@ -558,6 +563,18 @@ class User(db.Model, UserMixin):
         return False
 
     @property
+    def trial_days_remaining(self) -> int:
+        """Returns the number of days remaining in the trial period."""
+        if not self.is_on_trial:
+            return 0
+        
+        sub = self.current_subscription
+        if sub and sub.trial_ends_at:
+            remaining = sub.trial_ends_at - datetime.utcnow()
+            return max(0, remaining.days)
+        return 0
+
+    @property
     def active_plan(self) -> Optional['Plan']: # Forward reference for Plan
         """Returns the Plan object for the current active subscription."""
         sub = self.current_subscription
@@ -579,6 +596,15 @@ class User(db.Model, UserMixin):
         """
         if self.is_admin:
             return True
+
+        # Trial users get full access to their plan's features
+        if self.is_on_trial:
+            plan = self.active_plan
+            if plan and plan.features:
+                if isinstance(plan.features.get(feature_key), bool):
+                    return plan.features.get(feature_key, False)
+                return feature_key in plan.features
+            return default_if_no_sub
 
         plan = self.active_plan
         if not plan:

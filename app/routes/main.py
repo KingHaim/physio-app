@@ -209,9 +209,17 @@ def get_relative_date_string(target_date):
 @main.route('/')
 def root():
     """Public marketing landing page."""
-    login_form = LoginForm()
-    register_form = RegistrationForm()
-    return render_template('landing.html', login_form=login_form, register_form=register_form)
+    try:
+        # Create forms for the landing page
+        login_form = LoginForm()
+        register_form = RegistrationForm()
+        return render_template('landing.html', login_form=login_form, register_form=register_form)
+    except Exception as e:
+        current_app.logger.error(f"Error in root route: {str(e)}")
+        # Return a simple response for debugging
+        return f"<h1>TRXCKER</h1><p>Debug: Error loading landing page: {str(e)}</p>"
+
+
 
 @main.route('/health')
 def health_check():
@@ -463,10 +471,7 @@ def index():
                          show_welcome_flow=show_welcome_flow,
                          welcome_form=welcome_form)
 
-@main.route('/welcome')
-def welcome_redirect():
-    """Redirect to the landing page at root."""
-    return redirect(url_for('main.root'))
+# Removed duplicate /welcome route - using landing_page() instead
 
 @main.route('/api/treatment/<int:id>')
 @login_required # Assuming API endpoints also need login
@@ -2625,6 +2630,11 @@ def bulk_update_treatments():
 @login_required
 @physio_required # <<< ADD DECORATOR
 def financials():
+    # Check if user has Premium plan access to finances
+    if not current_user.can_use_clinic_feature('reporting_advanced_ai') and not current_user.is_admin:
+        flash('Financial reporting is only available with the Premium plan. Please upgrade to access advanced business analytics.', 'warning')
+        return redirect(url_for('main.pricing_page'))
+    
     # Check if user has permission to view finances
     if current_user.is_in_clinic and not current_user.can_manage_clinic_billing():
         flash('You do not have permission to view financial reports.', 'error')
@@ -3031,13 +3041,15 @@ def new_patient():
             # Repopulate form fields for clarity, though redirecting is simpler
             name = request.form['name']
             date_of_birth_str = request.form.get('date_of_birth')
-            contact = request.form.get('contact', '')  # Hacer opcional
-            diagnosis = request.form['diagnosis']
-            treatment_plan = request.form.get('treatment_plan')
-            notes = request.form.get('notes')
+            # Updated field names to match new form structure
+            patient_contact_email_on_patient_record = request.form.get('patient_contact_email')
+            patient_contact_phone_on_patient_record = request.form.get('patient_contact_phone')
+            # Set default values for fields that no longer exist in the form
+            contact = patient_contact_phone_on_patient_record or patient_contact_email_on_patient_record or ''
+            diagnosis = ''  # Default empty diagnosis since field was removed
+            treatment_plan = request.form.get('treatment_plan', '')
+            notes = request.form.get('notes', '')
             anamnesis = request.form.get('anamnesis')  # Add anamnesis processing
-            patient_contact_email_on_patient_record = request.form.get('patient_contact_email_on_patient_record')
-            patient_contact_phone_on_patient_record = request.form.get('patient_contact_phone_on_patient_record')
             address_line1 = request.form.get('address_line1')
             address_line2 = request.form.get('address_line2')
             city = request.form.get('city')
@@ -3054,21 +3066,43 @@ def new_patient():
                 print("DEBUG: ANAMNESIS VALIDATION FAILED - Returning to form")
                 flash('Anamnesis (clinical history) is required before creating a patient record.', 'danger')
                 return render_template('new_patient.html', 
-                                       name=name, date_of_birth=date_of_birth_str, contact=contact, 
-                                       diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes,
+                                       name=name, date_of_birth=date_of_birth_str,
+                                       patient_contact_email=patient_contact_email_on_patient_record,
+                                       patient_contact_phone=patient_contact_phone_on_patient_record,
+                                       treatment_plan=treatment_plan, notes=notes,
                                        anamnesis=anamnesis)
             
             try:
-                date_of_birth = datetime.strptime(date_of_birth_str, '%Y-%m-%d').date() if date_of_birth_str else None
+                if date_of_birth_str:
+                    date_of_birth = datetime.strptime(date_of_birth_str, '%Y-%m-%d').date()
+                    # Validate that the date is reasonable (not too far in the past or future)
+                    from datetime import date
+                    current_year = date.today().year
+                    birth_year = date_of_birth.year
+                    if birth_year < 1900 or birth_year > current_year:
+                        flash(f'Invalid birth year {birth_year}. Please enter a year between 1900 and {current_year}.', 'danger')
+                        return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, 
+                                               patient_contact_email=patient_contact_email_on_patient_record, 
+                                               patient_contact_phone=patient_contact_phone_on_patient_record, 
+                                               treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, 
+                                               address_line1=address_line1, address_line2=address_line2, city=city, 
+                                               postcode=postcode, preferred_location=preferred_location)
+                else:
+                    date_of_birth = None
             except ValueError:
                 flash('Invalid date format for Date of Birth. Please use YYYY-MM-DD.', 'danger')
-                return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location)
+                return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, 
+                                       patient_contact_email=patient_contact_email_on_patient_record, 
+                                       patient_contact_phone=patient_contact_phone_on_patient_record, 
+                                       treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, 
+                                       address_line1=address_line1, address_line2=address_line2, city=city, 
+                                       postcode=postcode, preferred_location=preferred_location)
 
             new_patient_obj = Patient(
                 name=name,
                 date_of_birth=date_of_birth,
-                contact=contact,
-                diagnosis=diagnosis,
+                contact=contact,  # This will be email or phone as fallback
+                diagnosis=diagnosis,  # This is now empty string by default
                 treatment_plan=treatment_plan,
                 notes=notes,
                 anamnesis=anamnesis,  # Add anamnesis to Patient object
@@ -3091,11 +3125,23 @@ def new_patient():
                 existing_user_check = User.query.filter_by(email=portal_login_email).first()
                 if existing_user_check:
                     flash('That portal login email address is already in use. Cannot create patient portal account with this email.', 'danger')
-                    return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location, portal_login_email=portal_login_email)
+                    return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, 
+                                           patient_contact_email=patient_contact_email_on_patient_record, 
+                                           patient_contact_phone=patient_contact_phone_on_patient_record, 
+                                           treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, 
+                                           address_line1=address_line1, address_line2=address_line2, city=city, 
+                                           postcode=postcode, preferred_location=preferred_location, 
+                                           portal_login_email=portal_login_email)
                 
                 if not portal_login_password:
                     flash('Password is required when providing an email for patient portal access.', 'danger')
-                    return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location, portal_login_email=portal_login_email)
+                    return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, 
+                                           patient_contact_email=patient_contact_email_on_patient_record, 
+                                           patient_contact_phone=patient_contact_phone_on_patient_record, 
+                                           treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, 
+                                           address_line1=address_line1, address_line2=address_line2, city=city, 
+                                           postcode=postcode, preferred_location=preferred_location, 
+                                           portal_login_email=portal_login_email)
 
                 newly_created_portal_user = User(
                     username=portal_login_email, 
@@ -3127,11 +3173,10 @@ def new_patient():
                 flash(f'Error creating patient: {str(e)}', 'danger')
                 print(f"Error creating patient: {e}") 
                 return render_template('new_patient.html',
-                                       name=name, date_of_birth=date_of_birth_str, contact=contact, 
-                                       diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes,
-                                       anamnesis=anamnesis,
-                                       patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, 
-                                       patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record,
+                                       name=name, date_of_birth=date_of_birth_str,
+                                       patient_contact_email=patient_contact_email_on_patient_record, 
+                                       patient_contact_phone=patient_contact_phone_on_patient_record,
+                                       treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis,
                                        address_line1=address_line1, address_line2=address_line2, city=city,
                                        postcode=postcode, preferred_location=preferred_location,
                                        portal_login_email=portal_login_email)
@@ -3139,13 +3184,15 @@ def new_patient():
         # Normal patient creation process (when limit is not reached)
         name = request.form['name']
         date_of_birth_str = request.form.get('date_of_birth')
-        contact = request.form.get('contact', '')  # Hacer opcional
-        diagnosis = request.form['diagnosis']
-        treatment_plan = request.form.get('treatment_plan')
-        notes = request.form.get('notes')
+        # Updated field names to match new form structure
+        patient_contact_email_on_patient_record = request.form.get('patient_contact_email')
+        patient_contact_phone_on_patient_record = request.form.get('patient_contact_phone')
+        # Set default values for fields that no longer exist in the form
+        contact = patient_contact_phone_on_patient_record or patient_contact_email_on_patient_record or ''
+        diagnosis = ''  # Default empty diagnosis since field was removed
+        treatment_plan = request.form.get('treatment_plan', '')
+        notes = request.form.get('notes', '')
         anamnesis = request.form.get('anamnesis')  # Add anamnesis processing
-        patient_contact_email_on_patient_record = request.form.get('patient_contact_email_on_patient_record')
-        patient_contact_phone_on_patient_record = request.form.get('patient_contact_phone_on_patient_record')
         address_line1 = request.form.get('address_line1')
         address_line2 = request.form.get('address_line2')
         city = request.form.get('city')
@@ -3162,21 +3209,43 @@ def new_patient():
             print("DEBUG: NORMAL PROCESSING - ANAMNESIS VALIDATION FAILED - Returning to form")
             flash('Anamnesis (clinical history) is required before creating a patient record.', 'danger')
             return render_template('new_patient.html', 
-                                   name=name, date_of_birth=date_of_birth_str, contact=contact, 
-                                   diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes,
+                                   name=name, date_of_birth=date_of_birth_str,
+                                   patient_contact_email=patient_contact_email_on_patient_record,
+                                   patient_contact_phone=patient_contact_phone_on_patient_record,
+                                   treatment_plan=treatment_plan, notes=notes,
                                    anamnesis=anamnesis)
         
         try:
-            date_of_birth = datetime.strptime(date_of_birth_str, '%Y-%m-%d').date() if date_of_birth_str else None
+            if date_of_birth_str:
+                date_of_birth = datetime.strptime(date_of_birth_str, '%Y-%m-%d').date()
+                # Validate that the date is reasonable (not too far in the past or future)
+                from datetime import date
+                current_year = date.today().year
+                birth_year = date_of_birth.year
+                if birth_year < 1900 or birth_year > current_year:
+                    flash(f'Invalid birth year {birth_year}. Please enter a year between 1900 and {current_year}.', 'danger')
+                    return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, 
+                                           patient_contact_email=patient_contact_email_on_patient_record, 
+                                           patient_contact_phone=patient_contact_phone_on_patient_record, 
+                                           treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, 
+                                           address_line1=address_line1, address_line2=address_line2, city=city, 
+                                           postcode=postcode, preferred_location=preferred_location)
+            else:
+                date_of_birth = None
         except ValueError:
             flash('Invalid date format for Date of Birth. Please use YYYY-MM-DD.', 'danger')
-            return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location)
+            return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, 
+                                   patient_contact_email=patient_contact_email_on_patient_record, 
+                                   patient_contact_phone=patient_contact_phone_on_patient_record, 
+                                   treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, 
+                                   address_line1=address_line1, address_line2=address_line2, city=city, 
+                                   postcode=postcode, preferred_location=preferred_location)
 
         new_patient_obj = Patient(
             name=name,
             date_of_birth=date_of_birth,
-            contact=contact,
-            diagnosis=diagnosis,
+            contact=contact,  # This will be email or phone as fallback
+            diagnosis=diagnosis,  # This is now empty string by default
             treatment_plan=treatment_plan,
             notes=notes,
             anamnesis=anamnesis,  # Add anamnesis to Patient object
@@ -3199,11 +3268,23 @@ def new_patient():
             existing_user_check = User.query.filter_by(email=portal_login_email).first()
             if existing_user_check:
                 flash('That portal login email address is already in use. Cannot create patient portal account with this email.', 'danger')
-                return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location, portal_login_email=portal_login_email)
+                return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, 
+                                       patient_contact_email=patient_contact_email_on_patient_record, 
+                                       patient_contact_phone=patient_contact_phone_on_patient_record, 
+                                       treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, 
+                                       address_line1=address_line1, address_line2=address_line2, city=city, 
+                                       postcode=postcode, preferred_location=preferred_location, 
+                                       portal_login_email=portal_login_email)
             
             if not portal_login_password:
                 flash('Password is required when providing an email for patient portal access.', 'danger')
-                return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, contact=contact, diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record, address_line1=address_line1, address_line2=address_line2, city=city, postcode=postcode, preferred_location=preferred_location, portal_login_email=portal_login_email)
+                return render_template('new_patient.html', name=name, date_of_birth=date_of_birth_str, 
+                                       patient_contact_email=patient_contact_email_on_patient_record, 
+                                       patient_contact_phone=patient_contact_phone_on_patient_record, 
+                                       treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis, 
+                                       address_line1=address_line1, address_line2=address_line2, city=city, 
+                                       postcode=postcode, preferred_location=preferred_location, 
+                                       portal_login_email=portal_login_email)
 
             newly_created_portal_user = User(
                 username=portal_login_email, 
@@ -3242,11 +3323,10 @@ def new_patient():
             flash(f'Error creating patient: {str(e)}', 'danger')
             print(f"ERROR creating patient: {e}") 
             return render_template('new_patient.html',
-                                   name=name, date_of_birth=date_of_birth_str, contact=contact, 
-                                   diagnosis=diagnosis, treatment_plan=treatment_plan, notes=notes,
-                                   anamnesis=anamnesis,
-                                   patient_contact_email_on_patient_record=patient_contact_email_on_patient_record, 
-                                   patient_contact_phone_on_patient_record=patient_contact_phone_on_patient_record,
+                                   name=name, date_of_birth=date_of_birth_str,
+                                   patient_contact_email=patient_contact_email_on_patient_record, 
+                                   patient_contact_phone=patient_contact_phone_on_patient_record,
+                                   treatment_plan=treatment_plan, notes=notes, anamnesis=anamnesis,
                                    address_line1=address_line1, address_line2=address_line2, city=city,
                                    postcode=postcode, preferred_location=preferred_location,
                                    portal_login_email=portal_login_email)

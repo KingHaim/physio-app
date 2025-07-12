@@ -414,7 +414,7 @@
                         {% endif %}
                         
                         {% set show_analytics = not current_user.is_in_clinic or current_user.can_view_clinic_reports() %}
-                        {% set show_finances = not current_user.is_in_clinic or current_user.can_manage_clinic_billing() %}
+                        {% set show_finances = (not current_user.is_in_clinic or current_user.can_manage_clinic_billing()) and (current_user.can_use_clinic_feature('reporting_advanced_ai') or current_user.is_admin) %}
                         
                         {% if show_analytics or show_finances %}
                         <li class="nav-section">
@@ -434,6 +434,21 @@
                                     </a>
                                 </li>
                                 {% endif %}
+                            </ul>
+                        </li>
+                        {% endif %}
+                        
+                        {# Show upgrade prompt for financial features if user doesn't have Premium #}
+                        {% if not current_user.can_use_clinic_feature('reporting_advanced_ai') and not current_user.is_admin %}
+                        <li class="nav-section">
+                            <div class="nav-section-title">{{ _('Premium Features') }}</div>
+                            <ul class="nav flex-column">
+                                <li class="nav-item">
+                                    <a class="nav-link text-muted" href="{{ url_for('main.pricing_page') }}" style="font-size: 0.875rem;">
+                                        <i class="bi bi-cash-coin text-warning"></i> {{ _('Financial Reports') }}
+                                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.7rem;">{{ _('Premium') }}</span>
+                                    </a>
+                                </li>
                             </ul>
                         </li>
                         {% endif %}

@@ -257,22 +257,45 @@
         {# Subscription Status Display - Hide only for clinic members (not admins) #}
         {% if not current_user.is_in_clinic or current_user.is_admin %}
         <div class="subscription-status-text">
-            {% if current_plan_name == 'Free Plan' %}
-                <i class="bi bi-gift-fill text-primary me-1"></i> 
+            {% if current_user.is_on_trial %}
+                <div class="alert alert-info mb-3" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-clock-fill text-primary me-2"></i>
+                        <div>
+                            <strong>{{ _('Trial Period Active') }}</strong>
+                            <br>
+                            <span class="fw-bold text-{{ 'danger' if current_user.trial_days_remaining <= 3 else 'warning' if current_user.trial_days_remaining <= 7 else 'primary' }}">
+                                {{ current_user.trial_days_remaining }} {{ _('days remaining') }}
+                            </span>
+                            in your {{ current_plan_name }} trial
+                            <br>
+                            <small class="text-muted">{{ _('Trial ends') }}: {{ current_subscription_ends_at.strftime('%B %d, %Y') if current_subscription_ends_at else 'N/A' }}</small>
+                        </div>
+                        <div class="ms-auto">
+                            <a href="{{ url_for('main.manage_subscription') }}" class="btn btn-sm btn-success">
+                                <i class="bi bi-credit-card me-1"></i>{{ _('Upgrade Now') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
             {% else %}
-                <i class="bi bi-award-fill text-success me-1"></i> 
-            {% endif %}
-            {{ _('Current Plan') }}: <strong>{{ current_plan_name }}</strong> 
-            {% if current_plan_name != 'Free Plan' %}
-                ({{ _('Status') }}: <span class="fw-semibold">{{ current_subscription_status }}</span>)
-                {% if current_subscription_ends_at %}
-                    - {% if current_subscription_status == 'Trialing' %}{{ _('Ends') }}{% else %}{{ _('Renews') }}{% endif %}: {{ current_subscription_ends_at.strftime('%d %b %Y') }}
+                {% if current_plan_name == 'Free Plan' %}
+                    <i class="bi bi-gift-fill text-primary me-1"></i> 
+                {% else %}
+                    <i class="bi bi-award-fill text-success me-1"></i> 
                 {% endif %}
-            {% endif %}
-            {% if current_plan_name == 'Free Plan' %}
-                <a href="{{ url_for('main.manage_subscription') }}" class="ms-2 badge bg-success text-decoration-none">{{ _('Upgrade Plan') }}</a>
-            {% else %}
-                <a href="{{ url_for('main.my_account') }}" class="ms-2 badge bg-primary text-decoration-none">{{ _('Manage Plan') }}</a>
+                {{ _('Current Plan') }}: <strong>{{ current_plan_name }}</strong> 
+                {% if current_plan_name != 'Free Plan' %}
+                    ({{ _('Status') }}: <span class="fw-semibold">{{ current_subscription_status }}</span>)
+                    {% if current_subscription_ends_at %}
+                        - {% if current_subscription_status == 'Trialing' %}{{ _('Ends') }}{% else %}{{ _('Renews') }}{% endif %}: {{ current_subscription_ends_at.strftime('%d %b %Y') }}
+                    {% endif %}
+                {% endif %}
+                {% if current_plan_name == 'Free Plan' %}
+                    <a href="{{ url_for('main.manage_subscription') }}" class="ms-2 badge bg-success text-decoration-none">{{ _('Upgrade Plan') }}</a>
+                {% else %}
+                    <a href="{{ url_for('main.my_account') }}" class="ms-2 badge bg-primary text-decoration-none">{{ _('Manage Plan') }}</a>
+                {% endif %}
             {% endif %}
         </div>
         {% endif %}

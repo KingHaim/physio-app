@@ -24,12 +24,32 @@ def register_commands(app):
         count = mark_inactive_patients()
         click.echo(f"Marked {count} patients as inactive.")
     
+    @app.cli.command('send-trial-reminders')
+    @with_appcontext
+    def send_trial_reminders():
+        """Send trial reminder emails to users who need them."""
+        from app.email_utils import send_trial_reminder_emails
+        try:
+            send_trial_reminder_emails()
+            click.echo("Trial reminder emails sent successfully.")
+        except Exception as e:
+            click.echo(f"Error sending trial reminders: {str(e)}")
+    
     @app.cli.command('maintenance')
     @with_appcontext
     def run_maintenance():
         """Run all maintenance tasks."""
         treatment_count = mark_past_treatments_as_completed()
         patient_count = mark_inactive_patients()
+        
+        # Send trial reminders
+        try:
+            from app.email_utils import send_trial_reminder_emails
+            send_trial_reminder_emails()
+            click.echo("Trial reminder emails sent.")
+        except Exception as e:
+            click.echo(f"Error sending trial reminders: {str(e)}")
+        
         click.echo(f"Maintenance complete: {treatment_count} treatments updated, {patient_count} patients marked inactive.")
 
     @click.command('create-admin')

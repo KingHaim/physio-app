@@ -4,26 +4,7 @@ from app.models import Plan
 
 # Define the plans to be created, aligned with the new Plan model and pricing strategy
 PLANS_DATA = [
-    {
-        "name": "Solo Free",
-        "slug": "solo-free", # Keep slug, will update if found
-        "price_cents": 0,
-        "billing_interval": "month",
-        "currency": "usd", # Changed from eur
-        "patient_limit": 10,
-        "practitioner_limit": 1, # Added
-        "features": {
-            "description": "For solo practitioners testing the waters. Manage up to 10 patients.",
-            "patient_management": "core",
-            "scheduling": "basic",
-            "clinical_notes": "basic",
-            "calendly_integration": True,
-            "support": "community"
-        },
-        "stripe_price_id": None, # Remains None
-        "is_active": True,
-        "display_order": 1
-    },
+    # Removed Solo Free plan - now offering 14-day trials for all paid plans instead
     {
         "name": "Basic", # Changed from "Basic Monthly"
         "slug": "basic-usd", # New slug to ensure it's treated as a new plan if "basic-monthly" existed
@@ -44,7 +25,7 @@ PLANS_DATA = [
         },
         "stripe_price_id": "price_1RTfP7P5aPDx5xda6UyIUt5m", # <<< UPDATED
         "is_active": True,
-        "display_order": 2
+        "display_order": 1
     },
     {
         "name": "Standard", # New Plan
@@ -70,7 +51,7 @@ PLANS_DATA = [
         },
         "stripe_price_id": "price_1RTfQVP5aPDx5xdaF9wAvecI", # <<< UPDATED
         "is_active": True,
-        "display_order": 3
+        "display_order": 2
     },
     {
         "name": "Premium", # Changed from "Pro Monthly"
@@ -101,7 +82,7 @@ PLANS_DATA = [
         },
         "stripe_price_id": "price_1RTfR4P5aPDx5xda3UvGfGoz", # <<< UPDATED
         "is_active": True,
-        "display_order": 4
+        "display_order": 3
     }
     # The "Clinic Monthly" plan has been removed as per the new 3-tier (plus free) structure.
 ]
@@ -138,20 +119,20 @@ def seed_plans():
             else:
                 # Add new plan
                 print(f"Adding new plan with slug '{plan_data['slug']}'...")
-            new_plan = Plan(
-                name=plan_data["name"],
+                new_plan = Plan(
+                    name=plan_data["name"],
                     slug=plan_data["slug"],
                     price_cents=plan_data["price_cents"],
                     billing_interval=plan_data["billing_interval"],
                     currency=plan_data["currency"],
-                patient_limit=plan_data["patient_limit"],
+                    patient_limit=plan_data["patient_limit"],
                     practitioner_limit=plan_data.get("practitioner_limit"),
                     features=plan_data["features"],
                     stripe_price_id=plan_data["stripe_price_id"],
                     is_active=plan_data.get("is_active", True),
                     display_order=plan_data.get("display_order", 0)
-            )
-            db.session.add(new_plan)
+                )
+                db.session.add(new_plan)
                 print(f"Plan '{new_plan.name}' (slug: {new_plan.slug}) added with active status: {new_plan.is_active}.")
             
         db.session.commit()
