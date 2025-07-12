@@ -113,7 +113,7 @@ def step_4_test_local_access():
         print(f"✅ Login route status: {response.status_code}")
         
         # Test verify route with dummy token
-        response = client.get('/auth/verify-email/dummy-token')
+        response = client.get('/auth/verify_email/dummy-token')
         print(f"✅ Verify route status: {response.status_code}")
         
         if response.status_code == 404:

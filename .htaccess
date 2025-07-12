@@ -1,0 +1,28 @@
+# Security headers for additional protection
+<IfModule mod_headers.c>
+    # Block tracking scripts
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://assets.calendly.com https://js.stripe.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://api.calendly.com https://api.stripe.com; object-src 'none'; base-uri 'self'"
+    
+    # Block malicious patterns
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Block specific tracking domains
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Block doubleclick.net requests
+    RewriteCond %{HTTP_HOST} doubleclick\.net [NC]
+    RewriteRule .* - [F,L]
+    
+    # Block malformed URLs with @
+    RewriteCond %{REQUEST_URI} ^@
+    RewriteRule .* - [F,L]
+    
+    # Block specific Google Analytics tracking
+    RewriteCond %{QUERY_STRING} tid=G-9Q6H0QETRF
+    RewriteRule .* - [F,L]
+</IfModule>

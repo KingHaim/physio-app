@@ -173,7 +173,7 @@ def register():
     
     return render_template('auth/register.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
 
-@auth.route('/verify-email/<token>')
+@auth.route('/verify_email/<token>')
 def verify_email(token):
     """Verify email address using token"""
     if current_user.is_authenticated and current_user.email_verified:

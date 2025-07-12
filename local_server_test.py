@@ -60,7 +60,7 @@ def run_local_server():
         print("\n🔍 Common test URLs:")
         print(f"- Registration: http://localhost:{port}/auth/register")
         print(f"- Login: http://localhost:{port}/auth/login")
-        print(f"- Test route: http://localhost:{port}/auth/verify-email/test-token")
+        print(f"- Test route: http://localhost:{port}/auth/verify_email/test-token")
         print("\n" + "=" * 70)
         print("🎯 Press Ctrl+C to stop the server")
         print("=" * 70)

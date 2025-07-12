@@ -59,7 +59,7 @@ def test_email_verification():
             # Test route accessibility
             print("\n🌐 Testing route accessibility...")
             with app.test_client() as client:
-                response = client.get(f'/auth/verify-email/{token}')
+                response = client.get(f'/auth/verify_email/{token}')
                 print(f"✅ Route response status: {response.status_code}")
                 if response.status_code != 404:
                     print("✅ Route is accessible!")

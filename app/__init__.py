@@ -1,6 +1,7 @@
 # app/__init__.py
 import os
-from flask import Flask, request, session
+from flask import Flask
+from app.security import SecurityMiddleware, request, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from config import Config
@@ -198,7 +199,10 @@ def create_app(config_class=None):
     
     migrate.init_app(app, db)
     login_manager.init_app(app)
-    csrf.init_app(app)  # Initialize CSRF protection
+    csrf.init_app(app)
+    
+    # Initialize security middleware
+    SecurityMiddleware(app)  # Initialize CSRF protection
 
     # TEMPORARY DEBUGGING for Stripe Webhook 403 - REMOVING THIS SECTION
     # from flask import request as flask_request 
@@ -314,6 +318,63 @@ def create_app(config_class=None):
             get_locale=get_locale,
             get_locale_display_name=get_locale_display_name
         )
+
+    
+    # Add CSP headers to block unauthorized scripts
+    @app.after_request
+    def add_security_headers(response):
+        """Add security headers to prevent malicious script injection"""
+        
+        # Content Security Policy - Block unauthorized scripts
+        csp_policy = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+            "https://cdn.jsdelivr.net "
+            "https://assets.calendly.com "
+            "https://js.stripe.com "
+            "https://code.jquery.com "
+            "https://cdnjs.cloudflare.com; "
+            "style-src 'self' 'unsafe-inline' "
+            "https://cdn.jsdelivr.net "
+            "https://fonts.googleapis.com "
+            "https://assets.calendly.com; "
+            "font-src 'self' "
+            "https://fonts.gstatic.com "
+            "https://cdn.jsdelivr.net; "
+            "img-src 'self' data: "
+            "https://cdn.jsdelivr.net "
+            "https://assets.calendly.com "
+            "https://trxck.tech; "
+            "connect-src 'self' "
+            "https://api.calendly.com "
+            "https://api.stripe.com "
+            "https://hooks.stripe.com; "
+            "frame-src 'self' "
+            "https://calendly.com "
+            "https://js.stripe.com; "
+            "object-src 'none'; "
+            "base-uri 'self'; "
+            "form-action 'self'; "
+            "frame-ancestors 'none'; "
+            "block-all-mixed-content; "
+            "upgrade-insecure-requests"
+        )
+        
+        response.headers['Content-Security-Policy'] = csp_policy
+        
+        # Additional security headers
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+        
+        # Block specific tracking domains
+        if 'doubleclick.net' in response.get_data(as_text=True):
+            app.logger.warning("🚨 Blocked doubleclick.net tracking attempt")
+            response.set_data(response.get_data(as_text=True).replace('doubleclick.net', 'blocked-tracking'))
+        
+        return response
 
     return app
 

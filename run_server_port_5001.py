@@ -63,7 +63,7 @@ def run_server_port_5001():
         print("\n🔍 Common test URLs:")
         print("- Registration: http://localhost:5001/auth/register")
         print("- Login: http://localhost:5001/auth/login")
-        print("- Test route: http://localhost:5001/auth/verify-email/test-token")
+        print("- Test route: http://localhost:5001/auth/verify_email/test-token")
         print("\n⚠️  IMPORTANT: Look for the email content in the console after registration!")
         print("=" * 60)
         print("🎯 Press Ctrl+C to stop the server")
