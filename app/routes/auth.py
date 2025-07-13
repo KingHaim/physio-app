@@ -88,7 +88,12 @@ def login():
             
             next_page = request.args.get('next')
             if not next_page or not is_safe_url(next_page):
-                if current_user.is_new_user:  # Check for new user
+                # Check if user actually needs onboarding (same logic as main dashboard)
+                needs_onboarding = (not current_user.first_name or 
+                                   not current_user.clinic_first_session_fee or 
+                                   not current_user.clinic_subsequent_session_fee)
+                
+                if needs_onboarding:
                     next_page = url_for('main.landing_page')
                 else:
                     next_page = url_for('main.index')
@@ -359,7 +364,12 @@ def google_callback():
             
             next_page = request.args.get('next')
             if not next_page or not is_safe_url(next_page):
-                if current_user.is_new_user:  # Check for new user
+                # Check if user actually needs onboarding (same logic as main dashboard)
+                needs_onboarding = (not current_user.first_name or 
+                                   not current_user.clinic_first_session_fee or 
+                                   not current_user.clinic_subsequent_session_fee)
+                
+                if needs_onboarding:
                     next_page = url_for('main.landing_page')
                 else:
                     next_page = url_for('main.index')

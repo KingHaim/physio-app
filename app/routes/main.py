@@ -316,6 +316,9 @@ def index():
         if welcome_form.subsequent_session_fee.data:
             current_user.clinic_subsequent_session_fee = welcome_form.subsequent_session_fee.data
         
+        # Mark user as no longer new after completing onboarding
+        current_user.is_new_user = False
+        
         # Create default locations based on work type
         if work_type == 'freelance':
             # Create "Home Visit" location
