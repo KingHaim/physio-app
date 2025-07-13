@@ -260,14 +260,21 @@
             {% if current_user.is_on_trial %}
                 <div class="alert alert-info mb-3" role="alert">
                     <div class="d-flex align-items-center">
-                        <i class="bi bi-clock-fill text-primary me-2"></i>
+                        <i class="bi bi-stars text-primary me-2 fs-4"></i>
                         <div>
-                            <strong>{{ _('Trial Period Active') }}</strong>
+                            <strong class="text-primary">🚀 {{ _('Premium Trial Active') }} - {{ _('All Features Unlocked!') }}</strong>
                             <br>
-                            <span class="fw-bold text-{{ 'danger' if current_user.trial_days_remaining <= 3 else 'warning' if current_user.trial_days_remaining <= 7 else 'primary' }}">
+                            <span class="fw-bold text-{{ 'danger' if current_user.trial_days_remaining <= 3 else 'warning' if current_user.trial_days_remaining <= 7 else 'success' }}">
                                 {{ current_user.trial_days_remaining }} {{ _('days remaining') }}
                             </span>
-                            in your {{ current_plan_name }} trial
+                            {{ _('of your Premium trial with unlimited access') }}
+                            <br>
+                            <small class="text-muted">
+                                <i class="bi bi-check-circle text-success me-1"></i>{{ _('AI Reports & Insights') }} | 
+                                <i class="bi bi-check-circle text-success me-1"></i>{{ _('Advanced Analytics') }} | 
+                                <i class="bi bi-check-circle text-success me-1"></i>{{ _('Unlimited Patients') }} | 
+                                <i class="bi bi-check-circle text-success me-1"></i>{{ _('All Premium Features') }}
+                            </small>
                             <br>
                             <small class="text-muted">{{ _('Trial ends') }}: {{ current_subscription_ends_at.strftime('%B %d, %Y') if current_subscription_ends_at else 'N/A' }}</small>
                         </div>

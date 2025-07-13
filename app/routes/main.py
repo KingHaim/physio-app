@@ -369,9 +369,11 @@ def index():
             flash(_('An error occurred while setting up your profile. Please try again.'), 'danger')
     
     # Get current user's subscription info and patient limits
-    current_plan_name = 'Free Plan'
+    current_plan_name = 'No Active Plan'
     current_subscription_status = None
     current_subscription_ends_at = None
+    trial_days_remaining = None
+    is_trial_user = current_user.is_on_trial
     
     if current_user.is_in_clinic:
         clinic = current_user.clinic
@@ -400,11 +402,18 @@ def index():
         
         # Get user's individual subscription (with error handling for missing columns)
         try:
-            subscription = UserSubscription.query.filter_by(user_id=current_user.id).first()
+            subscription = current_user.current_subscription
             if subscription and subscription.plan:
-                current_plan_name = subscription.plan.name
-                current_subscription_status = subscription.status
-                current_subscription_ends_at = subscription.current_period_ends_at
+                if current_user.is_on_trial:
+                    # Show premium trial information
+                    current_plan_name = f"Premium Trial ({subscription.plan.name})"
+                    trial_days_remaining = current_user.trial_days_remaining
+                    current_subscription_status = 'trialing'
+                    current_subscription_ends_at = subscription.trial_ends_at
+                else:
+                    current_plan_name = subscription.plan.name
+                    current_subscription_status = subscription.status
+                    current_subscription_ends_at = subscription.current_period_ends_at
                 patient_plan_limit = subscription.plan.patient_limit if not current_user.is_admin else None
             else:
                 patient_plan_limit = 10 if not current_user.is_admin else None

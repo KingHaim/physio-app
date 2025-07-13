@@ -597,14 +597,11 @@ class User(db.Model, UserMixin):
         if self.is_admin or self.has_unlimited_access:
             return True
 
-        # Trial users get full access to their plan's features
+        # Trial users get FULL ACCESS to ALL premium features during trial
         if self.is_on_trial:
-            plan = self.active_plan
-            if plan and plan.features:
-                if isinstance(plan.features.get(feature_key), bool):
-                    return plan.features.get(feature_key, False)
-                return feature_key in plan.features
-            return default_if_no_sub
+            # During trial, users get access to all premium features
+            # This includes advanced features like AI insights, advanced reporting, etc.
+            return True
 
         plan = self.active_plan
         if not plan:
@@ -644,6 +641,10 @@ class User(db.Model, UserMixin):
         """
         # Admin users and VIP unlimited users have unlimited access to all features
         if self.is_admin or self.has_unlimited_access:
+            return None
+        
+        # Trial users get UNLIMITED access to all features during trial
+        if self.is_on_trial:
             return None
             
         plan = self.active_plan
@@ -798,6 +799,10 @@ class User(db.Model, UserMixin):
     def can_use_clinic_feature(self, feature_key: str) -> bool:
         """Check if user can use a feature based on clinic or individual plan"""
         if self.is_admin or self.has_unlimited_access:
+            return True
+        
+        # Trial users get FULL ACCESS to ALL premium features during trial
+        if self.is_on_trial:
             return True
         
         plan = self.get_effective_plan()
