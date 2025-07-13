@@ -31,7 +31,7 @@ class Config:
     }
     
     # Server configuration for email URL generation (overridden in subclasses)
-    SERVER_NAME = 'localhost:5000'  # Default for development
+    # SERVER_NAME = 'localhost:5000'  # Commented out to allow flexible host access in development
     PREFERRED_URL_SCHEME = 'http'
     
     # Email configuration
@@ -102,8 +102,8 @@ class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_ECHO = True
     
-    # Override server name for local development
-    SERVER_NAME = 'localhost:5000'
+    # Remove SERVER_NAME restriction for development to work with both localhost and 127.0.0.1
+    # SERVER_NAME = 'localhost:5000'  # Commented out to allow flexible host access
     PREFERRED_URL_SCHEME = 'http'
 
 class ProductionConfig(Config):
