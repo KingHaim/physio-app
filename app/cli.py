@@ -85,8 +85,65 @@ def register_commands(app):
         
         db.session.add(user)
         db.session.commit()
-        click.echo(f'User with email {email} created successfully. Admin: {admin}')
+        
+        # Create trial subscription for new non-admin users
+        if not admin:
+            trial_subscription = User.create_trial_subscription(user)
+            if trial_subscription:
+                click.echo(f'User with email {email} created successfully. Admin: {admin}. Trial subscription: {trial_subscription.plan.name}')
+            else:
+                click.echo(f'User with email {email} created successfully. Admin: {admin}. Warning: Failed to create trial subscription.')
+        else:
+            click.echo(f'User with email {email} created successfully. Admin: {admin}')
 
+    @click.command('create-trial-subscriptions')
+    @with_appcontext
+    @click.option('--plan', default='basic-usd', help='Plan slug to create trial for (default: basic-usd)')
+    @click.option('--days', default=14, help='Number of trial days (default: 14)')
+    @click.option('--dry-run', is_flag=True, help='Show what would be done without making changes')
+    def create_trial_subscriptions_command(plan, days, dry_run):
+        """Create trial subscriptions for users who don't have any active subscription."""
+        from app.models import User, UserSubscription
+        
+        # Find users without active subscriptions
+        users_without_subscription = db.session.query(User).filter(
+            ~User.id.in_(
+                db.session.query(UserSubscription.user_id).filter(
+                    UserSubscription.status.in_(['active', 'trialing']),
+                    UserSubscription.ended_at.is_(None)
+                )
+            ),
+            User.is_admin == False,  # Exclude admins
+            User.role != 'patient'   # Exclude patient accounts
+        ).all()
+        
+        if not users_without_subscription:
+            click.echo('No users found without active subscriptions.')
+            return
+        
+        click.echo(f'Found {len(users_without_subscription)} users without active subscriptions:')
+        for user in users_without_subscription:
+            click.echo(f'  - {user.email} (ID: {user.id})')
+        
+        if dry_run:
+            click.echo(f'Dry run: Would create {days}-day trial subscriptions for {plan} plan.')
+            return
+        
+        # Create trial subscriptions
+        success_count = 0
+        fail_count = 0
+        
+        for user in users_without_subscription:
+            trial_subscription = User.create_trial_subscription(user, plan, days)
+            if trial_subscription:
+                click.echo(f'✓ Created trial subscription for {user.email}: {trial_subscription.plan.name}')
+                success_count += 1
+            else:
+                click.echo(f'✗ Failed to create trial subscription for {user.email}')
+                fail_count += 1
+        
+        click.echo(f'Completed: {success_count} success, {fail_count} failed')
+    
     @click.command('list-users')
     @with_appcontext
     def list_users_command():
@@ -187,6 +244,7 @@ def register_commands(app):
 
     app.cli.add_command(create_admin)
     app.cli.add_command(create_user_command)
+    app.cli.add_command(create_trial_subscriptions_command)
     app.cli.add_command(list_users_command)
     app.cli.add_command(generate_past_appointments_command)
     # app.cli.add_command(generate_recurring_command) 

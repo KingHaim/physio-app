@@ -585,6 +585,14 @@ def complete_registration(token):
             
             db.session.commit()
             
+            # Create trial subscription for new clinic users
+            from app.models import User as UserModel
+            trial_subscription = UserModel.create_trial_subscription(user)
+            if trial_subscription:
+                current_app.logger.info(f"Trial subscription created for clinic user {user.email}: {trial_subscription.plan.name}")
+            else:
+                current_app.logger.warning(f"Failed to create trial subscription for clinic user {user.email}")
+            
             # Log the user in
             from flask_login import login_user
             login_user(user)

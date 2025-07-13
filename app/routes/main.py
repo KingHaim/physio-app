@@ -373,25 +373,25 @@ def index():
     current_subscription_status = None
     current_subscription_ends_at = None
     
-    # Use clinic-aware patient limits and counts
     if current_user.is_in_clinic:
         clinic = current_user.clinic
         if clinic:
-            # Use clinic's plan and patient count
-            effective_plan = clinic.active_plan
+            # Use clinic's subscription info and patient count
             current_patients_count = clinic.patient_count
-            patient_plan_limit = effective_plan.patient_limit if effective_plan else None
-            if effective_plan:
-                current_plan_name = f"{effective_plan.name} (Clinic)"
-                # Get clinic subscription for status info
-                clinic_subscription = clinic.current_subscription
-                if clinic_subscription:
-                    current_subscription_status = clinic_subscription.status
-                    current_subscription_ends_at = clinic_subscription.current_period_ends_at
+            clinic_subscription = clinic.current_subscription
+            if clinic_subscription:
+                current_plan_name = clinic_subscription.plan.name
+                current_subscription_status = clinic_subscription.status
+                current_subscription_ends_at = clinic_subscription.current_period_ends_at
+                patient_plan_limit = clinic_subscription.plan.patient_limit
+            else:
+                patient_plan_limit = 10 if not current_user.is_admin else None
+                current_plan_name = 'No Active Plan'
         else:
             # Fallback if clinic not found
             current_patients_count = len(current_user.get_accessible_patients())
             patient_plan_limit = 10 if not current_user.is_admin else None
+            current_plan_name = 'No Active Plan'
     else:
         # Individual user logic
         accessible_patients = current_user.get_accessible_patients()
@@ -408,11 +408,12 @@ def index():
                 patient_plan_limit = subscription.plan.patient_limit if not current_user.is_admin else None
             else:
                 patient_plan_limit = 10 if not current_user.is_admin else None
+                current_plan_name = 'No Active Plan'
         except Exception as e:
             # Handle database schema mismatch (missing columns)
             current_app.logger.warning(f"Subscription query error (schema mismatch): {e}")
-            current_plan_name = "Free Plan"
-            current_subscription_status = "active"
+            current_plan_name = 'No Active Plan'
+            current_subscription_status = None
             current_subscription_ends_at = None
             patient_plan_limit = 10 if not current_user.is_admin else None
     
@@ -420,9 +421,8 @@ def index():
     accessible_patients = current_user.get_accessible_patients()
     
     # Calculate active patients for display
-    # For clinic members, show only their own patients, not all clinic patients
     if current_user.is_in_clinic:
-        # Get only the user's own patients for the dashboard display
+        # For clinic members, show only their own patients for the dashboard display
         user_patients = current_user.patients.filter_by(status='Active').all()
         active_patients = len(user_patients)
     else:

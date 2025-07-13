@@ -151,6 +151,15 @@ def register():
         db.session.add(user)
         db.session.commit()
         
+        # Create trial subscription for new users (except admins)
+        if not user.is_admin:
+            from app.models import User
+            trial_subscription = User.create_trial_subscription(user)
+            if trial_subscription:
+                current_app.logger.info(f"Trial subscription created for user {user.email}: {trial_subscription.plan.name}")
+            else:
+                current_app.logger.warning(f"Failed to create trial subscription for user {user.email}")
+        
         # Send verification email (unless it's the first admin user)
         if not user.is_admin:
             try:
@@ -328,6 +337,15 @@ def google_callback():
                     db.session.add(user)
             
             db.session.commit()
+            
+            # Create trial subscription for new users (except admins)
+            if not user.is_admin:
+                from app.models import User as UserModel
+                trial_subscription = UserModel.create_trial_subscription(user)
+                if trial_subscription:
+                    current_app.logger.info(f"Trial subscription created for Google OAuth user {user.email}: {trial_subscription.plan.name}")
+                else:
+                    current_app.logger.warning(f"Failed to create trial subscription for Google OAuth user {user.email}")
             
             # Log the user in
             login_user(user, remember=True)

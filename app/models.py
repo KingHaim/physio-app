@@ -594,7 +594,7 @@ class User(db.Model, UserMixin):
         `feature_key` should correspond to a key in the Plan's `features` JSON.
         `default_if_no_sub` is the value returned if the user has no active subscription.
         """
-        if self.is_admin:
+        if self.is_admin or self.has_unlimited_access:
             return True
 
         # Trial users get full access to their plan's features
@@ -642,8 +642,8 @@ class User(db.Model, UserMixin):
         Example: `user.get_feature_limit('ai_reports_limit')`
         Returns None if no limit is set or no active plan.
         """
-        # Admin users have unlimited access to all features
-        if self.is_admin:
+        # Admin users and VIP unlimited users have unlimited access to all features
+        if self.is_admin or self.has_unlimited_access:
             return None
             
         plan = self.active_plan
@@ -797,7 +797,7 @@ class User(db.Model, UserMixin):
     
     def can_use_clinic_feature(self, feature_key: str) -> bool:
         """Check if user can use a feature based on clinic or individual plan"""
-        if self.is_admin:
+        if self.is_admin or self.has_unlimited_access:
             return True
         
         plan = self.get_effective_plan()
@@ -895,6 +895,63 @@ class User(db.Model, UserMixin):
                 color_mapping[membership.user.id] = membership.user.get_practitioner_color()
         
         return color_mapping
+
+    @staticmethod
+    def create_trial_subscription(user, plan_slug='basic-usd', trial_days=14):
+        """
+        Create a trial subscription for a user
+        
+        Args:
+            user: User object
+            plan_slug: Plan slug to create trial for (default: 'basic-usd')
+            trial_days: Number of trial days (default: 14)
+            
+        Returns:
+            UserSubscription object or None if failed
+        """
+        from datetime import datetime, timedelta
+        
+        # Get the plan
+        plan = Plan.query.filter_by(slug=plan_slug, is_active=True).first()
+        if not plan:
+            # Fallback to first available plan
+            plan = Plan.query.filter_by(is_active=True).first()
+            
+        if not plan:
+            return None
+            
+        # Check if user already has an active or trialing subscription
+        existing_subscription = UserSubscription.query.filter(
+            UserSubscription.user_id == user.id,
+            UserSubscription.status.in_(['active', 'trialing']),
+            UserSubscription.ended_at.is_(None)
+        ).first()
+        
+        if existing_subscription:
+            return existing_subscription
+            
+        # Create trial subscription
+        trial_start = datetime.utcnow()
+        trial_end = trial_start + timedelta(days=trial_days)
+        
+        trial_subscription = UserSubscription(
+            user_id=user.id,
+            plan_id=plan.id,
+            status='trialing',
+            trial_starts_at=trial_start,
+            trial_ends_at=trial_end,
+            current_period_starts_at=trial_start,
+            current_period_ends_at=trial_end
+        )
+        
+        db.session.add(trial_subscription)
+        
+        try:
+            db.session.commit()
+            return trial_subscription
+        except Exception:
+            db.session.rollback()
+            return None
 
 class FixedCost(db.Model):
     id = db.Column(db.Integer, primary_key=True)
