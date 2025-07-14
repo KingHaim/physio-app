@@ -340,6 +340,7 @@ def create_app(config_class=None):
             "https://assets.calendly.com; "
             "font-src 'self' "
             "https://fonts.gstatic.com "
+            "https://fonts.googleapis.com "
             "https://cdn.jsdelivr.net; "
             "img-src 'self' data: "
             "https://cdn.jsdelivr.net "

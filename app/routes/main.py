@@ -4372,7 +4372,42 @@ def get_calendar_appointments():
 @login_required
 @physio_required
 def bulk_delete_patients():
-    data = request.get_json()
+    # Handle CSRF validation manually for AJAX requests
+    from flask_wtf.csrf import validate_csrf
+    csrf_token = request.headers.get('X-CSRFToken')
+    current_app.logger.info(f"CSRF Token received: {csrf_token}")
+    
+    if csrf_token:
+        try:
+            validate_csrf(csrf_token)
+            current_app.logger.info("CSRF token validation successful")
+        except Exception as e:
+            current_app.logger.error(f"CSRF token validation failed: {e}")
+            return jsonify({'status': 'error', 'message': 'CSRF token validation failed'}), 400
+    else:
+        current_app.logger.error("CSRF token missing")
+        return jsonify({'status': 'error', 'message': 'CSRF token missing'}), 400
+
+    # Add debugging for the request
+    current_app.logger.info(f"=== BULK DELETE REQUEST START ===")
+    current_app.logger.info(f"Request method: {request.method}")
+    current_app.logger.info(f"Request headers: {dict(request.headers)}")
+    current_app.logger.info(f"Request content type: {request.content_type}")
+    current_app.logger.info(f"Request data raw: {request.data}")
+    current_app.logger.info(f"Request args: {request.args}")
+    current_app.logger.info(f"Request form: {request.form}")
+    
+    try:
+        data = request.get_json()
+        current_app.logger.info(f"Parsed JSON data: {data}")
+    except Exception as e:
+        current_app.logger.error(f"Error parsing JSON: {e}")
+        return jsonify({'status': 'error', 'message': f'Invalid JSON: {str(e)}'}), 400
+    
+    if data is None:
+        current_app.logger.error("No JSON data received")
+        return jsonify({'status': 'error', 'message': 'No JSON data received'}), 400
+    
     patient_ids = data.get('patient_ids', [])
     
     # Add logging for debugging

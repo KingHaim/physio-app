@@ -390,18 +390,34 @@
         const patientIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.patientId);
         let csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
+        // Add debugging
+        console.log('=== BULK DELETE DEBUG START ===');
+        console.log('Selected patient IDs:', patientIds);
+        console.log('CSRF Token:', csrfToken);
+        console.log('Request URL:', '/api/patients/bulk-delete');
+        
+        const requestData = {
+            patient_ids: patientIds
+        };
+        console.log('Request data:', requestData);
+        console.log('Request data JSON:', JSON.stringify(requestData));
+        
         fetch('/api/patients/bulk-delete', { // New endpoint
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken
             },
-            body: JSON.stringify({
-                patient_ids: patientIds
-            })
+            body: JSON.stringify(requestData)
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            console.log('Response ok:', response.ok);
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
             if (data.status === 'success' || data.status === 'partial_success') {
                 alert(data.message || '{{ _("Selected patients deleted successfully.") }}');
                 window.location.reload();
