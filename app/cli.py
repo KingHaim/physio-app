@@ -143,7 +143,7 @@ def register_commands(app):
                 fail_count += 1
         
         click.echo(f'Completed: {success_count} success, {fail_count} failed')
-    
+
     @click.command('list-users')
     @with_appcontext
     def list_users_command():

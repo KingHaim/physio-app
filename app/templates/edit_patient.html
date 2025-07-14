@@ -552,113 +552,73 @@
 <script>
     // Function to compile all anamnesis fields into one (same as new patient)
     function compileAnamnesis() {
+        console.log('DEBUG: Starting compileAnamnesis() for edit form');
+        
+        // Helper function to safely get element value
+        function safeGetValue(elementId) {
+            const element = document.getElementById(elementId);
+            const value = element ? element.value.trim() : '';
+            console.log(`DEBUG: ${elementId} = "${value}"`);
+            return value;
+        }
+        
         const anamnesisData = {
             personal_data: {
-                age: document.getElementById('edit_anamnesis_age').value,
-                gender: document.getElementById('edit_anamnesis_gender').value,
-                occupation: document.getElementById('edit_anamnesis_occupation').value,
-                emergency_contact: document.getElementById('edit_anamnesis_emergency_contact').value
+                age: safeGetValue('edit_anamnesis_age'),
+                gender: safeGetValue('edit_anamnesis_gender'),
+                occupation: safeGetValue('edit_anamnesis_occupation'),
+                emergency_contact: safeGetValue('edit_anamnesis_emergency_contact')
             },
             chief_complaint: {
-                main_complaint: document.getElementById('edit_anamnesis_chief_complaint').value,
-                onset: document.getElementById('edit_anamnesis_onset').value,
-                mechanism: document.getElementById('edit_anamnesis_mechanism').value
+                main_complaint: safeGetValue('edit_anamnesis_chief_complaint'),
+                onset: safeGetValue('edit_anamnesis_onset'),
+                mechanism: safeGetValue('edit_anamnesis_mechanism')
             },
             medical_history: {
-                previous_conditions: document.getElementById('edit_anamnesis_previous_conditions').value,
-                surgeries: document.getElementById('edit_anamnesis_surgeries').value,
-                medications: document.getElementById('edit_anamnesis_medications').value,
-                allergies: document.getElementById('edit_anamnesis_allergies').value
+                previous_conditions: safeGetValue('edit_anamnesis_previous_conditions'),
+                surgeries: safeGetValue('edit_anamnesis_surgeries'),
+                medications: safeGetValue('edit_anamnesis_medications'),
+                allergies: safeGetValue('edit_anamnesis_allergies')
             },
             family_history: {
-                family_history: document.getElementById('edit_anamnesis_family_history').value
+                family_history: safeGetValue('edit_anamnesis_family_history')
             },
             lifestyle: {
-                physical_activity: document.getElementById('edit_anamnesis_physical_activity').value,
-                sleep: document.getElementById('edit_anamnesis_sleep').value,
-                work_posture: document.getElementById('edit_anamnesis_work_posture').value,
-                stress_level: document.getElementById('edit_anamnesis_stress_level').value,
-                diet_habits: document.getElementById('edit_anamnesis_diet_habits').value
+                physical_activity: safeGetValue('edit_anamnesis_physical_activity'),
+                sleep: safeGetValue('edit_anamnesis_sleep'),
+                work_posture: safeGetValue('edit_anamnesis_work_posture'),
+                stress_level: safeGetValue('edit_anamnesis_stress_level'),
+                diet_habits: safeGetValue('edit_anamnesis_diet_habits')
             },
-            current_pain: {
-                pain_scale: document.getElementById('edit_anamnesis_pain_scale').value,
-                pain_type: document.getElementById('edit_anamnesis_pain_type').value,
-                pain_triggers: document.getElementById('edit_anamnesis_pain_triggers').value,
-                pain_relievers: document.getElementById('edit_anamnesis_pain_relievers').value,
-                pain_location: document.getElementById('edit_anamnesis_pain_location').value
+            pain_details: {
+                pain_scale: safeGetValue('edit_anamnesis_pain_scale'),
+                pain_type: safeGetValue('edit_anamnesis_pain_type'),
+                pain_location: safeGetValue('edit_anamnesis_pain_location'),
+                pain_triggers: safeGetValue('edit_anamnesis_pain_triggers'),
+                pain_relievers: safeGetValue('edit_anamnesis_pain_relievers')
             },
-            functional_exam: {
-                functional_limitations: document.getElementById('edit_anamnesis_functional_limitations').value,
-                rom_limitations: document.getElementById('edit_anamnesis_rom_limitations').value,
-                strength_deficits: document.getElementById('edit_anamnesis_strength_deficits').value,
-                special_tests: document.getElementById('edit_anamnesis_special_tests').value
+            functional_assessment: {
+                functional_limitations: safeGetValue('edit_anamnesis_functional_limitations'),
+                onset_date: safeGetValue('edit_anamnesis_onset_date')
+            },
+            metadata: {
+                form_version: '2.0_edit',
+                updated_date: new Date().toISOString()
             }
         };
 
-        // Create formatted text from the data
-        let compiledText = '';
-        
-        if (anamnesisData.personal_data.age || anamnesisData.personal_data.gender || anamnesisData.personal_data.occupation || anamnesisData.personal_data.emergency_contact) {
-            compiledText += '=== DATOS PERSONALES ===\n';
-            if (anamnesisData.personal_data.age) compiledText += `Edad: ${anamnesisData.personal_data.age}\n`;
-            if (anamnesisData.personal_data.gender) compiledText += `Género: ${anamnesisData.personal_data.gender}\n`;
-            if (anamnesisData.personal_data.occupation) compiledText += `Ocupación: ${anamnesisData.personal_data.occupation}\n`;
-            if (anamnesisData.personal_data.emergency_contact) compiledText += `Contacto de emergencia: ${anamnesisData.personal_data.emergency_contact}\n`;
-            compiledText += '\n';
+        // Convert to JSON and update the hidden field
+        const compiledField = document.getElementById('edit_compiled_anamnesis');
+        if (compiledField) {
+            const jsonString = JSON.stringify(anamnesisData, null, 2);
+            compiledField.value = jsonString;
+            console.log('DEBUG: Anamnesis compiled successfully for edit form. Length:', jsonString.length);
+            console.log('DEBUG: Compiled data:', jsonString);
+            return jsonString;
+        } else {
+            console.error('ERROR: edit_compiled_anamnesis field not found!');
+            return '';
         }
-        
-        if (anamnesisData.chief_complaint.main_complaint) {
-            compiledText += '=== MOTIVO DE CONSULTA ===\n';
-            compiledText += `Motivo principal: ${anamnesisData.chief_complaint.main_complaint}\n`;
-            if (anamnesisData.chief_complaint.onset) compiledText += `Inicio: ${anamnesisData.chief_complaint.onset}\n`;
-            if (anamnesisData.chief_complaint.mechanism) compiledText += `Mecanismo: ${anamnesisData.chief_complaint.mechanism}\n`;
-            compiledText += '\n';
-        }
-        
-        if (anamnesisData.medical_history.previous_conditions || anamnesisData.medical_history.surgeries || anamnesisData.medical_history.medications || anamnesisData.medical_history.allergies) {
-            compiledText += '=== HISTORIA MÉDICA ===\n';
-            if (anamnesisData.medical_history.previous_conditions) compiledText += `Condiciones previas: ${anamnesisData.medical_history.previous_conditions}\n`;
-            if (anamnesisData.medical_history.surgeries) compiledText += `Cirugías: ${anamnesisData.medical_history.surgeries}\n`;
-            if (anamnesisData.medical_history.medications) compiledText += `Medicación actual: ${anamnesisData.medical_history.medications}\n`;
-            if (anamnesisData.medical_history.allergies) compiledText += `Alergias: ${anamnesisData.medical_history.allergies}\n`;
-            compiledText += '\n';
-        }
-        
-        if (anamnesisData.family_history.family_history) {
-            compiledText += '=== ANTECEDENTES FAMILIARES ===\n';
-            compiledText += `${anamnesisData.family_history.family_history}\n\n`;
-        }
-        
-        if (anamnesisData.lifestyle.physical_activity || anamnesisData.lifestyle.sleep || anamnesisData.lifestyle.work_posture || anamnesisData.lifestyle.stress_level || anamnesisData.lifestyle.diet_habits) {
-            compiledText += '=== ESTILO DE VIDA ===\n';
-            if (anamnesisData.lifestyle.physical_activity) compiledText += `Actividad física: ${anamnesisData.lifestyle.physical_activity}\n`;
-            if (anamnesisData.lifestyle.sleep) compiledText += `Calidad del sueño: ${anamnesisData.lifestyle.sleep}\n`;
-            if (anamnesisData.lifestyle.work_posture) compiledText += `Postura de trabajo: ${anamnesisData.lifestyle.work_posture}\n`;
-            if (anamnesisData.lifestyle.stress_level) compiledText += `Nivel de estrés: ${anamnesisData.lifestyle.stress_level}/10\n`;
-            if (anamnesisData.lifestyle.diet_habits) compiledText += `Hábitos alimentarios: ${anamnesisData.lifestyle.diet_habits}\n`;
-            compiledText += '\n';
-        }
-        
-        if (anamnesisData.current_pain.pain_scale || anamnesisData.current_pain.pain_type || anamnesisData.current_pain.pain_triggers || anamnesisData.current_pain.pain_relievers || anamnesisData.current_pain.pain_location) {
-            compiledText += '=== DOLOR ACTUAL ===\n';
-            if (anamnesisData.current_pain.pain_scale) compiledText += `Escala de dolor: ${anamnesisData.current_pain.pain_scale}/10\n`;
-            if (anamnesisData.current_pain.pain_type) compiledText += `Tipo de dolor: ${anamnesisData.current_pain.pain_type}\n`;
-            if (anamnesisData.current_pain.pain_location) compiledText += `Localización: ${anamnesisData.current_pain.pain_location}\n`;
-            if (anamnesisData.current_pain.pain_triggers) compiledText += `Factores que empeoran: ${anamnesisData.current_pain.pain_triggers}\n`;
-            if (anamnesisData.current_pain.pain_relievers) compiledText += `Factores que mejoran: ${anamnesisData.current_pain.pain_relievers}\n`;
-            compiledText += '\n';
-        }
-        
-        if (anamnesisData.functional_exam.functional_limitations || anamnesisData.functional_exam.rom_limitations || anamnesisData.functional_exam.strength_deficits || anamnesisData.functional_exam.special_tests) {
-            compiledText += '=== EXPLORACIÓN FUNCIONAL ===\n';
-            if (anamnesisData.functional_exam.functional_limitations) compiledText += `Limitaciones funcionales: ${anamnesisData.functional_exam.functional_limitations}\n`;
-            if (anamnesisData.functional_exam.rom_limitations) compiledText += `Limitaciones ROM: ${anamnesisData.functional_exam.rom_limitations}\n`;
-            if (anamnesisData.functional_exam.strength_deficits) compiledText += `Déficits de fuerza: ${anamnesisData.functional_exam.strength_deficits}\n`;
-            if (anamnesisData.functional_exam.special_tests) compiledText += `Pruebas especiales: ${anamnesisData.functional_exam.special_tests}\n`;
-        }
-        
-        document.getElementById('edit_compiled_anamnesis').value = compiledText;
-        return compiledText;
     }
 
     // Function to parse existing anamnesis and populate fields
@@ -789,8 +749,11 @@
         const form = document.querySelector('form');
         
         form.addEventListener('submit', function(e) {
-            // Compile anamnesis before submitting
-            compileAnamnesis();
+            console.log('DEBUG: Form submit triggered for edit patient');
+            
+            // ALWAYS compile anamnesis before submitting - this is critical!
+            const compiledAnamnesis = compileAnamnesis();
+            console.log('DEBUG: Anamnesis compilation result:', compiledAnamnesis ? 'SUCCESS' : 'FAILED');
             
             let isValid = true;
             const requiredFields = form.querySelectorAll('[required]');
@@ -799,6 +762,7 @@
                 if (!field.value.trim()) {
                     isValid = false;
                     field.classList.add('is-invalid');
+                    console.log('DEBUG: Required field missing:', field.id || field.name);
                 } else {
                     field.classList.remove('is-invalid');
                 }
@@ -809,6 +773,7 @@
             if (emailInput && emailInput.value.trim() && !emailInput.checkValidity()) {
                  isValid = false;
                  emailInput.classList.add('is-invalid');
+                 console.log('DEBUG: Invalid email format');
                  // Optionally add a specific message near the email field
             } else if (emailInput) {
                  emailInput.classList.remove('is-invalid');
@@ -817,7 +782,12 @@
             if (!isValid) {
                 e.preventDefault();
                 alert('Please fill in all required fields correctly.');
+                console.log('DEBUG: Form validation failed - submission prevented');
+                return false;
             }
+            
+            console.log('DEBUG: Form validation passed - submitting form');
+            return true;
         });
 
         // Initialize edit form anamnesis functionality
@@ -852,25 +822,26 @@
         if (data.mechanism) document.getElementById('edit_anamnesis_mechanism').value = data.mechanism;
         
         // Personal Information
-        if (data.age) document.getElementById('edit_anamnesis_age').value = data.age;
-        if (data.gender) document.getElementById('edit_anamnesis_gender').value = data.gender;
-        if (data.occupation) document.getElementById('edit_anamnesis_occupation').value = data.occupation;
-        if (data.emergency_contact) document.getElementById('edit_anamnesis_emergency_contact').value = data.emergency_contact;
+        if (data.personal_data.age) document.getElementById('edit_anamnesis_age').value = data.personal_data.age;
+        if (data.personal_data.gender) document.getElementById('edit_anamnesis_gender').value = data.personal_data.gender;
+        if (data.personal_data.occupation) document.getElementById('edit_anamnesis_occupation').value = data.personal_data.occupation;
+        if (data.personal_data.emergency_contact) document.getElementById('edit_anamnesis_emergency_contact').value = data.personal_data.emergency_contact;
         
         // Medical History
-        if (data.previous_conditions) document.getElementById('edit_anamnesis_previous_conditions').value = data.previous_conditions;
-        if (data.surgeries) document.getElementById('edit_anamnesis_surgeries').value = data.surgeries;
-        if (data.medications) document.getElementById('edit_anamnesis_medications').value = data.medications;
-        if (data.allergies) document.getElementById('edit_anamnesis_allergies').value = data.allergies;
+        if (data.medical_history.previous_conditions) document.getElementById('edit_anamnesis_previous_conditions').value = data.medical_history.previous_conditions;
+        if (data.medical_history.surgeries) document.getElementById('edit_anamnesis_surgeries').value = data.medical_history.surgeries;
+        if (data.medical_history.medications) document.getElementById('edit_anamnesis_medications').value = data.medical_history.medications;
+        if (data.medical_history.allergies) document.getElementById('edit_anamnesis_allergies').value = data.medical_history.allergies;
         
         // Pain Details
-        if (data.pain_type) document.getElementById('edit_anamnesis_pain_type').value = data.pain_type;
-        if (data.pain_location) document.getElementById('edit_anamnesis_pain_location').value = data.pain_location;
-        if (data.pain_triggers) document.getElementById('edit_anamnesis_pain_triggers').value = data.pain_triggers;
-        if (data.pain_relievers) document.getElementById('edit_anamnesis_pain_relievers').value = data.pain_relievers;
+        if (data.pain_details.pain_type) document.getElementById('edit_anamnesis_pain_type').value = data.pain_details.pain_type;
+        if (data.pain_details.pain_location) document.getElementById('edit_anamnesis_pain_location').value = data.pain_details.pain_location;
+        if (data.pain_details.pain_triggers) document.getElementById('edit_anamnesis_pain_triggers').value = data.pain_details.pain_triggers;
+        if (data.pain_details.pain_relievers) document.getElementById('edit_anamnesis_pain_relievers').value = data.pain_details.pain_relievers;
         
         // Functional Assessment
-        if (data.functional_limitations) document.getElementById('edit_anamnesis_functional_limitations').value = data.functional_limitations;
+        if (data.functional_assessment.functional_limitations) document.getElementById('edit_anamnesis_functional_limitations').value = data.functional_assessment.functional_limitations;
+        if (data.functional_assessment.onset_date) document.getElementById('edit_anamnesis_onset_date').value = data.functional_assessment.onset_date;
         if (data.physical_activity) document.getElementById('edit_anamnesis_physical_activity').value = data.physical_activity;
         if (data.work_posture) document.getElementById('edit_anamnesis_work_posture').value = data.work_posture;
         if (data.sleep) document.getElementById('edit_anamnesis_sleep').value = data.sleep;
@@ -901,11 +872,11 @@
         ];
         
         const optionalFields = [
-            'edit_anamnesis_age',
             'edit_anamnesis_gender',
             'edit_anamnesis_occupation',
             'edit_anamnesis_functional_limitations',
-            'edit_anamnesis_physical_activity'
+            'edit_anamnesis_physical_activity',
+            'edit_anamnesis_age'  // Moved age to end of optional fields - not prioritized
         ];
         
         let essentialCount = 0;

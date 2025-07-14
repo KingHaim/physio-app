@@ -942,8 +942,12 @@ function nextStep(step) {
         // Contact is not required anymore since we have separate email/phone fields
         
         if (missingFields.length > 0) {
+            // DON'T clear any form data - just show alert and stay on current step
             alert('Faltan los siguientes campos obligatorios: ' + missingFields.join(', '));
-            return;
+            // Focus on the first missing field
+            if (!name) document.getElementById('name').focus();
+            else if (!dob) document.getElementById('date_of_birth').focus();
+            return; // Stay on current step without clearing data
         }
         
         // No additional validation needed for Step 1 to Step 2
@@ -955,7 +959,9 @@ function nextStep(step) {
         const chiefComplaint = document.getElementById('anamnesis_chief_complaint').value.trim();
         if (!chiefComplaint) {
             alert('{{ _("Please complete at least the main reason for consultation before proceeding.") }}');
-            return;
+            // Focus on chief complaint field but don't clear any data
+            document.getElementById('anamnesis_chief_complaint').focus();
+            return; // Stay on current step without clearing data
         }
         // Compile anamnesis data
         compileAnamnesis();
@@ -1011,7 +1017,11 @@ document.getElementById('newPatientForm').addEventListener('submit', function(e)
     if (missingFields.length > 0) {
         e.preventDefault();
         alert('{{ _("Please fill in all required patient data fields: ") }}' + missingFields.join(', '));
+        // Go to step 1 but preserve all form data
         prevStep(1);
+        // Focus on the first missing field
+        if (!name) document.getElementById('name').focus();
+        else if (!dob) document.getElementById('date_of_birth').focus();
         return false;
     }
     
@@ -1020,7 +1030,8 @@ document.getElementById('newPatientForm').addEventListener('submit', function(e)
     if (!chiefComplaint) {
         e.preventDefault();
         alert('{{ _("Main reason for consultation is required before creating a patient record.") }}');
-        prevStep(2); // Go to clinical history step
+        prevStep(2); // Go to clinical history step but preserve all data
+        document.getElementById('anamnesis_chief_complaint').focus();
         return false;
     }
 });
