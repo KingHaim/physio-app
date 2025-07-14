@@ -5062,3 +5062,27 @@ def create_patient_ajax():
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Error creating patient: {str(e)}'}), 500
 
+@main.route('/debug/patients')
+@login_required
+def debug_patients():
+    """Temporary debug endpoint to see what patients exist for the current user"""
+    user_patients = Patient.query.filter_by(user_id=current_user.id).all()
+    
+    patients_info = []
+    for p in user_patients:
+        patients_info.append({
+            'id': p.id,
+            'name': p.name,
+            'status': p.status,
+            'user_id': p.user_id
+        })
+    
+    debug_info = {
+        'current_user_id': current_user.id,
+        'current_user_email': current_user.email,
+        'total_patients': len(user_patients),
+        'patients': patients_info
+    }
+    
+    return jsonify(debug_info)
+
