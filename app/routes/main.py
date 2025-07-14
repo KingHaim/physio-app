@@ -4413,6 +4413,13 @@ def bulk_delete_patients():
     # Add logging for debugging
     current_app.logger.info(f"Bulk delete request received for patient IDs: {patient_ids}")
     current_app.logger.info(f"Current user ID: {current_user.id}")
+    current_app.logger.info(f"Current user email: {current_user.email}")
+    
+    # Check what patients exist for this user
+    user_patients = Patient.query.filter_by(user_id=current_user.id).all()
+    current_app.logger.info(f"User has {len(user_patients)} patients total")
+    for p in user_patients[:5]:  # Log first 5 patients
+        current_app.logger.info(f"  Patient ID {p.id}: {p.name}")
 
     if not patient_ids:
         current_app.logger.warning("No patient IDs provided in request")
