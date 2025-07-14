@@ -4424,8 +4424,26 @@ def bulk_delete_patients():
 
     for patient_id in patient_ids:
         try:
-            current_app.logger.info(f"Attempting to delete patient ID: {patient_id}")
-            patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
+            current_app.logger.info(f"Attempting to delete patient ID: {patient_id} (type: {type(patient_id)})")
+            
+            # Convert to int if it's a string
+            try:
+                patient_id_int = int(patient_id)
+                current_app.logger.info(f"Converted patient ID to int: {patient_id_int}")
+            except (ValueError, TypeError) as e:
+                current_app.logger.error(f"Invalid patient ID format: {patient_id}, error: {e}")
+                errors.append(f"Invalid patient ID format: {patient_id}")
+                continue
+            
+            # First check if patient exists at all
+            patient_exists = Patient.query.filter_by(id=patient_id_int).first()
+            if patient_exists:
+                current_app.logger.info(f"Patient {patient_id_int} exists, belongs to user_id: {patient_exists.user_id}")
+            else:
+                current_app.logger.warning(f"Patient {patient_id_int} does not exist in database")
+            
+            # Now check if patient belongs to current user
+            patient = Patient.query.filter_by(id=patient_id_int, user_id=current_user.id).first()
             
             if patient:
                 current_app.logger.info(f"Found patient: {patient.name} (ID: {patient.id})")
@@ -4450,10 +4468,10 @@ def bulk_delete_patients():
                 # Now delete the patient
                 db.session.delete(patient)
                 deleted_count += 1
-                successful_deletions.append(patient_id)
+                successful_deletions.append(patient_id_int)
                 current_app.logger.info(f"Successfully marked patient {patient.id} for deletion")
             else:
-                error_msg = f"Patient with ID {patient_id} not found or not accessible."
+                error_msg = f"Patient with ID {patient_id_int} not found or not accessible."
                 current_app.logger.warning(error_msg)
                 errors.append(error_msg)
         except Exception as e:
