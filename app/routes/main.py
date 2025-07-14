@@ -4442,15 +4442,16 @@ def bulk_delete_patients():
                 errors.append(f"Invalid patient ID format: {patient_id}")
                 continue
             
-            # First check if patient exists at all
-            patient_exists = Patient.query.filter_by(id=patient_id_int).first()
-            if patient_exists:
-                current_app.logger.info(f"Patient {patient_id_int} exists, belongs to user_id: {patient_exists.user_id}")
-            else:
-                current_app.logger.warning(f"Patient {patient_id_int} does not exist in database")
+            # Check if patient is accessible to current user (using same logic as patients list)
+            accessible_patients = current_user.get_accessible_patients()
+            accessible_patient_ids = [p.id for p in accessible_patients]
             
-            # Now check if patient belongs to current user
-            patient = Patient.query.filter_by(id=patient_id_int, user_id=current_user.id).first()
+            if patient_id_int in accessible_patient_ids:
+                patient = Patient.query.filter_by(id=patient_id_int).first()
+                current_app.logger.info(f"FOUND accessible patient: {patient.id} - {patient.name} - user_id: {patient.user_id}")
+            else:
+                patient = None
+                current_app.logger.error(f"Patient {patient_id_int} is not accessible to current user {current_user.id}")
             
             if patient:
                 current_app.logger.info(f"Found patient: {patient.name} (ID: {patient.id})")
