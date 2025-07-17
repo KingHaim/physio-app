@@ -1048,8 +1048,8 @@
     dateOfBirthInput.setAttribute('max', today);
 
     // Merge Patient functionality
-    let selectedTargetPatientId = null;
-    let searchTimeout = null;
+    var selectedTargetPatientId = null;
+    var searchTimeout = null;
 
     // Search for patients
     document.getElementById('targetPatientSearch').addEventListener('input', function() {
