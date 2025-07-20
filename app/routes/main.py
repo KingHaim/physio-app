@@ -270,16 +270,84 @@ def monitoring_dashboard():
     """Monitoring dashboard for system administrators."""
     return render_template('monitoring.html')
 
+@main.route('/welcome-choice', methods=['GET', 'POST'])
+@login_required
+def welcome_choice():
+    """Welcome choice screen for new users to select their dashboard type."""
+    # Only show this to new users
+    if not current_user.is_new_user:
+        return redirect(url_for(current_user.get_preferred_dashboard_route()))
+    
+    if request.method == 'POST':
+        choice = request.form.get('choice')
+        
+        if choice in ['individual', 'clinic']:
+            # Set dashboard mode based on choice
+            if choice == 'clinic':
+                current_user.dashboard_mode = 'clinic'
+                # Mark user as no longer new since they made their choice
+                current_user.is_new_user = False
+                db.session.commit()
+                # For clinic choice, redirect to clinic creation/joining flow
+                flash(_('Great! You\'ll get a 14-day free trial to explore all clinic features.'), 'info')
+                return redirect(url_for('clinic.choose_option'))
+            else:
+                current_user.dashboard_mode = 'individual'
+                # Mark user as no longer new and redirect to onboarding
+                current_user.is_new_user = False
+                db.session.commit()
+                flash(_('Welcome to your personal practice dashboard!'), 'success')
+                return redirect(url_for('main.index'))
+        
+        flash(_('Please select an option to continue.'), 'warning')
+    
+    return render_template('welcome_choice.html')
+
+@main.route('/switch-dashboard-mode')
+@login_required
+def switch_dashboard_mode():
+    """Switch dashboard mode for clinic admins."""
+    if not current_user.can_switch_dashboard_mode():
+        flash(_('You do not have permission to switch dashboard modes.'), 'error')
+        return redirect(url_for('main.index'))
+    
+    # Toggle between individual and clinic mode
+    new_mode = 'clinic' if current_user.dashboard_mode == 'individual' else 'individual'
+    current_user.set_dashboard_mode(new_mode)
+    db.session.commit()
+    
+    # Redirect to the appropriate dashboard
+    if new_mode == 'clinic':
+        flash(_('Switched to clinic management mode.'), 'success')
+        return redirect(url_for('clinic.dashboard'))
+    else:
+        flash(_('Switched to individual practice mode.'), 'success')
+        return redirect(url_for('main.index'))
+
 @main.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
     """Dashboard route for authenticated users."""
+    # Check if user is new and needs to make initial choice
+    if current_user.is_new_user:
+        return redirect(url_for('main.welcome_choice'))
+    
+    # Check if user should be redirected to clinic dashboard
+    preferred_route = current_user.get_preferred_dashboard_route()
+    if preferred_route != 'main.index':
+        return redirect(url_for(preferred_route))
+    
     # Check if user is new and needs onboarding
-    # A user is new if they lack essential profile info
-    is_new_user = (not current_user.first_name or 
-                   not current_user.clinic_first_session_fee or 
-                   not current_user.clinic_subsequent_session_fee)
-    welcome_form = WelcomeOnboardingForm() if is_new_user else None
+    # Skip old onboarding for clinic users - they'll do onboarding in clinic flow
+    if current_user.current_dashboard_mode == 'clinic':
+        is_new_user = False
+        welcome_form = None
+    else:
+        # Individual users: check if they lack essential profile info
+        is_new_user = (not current_user.first_name or 
+                       not current_user.clinic_first_session_fee or 
+                       not current_user.clinic_subsequent_session_fee)
+        welcome_form = WelcomeOnboardingForm() if is_new_user else None
     
     # Handle onboarding form submission
     if is_new_user and request.method == 'POST' and welcome_form.validate_on_submit():
@@ -456,6 +524,8 @@ def index():
     ).order_by(Treatment.created_at.asc()).limit(10)
     
     upcoming_appointments = []
+    
+    # Add regular treatments
     for treatment in upcoming_appointments_query.all():
         # Calculate relative date
         treatment_date = treatment.created_at.date()
@@ -472,8 +542,107 @@ def index():
             'treatment': treatment,
             'patient_name': treatment.patient.name if treatment.patient else 'Unknown',
             'relative_date': relative_date,
-            'time': treatment.created_at.strftime('%H:%M')
+            'time': treatment.created_at.strftime('%H:%M'),
+            'is_recurring': False
         })
+    
+    # Add upcoming recurring appointments (next 30 days)
+    from app.models import RecurringAppointment
+    end_date = today + timedelta(days=30)
+    
+    recurring_query = RecurringAppointment.query.filter(
+        RecurringAppointment.patient_id.in_(accessible_patient_ids),
+        RecurringAppointment.is_active == True
+    ).options(joinedload(RecurringAppointment.patient))
+    
+    for rule in recurring_query.all():
+        if not rule.patient or not rule.time_of_day:
+            continue
+            
+        current_check_date = max(today, rule.start_date)
+        effective_rule_end = rule.end_date or end_date
+        
+        while current_check_date <= end_date and current_check_date <= effective_rule_end:
+            is_valid_occurrence = False
+            
+            # Check based on recurrence type
+            if rule.recurrence_type == 'weekly':
+                if current_check_date.weekday() == rule.start_date.weekday():
+                    is_valid_occurrence = True
+            elif rule.recurrence_type == 'daily-mon-fri':
+                if current_check_date.weekday() < 5:  # Monday to Friday
+                    is_valid_occurrence = True
+            elif rule.recurrence_type == 'daily':
+                is_valid_occurrence = True
+            
+            if is_valid_occurrence:
+                occurrence_datetime = datetime.combine(current_check_date, rule.time_of_day)
+                
+                # Check if this occurrence doesn't already exist as a Treatment
+                existing_treatment = Treatment.query.filter(
+                    Treatment.patient_id == rule.patient_id,
+                    Treatment.created_at == occurrence_datetime
+                ).first()
+                
+                if not existing_treatment and occurrence_datetime >= datetime.utcnow():
+                    # Calculate relative date
+                    if current_check_date == today:
+                        relative_date = 'Today'
+                    elif current_check_date == today + timedelta(days=1):
+                        relative_date = 'Tomorrow'
+                    elif current_check_date <= today + timedelta(days=7):
+                        relative_date = current_check_date.strftime('%A')
+                    else:
+                        relative_date = current_check_date.strftime('%b %d')
+                    
+                    upcoming_appointments.append({
+                        'treatment': None,  # No actual treatment object
+                        'patient_name': rule.patient.name,
+                        'relative_date': relative_date,
+                        'time': rule.time_of_day.strftime('%H:%M'),
+                        'is_recurring': True,
+                        'treatment_type': rule.treatment_type,
+                        'recurring_rule': rule
+                    })
+            
+            current_check_date += timedelta(days=1)
+    
+    # Sort all appointments by datetime and limit to 10
+    def get_appointment_datetime(appt):
+        if appt['treatment']:
+            return appt['treatment'].created_at
+        else:
+            # For recurring appointments, construct datetime from relative_date and time
+            if appt['relative_date'] == 'Today':
+                appt_date = today
+            elif appt['relative_date'] == 'Tomorrow':
+                appt_date = today + timedelta(days=1)
+            elif appt['relative_date'] in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
+                # Find next occurrence of this weekday
+                days_ahead = 0
+                weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+                target_weekday = weekdays.index(appt['relative_date'])
+                current_weekday = today.weekday()
+                if target_weekday <= current_weekday:
+                    days_ahead = target_weekday + 7 - current_weekday
+                else:
+                    days_ahead = target_weekday - current_weekday
+                appt_date = today + timedelta(days=days_ahead)
+            else:
+                # Try to parse date format like "Jan 15"
+                try:
+                    current_year = today.year
+                    appt_date = datetime.strptime(f"{current_year} {appt['relative_date']}", '%Y %b %d').date()
+                    if appt_date < today:
+                        appt_date = datetime.strptime(f"{current_year + 1} {appt['relative_date']}", '%Y %b %d').date()
+                except ValueError:
+                    appt_date = today + timedelta(days=7)  # Fallback
+            
+            appt_time = datetime.strptime(appt['time'], '%H:%M').time()
+            return datetime.combine(appt_date, appt_time)
+    
+    upcoming_appointments.sort(key=get_appointment_datetime)
+    upcoming_appointments = upcoming_appointments[:10]
     
     # Show welcome flow for new users who haven't completed basic setup
     show_welcome_flow = is_new_user and not current_user.is_in_clinic

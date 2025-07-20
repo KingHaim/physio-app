@@ -85,13 +85,21 @@
 
 <script>
 function confirmPermanentDeletion() {
-    const message = "Are you absolutely sure you want to permanently delete your account?\n\nThis will delete:\n- All your patients and their data\n- All treatments and reports\n- All clinic information\n- All financial data\n\nThis action cannot be undone. Type \"DELETE\" to confirm:";
+    // First confirm the action
+    const confirmed = confirm("Are you absolutely sure you want to permanently delete your account?\n\nThis will delete:\n- All your patients and their data\n- All treatments and reports\n- All clinic information\n- All financial data\n\nThis action cannot be undone and cannot be reversed.");
     
-    const userInput = prompt(message);
-    if (userInput === "DELETE") {
-        return confirm("Final confirmation: This will permanently delete everything. Are you sure?");
+    if (!confirmed) {
+        return false;
     }
-    return false;
+    
+    // Ask user to type DELETE to confirm
+    const userInput = prompt("To confirm permanent deletion, please type exactly: DELETE");
+    if (userInput === "DELETE") {
+        return confirm("FINAL WARNING: This will permanently delete everything and cannot be undone. Are you absolutely sure?");
+    } else {
+        alert("Deletion cancelled. You must type exactly 'DELETE' to confirm.");
+        return false;
+    }
 }
 </script>
 {% endblock %} 

@@ -258,32 +258,15 @@
         {% if not current_user.is_in_clinic or current_user.is_admin %}
         <div class="subscription-status-text">
             {% if current_user.is_on_trial %}
-                <div class="alert alert-info mb-3" role="alert">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-stars text-primary me-2 fs-4"></i>
-                        <div>
-                            <strong class="text-primary">🚀 {{ _('Premium Trial Active') }} - {{ _('All Features Unlocked!') }}</strong>
-                            <br>
-                            <span class="fw-bold text-{{ 'danger' if current_user.trial_days_remaining <= 3 else 'warning' if current_user.trial_days_remaining <= 7 else 'success' }}">
-                                {{ current_user.trial_days_remaining }} {{ _('days remaining') }}
-                            </span>
-                            {{ _('of your Premium trial with unlimited access') }}
-                            <br>
-                            <small class="text-muted">
-                                <i class="bi bi-check-circle text-success me-1"></i>{{ _('AI Reports & Insights') }} | 
-                                <i class="bi bi-check-circle text-success me-1"></i>{{ _('Advanced Analytics') }} | 
-                                <i class="bi bi-check-circle text-success me-1"></i>{{ _('Unlimited Patients') }} | 
-                                <i class="bi bi-check-circle text-success me-1"></i>{{ _('All Premium Features') }}
-                            </small>
-                            <br>
-                            <small class="text-muted">{{ _('Trial ends') }}: {{ current_subscription_ends_at.strftime('%B %d, %Y') if current_subscription_ends_at else 'N/A' }}</small>
-                        </div>
-                        <div class="ms-auto">
-                            <a href="{{ url_for('main.manage_subscription') }}" class="btn btn-sm btn-success">
-                                <i class="bi bi-credit-card me-1"></i>{{ _('Upgrade Now') }}
-                            </a>
-                        </div>
-                    </div>
+                {# Trial banner moved to base.html for global display #}
+            {% elif current_plan_name and current_plan_name != 'No Active Plan' %}
+                <div class="alert alert-success mb-3" role="alert">
+                    <i class="bi bi-check-circle text-success me-2"></i>
+                    <strong>{{ current_plan_name }}</strong> {{ _('Plan Active') }}
+                    {% if current_subscription_status and current_subscription_ends_at %}
+                        - {{ _('Renews') }}: {{ current_subscription_ends_at.strftime('%B %d, %Y') }}
+                    {% endif %}
+                    <a href="{{ url_for('main.my_account') }}" class="ms-2 badge bg-primary text-decoration-none">{{ _('Manage Plan') }}</a>
                 </div>
             {% else %}
                 {% if current_plan_name == 'Free Plan' %}
@@ -419,7 +402,14 @@
                                            {{ appt.patient_name }}
                                         </a>
                                         {% else %}
-                                        <span class="text-muted">{{ appt.patient_name }}</span>
+                                        <span class="fw-medium">{{ appt.patient_name }}</span>
+                                        {% endif %}
+                                        {% if appt.is_recurring %}
+                                        <br><small class="text-muted">
+                                            <i class="bi bi-arrow-repeat"></i> {{ appt.treatment_type }} ({{ _('Recurring') }})
+                                        </small>
+                                        {% elif appt.treatment and appt.treatment.treatment_type %}
+                                        <br><small class="text-muted">{{ appt.treatment.treatment_type }}</small>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -434,13 +424,21 @@
                                     <td class="text-end">
                                         {% if appt.treatment %}
                                         <a href="{{ url_for('main.view_treatment', id=appt.treatment.id) }}" 
-                                           class="btn btn-sm btn-outline-primary">
+                                           class="btn btn-sm btn-outline-primary" title="{{ _('View Treatment') }}">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                         <a href="{{ url_for('main.edit_treatment', id=appt.treatment.id) }}" 
-                                           class="btn btn-sm btn-outline-secondary">
+                                           class="btn btn-sm btn-outline-secondary" title="{{ _('Edit Treatment') }}">
                                             <i class="bi bi-pencil"></i>
                                         </a>
+                                        {% elif appt.is_recurring and appt.recurring_rule %}
+                                        <span class="badge bg-info">{{ _('Recurring') }}</span>
+                                        <a href="{{ url_for('main.edit_recurring_appointment', id=appt.recurring_rule.id) }}" 
+                                           class="btn btn-sm btn-outline-secondary ms-1" title="{{ _('Edit Recurring Rule') }}">
+                                            <i class="bi bi-arrow-repeat"></i>
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
                                         {% endif %}
                                     </td>
                                 </tr>

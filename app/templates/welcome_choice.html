@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Welcome to TRXCKER') }}{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .welcome-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .choice-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2.5rem;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        cursor: pointer;
+        border: 3px solid transparent;
+        height: 100%;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .choice-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+        border-color: #3498db;
+    }
+    
+    .choice-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        color: #3498db;
+    }
+    
+    .choice-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #2c3e50;
+    }
+    
+    .choice-description {
+        color: #6c757d;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+    
+    .choice-features {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .choice-features li {
+        padding: 0.5rem 0;
+        color: #28a745;
+        font-size: 0.9rem;
+    }
+    
+    .choice-features li i {
+        margin-right: 0.5rem;
+    }
+    
+    .welcome-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+    }
+    
+    .welcome-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    .continue-btn {
+        background: linear-gradient(135deg, #3498db, #2c3e50);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+    
+    .continue-btn:hover {
+        background: linear-gradient(135deg, #2980b9, #34495e);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+    }
+    
+    .continue-btn:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-container">
+    <div class="container">
+        <div class="welcome-header">
+            <h1 class="welcome-title">{{ _('Welcome to TRXCKER') }}</h1>
+            <p class="welcome-subtitle">{{ _('Let\'s set up your practice management experience') }}</p>
+        </div>
+        
+        <form id="choiceForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="choice-card" data-choice="individual">
+                        <div class="choice-icon">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <h3 class="choice-title">{{ _('Individual Professional') }}</h3>
+                        <p class="choice-description">
+                            {{ _('I\'m a solo practitioner managing my own patients and practice') }}
+                        </p>
+                        <ul class="choice-features">
+                            <li><i class="bi bi-check-circle-fill"></i> {{ _('Personal patient management') }}</li>
+                            <li><i class="bi bi-check-circle-fill"></i> {{ _('Individual appointment scheduling') }}</li>
+                            <li><i class="bi bi-check-circle-fill"></i> {{ _('Personal practice analytics') }}</li>
+                            <li><i class="bi bi-check-circle-fill"></i> {{ _('Individual billing & reports') }}</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="choice-card" data-choice="clinic">
+                        <div class="choice-icon">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h3 class="choice-title">{{ _('Clinic Entity') }}</h3>
+                        <p class="choice-description">
+                            {{ _('I\'m part of a clinic or managing a multi-practitioner facility') }}
+                        </p>
+                        <ul class="choice-features">
+                            <li><i class="bi bi-check-circle-fill"></i> {{ _('Team & clinic management') }}</li>
+                            <li><i class="bi bi-check-circle-fill"></i> {{ _('Multi-practitioner scheduling') }}</li>
+                            <li><i class="bi bi-check-circle-fill"></i> {{ _('Clinic-wide analytics') }}</li>
+                            <li><i class="bi bi-check-circle-fill"></i> {{ _('Team collaboration tools') }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <input type="hidden" name="choice" id="selectedChoice" value="">
+                <button type="submit" class="btn continue-btn" id="continueBtn" disabled>
+                    {{ _('Continue') }} <i class="bi bi-arrow-right ms-2"></i>
+                </button>
+                <p class="mt-3 text-white-50">
+                    <small>{{ _('You can change this setting later in your account preferences') }}</small>
+                </p>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const choiceCards = document.querySelectorAll('.choice-card');
+    const selectedChoiceInput = document.getElementById('selectedChoice');
+    const continueBtn = document.getElementById('continueBtn');
+    
+    choiceCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Remove selected state from all cards
+            choiceCards.forEach(c => {
+                c.style.borderColor = 'transparent';
+                c.style.backgroundColor = 'white';
+            });
+            
+            // Add selected state to clicked card
+            this.style.borderColor = '#3498db';
+            this.style.backgroundColor = '#f8f9ff';
+            
+            // Update hidden input and enable button
+            const choice = this.getAttribute('data-choice');
+            selectedChoiceInput.value = choice;
+            continueBtn.disabled = false;
+        });
+    });
+});
+</script>
+{% endblock %} 

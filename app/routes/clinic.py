@@ -42,6 +42,15 @@ def clinic_plan_required(f):
 @clinic_plan_required
 def dashboard():
     """Clinic dashboard - main page for clinic management"""
+    # Check if user is new and needs to make initial choice
+    if current_user.is_new_user:
+        return redirect(url_for('main.welcome_choice'))
+    
+    # Check if user should be redirected to individual dashboard
+    preferred_route = current_user.get_preferred_dashboard_route()
+    if preferred_route != 'clinic.dashboard':
+        return redirect(url_for(preferred_route))
+    
     if not current_user.is_in_clinic:
         return redirect(url_for('clinic.choose_option'))
     
@@ -71,12 +80,25 @@ def choose_option():
     if current_user.is_in_clinic:
         return redirect(url_for('clinic.dashboard'))
     
-    # Check if user has clinic plan before showing options
+    # Check if user can access clinic features (including trial users)
     if not current_user.is_admin:
-        user_plan = current_user.active_plan
-        if not user_plan or user_plan.slug not in ['standard-usd', 'premium-usd']:
-            flash('Clinic features require a Standard or Premium plan. Please upgrade to access clinic functionality.', 'warning')
-            return redirect(url_for('main.manage_subscription'))
+        # First check if user is on trial - trial users get full access
+        if current_user.is_on_trial:
+            # User is on trial, allow access
+            pass
+        elif current_user.active_plan and current_user.active_plan.slug in ['standard-usd', 'premium-usd']:
+            # User has paid plan, allow access
+            pass
+        else:
+            # User has no trial and no paid plan - create trial automatically
+            trial_subscription = User.create_trial_subscription(current_user)
+            if trial_subscription:
+                db.session.commit()
+                flash('Welcome! You now have a 14-day free trial to explore all clinic features.', 'success')
+            else:
+                # Trial creation failed, redirect to pricing
+                flash('Clinic features require a Standard or Premium plan. Please upgrade to access clinic functionality.', 'warning')
+                return redirect(url_for('main.manage_subscription'))
     
     return render_template('clinic/choose_option.html')
 
@@ -122,6 +144,9 @@ def create():
             )
             membership.set_permissions_by_role()
             db.session.add(membership)
+            
+            # Mark user as no longer new since they're creating a clinic
+            current_user.is_new_user = False
             
             db.session.commit()
             flash(f'Clinic "{clinic_obj.name}" created successfully! You are now the clinic administrator.', 'success')
@@ -183,6 +208,8 @@ def join_with_token(token):
         
         # Mark user as no longer new since they're joining a clinic
         current_user.is_new_user = False
+        # Set dashboard mode to clinic since they're joining a clinic
+        current_user.dashboard_mode = 'clinic'
         
         db.session.commit()
         flash(f'Successfully joined {invitation.clinic.name}!', 'success')

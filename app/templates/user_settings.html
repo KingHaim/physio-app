@@ -242,7 +242,7 @@
                             <h5 class="mb-3">{{ _('Available Integrations') }}</h5>
                             <p class="text-muted mb-3">{{ _('Select which integrations you would like to enable. All integrations are disabled by default for security.') }}</p>
                             <div class="form-check mb-3">
-                                {{ api_form.enable_calendly(class="form-check-input", id="enable_calendly") }}
+                                {{ api_form.enable_calendly(class="form-check-input", id="enable_calendly", onclick="toggleCalendlyConfig()") }}
                                 {{ api_form.enable_calendly.label(class="form-check-label", for="enable_calendly") }}
                                 <div class="form-text">
                                     <i class="bi bi-calendar-event"></i> {{ _('Sync appointments and bookings from Calendly') }}
@@ -374,7 +374,7 @@
                                     <td>{{ cost.description }}</td>
                                     <td class="text-end">{{ "%.2f"|format(cost.monthly_amount) }}</td>
                                     <td class="text-end">
-                                        <form action="{{ url_for('main.delete_fixed_cost', cost_id=cost.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('Are you sure you want to delete this cost?') }}');">
+                                        <form action="{{ url_for('main.delete_fixed_cost', cost_id=cost.id) }}" method="POST" class="d-inline" onsubmit="return confirmDeleteCost();">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                             <button type="submit" class="btn btn-danger btn-sm" title="{{ _('Delete Cost') }}">
                                                 <i class="bi bi-trash"></i>
@@ -450,7 +450,7 @@
                                         <li>{{ _('Can be reversed by contacting support') }}</li>
                                         <li>{{ _('Ideal if you might return') }}</li>
                                     </ul>
-                                    <form method="POST" action="{{ url_for('user_data.delete_account') }}" onsubmit="return confirm('{{ _('Are you sure you want to temporarily deactivate your account? You can contact support to reactivate it.') }}');">
+                                    <form method="POST" action="{{ url_for('user_data.delete_account') }}" onsubmit="return confirmTempDeactivation();">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                         <button type="submit" class="btn btn-warning">
                                             <i class="bi bi-pause-circle"></i> {{ _('Temporarily Deactivate Account') }}
@@ -506,28 +506,82 @@
     </div>
 </div>
 
+<!-- Hidden div with translated messages for JavaScript -->
+<div id="js-messages" style="display: none;" 
+     data-delete-cost="{{ _('Are you sure you want to delete this cost?') }}"
+     data-temp-deactivate="{{ _('Are you sure you want to temporarily deactivate your account? You can contact support to reactivate it.') }}"
+     data-perm-question="{{ _('Are you absolutely sure you want to permanently delete your account?') }}"
+     data-perm-will-delete="{{ _('This will delete:') }}"
+     data-perm-patients="{{ _('All your patients and their data') }}"
+     data-perm-treatments="{{ _('All treatments and reports') }}"
+     data-perm-clinic="{{ _('All clinic information') }}"
+     data-perm-financial="{{ _('All financial data') }}"
+     data-perm-type-delete="{{ _('This action cannot be undone. Type \"DELETE\" to confirm:') }}"
+     data-perm-final="{{ _('Final confirmation: This will permanently delete everything. Are you sure?') }}">
+</div>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const calendlyCheckbox = document.getElementById('enable_calendly');
-    const calendlyConfig = document.getElementById('calendly-config');
+// Global functions for onclick handlers
+function toggleCalendlyConfig() {
+    const checkbox = document.getElementById('enable_calendly');
+    const config = document.getElementById('calendly-config');
     
-    // Function to toggle Calendly configuration visibility
-    function toggleCalendlyConfig() {
-        if (calendlyCheckbox.checked) {
-            calendlyConfig.style.display = 'block';
+    if (checkbox && config) {
+        if (checkbox.checked) {
+            config.style.display = 'block';
         } else {
-            calendlyConfig.style.display = 'none';
+            config.style.display = 'none';
         }
     }
+}
+
+function confirmDeleteCost() {
+    const messages = document.getElementById('js-messages');
+    return confirm(messages.dataset.deleteCost);
+}
+
+function confirmTempDeactivation() {
+    const messages = document.getElementById('js-messages');
+    return confirm(messages.dataset.tempDeactivate);
+}
+
+function confirmPermanentDeletion() {
+    const messages = document.getElementById('js-messages');
+    const deleteText = "DELETE";
     
-    // Set initial state - ensure it's hidden by default unless explicitly checked
+    // First confirm the action
+    const warningMessage = messages.dataset.permQuestion + 
+                          "\n\n" + messages.dataset.permWillDelete +
+                          "\n- " + messages.dataset.permPatients +
+                          "\n- " + messages.dataset.permTreatments +
+                          "\n- " + messages.dataset.permClinic +
+                          "\n- " + messages.dataset.permFinancial +
+                          "\n\nThis action cannot be undone and cannot be reversed.";
+    
+    const confirmed = confirm(warningMessage);
+    if (!confirmed) {
+        return false;
+    }
+    
+    // Ask user to type DELETE to confirm
+    const userInput = prompt("To confirm permanent deletion, please type exactly: DELETE");
+    if (userInput === deleteText) {
+        return confirm(messages.dataset.permFinal);
+    } else {
+        alert("Deletion cancelled. You must type exactly 'DELETE' to confirm.");
+        return false;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Set initial state for Calendly toggle
     toggleCalendlyConfig();
     
     // Add event listener for checkbox changes
-    calendlyCheckbox.addEventListener('change', toggleCalendlyConfig);
-    
-    // Log the initial state for debugging
-    console.log('Calendly integration enabled:', calendlyCheckbox.checked);
+    const checkbox = document.getElementById('enable_calendly');
+    if (checkbox) {
+        checkbox.addEventListener('change', toggleCalendlyConfig);
+    }
 
     // Account deletion confirmation logic
     const confirmCheckbox = document.getElementById('confirmPermanentDeletion');
@@ -539,16 +593,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
-function confirmPermanentDeletion() {
-    const message = "{{ _('Are you absolutely sure you want to permanently delete your account?') }}\n\n{{ _('This will delete:') }}\n- {{ _('All your patients and their data') }}\n- {{ _('All treatments and reports') }}\n- {{ _('All clinic information') }}\n- {{ _('All financial data') }}\n\n{{ _('This action cannot be undone. Type \"DELETE\" to confirm:') }}";
-    
-    const userInput = prompt(message);
-    if (userInput === "DELETE") {
-        return confirm("{{ _('Final confirmation: This will permanently delete everything. Are you sure?') }}");
-    }
-    return false;
-}
 </script>
 
 {% endblock %} 

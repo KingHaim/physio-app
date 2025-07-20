@@ -88,15 +88,13 @@ def login():
             
             next_page = request.args.get('next')
             if not next_page or not is_safe_url(next_page):
-                # Check if user actually needs onboarding (same logic as main dashboard)
-                needs_onboarding = (not current_user.first_name or 
-                                   not current_user.clinic_first_session_fee or 
-                                   not current_user.clinic_subsequent_session_fee)
-                
-                if needs_onboarding:
-                    next_page = url_for('main.landing_page')
+                # Use the new dashboard routing logic
+                if current_user.is_new_user:
+                    # New users go to welcome choice screen
+                    next_page = url_for('main.welcome_choice')
                 else:
-                    next_page = url_for('main.index')
+                    # Existing users go to their preferred dashboard
+                    next_page = url_for(current_user.get_preferred_dashboard_route())
             
             current_app.logger.info(f"Redirecting to: {next_page}")
             return redirect(next_page)
@@ -158,7 +156,6 @@ def register():
         
         # Create trial subscription for new users (except admins)
         if not user.is_admin:
-            from app.models import User
             trial_subscription = User.create_trial_subscription(user)
             if trial_subscription:
                 current_app.logger.info(f"Trial subscription created for user {user.email}: {trial_subscription.plan.name}")
@@ -345,8 +342,7 @@ def google_callback():
             
             # Create trial subscription for new users (except admins)
             if not user.is_admin:
-                from app.models import User as UserModel
-                trial_subscription = UserModel.create_trial_subscription(user)
+                trial_subscription = User.create_trial_subscription(user)
                 if trial_subscription:
                     current_app.logger.info(f"Trial subscription created for Google OAuth user {user.email}: {trial_subscription.plan.name}")
                 else:
@@ -364,15 +360,13 @@ def google_callback():
             
             next_page = request.args.get('next')
             if not next_page or not is_safe_url(next_page):
-                # Check if user actually needs onboarding (same logic as main dashboard)
-                needs_onboarding = (not current_user.first_name or 
-                                   not current_user.clinic_first_session_fee or 
-                                   not current_user.clinic_subsequent_session_fee)
-                
-                if needs_onboarding:
-                    next_page = url_for('main.landing_page')
+                # Use the new dashboard routing logic
+                if current_user.is_new_user:
+                    # New users go to welcome choice screen
+                    next_page = url_for('main.welcome_choice')
                 else:
-                    next_page = url_for('main.index')
+                    # Existing users go to their preferred dashboard
+                    next_page = url_for(current_user.get_preferred_dashboard_route())
             return redirect(next_page)
             
     except Exception as e:

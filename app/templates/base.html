@@ -280,6 +280,15 @@
             color: white !important;
         }
 
+        /* Trial banner styles */
+        .trial-banner-main {
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .trial-banner-compact {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
         /* Responsive design for mobile */
         @media (max-width: 768px) {
             .sidebar {
@@ -296,6 +305,29 @@
                 width: 100%; /* Full width on mobile */
                 max-width: 100vw; /* Full viewport width */
                 padding: 10px;
+            }
+            
+            .trial-banner-main {
+                margin-left: 0 !important;
+            }
+            
+            .trial-banner-main .container-fluid {
+                padding: 0 15px !important;
+            }
+            
+            .trial-banner-main .d-flex {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 10px;
+            }
+            
+            .trial-banner-compact {
+                left: 0 !important;
+            }
+            
+            .trial-banner-compact .d-flex {
+                flex-wrap: wrap;
+                gap: 5px;
             }
         }
     </style>
@@ -325,11 +357,72 @@
     {% endwith %}
     <!-- End Flash Message Display Area -->
 
+    <!-- Global Trial Status Banner -->
+    {% if current_user and current_user.is_authenticated and current_user.is_on_trial %}
+    <!-- Main trial banner -->
+    <div id="trialBannerMain" class="trial-banner-main" style="background: linear-gradient(135deg, #17a2b8, #20c997); padding: 12px 0; color: white; position: relative; z-index: 1040; margin-left: var(--sidebar-width);">
+        <div class="container-fluid" style="padding: 0 20px;">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-stars fs-4 me-3"></i>
+                    <div>
+                        <div class="d-flex align-items-center flex-wrap">
+                            <strong class="me-3">🚀 {{ _('Premium Trial Active - All Features Unlocked!') }}</strong>
+                            <span class="badge bg-{{ 'danger' if current_user.trial_days_remaining <= 3 else 'warning' if current_user.trial_days_remaining <= 7 else 'light text-dark' }} me-2">
+                                {{ current_user.trial_days_remaining }} {{ _('days remaining') }}
+                            </span>
+                        </div>
+                        <small class="opacity-75">
+                            <i class="bi bi-check-circle me-1"></i>{{ _('AI Reports & Insights') }} | 
+                            <i class="bi bi-check-circle me-1"></i>{{ _('Advanced Analytics') }} | 
+                            <i class="bi bi-check-circle me-1"></i>{{ _('Unlimited Patients') }} | 
+                            <i class="bi bi-check-circle me-1"></i>{{ _('All Premium Features') }}
+                        </small>
+                        <br><small class="opacity-75">{{ _('Trial ends') }}: {{ current_user.current_subscription.trial_ends_at.strftime('%B %d, %Y') if current_user.current_subscription and current_user.current_subscription.trial_ends_at else 'N/A' }}</small>
+                    </div>
+                </div>
+                <a href="{{ url_for('main.manage_subscription') }}" class="btn btn-light btn-sm">
+                    <i class="bi bi-credit-card me-1"></i>{{ _('Upgrade Now') }}
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Compact trial banner (shows when scrolling) -->
+    <div id="trialBannerCompact" class="trial-banner-compact" style="background: linear-gradient(135deg, #17a2b8, #20c997); padding: 6px 0; color: white; position: fixed; top: 0; left: var(--sidebar-width); right: 0; z-index: 1050; transform: translateY(-100%); transition: transform 0.3s ease;">
+        <div class="container-fluid" style="margin-left: 0; padding: 0 20px;">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-stars me-2"></i>
+                    <small><strong>{{ _('Premium Trial') }}</strong> - {{ current_user.trial_days_remaining }} {{ _('days left') }}</small>
+                </div>
+                <a href="{{ url_for('main.manage_subscription') }}" class="btn btn-light btn-xs" style="font-size: 0.75rem; padding: 2px 8px;">
+                    {{ _('Upgrade') }}
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <!-- End Global Trial Status Banner -->
+
     <div class="container-fluid p-0"> {# Remove default padding for full control #}
         <div class="row g-0"> {# Remove gutters for seamless edge #}
             <div class="sidebar" id="sidebar"> {# REMOVED Bootstrap columns col-12 col-lg-2 #}
                 <div class="sidebar-header">
                     <h3>TRXCKER</h3>
+                    {% if current_user and current_user.is_authenticated %}
+                        <div class="current-mode-indicator mt-2">
+                            {% if current_user.current_dashboard_mode == 'clinic' %}
+                                <small class="text-light opacity-75">
+                                    <i class="bi bi-building me-1"></i>{{ _('Clinic Mode') }}
+                                </small>
+                            {% else %}
+                                <small class="text-light opacity-75">
+                                    <i class="bi bi-person-circle me-1"></i>{{ _('Individual Mode') }}
+                                </small>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                 </div>
                 
                 <ul class="nav flex-column">
@@ -362,7 +455,7 @@
                         <li class="nav-section">
                             <div class="nav-section-title">{{ _('Management') }}</div>
                             <ul class="nav flex-column">
-                                {% if current_user and current_user.is_admin or (current_user and current_user.calendly_api_token and current_user.calendly_user_uri) %}
+                                {% if current_user and current_user.calendly_api_token and current_user.calendly_user_uri %}
                                 <li class="nav-item">
                                     <a class="nav-link {{ 'active' if request.endpoint == 'main.review_calendly_bookings' else '' }}"
                                        href="{{ url_for('main.review_calendly_bookings') }}">
@@ -449,6 +542,24 @@
                                     <a class="nav-link text-muted" href="{{ url_for('main.pricing_page') }}" style="font-size: 0.875rem;">
                                         <i class="bi bi-cash-coin text-warning"></i> {{ _('Financial Reports') }}
                                         <span class="badge bg-warning text-dark ms-1" style="font-size: 0.7rem;">{{ _('Premium') }}</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Mode Switching for Clinic Admins -->
+                        {% if current_user and current_user.is_authenticated and current_user.can_switch_dashboard_mode() %}
+                        <li class="nav-section">
+                            <div class="nav-section-title">{{ _('Dashboard Mode') }}</div>
+                            <ul class="nav flex-column">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ url_for('main.switch_dashboard_mode') }}" style="font-size: 0.9rem;">
+                                        {% if current_user.current_dashboard_mode == 'clinic' %}
+                                            <i class="bi bi-person-circle text-info"></i> {{ _('Switch to Individual') }}
+                                        {% else %}
+                                            <i class="bi bi-building text-info"></i> {{ _('Switch to Clinic') }}
+                                        {% endif %}
                                     </a>
                                 </li>
                             </ul>
@@ -721,6 +832,30 @@
                         });
                 });
             });
+
+            // Trial banner scroll behavior
+            const trialBannerMain = document.getElementById('trialBannerMain');
+            const trialBannerCompact = document.getElementById('trialBannerCompact');
+            
+            if (trialBannerMain && trialBannerCompact) {
+                let lastScrollTop = 0;
+                
+                window.addEventListener('scroll', function() {
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    const bannerHeight = trialBannerMain.offsetHeight;
+                    
+                    // Show compact banner when scrolled past the main banner
+                    if (scrollTop > bannerHeight && scrollTop > lastScrollTop) {
+                        // Scrolling down past banner
+                        trialBannerCompact.style.transform = 'translateY(0)';
+                    } else if (scrollTop <= bannerHeight / 2) {
+                        // Scrolled back to top
+                        trialBannerCompact.style.transform = 'translateY(-100%)';
+                    }
+                    
+                    lastScrollTop = scrollTop;
+                }, { passive: true });
+            }
         });
     </script>
     <script src="{{ url_for('static', filename='js/voice-notes.js') }}"></script>
