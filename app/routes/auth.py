@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, session
 from flask_login import login_user, logout_user, current_user, login_required
+from flask_babel import _
 from app.models import User, db
 from app.forms import RegistrationForm, LoginForm
 from app.email_utils import send_verification_email, send_welcome_email
@@ -67,7 +68,7 @@ def login():
             
             # Check if email is verified
             if not user.email_verified:
-                flash('Por favor verifica tu email antes de iniciar sesión. Revisa tu bandeja de entrada.', 'warning')
+                flash(_('Please verify your email before signing in. Check your inbox.'), 'warning')
                 return render_template('auth/login.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
             
             # Set session as permanent if remember me is checked
@@ -166,14 +167,14 @@ def register():
         if not user.is_admin:
             try:
                 if send_verification_email(user):
-                    flash('¡Registro exitoso! Te hemos enviado un email de verificación. Revisa tu bandeja de entrada.', 'success')
+                    flash(_('Registration successful! We have sent you a verification email. Check your inbox.'), 'success')
                 else:
-                    flash('Registro exitoso, pero hubo un problema enviando el email de verificación. Contacta al soporte.', 'warning')
+                    flash(_('Registration successful, but there was a problem sending the verification email. Contact support.'), 'warning')
             except Exception as e:
                 current_app.logger.error(f"Error sending verification email: {str(e)}")
-                flash('Registro exitoso, pero hubo un problema enviando el email de verificación. Contacta al soporte.', 'warning')
+                flash(_('Registration successful, but there was a problem sending the verification email. Contact support.'), 'warning')
         else:
-            flash('¡Registro exitoso! Ya puedes iniciar sesión.', 'success')
+            flash(_('Registration successful! You can now sign in.'), 'success')
         
         return redirect(url_for('auth.login'))
     elif request.method == 'POST':
@@ -188,7 +189,7 @@ def register():
 def verify_email(token):
     """Verify email address using token"""
     if current_user.is_authenticated and current_user.email_verified:
-        flash('Tu email ya ha sido verificado.', 'info')
+        flash(_('Your email has already been verified.'), 'info')
         return redirect(url_for('main.index'))
     
     # Find user by token
@@ -201,7 +202,7 @@ def verify_email(token):
         user = User.query.filter_by(email_verification_token=hashed_token).first()
     
     if not user:
-        flash('Enlace de verificación inválido o expirado.', 'danger')
+        flash(_('Invalid or expired verification link.'), 'danger')
         return redirect(url_for('auth.login'))
     
     # Verify the token
@@ -215,10 +216,10 @@ def verify_email(token):
         except Exception as e:
             current_app.logger.error(f"Error sending welcome email: {str(e)}")
         
-        flash('¡Email verificado exitosamente! Ya puedes iniciar sesión.', 'success')
+        flash(_('Email verified successfully! You can now sign in.'), 'success')
         return redirect(url_for('auth.login'))
     else:
-        flash('Enlace de verificación inválido o expirado.', 'danger')
+        flash(_('Invalid or expired verification link.'), 'danger')
         return redirect(url_for('auth.login'))
 
 @auth.route('/resend-verification', methods=['GET', 'POST'])
@@ -227,28 +228,28 @@ def resend_verification():
     if request.method == 'POST':
         email = request.form.get('email')
         if not email:
-            flash('Por favor introduce tu email.', 'danger')
+            flash(_('Please enter your email.'), 'danger')
             return render_template('auth/resend_verification.html')
         
         user = User.query.filter_by(email=email).first()
         if not user:
-            flash('No se encontró una cuenta con ese email.', 'danger')
+            flash(_('No account found with that email.'), 'danger')
             return render_template('auth/resend_verification.html')
         
         if user.email_verified:
-            flash('Tu email ya ha sido verificado.', 'info')
+            flash(_('Your email has already been verified.'), 'info')
             return redirect(url_for('auth.login'))
         
         # Send new verification email
         try:
             if send_verification_email(user):
                 db.session.commit()
-                flash('Email de verificación reenviado. Revisa tu bandeja de entrada.', 'success')
+                flash(_('Verification email resent. Check your inbox.'), 'success')
             else:
-                flash('Hubo un problema enviando el email. Inténtalo más tarde.', 'danger')
+                flash(_('There was a problem sending the email. Please try again later.'), 'danger')
         except Exception as e:
             current_app.logger.error(f"Error resending verification email: {str(e)}")
-            flash('Hubo un problema enviando el email. Inténtalo más tarde.', 'danger')
+            flash(_('There was a problem sending the email. Please try again later.'), 'danger')
         
         return redirect(url_for('auth.login'))
     

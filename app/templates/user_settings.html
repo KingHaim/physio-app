@@ -551,11 +551,11 @@ function confirmPermanentDeletion() {
     
     // First confirm the action
     const warningMessage = messages.dataset.permQuestion + 
-                          "\n\n" + messages.dataset.permWillDelete +
-                          "\n- " + messages.dataset.permPatients +
-                          "\n- " + messages.dataset.permTreatments +
-                          "\n- " + messages.dataset.permClinic +
-                          "\n- " + messages.dataset.permFinancial +
+                   "\n\n" + messages.dataset.permWillDelete +
+                   "\n- " + messages.dataset.permPatients +
+                   "\n- " + messages.dataset.permTreatments +
+                   "\n- " + messages.dataset.permClinic +
+                   "\n- " + messages.dataset.permFinancial +
                           "\n\nThis action cannot be undone and cannot be reversed.";
     
     const confirmed = confirm(warningMessage);

@@ -72,9 +72,9 @@
                             </a>
                         </p>
                         <p class="text-muted small">
-                            ¿No recibiste el email de verificación?
+                            {{ _('Did not receive verification email?') }}
                             <a href="{{ url_for('auth.resend_verification') }}" class="text-decoration-none">
-                                Reenviar email
+                                {{ _('Resend email') }}
                             </a>
                         </p>
                     </div>

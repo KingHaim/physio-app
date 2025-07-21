@@ -97,8 +97,8 @@ def choose_option():
                 flash('Welcome! You now have a 14-day free trial to explore all clinic features.', 'success')
             else:
                 # Trial creation failed, redirect to pricing
-                flash('Clinic features require a Standard or Premium plan. Please upgrade to access clinic functionality.', 'warning')
-                return redirect(url_for('main.manage_subscription'))
+            flash('Clinic features require a Standard or Premium plan. Please upgrade to access clinic functionality.', 'warning')
+            return redirect(url_for('main.manage_subscription'))
     
     return render_template('clinic/choose_option.html')
 

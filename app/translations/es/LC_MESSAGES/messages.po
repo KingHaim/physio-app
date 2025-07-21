@@ -6403,3 +6403,67 @@ msgstr "Eliminar Tratamiento"
 msgid "Are you sure you want to delete this treatment? This action cannot be undone."
 msgstr "¿Estás seguro de que quieres eliminar este tratamiento? Esta acción no se puede deshacer."
 
+# Authentication and registration translations
+msgid "Create a new account"
+msgstr "Crear una nueva cuenta"
+
+msgid "Already have an account?"
+msgstr "¿Ya tienes una cuenta?"
+
+msgid "Login"
+msgstr "Iniciar sesión"
+
+msgid "Sign in to your account"
+msgstr "Inicia sesión en tu cuenta"
+
+msgid "or"
+msgstr "o"
+
+msgid "Continue with Google"
+msgstr "Continuar con Google"
+
+msgid "Not a member?"
+msgstr "¿No eres miembro?"
+
+msgid "Register here for free"
+msgstr "Regístrate aquí gratis"
+
+msgid "Did not receive verification email?"
+msgstr "¿No recibiste el email de verificación?"
+
+msgid "Resend email"
+msgstr "Reenviar email"
+
+msgid "Please verify your email before signing in. Check your inbox."
+msgstr "Por favor verifica tu email antes de iniciar sesión. Revisa tu bandeja de entrada."
+
+msgid "Registration successful! We have sent you a verification email. Check your inbox."
+msgstr "¡Registro exitoso! Te hemos enviado un email de verificación. Revisa tu bandeja de entrada."
+
+msgid "Registration successful, but there was a problem sending the verification email. Contact support."
+msgstr "Registro exitoso, pero hubo un problema enviando el email de verificación. Contacta al soporte."
+
+msgid "Registration successful! You can now sign in."
+msgstr "¡Registro exitoso! Ya puedes iniciar sesión."
+
+msgid "Your email has already been verified."
+msgstr "Tu email ya ha sido verificado."
+
+msgid "Invalid or expired verification link."
+msgstr "Enlace de verificación inválido o expirado."
+
+msgid "Email verified successfully! You can now sign in."
+msgstr "¡Email verificado exitosamente! Ya puedes iniciar sesión."
+
+msgid "Please enter your email."
+msgstr "Por favor introduce tu email."
+
+msgid "No account found with that email."
+msgstr "No se encontró una cuenta con ese email."
+
+msgid "Verification email resent. Check your inbox."
+msgstr "Email de verificación reenviado. Revisa tu bandeja de entrada."
+
+msgid "There was a problem sending the email. Please try again later."
+msgstr "Hubo un problema enviando el email. Inténtalo más tarde."
+
