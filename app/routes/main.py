@@ -344,10 +344,10 @@ def index():
         welcome_form = None
     else:
         # Individual users: check if they lack essential profile info
-    is_new_user = (not current_user.first_name or 
-                   not current_user.clinic_first_session_fee or 
-                   not current_user.clinic_subsequent_session_fee)
-    welcome_form = WelcomeOnboardingForm() if is_new_user else None
+        is_new_user = (not current_user.first_name or 
+                    not current_user.clinic_first_session_fee or 
+                    not current_user.clinic_subsequent_session_fee)
+        welcome_form = WelcomeOnboardingForm() if is_new_user else None
     
     # Handle onboarding form submission
     if is_new_user and request.method == 'POST' and welcome_form.validate_on_submit():
