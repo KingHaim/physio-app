@@ -6273,3 +6273,133 @@ msgstr ""
 msgid "Not a valid float value."
 msgstr ""
 
+# Treatment page translations
+msgid "View Treatment"
+msgstr "Ver Tratamiento"
+
+msgid "Treatment Details"
+msgstr "Detalles del Tratamiento"
+
+msgid "Back to Patient"
+msgstr "Volver al Paciente"
+
+msgid "Viewing treatment for"
+msgstr "Viendo tratamiento para"
+
+msgid "on"
+msgstr "el"
+
+msgid "No date"
+msgstr "Sin fecha"
+
+msgid "Treatment Information"
+msgstr "Información del Tratamiento"
+
+msgid "Date:"
+msgstr "Fecha:"
+
+msgid "Not set"
+msgstr "No establecido"
+
+msgid "Treatment Type:"
+msgstr "Tipo de Tratamiento:"
+
+msgid "Pain Level:"
+msgstr "Nivel de Dolor:"
+
+msgid "Pain:"
+msgstr "Dolor:"
+
+msgid "Not recorded"
+msgstr "No registrado"
+
+msgid "Movement Restriction:"
+msgstr "Restricción de Movimiento:"
+
+msgid "None specified"
+msgstr "No especificado"
+
+msgid "Status:"
+msgstr "Estado:"
+
+msgid "Completed"
+msgstr "Completado"
+
+msgid "In Progress"
+msgstr "En Progreso"
+
+msgid "Scheduled"
+msgstr "Programado"
+
+msgid "Cancelled"
+msgstr "Cancelado"
+
+msgid "Provider:"
+msgstr "Proveedor:"
+
+msgid "Location & Financial"
+msgstr "Ubicación y Financiero"
+
+msgid "Location:"
+msgstr "Ubicación:"
+
+msgid "Not specified"
+msgstr "No especificado"
+
+msgid "Visit Type:"
+msgstr "Tipo de Visita:"
+
+msgid "Fee Charged:"
+msgstr "Tarifa Cobrada:"
+
+msgid "Payment Method:"
+msgstr "Método de Pago:"
+
+msgid "Clinic Share:"
+msgstr "Participación de la Clínica:"
+
+msgid "Therapist Share:"
+msgstr "Participación del Terapeuta:"
+
+msgid "Body Chart & Trigger Points"
+msgstr "Mapa Corporal y Puntos Gatillo"
+
+msgid "Body Chart"
+msgstr "Mapa Corporal"
+
+msgid "Trigger Points"
+msgstr "Puntos Gatillo"
+
+msgid "Trigger Point"
+msgstr "Punto Gatillo"
+
+msgid "Position:"
+msgstr "Posición:"
+
+msgid "Type:"
+msgstr "Tipo:"
+
+msgid "Muscle:"
+msgstr "Músculo:"
+
+msgid "Intensity:"
+msgstr "Intensidad:"
+
+msgid "Symptoms:"
+msgstr "Síntomas:"
+
+msgid "Referral Pattern:"
+msgstr "Patrón de Referencia:"
+
+msgid "Notes"
+msgstr "Notas"
+
+msgid "No notes recorded for this treatment."
+msgstr "No se registraron notas para este tratamiento."
+
+msgid "Delete Treatment"
+msgstr "Eliminar Tratamiento"
+
+msgid "Are you sure you want to delete this treatment? This action cannot be undone."
+msgstr "¿Estás seguro de que quieres eliminar este tratamiento? Esta acción no se puede deshacer."
+

@@ -1,25 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}View Treatment - {{ treatment.treatment_type }}{% endblock %}
+{% block title %}{{ _('View Treatment') }} - {{ treatment.treatment_type }}{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="row">
         <div class="col-md-12 mb-4">
             <div class="d-flex justify-content-between align-items-center">
-                <h2><i class="bi bi-clipboard-pulse"></i> Treatment Details</h2>
+                <h2><i class="bi bi-clipboard-pulse"></i> {{ _('Treatment Details') }}</h2>
                     <div>
                     <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-primary">
                             <i class="bi bi-pencil"></i> {{ _('Edit Treatment') }}
                         </a>
                     <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-secondary ms-2">
-                            <i class="bi bi-arrow-left"></i> Back to Patient
+                            <i class="bi bi-arrow-left"></i> {{ _('Back to Patient') }}
                         </a>
                 </div>
             </div>
             <p class="text-muted">
-                Viewing treatment for <strong>{{ patient.name }}</strong> on 
-                <strong>{{ treatment.created_at.strftime('%Y-%m-%d') if treatment.created_at else 'No date' }}</strong>
+                {{ _('Viewing treatment for') }} <strong>{{ patient.name }}</strong> {{ _('on') }} 
+                <strong>{{ treatment.created_at.strftime('%Y-%m-%d') if treatment.created_at else _('No date') }}</strong>
             </p>
         </div>
     </div>
@@ -29,191 +29,176 @@
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Treatment Information</h5>
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> {{ _('Treatment Information') }}</h5>
                 </div>
                 <div class="card-body">
                     <table class="table table-borderless">
                         <tr>
-                            <th style="width: 40%">Date:</th>
-                            <td>{{ treatment.created_at.strftime('%Y-%m-%d %H:%M') if treatment.created_at else 'Not set' }}</td>
+                            <th style="width: 40%">{{ _('Date:') }}</th>
+                            <td>{{ treatment.created_at.strftime('%Y-%m-%d %H:%M') if treatment.created_at else _('Not set') }}</td>
                         </tr>
                         <tr>
-                            <th>Treatment Type:</th>
+                            <th>{{ _('Treatment Type:') }}</th>
                             <td>{{ treatment.treatment_type }}</td>
                         </tr>
                         <tr>
-                            <th>Pain Level:</th>
+                            <th>{{ _('Pain Level:') }}</th>
                             <td>
                                 {% if treatment.pain_level is not none %}
                                     {% set width = treatment.pain_level * 10 %}
-                                    <div class="progress" style="height: 20px;" title="Pain: {{ treatment.pain_level }}/10">
+                                    <div class="progress" style="height: 20px;" title="{{ _('Pain:') }} {{ treatment.pain_level }}/10">
                                         <div class="progress-bar bg-danger" role="progressbar"
-                                             style="width: {{ width }}%;"
-                                             aria-valuenow="{{ treatment.pain_level }}" aria-valuemin="0" aria-valuemax="10">
+                                             style="width: {{ width }}%">
                                             {{ treatment.pain_level }}/10
                                         </div>
                                     </div>
                                 {% else %}
-                                    <span class="text-muted">N/E</span>
+                                    <span class="text-muted">{{ _('Not recorded') }}</span>
                                 {% endif %}
                             </td>
                         </tr>
+                        <tr>
+                            <th>{{ _('Movement Restriction:') }}</th>
+                            <td>{{ treatment.movement_restriction if treatment.movement_restriction else _('None specified') }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ _('Status:') }}</th>
+                            <td>
+                                {% if treatment.status == 'Completed' %}
+                                    <span class="badge bg-success">{{ _('Completed') }}</span>
+                                {% elif treatment.status == 'In Progress' %}
+                                    <span class="badge bg-warning">{{ _('In Progress') }}</span>
+                                {% elif treatment.status == 'Scheduled' %}
+                                    <span class="badge bg-primary">{{ _('Scheduled') }}</span>
+                                {% elif treatment.status == 'Cancelled' %}
+                                    <span class="badge bg-danger">{{ _('Cancelled') }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ treatment.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if treatment.provider %}
+                        <tr>
+                            <th>{{ _('Provider:') }}</th>
+                            <td>{{ treatment.provider }}</td>
+                        </tr>
+                        {% endif %}
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- Right column - Assessment -->
+        <!-- Right column - Location & Financial Info -->
         <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Assessment</h5>
+                    <h5 class="mb-0"><i class="bi bi-geo-alt"></i> {{ _('Location & Financial') }}</h5>
                 </div>
                 <div class="card-body">
-                    <div class="p-3 bg-light rounded" style="min-height: 200px;">
-                        {% if treatment.assessment %}
-                            <p>{{ treatment.assessment|replace('\n', '<br>')|safe }}</p>
-                        {% else %}
-                            <p class="text-muted">No assessment recorded for this treatment.</p>
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width: 40%">{{ _('Location:') }}</th>
+                            <td>{{ treatment.location_name if treatment.location_name else _('Not specified') }}</td>
+                        </tr>
+                        {% if treatment.visit_type %}
+                        <tr>
+                            <th>{{ _('Visit Type:') }}</th>
+                            <td>{{ treatment.visit_type }}</td>
+                        </tr>
                         {% endif %}
-                    </div>
+                        {% if treatment.fee_charged %}
+                        <tr>
+                            <th>{{ _('Fee Charged:') }}</th>
+                            <td>€{{ treatment.fee_charged }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if treatment.payment_method %}
+                        <tr>
+                            <th>{{ _('Payment Method:') }}</th>
+                            <td>{{ treatment.payment_method }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if treatment.clinic_share %}
+                        <tr>
+                            <th>{{ _('Clinic Share:') }}</th>
+                            <td>€{{ treatment.clinic_share }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if treatment.therapist_share %}
+                        <tr>
+                            <th>{{ _('Therapist Share:') }}</th>
+                            <td>€{{ treatment.therapist_share }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Body Chart Section -->
+    <!-- Body Chart and Trigger Points -->
+    {% if treatment.evaluation_data or treatment.body_chart_url %}
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-person-bounding-box"></i> Body Chart</h5>
+                    <h5 class="mb-0"><i class="bi bi-person"></i> {{ _('Body Chart & Trigger Points') }}</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <!-- Body Chart Visualization -->
-                        <div class="col-md-6 text-center">
-                            <div class="body-map-container">
-                                <img src="{{ url_for('static', filename='images/bodychart.svg') }}" class="body-map" alt="Body chart">
-                                <svg class="body-map-overlay" viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg">
-                                    <g id="triggerPoints">
-                                        {% if treatment.evaluation_data %}
-                                            {# First check if we can sort the points #}
-                                            {% if treatment.evaluation_data|length > 0 and treatment.evaluation_data is iterable %}
-                                                {% set first_point = treatment.evaluation_data|first %}
-                                                {% if first_point is mapping and first_point.y is defined %}
-                                                    {% set sorted_points = treatment.evaluation_data|sort(attribute='y') %}
-                                                {% else %}
-                                                    {% set sorted_points = treatment.evaluation_data %}
-                                                {% endif %}
-                                            {% else %}
-                                                {% set sorted_points = treatment.evaluation_data %}
-                                            {% endif %}
-                                            
-                                            {% for point in sorted_points %}
-                                                {% if point is mapping and point.x is defined and point.y is defined %}
-                                                <circle 
-                                                    cx="{{ point.x }}" 
-                                                    cy="{{ point.y }}" 
-                                                    r="{% if point.y|float > 400 %}7{% else %}5{% endif %}" 
-                                                    fill="{{ '#dc3545' if point.type == 'active' else ('#ffc107' if point.type == 'latent' else '#17a2b8') }}"
-                                                    data-bs-toggle="tooltip"
-                                                    title="{% if point.muscle %}{{ point.muscle }}{% endif %}{% if point.intensity %} ({{ point.intensity }}/10){% endif %}"
-                                                    style="{% if point.y|float > 400 %}stroke: black; stroke-width: 1;{% endif %}"
-                                                />
-                                                {% endif %}
-                                            {% endfor %}
-                                        {% endif %}
-                                    </g>
-                                </svg>
+                    {% if treatment.body_chart_url %}
+                        <div class="mb-3">
+                            <h6>{{ _('Body Chart') }}</h6>
+                            <img src="{{ treatment.body_chart_url }}" alt="{{ _('Body Chart') }}" class="img-fluid border">
+                        </div>
+                    {% endif %}
+                    
+                    {% if treatment.evaluation_data %}
+                        <div>
+                            <h6>{{ _('Trigger Points') }}</h6>
+                            <div class="trigger-points-display">
+                                {% for point in treatment.evaluation_data %}
+                                <div class="point-item mb-2 p-2 border rounded">
+                                    <strong>{{ _('Trigger Point') }} {{ loop.index }}</strong><br>
+                                    <small class="text-muted">
+                                        {{ _('Position:') }} ({{ point.x }}, {{ point.y }}) | 
+                                        {{ _('Type:') }} {{ point.type }} |
+                                        {{ _('Muscle:') }} {{ point.muscle }}
+                                        {% if point.intensity %} | {{ _('Intensity:') }} {{ point.intensity }}{% endif %}
+                                    </small>
+                                    {% if point.symptoms %}
+                                    <div class="mt-1">
+                                        <small><strong>{{ _('Symptoms:') }}</strong> {{ point.symptoms }}</small>
+                                    </div>
+                                    {% endif %}
+                                    {% if point.referral %}
+                                    <div>
+                                        <small><strong>{{ _('Referral Pattern:') }}</strong> {{ point.referral }}</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
                             </div>
                         </div>
-                        
-                        <!-- Trigger Points Table -->
-                        <div class="col-md-6">
-                            {% if treatment.trigger_points and treatment.trigger_points|length > 0 %}
-                                <h6>Trigger Points ({{ treatment.trigger_points|length }})</h6>
-                                <div class="table-responsive">
-                                    <table class="table table-sm">
-                                        <thead>
-                                            <tr>
-                                                <th>Type</th>
-                                                <th>Muscle</th>
-                                                <th>Intensity</th>
-                                                <th>Symptoms</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for point in treatment.trigger_points %}
-                                                <tr>
-                                                    <td>
-                                                        <span class="badge bg-{{ 'danger' if point.type == 'active' else ('warning' if point.type == 'latent' else 'info') }}">
-                                                            {{ point.type|capitalize }}
-                                                        </span>
-                                                    </td>
-                                                    <td>{{ point.muscle or 'Not specified' }}</td>
-                                                    <td>{{ point.intensity|string + '/10' if point.intensity is not none else 'N/A' }}</td>
-                                                    <td>{{ point.symptoms or 'None recorded' }}</td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            {% elif treatment.evaluation_data %}
-                                <h6>Trigger Points ({{ treatment.evaluation_data|length }})</h6>
-                                <div class="table-responsive">
-                                    <table class="table table-sm">
-                                        <thead>
-                                            <tr>
-                                                <th>Type</th>
-                                                <th>Muscle</th>
-                                                <th>Intensity</th>
-                                                <th>Symptoms</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for point in treatment.evaluation_data %}
-                                                {% if point is mapping %}
-                                                <tr>
-                                                    <td>
-                                                        <span class="badge bg-{{ 'danger' if point.type == 'active' else ('warning' if point.type == 'latent' else 'info') }}">
-                                                            {{ point.type|default('Unknown')|capitalize }}
-                                                        </span>
-                                                    </td>
-                                                    <td>{{ point.muscle|default('Not specified') }}</td>
-                                                    <td>{{ (point.intensity|string + '/10') if point.intensity is defined and point.intensity is not none else 'N/A' }}</td>
-                                                    <td>{{ point.symptoms|default('None recorded') }}</td>
-                                                </tr>
-                                                {% endif %}
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            {% else %}
-                                <div class="alert alert-info">
-                                    <i class="bi bi-info-circle"></i> No trigger points recorded for this treatment.
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
-                        </div>
+        </div>
                     </div>
+                    {% endif %}
                     
     <!-- Notes Section -->
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-journal-text"></i> Notes</h5>
+                    <h5 class="mb-0"><i class="bi bi-journal-text"></i> {{ _('Notes') }}</h5>
                 </div>
                 <div class="card-body">
                         <div class="p-3 bg-light rounded">
                         {% if treatment.notes %}
                             <p>{{ treatment.notes|replace('\n', '<br>')|safe }}</p>
                         {% else %}
-                            <p class="text-muted">No notes recorded for this treatment.</p>
+                            <p class="text-muted">{{ _('No notes recorded for this treatment.') }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -226,11 +211,11 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-between">
                 <button class="btn btn-danger" onclick="confirmDelete({{ treatment.id|tojson }})">
-                            <i class="bi bi-trash"></i> Delete Treatment
+                            <i class="bi bi-trash"></i> {{ _('Delete Treatment') }}
                         </button>
                 <div>
                     <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-secondary me-2">
-                        <i class="bi bi-arrow-left"></i> Back to Patient
+                        <i class="bi bi-arrow-left"></i> {{ _('Back to Patient') }}
                     </a>
                         <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-primary">
                             <i class="bi bi-pencil"></i> {{ _('Edit Treatment') }}
@@ -248,83 +233,52 @@
         border-radius: 4px;
         margin-bottom: 1rem;
         width: 100%;
-        max-width: 300px;
-        margin: 0 auto;
+        height: 400px;
+        background: #f8f9fa;
+        overflow: hidden;
     }
     
     .body-map {
         width: 100%;
-        height: auto;
-        display: block;
-    }
-    
-    .body-map-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
         height: 100%;
-        pointer-events: none;
-        z-index: 10;
+        object-fit: contain;
     }
     
     .trigger-point {
-        transition: r 0.2s;
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: red;
+        border: 2px solid white;
+        box-shadow: 0 0 4px rgba(0,0,0,0.3);
         cursor: pointer;
+        transform: translate(-50%, -50%);
     }
     
-    .trigger-point.active {
-        fill: #dc3545;
-    }
-    
-    .trigger-point.latent {
-        fill: #ffc107;
-    }
-    
-    .trigger-point.satellite {
-        fill: #17a2b8;
+    .trigger-points-display .point-item {
+        background: #f8f9fa;
     }
 </style>
 
 <script>
-    function confirmDelete(treatmentId) {
-        if (confirm('Are you sure you want to delete this treatment record? This action cannot be undone.')) {
-            // Get CSRF token from meta tag
-            let csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            
-            fetch(`/api/treatment/${treatmentId}`, {
-                method: 'DELETE',
-                headers: {
-                    // Add the CSRF token header
-                    'X-CSRFToken': csrfToken
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Treatment deleted successfully.');
-                    window.location.href = "{{ url_for('main.patient_detail', id=patient.id) }}";
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while deleting the treatment.');
-            });
-        }
+function confirmDelete(treatmentId) {
+    if (confirm('{{ _("Are you sure you want to delete this treatment? This action cannot be undone.") }}')) {
+        // Create a form to submit the delete request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/treatment/${treatmentId}/delete`;
+        
+        // Add CSRF token
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrf_token';
+        csrfToken.value = '{{ csrf_token() }}';
+        form.appendChild(csrfToken);
+        
+        document.body.appendChild(form);
+        form.submit();
     }
-    
-    // Initialize tooltips
-    document.addEventListener('DOMContentLoaded', function() {
-        // Bootstrap 5 tooltip initialization
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            }
-            return null;
-        });
-    });
+}
 </script>
 {% endblock %} 
