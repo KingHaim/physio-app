@@ -96,30 +96,32 @@ def delete_account_permanent():
             raise
         
         # 2. Handle patients owned by this user (physio)
+        # Fetch all patients owned by this physio
         try:
             owned_patients = Patient.query.filter_by(user_id=user_id).all()
             logging.info(f"Found {len(owned_patients)} patients to delete")
-
-            for patient in owned_patients:
-                # Delete patient reports
-                PatientReport.query.filter_by(patient_id=patient.id).delete()
-                # Delete recurring appointments
-                RecurringAppointment.query.filter_by(patient_id=patient.id).delete()
-                # Delete treatments and their trigger points
-                treatments = Treatment.query.filter_by(patient_id=patient.id).all()
-                for treatment in treatments:
-                    TriggerPoint.query.filter_by(treatment_id=treatment.id).delete()
-                    db.session.delete(treatment)
-                # Delete user consents related to this patient
-                UserConsent.query.filter_by(patient_id=patient.id).delete()
-                # Unlink any matched Calendly bookings
-                UnmatchedCalendlyBooking.query.filter_by(matched_patient_id=patient.id).update({'matched_patient_id': None})
-                # Delete the patient record
-                db.session.delete(patient)
-            logging.info(f"Deleted {len(owned_patients)} patients and their data")
         except Exception as e:
-            logging.error(f"Error deleting patients for user {user_id}: {e}")
-            raise
+            logging.error(f"Error fetching patients for user {user_id}: {e}")
+            owned_patients = []
+
+        # Now delete each patient’s data
+        for patient in owned_patients:
+            # Delete patient reports
+            PatientReport.query.filter_by(patient_id=patient.id).delete()
+            # Delete recurring appointments
+            RecurringAppointment.query.filter_by(patient_id=patient.id).delete()
+            # Delete treatments and their trigger points
+            treatments = Treatment.query.filter_by(patient_id=patient.id).all()
+            for treatment in treatments:
+                TriggerPoint.query.filter_by(treatment_id=treatment.id).delete()
+                db.session.delete(treatment)
+            # Delete user consents related to this patient
+            UserConsent.query.filter_by(patient_id=patient.id).delete()
+            # Unlink any matched Calendly bookings
+            UnmatchedCalendlyBooking.query.filter_by(matched_patient_id=patient.id).update({'matched_patient_id': None})
+            # Delete the patient record
+            db.session.delete(patient)
+        logging.info(f"Deleted {len(owned_patients)} patients and their data")
         
         # 3. Handle if this user is also a patient (portal user)
         try:
