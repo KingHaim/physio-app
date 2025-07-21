@@ -196,7 +196,7 @@ def verify_email(token):
     user = User.query.filter_by(email_verification_token=token).first()
     
     if not user:
-        # If not found by direct token match, try to find by hashed token
+        # If not found by direct match, try hashing the token
         import hashlib
         hashed_token = hashlib.sha256(token.encode()).hexdigest()
         user = User.query.filter_by(email_verification_token=hashed_token).first()
