@@ -406,7 +406,7 @@ msgstr "Benvenuto su TRXCKER! Il tuo profilo è stato configurato con successo."
 #: app/routes/main.py:361
 #, fuzzy
 msgid "An error occurred while setting up your profile. Please try again."
-msgstr "Si è verificato un errore imprevisto durante l'eliminazione dei pazienti."
+msgstr "Si è verificato un errore durante la configurazione del tuo profilo. Riprova."
 
 #: app/routes/main.py:2717
 msgid "Clinic Revenue"
@@ -423,7 +423,7 @@ msgstr "Spese Fisse Totali (€)"
 #: app/routes/main.py:2724
 #, fuzzy
 msgid "Est. Self-Employed Tax Contribution (€)"
-msgstr "Contrib. Mensile Stimata (€)"
+msgstr "Contrib. Fiscale Autonomo Stimato (€)"
 
 #: app/routes/main.py:2725
 msgid "Est. Net Revenue (Final)"
@@ -484,7 +484,7 @@ msgstr "Dicembre"
 #: app/routes/onboarding.py:125
 #, fuzzy
 msgid "Profile updated successfully!"
-msgstr "Paziente creato con successo!"
+msgstr "Profilo aggiornato con successo!"
 
 #: app/routes/onboarding.py:132
 #, fuzzy
@@ -498,7 +498,7 @@ msgstr "Analisi"
 
 #: app/templates/analytics.html:7
 msgid "No patient revenue data available."
-msgstr ""
+msgstr "Nessun dato di ricavo paziente disponibile."
 
 #: app/templates/analytics.html:8
 msgid "Error loading data."
@@ -561,7 +561,7 @@ msgstr "Fai clic per vedere l'elenco"
 #: app/templates/analytics.html:87 app/templates/analytics.html:279
 #, fuzzy
 msgid "Inactive Patients (>90d)"
-msgstr "Pazienti attivi"
+msgstr "Pazienti inattivi (>90 giorni)"
 
 #: app/templates/analytics.html:99
 msgid "Treatments by Month"
@@ -627,7 +627,7 @@ msgstr "Utilizzando DeepSeek AI basato sui dati attuali della pratica."
 #: app/templates/analytics.html:240
 #, python-format
 msgid "%(clinic_name)s Fee Breakdown (%(percentage)s%%)"
-msgstr ""
+msgstr "Ripartizione Tariffe %(clinic_name)s (%(percentage)s%%)"
 
 #: app/templates/analytics.html:241 app/templates/analytics.html:268
 #: app/templates/analytics.html:280 app/templates/analytics.html:289
@@ -693,6 +693,8 @@ msgid ""
 "The following active patients have not had a treatment logged in the last"
 " 90 days."
 msgstr ""
+"I seguenti pazienti attivi non hanno avuto un trattamento registrato "
+"negli ultimi 90 giorni."
 
 #: app/templates/analytics.html:450 app/templates/analytics.html:477
 #: app/templates/edit_treatment.html:667 app/templates/edit_treatment.html:672
@@ -1689,7 +1691,7 @@ msgstr "Cerca il paziente di destinazione con cui unire:"
 #: app/templates/edit_patient.html:452
 #, fuzzy
 msgid "Enter patient name or contact information..."
-msgstr "Informazioni di Contatto"
+msgstr "Inserisci nome paziente o informazioni di contatto..."
 
 #: app/templates/edit_patient.html:453
 msgid "Start typing to search for patients"
@@ -1698,22 +1700,22 @@ msgstr "Inizia a digitare per cercare i pazienti"
 #: app/templates/edit_patient.html:457
 #, fuzzy
 msgid "Search Results:"
-msgstr "Errore nel recupero dei risultati."
+msgstr "Risultati della Ricerca:"
 
 #: app/templates/edit_patient.html:464
 #, fuzzy
 msgid "Selected Target Patient:"
-msgstr "Elimina Paziente"
+msgstr "Paziente di Destinazione Selezionato:"
 
 #: app/templates/edit_patient.html:477
 #, fuzzy
 msgid "Confirm Merge"
-msgstr "Conferma Eliminazione"
+msgstr "Conferma Unione"
 
 #: app/templates/edit_patient.html:894
 #, fuzzy
 msgid "Contact"
-msgstr "Contatto:"
+msgstr "Contatto"
 
 #: app/templates/edit_patient.html:894 app/templates/edit_patient.html:898
 #: app/templates/patient_detail.html:216 app/templates/patient_detail.html:217
@@ -2589,14 +2591,14 @@ msgstr "Completa l'anamnesi (storia clinica) prima di procedere con i dati del p
 #: app/templates/new_patient_old.html:22
 #, fuzzy
 msgid "Anamnesis & Patient Data"
-msgstr "Modifica Dettagli Paziente"
+msgstr "Anamnesi e Dati Paziente"
 
 #: app/templates/new_patient.html:26 app/templates/new_patient_backup.html:26
 #: app/templates/new_patient_backup_final.html:26
 #: app/templates/new_patient_old.html:26
 #, fuzzy
 msgid "Portal Access"
-msgstr "Accesso Portale Paziente"
+msgstr "Accesso al Portale"
 
 #: app/templates/new_patient.html:39 app/templates/new_patient_backup.html:39
 #: app/templates/new_patient_backup_final.html:39
@@ -2617,26 +2619,26 @@ msgstr "Compila i dati del paziente e la storia clinica. Queste informazioni son
 #: app/templates/new_patient_old.html:47
 #, fuzzy
 msgid "Patient Data"
-msgstr "Dettagli del Paziente"
+msgstr "Dati Paziente"
 
 #: app/templates/new_patient.html:85 app/templates/new_patient_backup.html:129
 #: app/templates/new_patient_backup_final.html:85
 #: app/templates/new_patient_old.html:85
 #, fuzzy
 msgid "Basic Patient Information"
-msgstr "Informazioni di Base"
+msgstr "Informazioni Base del Paziente"
 
 #: app/templates/new_patient.html:98 app/templates/new_patient_backup.html:146
 #: app/templates/new_patient_backup_final.html:102
 #: app/templates/new_patient_old.html:102
 #, fuzzy
 msgid "Email Address"
-msgstr "Indirizzo IP"
+msgstr "Indirizzo Email"
 
 #: app/templates/new_patient.html:99 app/templates/new_patient.html:945
 #, fuzzy
 msgid "patient@example.com"
-msgstr "Nome Paziente"
+msgstr "paziente@esempio.com"
 
 #: app/templates/new_patient.html:103
 msgid "+34 600 123 456"
@@ -2647,7 +2649,7 @@ msgstr "+34 600 123 456"
 #: app/templates/new_patient_old.html:120
 #, fuzzy
 msgid "Address Information"
-msgstr "Informazioni di Base"
+msgstr "Informazioni Indirizzo"
 
 #: app/templates/new_patient.html:119 app/templates/new_patient_backup.html:167
 #: app/templates/new_patient_backup_final.html:123
@@ -4119,7 +4121,7 @@ msgstr "Documentare i test speciali eseguiti, i risultati e la rilevanza clinica
 #: app/templates/new_patient_backup_final.html:918
 #: app/templates/new_patient_old.html:918
 msgid "Additional examination findings"
-msgstr ""
+msgstr "Risultati aggiuntivi dell'esame"
 
 #: app/templates/new_patient.html:917 app/templates/new_patient_backup.html:962
 #: app/templates/new_patient_backup_final.html:921
@@ -4127,7 +4129,7 @@ msgstr ""
 msgid ""
 "Posture, gait, neurological findings, palpation, clinical impression, red"
 " flags, etc."
-msgstr ""
+msgstr "Postura, andatura, risultati neurologici, palpazione, impressione clinica, bandiere rosse, ecc."
 
 #: app/templates/new_patient.html:928 app/templates/new_patient_backup.html:973
 #: app/templates/new_patient_backup_final.html:932
@@ -4145,15 +4147,15 @@ msgstr "Accesso Portale Paziente (Opzionale)"
 #: app/templates/new_patient.html:938
 #, fuzzy
 msgid "This step is completely optional."
-msgstr "Passaggio 1: Completa il tuo profilo"
+msgstr "Questo passaggio è completamente opzionale."
 
 #: app/templates/new_patient.html:939
 msgid ""
 "If you do not want the patient to have portal access, simply click "
 "\"Create Patient\" without filling anything."
 msgstr ""
-"Inserisci un'email e una password se vuoi che il paziente possa accedere "
-"e visualizzare le sue prescrizioni di esercizi."
+"Se non vuoi che il paziente abbia accesso al portale, semplicemente clicca "
+"\"Crea Paziente\" senza compilare nulla."
 
 #: app/templates/new_patient.html:941 app/templates/new_patient_backup.html:981
 #: app/templates/new_patient_backup_final.html:940
@@ -4172,7 +4174,7 @@ msgstr "Opzionale"
 
 #: app/templates/new_patient.html:948
 msgid "(Only if you provide email)"
-msgstr ""
+msgstr "(Solo se fornisci un'email)"
 
 #: app/templates/new_patient.html:949 app/templates/new_patient_backup.html:989
 #: app/templates/new_patient_backup_final.html:948
@@ -4190,11 +4192,11 @@ msgstr "Lascia vuoto se l'email di accesso non è fornita."
 #: app/templates/new_patient_backup_final.html:955
 #: app/templates/new_patient_old.html:955
 msgid "Back: Patient Data & Anamnesis"
-msgstr ""
+msgstr "Indietro: Dati Paziente e Anamnesi"
 
 #: app/templates/new_patient.html:960
 msgid "Skip Portal"
-msgstr ""
+msgstr "Salta Portale"
 
 #: app/templates/new_patient.html:963 app/templates/new_patient_backup.html:999
 #: app/templates/new_patient_backup_final.html:958
@@ -4211,52 +4213,56 @@ msgid ""
 "Please complete at least the main reason for consultation before "
 "proceeding."
 msgstr ""
+"Completa almeno il motivo principale della consultazione prima di "
+"procedere."
 
 #: app/templates/new_patient.html:1474
 #: app/templates/new_patient_backup.html:1479
 #: app/templates/new_patient_backup_final.html:1439
 #: app/templates/new_patient_old.html:1437
 msgid "Main reason for consultation is required before creating a patient record."
-msgstr ""
+msgstr "Il motivo principale della consultazione è richiesto prima di creare una cartella paziente."
 
 #: app/templates/new_patient_backup.html:90
 msgid "Smart Clinical Assistant Activated"
-msgstr ""
+msgstr "Assistente Clinico Intelligente Attivato"
 
 #: app/templates/new_patient_backup.html:92
 msgid ""
 "I will provide intelligent clinical suggestions as you fill out the "
 "anamnesis. Look for the blue suggestions panel below."
 msgstr ""
+"Fornirò suggerimenti clinici intelligenti mentre compili l'anamnesi. "
+"Cerca il pannello blu dei suggerimenti qui sotto."
 
 #: app/templates/new_patient_backup.html:105
 #: app/templates/new_patient_backup_final.html:1560
 #: app/templates/new_patient_old.html:1558
 #, fuzzy
 msgid "Smart Clinical Suggestions"
-msgstr "Comunicazioni Marketing"
+msgstr "Suggerimenti Clinici Intelligenti"
 
 #: app/templates/new_patient_backup.html:142
 #: app/templates/new_patient_backup_final.html:98
 #: app/templates/new_patient_old.html:98
 #, fuzzy
 msgid "Primary Contact"
-msgstr "Contatto:"
+msgstr "Contatto Principale"
 
 #: app/templates/new_patient_backup.html:143
 #: app/templates/new_patient_backup_final.html:99
 #: app/templates/new_patient_old.html:99
 #, fuzzy
 msgid "Phone number or email"
-msgstr "Numero di telefono o indirizzo email"
+msgstr "Numero di telefono o email"
 
 #: app/templates/new_patient_backup.html:241
 msgid "Reason for Today's Visit"
-msgstr ""
+msgstr "Motivo della Visita di Oggi"
 
 #: app/templates/new_patient_backup.html:266
 msgid "Runner's Knee"
-msgstr ""
+msgstr "Ginocchio del Corridore"
 
 #: app/templates/new_patient_backup.html:1412
 #: app/templates/new_patient_backup_final.html:1372
@@ -4265,6 +4271,8 @@ msgid ""
 "Please fill in all required patient data fields (Name, Date of Birth, "
 "Contact, and Diagnosis)."
 msgstr ""
+"Compila tutti i campi dati paziente richiesti (Nome, Data di Nascita, "
+"Contatto e Diagnosi)."
 
 #: app/templates/new_patient_backup.html:1468
 #: app/templates/new_patient_backup_final.html:1428
@@ -4273,6 +4281,8 @@ msgid ""
 "Please fill in all required patient data fields before creating the "
 "patient record."
 msgstr ""
+"Compila tutti i campi dati paziente richiesti prima di creare la "
+"cartella paziente."
 
 #: app/templates/new_recurring_appointment.html:3
 msgid "Add Recurring Appointment"
@@ -4335,7 +4345,7 @@ msgstr "Tariffa"
 #: app/templates/patient_detail_BACKUP.html:829
 #, fuzzy
 msgid "Provider"
-msgstr "Profilo"
+msgstr "Fornitore"
 
 #: app/templates/new_recurring_appointment.html:77
 msgid "Select payment method..."
@@ -4373,16 +4383,12 @@ msgstr "Attenzione:"
 #: app/templates/patient_detail.html:183
 #: app/templates/patient_detail_BACKUP.html:153
 msgid "The 'today' variable is not defined. Some features may not work correctly."
-msgstr ""
-"La variabile 'today' non è definita. Alcune funzionalità potrebbero non "
-"funzionare correttamente."
+msgstr "La variabile 'today' non è definita. Alcune funzionalità potrebbero non funzionare correttamente."
 
 #: app/templates/patient_detail.html:190
 #: app/templates/patient_detail_BACKUP.html:160
 msgid "past treatment(s) were automatically marked as completed."
-msgstr ""
-"trattamento/i passato/i sono stati contrassegnati automaticamente come "
-"completati."
+msgstr "trattamento/i passato/i sono stati contrassegnati automaticamente come completati."
 
 #: app/templates/patient_detail.html:201
 msgid "Clinical History Incomplete"
@@ -4617,6 +4623,8 @@ msgid ""
 "The clinical history (anamnesis) for this patient has not been completed "
 "yet."
 msgstr ""
+"La storia clinica (anamnesis) per questo paziente non è stata ancora "
+"completata."
 
 #: app/templates/patient_detail.html:516
 #: app/templates/patient_detail_BACKUP.html:446
@@ -4703,24 +4711,24 @@ msgstr "Nessun report generato ancora."
 #: app/templates/patient_detail.html:680
 #, fuzzy
 msgid "Analysis Completed Successfully"
-msgstr "Paziente creato con successo!"
+msgstr "Analisi Completata con Successo"
 
 #: app/templates/patient_detail.html:681
 #, fuzzy
 msgid "Generated on"
-msgstr "Report generato il:"
+msgstr "Generato il"
 
 #: app/templates/patient_detail.html:693
 msgid "Recommended Tests & Assessments"
-msgstr ""
+msgstr "Test e Valutazioni Raccomandati"
 
 #: app/templates/patient_detail.html:708
 msgid "Red Flags - Immediate Attention Required"
-msgstr ""
+msgstr "Bandiere Rosse - Attenzione Immediata Richiesta"
 
 #: app/templates/patient_detail.html:723
 msgid "Yellow Flags - Monitor & Consider"
-msgstr ""
+msgstr "Bandiere Gialle - Monitora e Considera"
 
 #: app/templates/patient_detail.html:738
 #, fuzzy
@@ -4734,18 +4742,21 @@ msgstr "Analisi dei Trigger Point"
 
 #: app/templates/patient_detail.html:760
 msgid "No AI Analysis Available"
-msgstr ""
+msgstr "Nessuna Analisi IA Disponibile"
 
 #: app/templates/patient_detail.html:761
 msgid ""
 "Generate an intelligent clinical analysis based on patient anamnesis data"
 " and treatment history using advanced AI technology."
 msgstr ""
+"Genera un'analisi clinica intelligente basata sui dati dell'anamnesi del "
+"paziente e sulla storia del trattamento utilizzando la tecnologia IA "
+"avanzata."
 
 #: app/templates/patient_detail.html:764
 #, fuzzy
 msgid "Generate AI Analysis"
-msgstr "Analisi dei Trigger Point"
+msgstr "Genera Analisi AI"
 
 #: app/templates/patient_detail.html:782
 #: app/templates/patient_detail_BACKUP.html:696
@@ -4757,13 +4768,13 @@ msgstr "Dettagli del Trattamento"
 #: app/templates/patient_detail_BACKUP.html:702
 #, fuzzy
 msgid "Date:"
-msgstr "Data"
+msgstr "Data:"
 
 #: app/templates/patient_detail.html:789
 #: app/templates/patient_detail_BACKUP.html:703
 #, fuzzy
 msgid "Description:"
-msgstr "Descrizione"
+msgstr "Descrizione:"
 
 #: app/templates/patient_detail.html:792
 #: app/templates/patient_detail_BACKUP.html:706
@@ -4798,25 +4809,25 @@ msgstr "Opzionale: Lasciare vuoto se non applicabile"
 #: app/templates/patient_detail_BACKUP.html:759
 #, fuzzy
 msgid "Body Chart"
-msgstr "Grafico corporeo"
+msgstr "Mappa Corporea"
 
 #: app/templates/patient_detail.html:849
 #: app/templates/patient_detail_BACKUP.html:763
 #, fuzzy
 msgid "Add Trigger Points"
-msgstr "Mappa dei Trigger Point"
+msgstr "Aggiungi Punti Trigger"
 
 #: app/templates/patient_detail.html:893
 #: app/templates/patient_detail_BACKUP.html:807
 #, fuzzy
 msgid "Assessment"
-msgstr "Gestione"
+msgstr "Valutazione"
 
 #: app/templates/patient_detail.html:903
 #: app/templates/patient_detail_BACKUP.html:817
 #, fuzzy
 msgid "Select status"
-msgstr "Tutti gli Stati"
+msgstr "Seleziona stato"
 
 #: app/templates/patient_detail.html:987
 #: app/templates/patient_detail_BACKUP.html:901
@@ -4950,12 +4961,14 @@ msgid ""
 "Please review the generated report below. You can edit the content before"
 " saving it."
 msgstr ""
+"Si prega di rivedere il rapporto generato qui sotto. Puoi modificare il "
+"contenuto prima di salvarlo."
 
 #: app/templates/patient_detail.html:1122
 #: app/templates/patient_detail_BACKUP.html:1036
 #, fuzzy
 msgid "Report Content"
-msgstr "Registra Consenso"
+msgstr "Contenuto del Rapporto"
 
 #: app/templates/patient_detail.html:1129
 #: app/templates/patient_detail.html:1522
@@ -4963,19 +4976,19 @@ msgstr "Registra Consenso"
 #: app/templates/patient_detail_BACKUP.html:1436
 #, fuzzy
 msgid "Save Report"
-msgstr "Genera Rapporto"
+msgstr "Salva Rapporto"
 
 #: app/templates/patient_detail.html:1141
 #: app/templates/patient_detail_BACKUP.html:1055
 #, fuzzy
 msgid "Select Exercise Prescription Language"
-msgstr "Prescrizione Esercizi Generata da AI"
+msgstr "Seleziona Lingua Prescrizione Esercizi"
 
 #: app/templates/patient_detail.html:1145
 #: app/templates/patient_detail_BACKUP.html:1059
 #, fuzzy
 msgid "Choose the language for your AI-generated exercise prescription:"
-msgstr "Scegli la lingua per il tuo rapporto del paziente generato dall'IA:"
+msgstr "Scegli la lingua per la tua prescrizione di esercizi generata dall'IA:"
 
 #: app/templates/patient_detail.html:1184
 #: app/templates/patient_detail.html:1573
@@ -4991,38 +5004,40 @@ msgid ""
 "This will analyze all available anamnesis data for this patient and "
 "generate:"
 msgstr ""
+"Questo analizzerà tutti i dati di anamnesi disponibili per questo "
+"paziente e genererà:"
 
 #: app/templates/patient_detail.html:1208
 #: app/templates/patient_detail_BACKUP.html:1122
 msgid "Suggested clinical tests"
-msgstr ""
+msgstr "Test clinici suggeriti"
 
 #: app/templates/patient_detail.html:1209
 #: app/templates/patient_detail_BACKUP.html:1123
 msgid "Red flags (warning signs)"
-msgstr ""
+msgstr "Bandiere rosse (segni di avvertimento)"
 
 #: app/templates/patient_detail.html:1210
 #: app/templates/patient_detail_BACKUP.html:1124
 msgid "Yellow flags (psychosocial factors)"
-msgstr ""
+msgstr "Bandiere gialle (fattori psicosociali)"
 
 #: app/templates/patient_detail.html:1211
 #: app/templates/patient_detail_BACKUP.html:1125
 #, fuzzy
 msgid "Clinical notes and recommendations"
-msgstr "Informazioni di Contatto"
+msgstr "Note cliniche e raccomandazioni"
 
 #: app/templates/patient_detail.html:1215
 #: app/templates/patient_detail_BACKUP.html:1129
 msgid "All data is anonymized before being sent to the AI service."
-msgstr ""
+msgstr "Tutti i dati sono anonimizzati prima di essere inviati al servizio IA."
 
 #: app/templates/patient_detail.html:1223
 #: app/templates/patient_detail_BACKUP.html:1137
 #, fuzzy
 msgid "Generate Analysis"
-msgstr "Analisi clinica"
+msgstr "Genera Analisi"
 
 #: app/templates/patient_detail.html:1326
 #: app/templates/patient_detail_BACKUP.html:1240
@@ -5043,7 +5058,7 @@ msgstr "Consenso e firma salvati!"
 #: app/templates/patient_detail_BACKUP.html:1267
 #, fuzzy
 msgid "Error:"
-msgstr "Errore: "
+msgstr "Errore:"
 
 #: app/templates/patient_detail.html:1465
 #: app/templates/patient_detail.html:1469
@@ -5055,19 +5070,19 @@ msgstr "Errore durante la generazione del rapporto:"
 #: app/templates/patient_detail.html:1487
 #: app/templates/patient_detail_BACKUP.html:1401
 msgid "Report content cannot be empty."
-msgstr ""
+msgstr "Il contenuto del rapporto non può essere vuoto."
 
 #: app/templates/patient_detail.html:1493
 #: app/templates/patient_detail_BACKUP.html:1407
 #, fuzzy
 msgid "Saving..."
-msgstr "Sincronizzazione..."
+msgstr "Salvataggio..."
 
 #: app/templates/patient_detail.html:1510
 #: app/templates/patient_detail_BACKUP.html:1424
 #, fuzzy
 msgid "Report saved successfully."
-msgstr "Rapporto generato con successo."
+msgstr "Rapporto salvato con successo."
 
 #: app/templates/patient_detail.html:1513
 #: app/templates/patient_detail.html:1517
@@ -5075,13 +5090,13 @@ msgstr "Rapporto generato con successo."
 #: app/templates/patient_detail_BACKUP.html:1431
 #, fuzzy
 msgid "Error saving report:"
-msgstr "Errore durante la generazione del rapporto:"
+msgstr "Errore durante il salvataggio del rapporto:"
 
 #: app/templates/patient_detail.html:1561
 #: app/templates/patient_detail_BACKUP.html:1475
 #, fuzzy
 msgid "Exercise prescription generated successfully."
-msgstr "Rapporto generato con successo."
+msgstr "Prescrizione di esercizi generata con successo."
 
 #: app/templates/patient_detail.html:1564
 #: app/templates/patient_detail.html:1568
@@ -5228,116 +5243,116 @@ msgstr "Si è verificato un errore imprevisto durante l'eliminazione dei pazient
 
 #: app/templates/pricing.html:3 app/templates/public_pricing.html:3
 msgid "Subscription Plans"
-msgstr ""
+msgstr "Piani di Abbonamento"
 
 #: app/templates/pricing.html:180
 msgid "Choose Your Plan"
-msgstr ""
+msgstr "Scegli il Tuo Piano"
 
 #: app/templates/pricing.html:181
 msgid "Select a plan that best fits your needs and unlock your potential."
-msgstr ""
+msgstr "Seleziona un piano che si adatta meglio alle tue esigenze e sblocca il tuo potenziale."
 
 #: app/templates/pricing.html:208
 msgid "Patient Management"
-msgstr ""
+msgstr "Gestione Pazienti"
 
 #: app/templates/pricing.html:208
 msgid "Core"
-msgstr ""
+msgstr "Base"
 
 #: app/templates/pricing.html:208 app/templates/pricing.html:209
 #: app/templates/pricing.html:210 app/templates/pricing.html:211
 #: app/templates/pricing.html:212 app/templates/pricing.html:215
 #: app/templates/pricing.html:216
 msgid "Standard"
-msgstr ""
+msgstr "Standard"
 
 #: app/templates/pricing.html:208 app/templates/pricing.html:209
 #: app/templates/pricing.html:210 app/templates/pricing.html:211
 #: app/templates/pricing.html:215 app/templates/pricing.html:216
 msgid "Advanced"
-msgstr ""
+msgstr "Avanzato"
 
 #: app/templates/pricing.html:209
 msgid "Scheduling"
-msgstr ""
+msgstr "Pianificazione"
 
 #: app/templates/pricing.html:209 app/templates/pricing.html:210
 #: app/templates/pricing.html:211 app/templates/pricing.html:212
 #: app/templates/pricing.html:215 app/templates/pricing.html:216
 msgid "Basic"
-msgstr ""
+msgstr "Base"
 
 #: app/templates/pricing.html:210
 msgid "Clinical Notes"
-msgstr ""
+msgstr "Note Cliniche"
 
 #: app/templates/pricing.html:211
 msgid "Billing"
-msgstr ""
+msgstr "Fatturazione"
 
 #: app/templates/pricing.html:212
 msgid "Reporting"
-msgstr ""
+msgstr "Reportistica"
 
 #: app/templates/pricing.html:212
 msgid "AI-Powered"
-msgstr ""
+msgstr "Alimentato da IA"
 
 #: app/templates/pricing.html:213
 msgid "Calendly Integration"
-msgstr ""
+msgstr "Integrazione Calendly"
 
 #: app/templates/pricing.html:214
 msgid "Patient Portal"
-msgstr ""
+msgstr "Portale Paziente"
 
 #: app/templates/pricing.html:215
 msgid "Telehealth"
-msgstr ""
+msgstr "Telemedicina"
 
 #: app/templates/pricing.html:217
 msgid "Multi-Practitioner Calendars"
-msgstr ""
+msgstr "Calendari Multi-Professionista"
 
 #: app/templates/pricing.html:218
 msgid "AI Driven Insights"
-msgstr ""
+msgstr "Approfondimenti Guidati dall'IA"
 
 #: app/templates/pricing.html:219
 msgid "Wearable Integration"
-msgstr ""
+msgstr "Integrazione Dispositivi Indossabili"
 
 #: app/templates/pricing.html:220
 msgid "Multi-Location Support"
-msgstr ""
+msgstr "Supporto Multi-Sede"
 
 #: app/templates/pricing.html:221
 msgid "API Access"
-msgstr ""
+msgstr "Accesso API"
 
 #: app/templates/pricing.html:222
 msgid "Custom Branding"
-msgstr ""
+msgstr "Branding Personalizzato"
 
 #: app/templates/pricing.html:223 app/templates/pricing.html:271
 #: app/templates/pricing.html:340 app/templates/pricing.html:348
 #: app/templates/pricing.html:356
 msgid "Support"
-msgstr ""
+msgstr "Supporto"
 
 #: app/templates/pricing.html:223
 msgid "Community"
-msgstr ""
+msgstr "Comunità"
 
 #: app/templates/pricing.html:223 app/templates/pricing.html:348
 msgid "Priority Email"
-msgstr ""
+msgstr "Email Prioritaria"
 
 #: app/templates/pricing.html:223 app/templates/pricing.html:356
 msgid "Dedicated"
-msgstr ""
+msgstr "Dedicato"
 
 #: app/templates/pricing.html:238
 #, fuzzy
@@ -5348,13 +5363,13 @@ msgstr ""
 
 #: app/templates/pricing.html:246 app/templates/pricing.html:324
 msgid "Up to"
-msgstr ""
+msgstr "Fino a"
 
 #: app/templates/pricing.html:253 app/templates/pricing.html:329
 msgid "practitioner"
 msgid_plural "practitioners"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "professionista"
+msgstr[1] "professionisti"
 
 #: app/templates/pricing.html:282
 msgid "You are currently on the Free Plan"
@@ -5374,27 +5389,27 @@ msgstr "mese"
 
 #: app/templates/pricing.html:361
 msgid "Everything in Basic, plus:"
-msgstr ""
+msgstr "Tutto in Base, più:"
 
 #: app/templates/pricing.html:378
 msgid "Everything in Standard, plus:"
-msgstr ""
+msgstr "Tutto in Standard, più:"
 
 #: app/templates/pricing.html:405
 msgid "Change to"
-msgstr ""
+msgstr "Cambia a"
 
 #: app/templates/pricing.html:412
 msgid "Choose Plan"
-msgstr ""
+msgstr "Scegli Piano"
 
 #: app/templates/pricing.html:417
 msgid "Sign Up & Choose"
-msgstr ""
+msgstr "Registrati e Scegli"
 
 #: app/templates/pricing.html:431
 msgid "No subscription plans are currently available. Please check back later."
-msgstr ""
+msgstr "Nessun piano di abbonamento è attualmente disponibile. Riprova più tardi."
 
 #: app/templates/review_calendly_bookings.html:3
 #: app/templates/review_calendly_bookings.html:9
@@ -5545,7 +5560,7 @@ msgstr "Descrizione del Costo"
 
 #: app/templates/user_settings.html:96
 msgid "Acronym of your professional college"
-msgstr ""
+msgstr "Acronimo del tuo collegio professionale"
 
 #: app/templates/user_settings.html:174
 #, fuzzy
@@ -5596,13 +5611,15 @@ msgstr "Base di Contribuzione Autonomo"
 #: app/templates/user_settings.html:314
 #, fuzzy
 msgid "Tax Configuration"
-msgstr "Configurazione Calendly"
+msgstr "Configurazione Fiscale"
 
 #: app/templates/user_settings.html:316
 msgid ""
 "Configure your tax rates for financial calculations. Leave empty to use "
 "default values."
 msgstr ""
+"Configura le tue aliquote fiscali per i calcoli finanziari. Lascia vuoto "
+"per utilizzare i valori predefiniti."
 
 #: app/templates/user_settings.html:359
 msgid "Manage Fixed Costs"
@@ -5634,54 +5651,61 @@ msgstr "Aggiungi"
 
 #: app/templates/user_settings.html:435
 msgid "Understanding Your Options"
-msgstr ""
+msgstr "Comprendere le Tue Opzioni"
 
 #: app/templates/user_settings.html:436
 msgid ""
 "We provide two types of account deletion to give you control over your "
 "data. Please read carefully before making a decision."
 msgstr ""
+"Forniamo due tipi di cancellazione dell'account per darti il controllo "
+"sui tuoi dati. Leggi attentamente prima di prendere una decisione."
 
 #: app/templates/user_settings.html:443
 msgid "Temporary Deactivation"
-msgstr ""
+msgstr "Disattivazione Temporanea"
 
 #: app/templates/user_settings.html:446
 msgid ""
 "Your account will be deactivated but all your data remains safely stored."
 " You can contact support to reactivate your account at any time."
 msgstr ""
+"Il tuo account sarà disattivato ma tutti i tuoi dati rimangono "
+"salvaguardati. Puoi contattare il supporto per riattivare il tuo account "
+"in qualsiasi momento."
 
 #: app/templates/user_settings.html:448
 msgid "Account becomes inaccessible"
-msgstr ""
+msgstr "L'account diventa inaccessibile"
 
 #: app/templates/user_settings.html:449
 msgid "All data is preserved"
-msgstr ""
+msgstr "Tutti i dati sono preservati"
 
 #: app/templates/user_settings.html:450
 msgid "Can be reversed by contacting support"
-msgstr ""
+msgstr "Può essere invertito contattando il supporto"
 
 #: app/templates/user_settings.html:451
 msgid "Ideal if you might return"
-msgstr ""
+msgstr "Ideale se potresti tornare"
 
 #: app/templates/user_settings.html:453
 msgid ""
 "Are you sure you want to temporarily deactivate your account? You can "
 "contact support to reactivate it."
 msgstr ""
+"Sei sicuro di voler disattivare temporaneamente il tuo account? Puoi "
+"contattare il supporto per riattivarlo."
 
 #: app/templates/user_settings.html:456
 msgid "Temporarily Deactivate Account"
-msgstr ""
+msgstr "Disattiva Temporaneamente Account"
 
 #: app/templates/user_settings.html:466
 #, fuzzy
 msgid "Permanent Deletion"
-msgstr "Descrizione Trattamento"
+msgstr "Eliminazione Definitiva"
 
 #: app/templates/user_settings.html:469
 #, fuzzy
@@ -5689,73 +5713,80 @@ msgid ""
 "Your account and ALL associated data will be permanently deleted. This "
 "action cannot be undone."
 msgstr ""
-"Sei sicuro di voler eliminare definitivamente questo paziente? Questa "
-"azione non può essere annullata."
+"Il tuo account e TUTTI i dati associati saranno eliminati definitivamente. "
+"Questa azione non può essere annullata."
 
 #: app/templates/user_settings.html:471
 msgid "Account permanently deleted"
-msgstr ""
+msgstr "Account eliminato definitivamente"
 
 #: app/templates/user_settings.html:472
 #, fuzzy
 msgid "All patients and treatments deleted"
-msgstr "I calcoli sono basati sulle date dei trattamenti."
+msgstr "Tutti i pazienti e trattamenti eliminati"
 
 #: app/templates/user_settings.html:473
 msgid "All reports and documents deleted"
-msgstr ""
+msgstr "Tutti i rapporti e documenti eliminati"
 
 #: app/templates/user_settings.html:474
 msgid "Cannot be reversed"
-msgstr ""
+msgstr "Non può essere invertito"
 
 #: app/templates/user_settings.html:477
 msgid ""
 "This will permanently delete all patients, treatments, reports, and other"
 " data associated with your account. This action cannot be undone."
 msgstr ""
+"Questo eliminerà definitivamente tutti i pazienti, trattamenti, rapporti "
+"e altri dati associati al tuo account. Questa azione non può essere "
+"annullata."
 
 #: app/templates/user_settings.html:484
 msgid ""
 "I understand that this action will permanently delete all my data and "
 "cannot be undone"
 msgstr ""
+"Comprendo che questa azione eliminerà definitivamente tutti i miei dati "
+"e non può essere annullata"
 
 #: app/templates/user_settings.html:491
 msgid "Permanently Delete Account"
-msgstr ""
+msgstr "Elimina Definitivamente Account"
 
 #: app/templates/user_settings.html:500
 msgid "Need Help?"
-msgstr ""
+msgstr "Hai Bisogno di Aiuto?"
 
 #: app/templates/user_settings.html:501
 msgid ""
 "If you have questions about account deletion or need assistance with your"
 " data, please"
 msgstr ""
+"Se hai domande sulla cancellazione dell'account o hai bisogno di "
+"assistenza con i tuoi dati, per favore"
 
 #: app/templates/user_settings.html:501
 msgid "contact our support team"
-msgstr ""
+msgstr "contatta il nostro team di supporto"
 
 #: app/templates/user_settings.html:501
 msgid "before proceeding."
-msgstr ""
+msgstr "prima di procedere."
 
 #: app/templates/user_settings.html:544
 #, fuzzy
 msgid "Are you absolutely sure you want to permanently delete your account?"
-msgstr "Sei sicuro di voler eliminare questo costo?"
+msgstr "Sei assolutamente sicuro di voler eliminare definitivamente il tuo account?"
 
 #: app/templates/user_settings.html:544
 #, fuzzy
 msgid "This will delete:"
-msgstr "Questa Settimana:"
+msgstr "Questo eliminerà:"
 
 #: app/templates/user_settings.html:544
 msgid "All your patients and their data"
-msgstr ""
+msgstr "Tutti i tuoi pazienti e i loro dati"
 
 #: app/templates/user_settings.html:544
 #, fuzzy
@@ -5774,11 +5805,11 @@ msgstr "Riepilogo Finanziario Annuale:"
 
 #: app/templates/user_settings.html:544
 msgid "This action cannot be undone. Type \"DELETE\" to confirm:"
-msgstr ""
+msgstr "Questa azione non può essere annullata. Digita \"DELETE\" per confermare:"
 
 #: app/templates/user_settings.html:548
 msgid "Final confirmation: This will permanently delete everything. Are you sure?"
-msgstr ""
+msgstr "Conferma finale: Questo eliminerà definitivamente tutto. Sei sicuro?"
 
 #: app/templates/welcome_modal.html:32
 msgid "Let's get to know each other!"
@@ -5883,7 +5914,7 @@ msgstr "Registrati qui gratuitamente"
 #: app/templates/auth/register.html:13
 #, fuzzy
 msgid "Create a new account"
-msgstr "Crea Paziente"
+msgstr "Crea un nuovo account"
 
 #: app/templates/auth/register.html:70
 msgid "Already have an account?"
@@ -5891,15 +5922,15 @@ msgstr "Hai già un account?"
 
 #: app/templates/locations/form.html:70
 msgid "Fee Structure"
-msgstr ""
+msgstr "Struttura Tariffaria"
 
 #: app/templates/locations/form.html:71
 msgid "Set default fees for this location. These can be overridden per treatment."
-msgstr ""
+msgstr "Imposta le tariffe predefinite per questa sede. Queste possono essere sovrascritte per trattamento."
 
 #: app/templates/locations/form.html:111
 msgid "Percentage of fees that go to the clinic (if applicable)"
-msgstr ""
+msgstr "Percentuale delle tariffe che vanno alla clinica (se applicabile)"
 
 #: app/templates/locations/form.html:116
 #, fuzzy
@@ -5913,7 +5944,7 @@ msgstr "Imposta Luogo"
 
 #: app/templates/locations/manage.html:52
 msgid "First Session"
-msgstr ""
+msgstr "Prima Sessione"
 
 #: app/templates/locations/manage.html:55
 #, fuzzy
@@ -5922,7 +5953,7 @@ msgstr "Gestione"
 
 #: app/templates/locations/manage.html:62
 msgid "Clinic Share"
-msgstr ""
+msgstr "Quota Clinica"
 
 #: app/templates/locations/manage.html:68
 #, fuzzy
@@ -5944,6 +5975,8 @@ msgid ""
 "Add your first location to get started with organized treatment "
 "management."
 msgstr ""
+"Aggiungi la tua prima sede per iniziare con la gestione organizzata dei "
+"trattamenti."
 
 #: app/templates/locations/manage.html:97
 #, fuzzy
@@ -5960,6 +5993,8 @@ msgid ""
 "If this location has treatments or appointments, it will be deactivated "
 "instead of deleted."
 msgstr ""
+"Se questa sede ha trattamenti o appuntamenti, sarà disattivata invece "
+"di essere eliminata."
 
 #: app/templates/locations/manage.html:124
 #, fuzzy
@@ -5978,7 +6013,7 @@ msgstr ""
 
 #: venv/lib/python3.9/site-packages/click/core.py:1124
 msgid "Aborted!"
-msgstr ""
+msgstr "Annullato!"
 
 #: venv/lib/python3.9/site-packages/click/core.py:1349
 #: venv/lib/python3.9/site-packages/click/core.py:1379
@@ -6005,20 +6040,20 @@ msgstr ""
 
 #: venv/lib/python3.9/site-packages/click/core.py:1645
 msgid "Commands"
-msgstr ""
+msgstr "Comandi"
 
 #: venv/lib/python3.9/site-packages/click/core.py:1677
 msgid "Missing command."
-msgstr ""
+msgstr "Comando mancante."
 
 #: venv/lib/python3.9/site-packages/click/core.py:1755
 #, python-brace-format
 msgid "No such command {name!r}."
-msgstr ""
+msgstr "Nessun comando {name!r}."
 
 #: venv/lib/python3.9/site-packages/click/core.py:2313
 msgid "Value must be an iterable."
-msgstr ""
+msgstr "Il valore deve essere iterabile."
 
 #: venv/lib/python3.9/site-packages/click/core.py:2334
 #, python-brace-format
@@ -6034,12 +6069,12 @@ msgstr ""
 
 #: venv/lib/python3.9/site-packages/click/core.py:2813
 msgid "(dynamic)"
-msgstr ""
+msgstr "(dinamico)"
 
 #: venv/lib/python3.9/site-packages/click/core.py:2828
 #, python-brace-format
 msgid "default: {default}"
-msgstr ""
+msgstr "predefinito: {default}"
 
 #: venv/lib/python3.9/site-packages/click/core.py:2841
 #, fuzzy
@@ -6051,13 +6086,13 @@ msgstr "Scaduto"
 msgid "%(prog)s, version %(version)s"
 msgstr ""
 
-#: venv/lib/python3.9/site-packages/click/decorators.py:520
+#: venv/lib/python3.9/site-packages/click/core.py:520
 msgid "Show the version and exit."
-msgstr ""
+msgstr "Mostra la versione ed esci."
 
 #: venv/lib/python3.9/site-packages/click/decorators.py:541
 msgid "Show this message and exit."
-msgstr ""
+msgstr "Mostra questo messaggio ed esci."
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:49
 #: venv/lib/python3.9/site-packages/click/exceptions.py:88
@@ -6082,7 +6117,7 @@ msgstr ""
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:187
 msgid "Missing argument"
-msgstr ""
+msgstr "Argomento mancante"
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:189
 #, fuzzy
@@ -6091,7 +6126,7 @@ msgstr "Gestisci Posizioni"
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:191
 msgid "Missing parameter"
-msgstr ""
+msgstr "Parametro mancante"
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:193
 #, python-brace-format
@@ -6117,7 +6152,7 @@ msgstr[1] ""
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:270
 msgid "unknown error"
-msgstr ""
+msgstr "errore sconosciuto"
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:277
 #, python-brace-format
@@ -6156,7 +6191,7 @@ msgstr "Configurazione Calendly"
 
 #: venv/lib/python3.9/site-packages/click/termui.py:174
 msgid "Error: The value you entered was invalid."
-msgstr ""
+msgstr "Errore: Il valore che hai inserito non era valido."
 
 #: venv/lib/python3.9/site-packages/click/termui.py:176
 #, python-brace-format
@@ -6165,15 +6200,15 @@ msgstr ""
 
 #: venv/lib/python3.9/site-packages/click/termui.py:187
 msgid "Error: The two entered values do not match."
-msgstr ""
+msgstr "Errore: I due valori inseriti non corrispondono."
 
 #: venv/lib/python3.9/site-packages/click/termui.py:243
 msgid "Error: invalid input"
-msgstr ""
+msgstr "Errore: input non valido"
 
 #: venv/lib/python3.9/site-packages/click/termui.py:773
 msgid "Press any key to continue..."
-msgstr ""
+msgstr "Premi un tasto per continuare..."
 
 #: venv/lib/python3.9/site-packages/click/types.py:267
 #, python-brace-format
@@ -6223,7 +6258,7 @@ msgstr "Filtra"
 
 #: venv/lib/python3.9/site-packages/click/types.py:828
 msgid "directory"
-msgstr ""
+msgstr "directory"
 
 #: venv/lib/python3.9/site-packages/click/types.py:830
 #, fuzzy
@@ -6271,7 +6306,7 @@ msgstr[1] ""
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:293
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:323
 msgid "This field is required."
-msgstr ""
+msgstr "Questo campo è obbligatorio."
 
 #: venv/lib/python3.9/site-packages/flask_wtf/file.py:94
 #, python-brace-format
@@ -6280,17 +6315,17 @@ msgstr ""
 
 #: venv/lib/python3.9/site-packages/flask_wtf/file.py:101
 msgid "File does not have an approved extension."
-msgstr ""
+msgstr "Il file non ha un'estensione approvata."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:86
 #, python-format
 msgid "Invalid field name '%s'."
-msgstr ""
+msgstr "Nome campo non valido '%s'."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:99
 #, python-format
 msgid "Field must be equal to %(other_name)s."
-msgstr ""
+msgstr "Il campo deve essere uguale a %(other_name)s."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:146
 #, python-format
@@ -6316,26 +6351,26 @@ msgstr[1] ""
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:164
 #, python-format
 msgid "Field must be between %(min)d and %(max)d characters long."
-msgstr ""
+msgstr "Il campo deve essere lungo tra %(min)d e %(max)d caratteri."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:216
 #, python-format
 msgid "Number must be at least %(min)s."
-msgstr ""
+msgstr "Il numero deve essere almeno %(min)s."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:219
 #, python-format
 msgid "Number must be at most %(max)s."
-msgstr ""
+msgstr "Il numero deve essere al massimo %(max)s."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:222
 #, python-format
 msgid "Number must be between %(min)s and %(max)s."
-msgstr ""
+msgstr "Il numero deve essere tra %(min)s e %(max)s."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:358
 msgid "Invalid input."
-msgstr ""
+msgstr "Input non valido."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:422
 #, fuzzy
@@ -6354,62 +6389,62 @@ msgstr "Indirizzo IP"
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:540
 msgid "Invalid URL."
-msgstr ""
+msgstr "URL non valido."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:561
 msgid "Invalid UUID."
-msgstr ""
+msgstr "UUID non valido."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:595
 #, python-format
 msgid "Invalid value, must be one of: %(values)s."
-msgstr ""
+msgstr "Valore non valido, deve essere uno di: %(values)s."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:631
 #, python-format
 msgid "Invalid value, can't be any of: %(values)s."
-msgstr ""
+msgstr "Valore non valido, non può essere nessuno di: %(values)s."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:700
 msgid "This field cannot be edited."
-msgstr ""
+msgstr "Questo campo non può essere modificato."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:716
 msgid "This field is disabled and cannot have a value."
-msgstr ""
+msgstr "Questo campo è disabilitato e non può avere un valore."
 
 #: venv/lib/python3.9/site-packages/wtforms/csrf/core.py:96
 msgid "Invalid CSRF Token."
-msgstr ""
+msgstr "Token CSRF non valido."
 
 #: venv/lib/python3.9/site-packages/wtforms/csrf/session.py:64
 msgid "CSRF token missing."
-msgstr ""
+msgstr "Token CSRF mancante."
 
 #: venv/lib/python3.9/site-packages/wtforms/csrf/session.py:72
 msgid "CSRF failed."
-msgstr ""
+msgstr "CSRF fallito."
 
 #: venv/lib/python3.9/site-packages/wtforms/csrf/session.py:77
 msgid "CSRF token expired."
-msgstr ""
+msgstr "Token CSRF scaduto."
 
 #: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:142
 msgid "Invalid Choice: could not coerce."
-msgstr ""
+msgstr "Scelta non valida: non è stato possibile convertire."
 
 #: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:149
 #: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:203
 msgid "Choices cannot be None."
-msgstr ""
+msgstr "Le scelte non possono essere None."
 
 #: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:155
 msgid "Not a valid choice."
-msgstr ""
+msgstr "Non è una scelta valida."
 
 #: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:194
 msgid "Invalid choice(s): one or more data inputs could not be coerced."
-msgstr ""
+msgstr "Scelta/e non valida/e: uno o più input di dati non sono stati convertibili."
 
 #: venv/lib/python3.9/site-packages/wtforms/fields/choices.py:212
 #, python-format
@@ -6420,32 +6455,32 @@ msgstr[1] ""
 
 #: venv/lib/python3.9/site-packages/wtforms/fields/datetime.py:52
 msgid "Not a valid datetime value."
-msgstr ""
+msgstr "Non è un valore datetime valido."
 
 #: venv/lib/python3.9/site-packages/wtforms/fields/datetime.py:78
 msgid "Not a valid date value."
-msgstr ""
+msgstr "Non è un valore data valido."
 
 #: venv/lib/python3.9/site-packages/wtforms/fields/datetime.py:104
 msgid "Not a valid time value."
-msgstr ""
+msgstr "Non è un valore ora valido."
 
 #: venv/lib/python3.9/site-packages/wtforms/fields/datetime.py:149
 msgid "Not a valid week value."
-msgstr ""
+msgstr "Non è un valore settimana valido."
 
 #: venv/lib/python3.9/site-packages/wtforms/fields/numeric.py:82
 #: venv/lib/python3.9/site-packages/wtforms/fields/numeric.py:92
 msgid "Not a valid integer value."
-msgstr ""
+msgstr "Non è un valore intero valido."
 
 #: venv/lib/python3.9/site-packages/wtforms/fields/numeric.py:168
 msgid "Not a valid decimal value."
-msgstr ""
+msgstr "Non è un valore decimale valido."
 
 #: venv/lib/python3.9/site-packages/wtforms/fields/numeric.py:197
 msgid "Not a valid float value."
-msgstr ""
+msgstr "Non è un valore float valido."
 
 # Treatment page translations
 msgid "View Treatment"
