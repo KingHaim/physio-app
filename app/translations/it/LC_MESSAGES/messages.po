@@ -5791,17 +5791,17 @@ msgstr "Tutti i tuoi pazienti e i loro dati"
 #: app/templates/user_settings.html:544
 #, fuzzy
 msgid "All treatments and reports"
-msgstr "Dettagli del Trattamento"
+msgstr "Tutti i trattamenti e rapporti"
 
 #: app/templates/user_settings.html:544
 #, fuzzy
 msgid "All clinic information"
-msgstr "Informazioni di Contatto"
+msgstr "Tutte le informazioni della clinica"
 
 #: app/templates/user_settings.html:544
 #, fuzzy
 msgid "All financial data"
-msgstr "Riepilogo Finanziario Annuale:"
+msgstr "Tutti i dati finanziari"
 
 #: app/templates/user_settings.html:544
 msgid "This action cannot be undone. Type \"DELETE\" to confirm:"
@@ -5935,12 +5935,12 @@ msgstr "Percentuale delle tariffe che vanno alla clinica (se applicabile)"
 #: app/templates/locations/form.html:116
 #, fuzzy
 msgid "Back to Locations"
-msgstr "Torna al Paziente"
+msgstr "Torna alle Sedi"
 
 #: app/templates/locations/manage.html:12
 #, fuzzy
 msgid "Add New Location"
-msgstr "Imposta Luogo"
+msgstr "Aggiungi Nuova Sede"
 
 #: app/templates/locations/manage.html:52
 msgid "First Session"
@@ -5949,7 +5949,7 @@ msgstr "Prima Sessione"
 #: app/templates/locations/manage.html:55
 #, fuzzy
 msgid "Subsequent"
-msgstr "Gestione"
+msgstr "Successive"
 
 #: app/templates/locations/manage.html:62
 msgid "Clinic Share"
@@ -5958,17 +5958,17 @@ msgstr "Quota Clinica"
 #: app/templates/locations/manage.html:68
 #, fuzzy
 msgid "treatments"
-msgstr "Trattamenti"
+msgstr "trattamenti"
 
 #: app/templates/locations/manage.html:70
 #, fuzzy
 msgid "recurring appointments"
-msgstr "Appuntamenti Ricorrenti"
+msgstr "appuntamenti ricorrenti"
 
 #: app/templates/locations/manage.html:94
 #, fuzzy
 msgid "No Locations Yet"
-msgstr "Posizione"
+msgstr "Nessuna Sede Ancora"
 
 #: app/templates/locations/manage.html:95
 msgid ""
@@ -5981,12 +5981,12 @@ msgstr ""
 #: app/templates/locations/manage.html:97
 #, fuzzy
 msgid "Add Your First Location"
-msgstr "Passaggio 3: Aggiungi il tuo primo paziente"
+msgstr "Aggiungi la Tua Prima Sede"
 
 #: app/templates/locations/manage.html:114
 #, fuzzy
 msgid "Are you sure you want to delete the location"
-msgstr "Sei sicuro di voler eliminare"
+msgstr "Sei sicuro di voler eliminare la sede"
 
 #: app/templates/locations/manage.html:117
 msgid ""
@@ -5999,7 +5999,7 @@ msgstr ""
 #: app/templates/locations/manage.html:124
 #, fuzzy
 msgid "Delete Location"
-msgstr "Imposta Luogo"
+msgstr "Elimina Sede"
 
 #: venv/lib/python3.9/site-packages/click/_termui_impl.py:556
 #, python-brace-format
@@ -6024,19 +6024,19 @@ msgstr ""
 #: venv/lib/python3.9/site-packages/click/core.py:1396
 #, fuzzy
 msgid "Options"
-msgstr "Opzionale"
+msgstr "Opzioni"
 
 #: venv/lib/python3.9/site-packages/click/core.py:1422
 #, python-brace-format
 msgid "Got unexpected extra argument ({args})"
 msgid_plural "Got unexpected extra arguments ({args})"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Ricevuto argomento extra inaspettato ({args})"
+msgstr[1] "Ricevuti argomenti extra inaspettati ({args})"
 
 #: venv/lib/python3.9/site-packages/click/core.py:1438
 #, python-brace-format
 msgid "DeprecationWarning: The command {name!r} is deprecated."
-msgstr ""
+msgstr "DeprecationWarning: Il comando {name!r} è deprecato."
 
 #: venv/lib/python3.9/site-packages/click/core.py:1645
 msgid "Commands"
@@ -6059,13 +6059,13 @@ msgstr "Il valore deve essere iterabile."
 #, python-brace-format
 msgid "Takes {nargs} values but 1 was given."
 msgid_plural "Takes {nargs} values but {len} were given."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Richiede {nargs} valori ma ne è stato fornito 1."
+msgstr[1] "Richiede {nargs} valori ma ne sono stati forniti {len}."
 
 #: venv/lib/python3.9/site-packages/click/core.py:2783
 #, python-brace-format
 msgid "env var: {var}"
-msgstr ""
+msgstr "variabile env: {var}"
 
 #: venv/lib/python3.9/site-packages/click/core.py:2813
 msgid "(dynamic)"
@@ -6079,12 +6079,12 @@ msgstr "predefinito: {default}"
 #: venv/lib/python3.9/site-packages/click/core.py:2841
 #, fuzzy
 msgid "required"
-msgstr "Scaduto"
+msgstr "richiesto"
 
 #: venv/lib/python3.9/site-packages/click/decorators.py:457
 #, python-format
 msgid "%(prog)s, version %(version)s"
-msgstr ""
+msgstr "%(prog)s, versione %(version)s"
 
 #: venv/lib/python3.9/site-packages/click/core.py:520
 msgid "Show the version and exit."
@@ -6098,22 +6098,22 @@ msgstr "Mostra questo messaggio ed esci."
 #: venv/lib/python3.9/site-packages/click/exceptions.py:88
 #, fuzzy, python-brace-format
 msgid "Error: {message}"
-msgstr "Messaggio"
+msgstr "Errore: {message}"
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:80
 #, python-brace-format
 msgid "Try '{command} {option}' for help."
-msgstr ""
+msgstr "Prova '{command} {option}' per l'aiuto."
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:129
 #, python-brace-format
 msgid "Invalid value: {message}"
-msgstr ""
+msgstr "Valore non valido: {message}"
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:131
 #, python-brace-format
 msgid "Invalid value for {param_hint}: {message}"
-msgstr ""
+msgstr "Valore non valido per {param_hint}: {message}"
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:187
 msgid "Missing argument"
@@ -6122,7 +6122,7 @@ msgstr "Argomento mancante"
 #: venv/lib/python3.9/site-packages/click/exceptions.py:189
 #, fuzzy
 msgid "Missing option"
-msgstr "Gestisci Posizioni"
+msgstr "Opzione mancante"
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:191
 msgid "Missing parameter"
@@ -6131,24 +6131,24 @@ msgstr "Parametro mancante"
 #: venv/lib/python3.9/site-packages/click/exceptions.py:193
 #, python-brace-format
 msgid "Missing {param_type}"
-msgstr ""
+msgstr "Mancante {param_type}"
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:200
 #, python-brace-format
 msgid "Missing parameter: {param_name}"
-msgstr ""
+msgstr "Parametro mancante: {param_name}"
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:220
 #, fuzzy, python-brace-format
 msgid "No such option: {name}"
-msgstr "Nome Posizione"
+msgstr "Nessuna opzione del genere: {name}"
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:232
 #, python-brace-format
 msgid "Did you mean {possibility}?"
 msgid_plural "(Possible options: {possibilities})"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Intendevi {possibility}?"
+msgstr[1] "(Opzioni possibili: {possibilities})"
 
 #: venv/lib/python3.9/site-packages/click/exceptions.py:270
 msgid "unknown error"
@@ -6157,37 +6157,37 @@ msgstr "errore sconosciuto"
 #: venv/lib/python3.9/site-packages/click/exceptions.py:277
 #, python-brace-format
 msgid "Could not open file {filename!r}: {message}"
-msgstr ""
+msgstr "Impossibile aprire il file {filename!r}: {message}"
 
 #: venv/lib/python3.9/site-packages/click/parser.py:233
 #, python-brace-format
 msgid "Argument {name!r} takes {nargs} values."
-msgstr ""
+msgstr "L'argomento {name!r} richiede {nargs} valori."
 
 #: venv/lib/python3.9/site-packages/click/parser.py:415
 #, python-brace-format
 msgid "Option {name!r} does not take a value."
-msgstr ""
+msgstr "L'opzione {name!r} non accetta un valore."
 
 #: venv/lib/python3.9/site-packages/click/parser.py:476
 #, python-brace-format
 msgid "Option {name!r} requires an argument."
 msgid_plural "Option {name!r} requires {nargs} arguments."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "L'opzione {name!r} richiede un argomento."
+msgstr[1] "L'opzione {name!r} richiede {nargs} argomenti."
 
 #: venv/lib/python3.9/site-packages/click/shell_completion.py:326
 msgid "Shell completion is not supported for Bash versions older than 4.4."
-msgstr ""
+msgstr "Il completamento della shell non è supportato per le versioni di Bash precedenti alla 4.4."
 
 #: venv/lib/python3.9/site-packages/click/shell_completion.py:333
 msgid "Couldn't detect Bash version, shell completion is not supported."
-msgstr ""
+msgstr "Impossibile rilevare la versione di Bash, il completamento della shell non è supportato."
 
 #: venv/lib/python3.9/site-packages/click/termui.py:158
 #, fuzzy
 msgid "Repeat for confirmation"
-msgstr "Configurazione Calendly"
+msgstr "Ripeti per conferma"
 
 #: venv/lib/python3.9/site-packages/click/termui.py:174
 msgid "Error: The value you entered was invalid."
@@ -6196,7 +6196,7 @@ msgstr "Errore: Il valore che hai inserito non era valido."
 #: venv/lib/python3.9/site-packages/click/termui.py:176
 #, python-brace-format
 msgid "Error: {e.message}"
-msgstr ""
+msgstr "Errore: {e.message}"
 
 #: venv/lib/python3.9/site-packages/click/termui.py:187
 msgid "Error: The two entered values do not match."
