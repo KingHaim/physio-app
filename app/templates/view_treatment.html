@@ -153,7 +153,7 @@
                             <h6>{{ _('Trigger Points Map') }}</h6>
                             <div class="body-map-container">
                                 <img src="{{ url_for('static', filename='images/bodychart.svg') }}" class="body-map" alt="{{ _('Body chart') }}">
-                                <svg class="body-map-overlay" viewBox="0 0 500 800" xmlns="http://www.w3.org/2000/svg">
+                                <svg class="body-map-overlay" viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg">
                                     <!-- Plot recorded trigger points -->
                                     {% if treatment.evaluation_data %}
                                         {% for point in treatment.evaluation_data %}
@@ -164,7 +164,7 @@
                                                data-toggle="tooltip"
                                                title="{{ point.muscle }} (Intensity: {{ point.intensity }}/10)"/>
                                         {% endfor %}
-                                    {% else %}
+                                    {% elif treatment.trigger_points %}
                                         {% for point in treatment.trigger_points %}
                                         <circle cx="{{ point.location_x }}"
                                                cy="{{ point.location_y }}"
@@ -205,7 +205,7 @@
                                                 <td>{{ point.intensity }}/10</td>
                                             </tr>
                                             {% endfor %}
-                                        {% else %}
+                                        {% elif treatment.trigger_points %}
                                             {% for point in treatment.trigger_points %}
                                             <tr>
                                                 <td>
