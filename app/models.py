@@ -733,10 +733,11 @@ class User(db.Model, UserMixin):
         Args:
             include_clinic_patients (bool): If True, include patients from other clinic members
                                           If False, only return own patients (default for privacy)
-        """
-        if self.is_admin:
-            return Patient.query.all()
         
+        SECURITY: Admins follow the same access rules as other users.
+        No user should have blanket access to all patient data.
+        """
+        # SECURITY FIX: Removed admin bypass - admins follow same rules as other users
         if include_clinic_patients and self.is_in_clinic and self.can_manage_clinic_patients():
             # Get all patients from clinic members (only when explicitly requested)
             clinic = self.clinic
@@ -1288,3 +1289,66 @@ class ClinicSubscription(db.Model):
         return f'<ClinicSubscription {self.id} - Clinic {self.clinic_id} - Plan {self.plan_id} - Status {self.status}>'
 
 # --- End Clinic Models ---
+
+    def emergency_technical_access_patients(self, reason: str, requesting_system: str = None):
+        """
+        EMERGENCY TECHNICAL ACCESS ONLY
+        
+        This method should ONLY be used for legitimate technical emergencies
+        such as data corruption, system migration, or critical bug fixes.
+        
+        ALL ACCESS IS LOGGED AND AUDITABLE.
+        
+        Args:
+            reason (str): Detailed reason for emergency access (required)
+            requesting_system (str): System or process requesting access
+            
+        Returns:
+            List of patients if admin, empty list otherwise
+            
+        Security Notes:
+        - Only available to verified system administrators
+        - All access is logged with timestamps, user, and reason
+        - Should be used sparingly and only for technical purposes
+        - Regular patient access should use get_accessible_patients()
+        """
+        import logging
+        from datetime import datetime
+        
+        # Only actual system administrators can use this
+        if not self.is_admin:
+            logging.warning(f"Non-admin user {self.email} attempted emergency technical access")
+            return []
+        
+        # Log the emergency access attempt
+        log_message = (
+            f"EMERGENCY TECHNICAL ACCESS: Admin {self.email} (ID: {self.id}) "
+            f"accessed all patients. Reason: {reason}. "
+            f"Requesting system: {requesting_system or 'Manual'}. "
+            f"Timestamp: {datetime.utcnow().isoformat()}"
+        )
+        
+        # Log to both application log and security log
+        logging.critical(log_message)
+        
+        # Also try to log to security breach system if available
+        try:
+            from app.models import SecurityLog
+            security_log = SecurityLog(
+                user_id=self.id,
+                action="EMERGENCY_PATIENT_ACCESS",
+                details=f"Reason: {reason}. System: {requesting_system or 'Manual'}",
+                ip_address=None,  # Would need to be passed from request context
+                timestamp=datetime.utcnow()
+            )
+            from app import db
+            db.session.add(security_log)
+            db.session.commit()
+        except Exception as e:
+            logging.error(f"Failed to log emergency access to security log: {e}")
+        
+        # Print to console for immediate visibility
+        print(f"🚨 EMERGENCY TECHNICAL ACCESS ALERT: {log_message}")
+        
+        # Return all patients - but this should be used very rarely
+        return Patient.query.all()

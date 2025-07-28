@@ -746,27 +746,22 @@ def patient_detail(id):
     patient = Patient.query.get_or_404(id)
     
     # --- Access Control ---
-    if not current_user.is_admin:  # Admins have full access
-        if current_user.role == 'physio':
-            # Physios can access their own patients or clinic patients
-            accessible_patients = current_user.get_accessible_patients()
-            patient_ids = [p.id for p in accessible_patients]
-            if patient.id not in patient_ids:
-                flash('You do not have permission to view this patient\'s details.', 'danger') # Indented
-                return redirect(url_for('main.patients_list')) # Indented
-        elif current_user.role == 'patient':
-            # Patients should view their details via their own dashboard.
-            if not current_user.patient_record or current_user.patient_record.id != patient.id:
-                flash('Please access your details via the patient dashboard.', 'info')
-                return redirect(url_for('main.patient_dashboard'))
-            # If it IS their record, and they somehow land here, it's okay or redirect.
-            # For consistency, you might redirect them to their dashboard anyway.
-            # else:
-            #    return redirect(url_for('main.patient_dashboard'))
-
-        else: # Other non-admin, non-physio roles
-            flash('Access Denied.', 'danger')
-            return redirect(url_for('main.index'))
+    # SECURITY FIX: All users (including admins) must follow access control rules
+    if current_user.role == 'physio' or current_user.is_admin:
+        # Physios and admins can access their own patients or clinic patients
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        if patient.id not in patient_ids:
+            flash('You do not have permission to view this patient\'s details.', 'danger')
+            return redirect(url_for('main.patients_list'))
+    elif current_user.role == 'patient':
+        # Patients should view their details via their own dashboard.
+        if not current_user.patient_record or current_user.patient_record.id != patient.id:
+            flash('Please access your details via the patient dashboard.', 'info')
+            return redirect(url_for('main.patient_dashboard'))
+    else: # Other roles
+        flash('Access Denied.', 'danger')
+        return redirect(url_for('main.index'))
     # --- End Access Control ---
 
     print(f"Treatments for patient {patient.name}:")
@@ -1498,23 +1493,22 @@ def patient_treatments(id):
     patient = Patient.query.get_or_404(id)
     
     # --- Access Control ---
-    if not current_user.is_admin: # Admins have full access
-        if current_user.role == 'physio':
-            # Physios can access their own patients or clinic patients
-            accessible_patients = current_user.get_accessible_patients()
-            patient_ids = [p.id for p in accessible_patients]
-            if patient.id not in patient_ids:
-                flash('You do not have permission to view these treatments.', 'danger')
-                return redirect(url_for('main.patients_list'))
-        elif current_user.role == 'patient':
-            if not current_user.patient_record or current_user.patient_record.id != patient.id:
-                flash('You do not have permission to view these treatments.', 'danger')
-                return redirect(url_for('main.patient_dashboard')) # Indent this line
-            # If it IS their record, they are allowed through to see treatments.
-            # No 'else' needed here for this specific condition if access is granted.
-        else: # Other roles (this 'else' correctly pairs with 'if current_user.role == 'physio':')
-            flash('Access Denied.', 'danger')
-            return redirect(url_for('main.index'))
+    # SECURITY FIX: All users (including admins) must follow access control rules
+    if current_user.role == 'physio' or current_user.is_admin:
+        # Physios and admins can access their own patients or clinic patients
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        if patient.id not in patient_ids:
+            flash('You do not have permission to view these treatments.', 'danger')
+            return redirect(url_for('main.patients_list'))
+    elif current_user.role == 'patient':
+        if not current_user.patient_record or current_user.patient_record.id != patient.id:
+            flash('You do not have permission to view these treatments.', 'danger')
+            return redirect(url_for('main.patient_dashboard'))
+        # If it IS their record, they are allowed through to see treatments.
+    else: # Other roles
+        flash('Access Denied.', 'danger')
+        return redirect(url_for('main.index'))
     # --- End Access Control ---
     
     treatments = Treatment.query.filter_by(patient_id=id).order_by(Treatment.created_at.desc()).all()
@@ -2025,24 +2019,22 @@ def view_treatment(id):
     patient = treatment.patient
     
     # --- Access Control --- 
-    if not current_user.is_admin: # Admins have full access
-        if current_user.role == 'physio':
-            # Physios can access their own patients or clinic patients
-            accessible_patients = current_user.get_accessible_patients()
-            patient_ids = [p.id for p in accessible_patients]
-            if patient.id not in patient_ids:
-                flash('You do not have permission to view this treatment.', 'danger')
-                return redirect(url_for('main.patients_list'))
-        elif current_user.role == 'patient':
-            if not current_user.patient_record or current_user.patient_record.id != patient.id:
-                # VVVVV THESE LINES MUST BE INDENTED LIKE THIS VVVVV
-                flash('You do not have permission to view this treatment.', 'danger')
-                return redirect(url_for('main.patient_dashboard'))
-            # If it IS their record, they are allowed through.
-        else: # Other roles
-            # VVVVV THESE LINES MUST BE INDENTED LIKE THIS VVVVV
-            flash('Access Denied.', 'danger')
-            return redirect(url_for('main.index')) # This was also mis-indented in the snippet
+    # SECURITY FIX: All users (including admins) must follow access control rules
+    if current_user.role == 'physio' or current_user.is_admin:
+        # Physios and admins can access their own patients or clinic patients
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        if patient.id not in patient_ids:
+            flash('You do not have permission to view this treatment.', 'danger')
+            return redirect(url_for('main.patients_list'))
+    elif current_user.role == 'patient':
+        if not current_user.patient_record or current_user.patient_record.id != patient.id:
+            flash('You do not have permission to view this treatment.', 'danger')
+            return redirect(url_for('main.patient_dashboard'))
+        # If it IS their record, they are allowed through.
+    else: # Other roles
+        flash('Access Denied.', 'danger')
+        return redirect(url_for('main.index'))
     # --- End Access Control ---
     
     print(f"Viewing treatment {id}: Type={treatment.treatment_type}, Notes={treatment.notes}, Status={treatment.status}")
@@ -2622,14 +2614,14 @@ def download_report_pdf(report_id):
     patient = report.patient
     
     # --- Access Control ---
-    if not current_user.is_admin: # Admins have full access
-        if current_user.role == 'physio':
-            # Physios can access their own patients or clinic patients
-            accessible_patients = current_user.get_accessible_patients()
-            patient_ids = [p.id for p in accessible_patients]
-            if patient.id not in patient_ids:
-                flash('You do not have permission to download this report.', 'danger')
-                return redirect(url_for('main.patients_list'))
+    # SECURITY FIX: All users (including admins) must follow access control rules
+    if current_user.role == 'physio' or current_user.is_admin:
+        # Physios and admins can access their own patients or clinic patients
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        if patient.id not in patient_ids:
+            flash('You do not have permission to download this report.', 'danger')
+            return redirect(url_for('main.patients_list'))
         elif current_user.role == 'patient':
             if not current_user.patient_record or current_user.patient_record.id != patient.id:
                 flash('You do not have permission to download this report.', 'danger')
@@ -2711,7 +2703,8 @@ def view_homework(report_id):
         if report.patient_id in patient_ids:
             is_clinician_of_patient = True
 
-    if not is_patient_self and not is_clinician_of_patient and not current_user.is_admin:
+    # SECURITY FIX: Remove admin bypass - all users must follow same access rules
+    if not is_patient_self and not is_clinician_of_patient:
         flash('You do not have permission to view this report.', 'danger')
         # Redirect to a safe page, e.g., patient dashboard if patient, or main index if physio
         if current_user.role == 'patient':
@@ -3531,22 +3524,22 @@ def edit_patient(id):
     ).get_or_404(id)
 
     # --- Access Control ---
-    if not current_user.is_admin:
-        if current_user.role == 'physio':
-            # Physios can access their own patients or clinic patients
-            accessible_patients = current_user.get_accessible_patients()
-            patient_ids = [p.id for p in accessible_patients]
-            if patient.id not in patient_ids:
-                flash('You do not have permission to edit this patient\'s details.', 'danger')
-                return redirect(url_for('main.patients_list'))
-        elif current_user.role == 'patient':
-            if not patient.portal_user_account or patient.portal_user_account.id != current_user.id:
-                flash('You do not have permission to edit these patient details.', 'danger')
-                return redirect(url_for('main.patient_dashboard'))
-            # If it IS their record, they are allowed through to edit.
-        else: # This 'else' belongs to 'if current_user.role == 'physio':'
-            flash('Access Denied.', 'danger')
-            return redirect(url_for('main.index'))
+    # SECURITY FIX: All users (including admins) must follow access control rules
+    if current_user.role == 'physio' or current_user.is_admin:
+        # Physios and admins can access their own patients or clinic patients
+        accessible_patients = current_user.get_accessible_patients()
+        patient_ids = [p.id for p in accessible_patients]
+        if patient.id not in patient_ids:
+            flash('You do not have permission to edit this patient\'s details.', 'danger')
+            return redirect(url_for('main.patients_list'))
+    elif current_user.role == 'patient':
+        if not patient.portal_user_account or patient.portal_user_account.id != current_user.id:
+            flash('You do not have permission to edit these patient details.', 'danger')
+            return redirect(url_for('main.patient_dashboard'))
+        # If it IS their record, they are allowed through to edit.
+    else:
+        flash('Access Denied.', 'danger')
+        return redirect(url_for('main.index'))
     # --- End Access Control ---
     
     if request.method == 'POST':
@@ -4891,7 +4884,8 @@ def security_breach():
 @login_required
 def api_revoke_consent(consent_id):
     consent = UserConsent.query.get_or_404(consent_id)
-    if consent.user_id != current_user.id and not current_user.is_admin:
+    # SECURITY FIX: Remove admin bypass - users can only revoke their own consent
+    if consent.user_id != current_user.id:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
 
     consent.is_active = False
@@ -5000,7 +4994,8 @@ def api_consent_template():
 def api_delete_consent(consent_id):
     from app.models import UserConsent
     consent = UserConsent.query.get_or_404(consent_id)
-    if consent.user_id != current_user.id and not current_user.is_admin:
+    # SECURITY FIX: Remove admin bypass - users can only delete their own consent
+    if consent.user_id != current_user.id:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     db.session.delete(consent)
     db.session.commit()
