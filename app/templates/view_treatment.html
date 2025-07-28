@@ -48,7 +48,10 @@
                                     {% set width = treatment.pain_level * 10 %}
                                     <div class="progress" style="height: 20px;" title="{{ _('Pain:') }} {{ treatment.pain_level }}/10">
                                         <div class="progress-bar bg-danger" role="progressbar"
-                                             style="width: {{ width }}%">
+                                             data-width="{{ width }}"
+                                             aria-valuenow="{{ width }}"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
                                             {{ treatment.pain_level }}/10
                                         </div>
                                     </div>
@@ -137,54 +140,110 @@
     </div>
 
     <!-- Body Chart and Trigger Points -->
-    {% if treatment.evaluation_data or treatment.body_chart_url %}
+    {% if treatment.evaluation_data or treatment.trigger_points or treatment.body_chart_url %}
     <div class="row mb-4">
-        <div class="col-md-12">
+        <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-person"></i> {{ _('Body Chart & Trigger Points') }}</h5>
                 </div>
                 <div class="card-body">
-                    {% if treatment.body_chart_url %}
-                        <div class="mb-3">
-                            <h6>{{ _('Body Chart') }}</h6>
-                            <img src="{{ treatment.body_chart_url }}" alt="{{ _('Body Chart') }}" class="img-fluid border">
-                        </div>
-                    {% endif %}
-                    
-                    {% if treatment.evaluation_data %}
-                        <div>
-                            <h6>{{ _('Trigger Points') }}</h6>
-                            <div class="trigger-points-display">
-                                {% for point in treatment.evaluation_data %}
-                                <div class="point-item mb-2 p-2 border rounded">
-                                    <strong>{{ _('Trigger Point') }} {{ loop.index }}</strong><br>
-                                    <small class="text-muted">
-                                        {{ _('Position:') }} ({{ point.x }}, {{ point.y }}) | 
-                                        {{ _('Type:') }} {{ point.type }} |
-                                        {{ _('Muscle:') }} {{ point.muscle }}
-                                        {% if point.intensity %} | {{ _('Intensity:') }} {{ point.intensity }}{% endif %}
-                                    </small>
-                                    {% if point.symptoms %}
-                                    <div class="mt-1">
-                                        <small><strong>{{ _('Symptoms:') }}</strong> {{ point.symptoms }}</small>
-                                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>{{ _('Trigger Points Map') }}</h6>
+                            <div class="body-map-container">
+                                <img src="{{ url_for('static', filename='images/bodychart.svg') }}" class="body-map" alt="{{ _('Body chart') }}">
+                                <svg class="body-map-overlay" viewBox="0 0 500 800" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Plot recorded trigger points -->
+                                    {% if treatment.evaluation_data %}
+                                        {% for point in treatment.evaluation_data %}
+                                        <circle cx="{{ point.x }}"
+                                               cy="{{ point.y }}"
+                                               r="7"
+                                               class="trigger-point {{ point.type }}"
+                                               data-toggle="tooltip"
+                                               title="{{ point.muscle }} (Intensity: {{ point.intensity }}/10)"/>
+                                        {% endfor %}
+                                    {% else %}
+                                        {% for point in treatment.trigger_points %}
+                                        <circle cx="{{ point.location_x }}"
+                                               cy="{{ point.location_y }}"
+                                               r="7"
+                                               class="trigger-point {{ point.type }}"
+                                               data-toggle="tooltip"
+                                               title="{{ point.muscle }} (Intensity: {{ point.intensity }}/10)"/>
+                                        {% endfor %}
                                     {% endif %}
-                                    {% if point.referral %}
-                                    <div>
-                                        <small><strong>{{ _('Referral Pattern:') }}</strong> {{ point.referral }}</small>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                {% endfor %}
+                                </svg>
                             </div>
                         </div>
-                    {% endif %}
+                        
+                        <div class="col-md-6">
+                            <!-- Trigger Points Details -->
+                            <h6>{{ _('Trigger Points Analysis') }}</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>{{ _('Type') }}</th>
+                                            <th>{{ _('Muscle') }}</th>
+                                            <th>{{ _('Intensity') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if treatment.evaluation_data %}
+                                            {% for point in treatment.evaluation_data %}
+                                            <tr>
+                                                <td>
+                                                    <span class="badge bg-{{ 'danger' if point.type == 'active' 
+                                                                            else 'warning' if point.type == 'latent' 
+                                                                            else 'info' }}">
+                                                        {{ point.type }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ point.muscle }}</td>
+                                                <td>{{ point.intensity }}/10</td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            {% for point in treatment.trigger_points %}
+                                            <tr>
+                                                <td>
+                                                    <span class="badge bg-{{ 'danger' if point.type == 'active' 
+                                                                            else 'warning' if point.type == 'latent' 
+                                                                            else 'info' }}">
+                                                        {{ point.type }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ point.muscle }}</td>
+                                                <td>{{ point.intensity }}/10</td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-                    </div>
-                    {% endif %}
+        
+        <!-- Additional Chart Info -->
+        <div class="col-md-4">
+            {% if treatment.body_chart_url %}
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">{{ _('Additional Body Chart') }}</h6>
+                </div>
+                <div class="card-body">
+                    <img src="{{ treatment.body_chart_url }}" alt="{{ _('Body Chart') }}" class="img-fluid border">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
                     
     <!-- Notes Section -->
     <div class="row mb-4">
@@ -210,7 +269,7 @@
     <div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-between">
-                <button class="btn btn-danger" onclick="confirmDelete({{ treatment.id|tojson }})">
+                <button class="btn btn-danger" data-treatment-id="{{ treatment.id }}" onclick="confirmDelete(this.dataset.treatmentId)">
                             <i class="bi bi-trash"></i> {{ _('Delete Treatment') }}
                         </button>
                 <div>
@@ -228,32 +287,47 @@
 
 <style>
     .body-map-container {
-        position: relative;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        margin-bottom: 1rem;
         width: 100%;
-        height: 400px;
-        background: #f8f9fa;
-        overflow: hidden;
+        max-width: 300px;
+        margin: 0 auto;
+        position: relative;
+        cursor: crosshair;
     }
-    
+
     .body-map {
         width: 100%;
-        height: 100%;
-        object-fit: contain;
+        height: auto;
+        display: block;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f8f9fa;
     }
-    
-    .trigger-point {
+
+    .body-map-overlay {
         position: absolute;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: red;
-        border: 2px solid white;
-        box-shadow: 0 0 4px rgba(0,0,0,0.3);
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    .trigger-point {
         cursor: pointer;
-        transform: translate(-50%, -50%);
+        pointer-events: all;
+    }
+
+    .trigger-point.active {
+        fill: #dc3545;
+    }
+
+    .trigger-point.latent {
+        fill: #ffc107;
+    }
+
+    .trigger-point.satellite {
+        fill: #17a2b8;
     }
     
     .trigger-points-display .point-item {
@@ -262,23 +336,37 @@
 </style>
 
 <script>
-function confirmDelete(treatmentId) {
-    if (confirm('{{ _("Are you sure you want to delete this treatment? This action cannot be undone.") }}')) {
-        // Create a form to submit the delete request
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/treatment/${treatmentId}/delete`;
-        
-        // Add CSRF token
-        const csrfToken = document.createElement('input');
-        csrfToken.type = 'hidden';
-        csrfToken.name = 'csrf_token';
-        csrfToken.value = '{{ csrf_token() }}';
-        form.appendChild(csrfToken);
-        
-        document.body.appendChild(form);
-        form.submit();
+    function confirmDelete(treatmentId) {
+        if (confirm('{{ _("Are you sure you want to delete this treatment? This action cannot be undone.") }}')) {
+            // Create a form to submit the delete request
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/treatment/${treatmentId}/delete`;
+            
+            // Add CSRF token
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrf_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
     }
-}
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips for trigger points
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Set progress bar widths from data attributes
+        document.querySelectorAll('.progress-bar[data-width]').forEach(function(bar) {
+            var width = bar.getAttribute('data-width');
+            bar.style.width = width + '%';
+        });
+    });
 </script>
 {% endblock %} 

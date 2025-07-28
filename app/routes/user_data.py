@@ -104,7 +104,7 @@ def delete_account_permanent():
             logging.error(f"Error fetching patients for user {user_id}: {e}")
             owned_patients = []
 
-        # Now delete each patient’s data
+        # Now delete each patient's data
         for patient in owned_patients:
             # Delete patient reports
             PatientReport.query.filter_by(patient_id=patient.id).delete()

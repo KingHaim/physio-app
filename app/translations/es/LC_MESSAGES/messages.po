@@ -427,7 +427,7 @@ msgid "Avg. Treatments/Patient"
 msgstr "Tratamientos promedio por paciente"
 
 msgid "%(clinic_name)s Fee (This Week)"
-msgstr "Tarifa de %(clinic_name)s (esta semana)"
+msgstr "Tarifa de %(clinic_name) (esta semana)"
 
 msgid "Total Weekly %(clinic_name)s Revenue:"
 msgstr "Ingresos semanales totales de %(clinic_name)s:"
@@ -1150,7 +1150,7 @@ msgstr "ej., agudo, sordo, ardiente, pulsátil"
 #: app/templates/new_patient_backup_final.html:728
 #: app/templates/new_patient_old.html:728
 msgid "What makes it worse?"
-msgstr ""
+msgstr "¿Qué lo empeora?"
 
 #: app/templates/edit_patient.html:294
 msgid "Activities, positions, times of day"
@@ -1161,7 +1161,7 @@ msgstr "Actividades, posiciones, momentos del día"
 #: app/templates/new_patient_backup_final.html:735
 #: app/templates/new_patient_old.html:735
 msgid "What makes it better?"
-msgstr ""
+msgstr "¿Qué lo mejora?"
 
 #: app/templates/edit_patient.html:299
 msgid "Rest, heat, cold, positions, medications"
@@ -1230,7 +1230,7 @@ msgstr "Gestionar las credenciales de inicio de sesión del paciente para accede
 #: app/templates/new_patient_backup_final.html:943
 #: app/templates/new_patient_old.html:943
 msgid "Login Email"
-msgstr ""
+msgstr "Correo de inicio de sesión"
 
 #: app/templates/edit_patient.html:357
 msgid "Enter an email and password below to create a login."
@@ -1239,7 +1239,7 @@ msgstr "Introduce un correo electrónico y contraseña a continuación para crea
 #: app/templates/edit_patient.html:363
 #, fuzzy
 msgid "Leave blank to keep current password"
-msgstr "Dejar en blanco para recurrencia indefinida."
+msgstr "Dejar en blanco para mantener la contraseña actual"
 
 #: app/templates/edit_patient.html:364
 msgid "Only enter a new password if you want to change it."
@@ -1248,12 +1248,12 @@ msgstr "Solo introduce una nueva contraseña si quieres cambiarla."
 #: app/templates/edit_patient.html:372 app/templates/edit_patient.html:438
 #, fuzzy
 msgid "Merge Patient"
-msgstr "Para paciente:"
+msgstr "Fusionar Paciente"
 
 #: app/templates/edit_patient.html:375
 #, fuzzy
 msgid "Delete Patient"
-msgstr "Volver al Paciente"
+msgstr "Eliminar Paciente"
 
 #: app/templates/edit_patient.html:382 app/templates/edit_treatment.html:139
 #: app/templates/user_settings.html:99 app/templates/user_settings.html:226
@@ -1278,7 +1278,7 @@ msgstr "Sí, Eliminar"
 #: app/templates/edit_patient.html:419
 #, fuzzy
 msgid "Confirm Cancel"
-msgstr "Cancelar"
+msgstr "Confirmar Cancelación"
 
 #: app/templates/edit_patient.html:423
 msgid "Are you sure you want to cancel? Any unsaved changes will be lost."
@@ -1291,45 +1291,45 @@ msgstr "No, Continuar Editando"
 #: app/templates/edit_patient.html:427
 #, fuzzy
 msgid "Yes, Cancel"
-msgstr "Cancelar"
+msgstr "Sí, Cancelar"
 
 #: app/templates/edit_patient.html:444
 msgid "This will merge the current patient ("
-msgstr ""
+msgstr "Esto fusionará el paciente actual ("
 
 #: app/templates/edit_patient.html:444
 msgid ""
 ") with another patient profile. All treatments, reports, and data will be"
 " transferred to the target patient, and this patient will be deleted."
-msgstr ""
+msgstr ") con otro perfil de paciente. Todos los tratamientos, informes y datos serán transferidos al paciente objetivo, y este paciente será eliminado."
 
 #: app/templates/edit_patient.html:448
 msgid "Search for target patient to merge with:"
-msgstr ""
+msgstr "Buscar paciente objetivo para fusionar con:"
 
 #: app/templates/edit_patient.html:452
 msgid "Enter patient name or contact information..."
-msgstr ""
+msgstr "Introduce el nombre del paciente o información de contacto..."
 
 #: app/templates/edit_patient.html:453
 msgid "Start typing to search for patients"
-msgstr ""
+msgstr "Empieza a escribir para buscar pacientes"
 
 #: app/templates/edit_patient.html:457
 msgid "Search Results:"
-msgstr ""
+msgstr "Resultados de búsqueda:"
 
 #: app/templates/edit_patient.html:464
 msgid "Selected Target Patient:"
-msgstr ""
+msgstr "Paciente objetivo seleccionado:"
 
 #: app/templates/edit_patient.html:477
 msgid "Confirm Merge"
-msgstr ""
+msgstr "Confirmar Fusión"
 
 #: app/templates/edit_patient.html:894
 msgid "Contact"
-msgstr ""
+msgstr "Contacto"
 
 #: app/templates/edit_patient.html:894 app/templates/edit_patient.html:898
 #: app/templates/patient_detail.html:216 app/templates/patient_detail.html:217
@@ -1341,73 +1341,73 @@ msgstr "Proveedor"
 
 #: app/templates/edit_patient.html:899
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: app/templates/edit_treatment.html:3 app/templates/edit_treatment.html:13
 #, fuzzy
 msgid "Edit Treatment Session"
-msgstr "Tipo de Tratamiento Predeterminado"
+msgstr "Editar Sesión de Tratamiento"
 
 #: app/templates/edit_treatment.html:21
 #, fuzzy
 msgid "Editing Treatment for"
-msgstr "Tipo de Tratamiento Predeterminado"
+msgstr "Editando Tratamiento para"
 
 #: app/templates/edit_treatment.html:22
 msgid "You are editing the treatment session from"
-msgstr ""
+msgstr "Estás editando la sesión de tratamiento del"
 
 #: app/templates/edit_treatment.html:40
 msgid "Clinical Details"
-msgstr ""
+msgstr "Detalles Clínicos"
 
 #: app/templates/edit_treatment.html:43
 msgid "Financial & Scheduling"
-msgstr ""
+msgstr "Financiero y Programación"
 
 #: app/templates/edit_treatment.html:54
 msgid "Clinical Information"
-msgstr ""
+msgstr "Información Clínica"
 
 #: app/templates/edit_treatment.html:55 app/templates/review_payments.html:21
 #, fuzzy
 msgid "Treatment Date"
-msgstr "Fecha de Inicio"
+msgstr "Fecha de Tratamiento"
 
 #: app/templates/edit_treatment.html:56 app/templates/patients_list.html:162
 msgid "Treatment Description"
-msgstr ""
+msgstr "Descripción del Tratamiento"
 
 #: app/templates/edit_treatment.html:57 app/templates/patient_detail.html:904
 #: app/templates/patient_detail_BACKUP.html:818
 msgid "Scheduled"
-msgstr ""
+msgstr "Programado"
 
 #: app/templates/edit_treatment.html:57 app/templates/patient_detail.html:905
 #: app/templates/patient_detail_BACKUP.html:819
 msgid "In Progress"
-msgstr ""
+msgstr "En Progreso"
 
 #: app/templates/edit_treatment.html:57 app/templates/patient_detail.html:906
 #: app/templates/patient_detail_BACKUP.html:820
 #: app/templates/patients_list.html:21
 msgid "Completed"
-msgstr ""
+msgstr "Completado"
 
 #: app/templates/edit_treatment.html:57 app/templates/patient_detail.html:907
 #: app/templates/patient_detail_BACKUP.html:821
 #, fuzzy
 msgid "Cancelled"
-msgstr "Cancelar"
+msgstr "Cancelado"
 
 #: app/templates/edit_treatment.html:58
 msgid "Pain Level (1-10)"
-msgstr ""
+msgstr "Nivel de Dolor (1-10)"
 
 #: app/templates/edit_treatment.html:59 app/templates/patient_detail.html:839
 #: app/templates/patient_detail_BACKUP.html:753
 msgid "Movement Restriction"
-msgstr ""
+msgstr "Restricción de Movimiento"
 
 #: app/templates/edit_treatment.html:61 app/templates/patient_detail.html:797
 #: app/templates/patient_detail.html:897
@@ -1415,88 +1415,88 @@ msgstr ""
 #: app/templates/patient_detail_BACKUP.html:811
 #: app/templates/patients_list.html:166 app/templates/treatment_detail.html:45
 msgid "Progress Notes"
-msgstr ""
+msgstr "Notas de Progreso"
 
 #: app/templates/edit_treatment.html:64 app/templates/edit_treatment.html:677
 msgid "Generate from Anamnesis"
-msgstr ""
+msgstr "Generar desde Anamnesis"
 
 #: app/templates/edit_treatment.html:67
 #, fuzzy
 msgid "Record"
-msgstr "Tarjeta"
+msgstr "Grabar"
 
 #: app/templates/edit_treatment.html:87
 msgid "Body Chart & Trigger Points"
-msgstr ""
+msgstr "Diagrama Corporal y Puntos Gatillo"
 
 #: app/templates/edit_treatment.html:89
 msgid "Body Map"
-msgstr ""
+msgstr "Mapa Corporal"
 
 #: app/templates/edit_treatment.html:89 app/templates/patient_detail.html:852
 #: app/templates/patient_detail_BACKUP.html:766
 msgid "Latent"
-msgstr ""
+msgstr "Latente"
 
 #: app/templates/edit_treatment.html:89 app/templates/patient_detail.html:853
 #: app/templates/patient_detail_BACKUP.html:767
 msgid "Satellite"
-msgstr ""
+msgstr "Satélite"
 
 #: app/templates/edit_treatment.html:90 app/templates/patient_detail.html:864
 #: app/templates/patient_detail_BACKUP.html:778
 msgid "Click on the body map to add trigger points"
-msgstr ""
+msgstr "Haz clic en el mapa corporal para añadir puntos gatillo"
 
 #: app/templates/edit_treatment.html:93 app/templates/patient_detail.html:868
 #: app/templates/patient_detail_BACKUP.html:782
 msgid "Trigger Points"
-msgstr ""
+msgstr "Puntos Gatillo"
 
 #: app/templates/edit_treatment.html:94 app/templates/patient_detail.html:874
 #: app/templates/patient_detail_BACKUP.html:788
 #: app/templates/treatment_detail.html:87
 msgid "Muscle"
-msgstr ""
+msgstr "Músculo"
 
 #: app/templates/edit_treatment.html:94 app/templates/patient_detail.html:875
 #: app/templates/patient_detail_BACKUP.html:789
 #: app/templates/treatment_detail.html:88
 msgid "Intensity"
-msgstr ""
+msgstr "Intensidad"
 
 #: app/templates/edit_treatment.html:94 app/templates/treatment_detail.html:89
 msgid "Symptoms"
-msgstr ""
+msgstr "Síntomas"
 
 #: app/templates/edit_treatment.html:94
 msgid "Referral"
-msgstr ""
+msgstr "Derivación"
 
 #: app/templates/edit_treatment.html:102
 msgid "Financial & Scheduling Information"
-msgstr ""
+msgstr "Información Financiera y de Programación"
 
 #: app/templates/edit_treatment.html:109
 msgid "Visit Type"
-msgstr ""
+msgstr "Tipo de Visita"
 
 #: app/templates/edit_treatment.html:112
 msgid "First Visit"
-msgstr ""
+msgstr "Primera Visita"
 
 #: app/templates/edit_treatment.html:116
 msgid "Follow-up"
-msgstr ""
+msgstr "Seguimiento"
 
 #: app/templates/edit_treatment.html:120
 msgid "Fee Charged (€)"
-msgstr ""
+msgstr "Tarifa Cobrada (€)"
 
 #: app/templates/edit_treatment.html:120
 msgid "Select location first"
-msgstr ""
+msgstr "Selecciona ubicación primero"
 
 #: app/templates/edit_treatment.html:124
 #: app/templates/new_recurring_appointment.html:75
@@ -1520,11 +1520,11 @@ msgstr "Tarjeta"
 
 #: app/templates/edit_treatment.html:126
 msgid "Next Appointment Date"
-msgstr ""
+msgstr "Fecha de Próxima Cita"
 
 #: app/templates/edit_treatment.html:126
 msgid "Optional: Leave blank if no follow-up is scheduled yet"
-msgstr ""
+msgstr "Opcional: Dejar en blanco si no hay seguimiento programado aún"
 
 #: app/templates/edit_treatment.html:611 app/templates/patient_detail.html:1444
 #: app/templates/patient_detail.html:1545
@@ -1532,119 +1532,119 @@ msgstr ""
 #: app/templates/patient_detail_BACKUP.html:1358
 #: app/templates/patient_detail_BACKUP.html:1459
 msgid "Generating..."
-msgstr ""
+msgstr "Generando..."
 
 #: app/templates/edit_treatment.html:628
 msgid "Clinical Notes:"
-msgstr ""
+msgstr "Notas Clínicas:"
 
 #: app/templates/edit_treatment.html:636
 msgid "Recommended Tests:"
-msgstr ""
+msgstr "Pruebas Recomendadas:"
 
 #: app/templates/edit_treatment.html:644
 msgid "Red Flags to Monitor:"
-msgstr ""
+msgstr "Señales de Alerta a Monitorear:"
 
 #: app/templates/edit_treatment.html:652
 msgid "Psychosocial Considerations:"
-msgstr ""
+msgstr "Consideraciones Psicosociales:"
 
 #: app/templates/edit_treatment.html:664 app/templates/monitoring.html:128
 msgid "Success"
-msgstr ""
+msgstr "Éxito"
 
 #: app/templates/edit_treatment.html:664
 msgid "Clinical notes generated successfully"
-msgstr ""
+msgstr "Notas clínicas generadas exitosamente"
 
 #: app/templates/edit_treatment.html:667 app/templates/edit_treatment.html:672
 msgid "Failed to generate clinical notes"
-msgstr ""
+msgstr "Error al generar notas clínicas"
 
 #: app/templates/financials.html:3 app/templates/financials.html:8
 #: app/templates/financials_backup.html:3
 #: app/templates/financials_backup.html:8
 msgid "Financial Report"
-msgstr ""
+msgstr "Informe Financiero"
 
 #: app/templates/financials.html:11 app/templates/financials_backup.html:11
 msgid "Select Year:"
-msgstr ""
+msgstr "Seleccionar Año:"
 
 #: app/templates/financials.html:25 app/templates/financials_backup.html:24
 msgid "Tax Configuration Required"
-msgstr ""
+msgstr "Configuración de Impuestos Requerida"
 
 #: app/templates/financials.html:56 app/templates/financials_backup.html:27
 #: app/templates/user_settings.html:24
 msgid "Financial Settings"
-msgstr ""
+msgstr "Configuración Financiera"
 
 #: app/templates/financials.html:66 app/templates/financials_backup.html:36
 msgid "Yearly Financial Summary:"
-msgstr ""
+msgstr "Resumen Financiero Anual:"
 
 #: app/templates/financials.html:73 app/templates/financials_backup.html:43
 msgid "Metric"
-msgstr ""
+msgstr "Métrica"
 
 #: app/templates/financials.html:74 app/templates/financials_backup.html:44
 msgid "Q1 (Jan-Mar)"
-msgstr ""
+msgstr "Q1 (Ene-Mar)"
 
 #: app/templates/financials.html:75 app/templates/financials_backup.html:45
 msgid "Q2 (Apr-Jun)"
-msgstr ""
+msgstr "Q2 (Abr-Jun)"
 
 #: app/templates/financials.html:76 app/templates/financials_backup.html:46
 msgid "Q3 (Jul-Sep)"
-msgstr ""
+msgstr "Q3 (Jul-Sep)"
 
 #: app/templates/financials.html:77 app/templates/financials_backup.html:47
 msgid "Q4 (Oct-Dec)"
-msgstr ""
+msgstr "Q4 (Oct-Dic)"
 
 #: app/templates/financials.html:78 app/templates/financials_backup.html:48
 msgid "Annual Total"
-msgstr ""
+msgstr "Total Anual"
 
 #: app/templates/financials.html:170
 #, python-brace-format
 msgid "Monthly Financial Breakdown & {} Contribution Analysis"
-msgstr ""
+msgstr "Desglose Financiero Mensual y Análisis de Contribuciones {}"
 
 #: app/templates/financials.html:177
 msgid "Month"
-msgstr ""
+msgstr "Mes"
 
 #: app/templates/financials.html:178
 msgid "Net Revenue (before Contrib.)"
-msgstr ""
+msgstr "Ingresos Netos (antes de Contrib.)"
 
 #: app/templates/financials.html:179
 msgid "Fixed Expenses"
-msgstr ""
+msgstr "Gastos Fijos"
 
 #: app/templates/financials.html:180
 msgid "Income Bracket (Tramo)"
-msgstr ""
+msgstr "Tramo de Ingresos (Tramo)"
 
 #: app/templates/financials.html:181
 msgid "Min. Contribution Base (€)"
-msgstr ""
+msgstr "Base Mín. de Contribución (€)"
 
 #: app/templates/financials.html:182
 msgid "Est. Monthly Contribution (€)"
-msgstr ""
+msgstr "Contribución Mensual Estimada (€)"
 
 #: app/templates/financials.html:183
 msgid "Final Net Revenue (€)"
-msgstr ""
+msgstr "Ingresos Netos Finales (€)"
 
 #: app/templates/financials.html:184
 msgid "Room Before Next Bracket"
-msgstr ""
+msgstr "Margen Antes del Siguiente Tramo"
 
 #: app/templates/financials.html:233
 #, python-brace-format
@@ -1654,172 +1654,172 @@ msgid ""
 "Revenue (before Contrib.) - Est. Monthly Contribution. All expenses and "
 "contributions are in EUR. Income brackets and minimum contribution bases "
 "shown are for the Spanish Autónomo system for {}."
-msgstr ""
+msgstr "*'Ingresos Netos (antes de Contrib.)' = Ingresos Mensuales{} - Gastos Fijos. Este valor determina el Tramo de Ingresos. 'Ingresos Netos Finales' = Ingresos Netos (antes de Contrib.) - Contribución Mensual Estimada. Todos los gastos y contribuciones están en EUR. Los tramos de ingresos y bases mínimas de contribución mostrados son para el sistema de Autónomos español para {}."
 
 #: app/templates/financials_backup.html:26
 msgid "You have not yet configured your tax rates and brackets. Please visit"
-msgstr ""
+msgstr "Aún no has configurado tus tasas e impuestos. Por favor visita"
 
 #: app/templates/financials_backup.html:28
 msgid "to configure your taxes. Until then, financial calculations will show N/A."
-msgstr ""
+msgstr "para configurar tus impuestos. Hasta entonces, los cálculos financieros mostrarán N/A."
 
 #: app/templates/index.html:216
 msgid "🚀 Welcome to TRXCKER! Let's get you set up."
-msgstr ""
+msgstr "🚀 ¡Bienvenido a TRXCKER! Vamos a configurarte."
 
 #: app/templates/index.html:220
 msgid ""
 "To personalize your experience and unlock all features, please complete "
 "these first steps:"
-msgstr ""
+msgstr "Para personalizar tu experiencia y desbloquear todas las funciones, por favor completa estos primeros pasos:"
 
 #: app/templates/index.html:223
 msgid "Step 1: Complete Your Profile"
-msgstr ""
+msgstr "Paso 1: Completa tu Perfil"
 
 #: app/templates/index.html:225
 msgid "Add your name and professional details."
-msgstr ""
+msgstr "Añade tu nombre y detalles profesionales."
 
 #: app/templates/index.html:228
 msgid "Step 2: Connect Your Tools (Optional)"
-msgstr ""
+msgstr "Paso 2: Conecta tus Herramientas (Opcional)"
 
 #: app/templates/index.html:230
 msgid "Integrate with Calendly to sync your appointments automatically."
-msgstr ""
+msgstr "Integra con Calendly para sincronizar tus citas automáticamente."
 
 #: app/templates/index.html:233
 msgid "Step 3: Add Your First Patient"
-msgstr ""
+msgstr "Paso 3: Añade tu Primer Paciente"
 
 #: app/templates/index.html:235
 msgid "Start managing your patient records and treatments."
-msgstr ""
+msgstr "Comienza a gestionar los registros y tratamientos de tus pacientes."
 
 #: app/templates/index.html:248
 #, python-format
 msgid "Welcome back, %(username)s!"
-msgstr ""
+msgstr "¡Bienvenido de vuelta, %(username)s!"
 
 #: app/templates/index.html:250
 msgid "Here's an overview of your clinic's activity."
-msgstr ""
+msgstr "Aquí tienes una vista general de la actividad de tu clínica."
 
 #: app/templates/index.html:259 app/templates/pricing.html:309
 #: app/templates/pricing.html:396
 msgid "Current Plan"
-msgstr ""
+msgstr "Plan Actual"
 
 #: app/templates/index.html:263
 msgid "Ends"
-msgstr ""
+msgstr "Termina"
 
 #: app/templates/index.html:263
 msgid "Renews"
-msgstr ""
+msgstr "Renueva"
 
 #: app/templates/index.html:267
 msgid "Upgrade Plan"
-msgstr ""
+msgstr "Actualizar Plan"
 
 #: app/templates/index.html:269
 msgid "Manage Plan"
-msgstr ""
+msgstr "Gestionar Plan"
 
 #: app/templates/index.html:281
 msgid "Patient Capacity"
-msgstr ""
+msgstr "Capacidad de Pacientes"
 
 #: app/templates/index.html:293 app/templates/patients_list.html:43
 msgid "Limit Reached!"
-msgstr ""
+msgstr "¡Límite Alcanzado!"
 
 #: app/templates/index.html:294 app/templates/patients_list.html:44
 msgid "Upgrade"
-msgstr ""
+msgstr "Actualizar"
 
 #: app/templates/index.html:296 app/templates/patients_list.html:46
 msgid "Nearing Limit"
-msgstr ""
+msgstr "Cerca del Límite"
 
 #: app/templates/index.html:304
 msgid "Unlimited Patients"
-msgstr ""
+msgstr "Pacientes Ilimitados"
 
 #: app/templates/index.html:316
 msgid "Currently under treatment"
-msgstr ""
+msgstr "Actualmente en tratamiento"
 
 #: app/templates/index.html:324
 msgid "Today's Appointments"
-msgstr ""
+msgstr "Citas de Hoy"
 
 #: app/templates/index.html:327
 msgid "Scheduled for today"
-msgstr ""
+msgstr "Programadas para hoy"
 
 #: app/templates/index.html:338
 msgid "Patients needing review"
-msgstr ""
+msgstr "Pacientes que necesitan revisión"
 
 #: app/templates/index.html:355
 #, fuzzy
 msgid "Upcoming Appointments"
-msgstr "Agregar Cita Recurrente"
+msgstr "Próximas Citas"
 
 #: app/templates/index.html:356
 msgid "View All"
-msgstr ""
+msgstr "Ver Todo"
 
 #: app/templates/index.html:414
 #, fuzzy
 msgid "No upcoming appointments"
-msgstr "Agregar Cita Recurrente"
+msgstr "No hay citas próximas"
 
 #: app/templates/index.html:416
 #, fuzzy
 msgid "Schedule Appointment"
-msgstr "Agregar Cita Recurrente"
+msgstr "Programar Cita"
 
 #: app/templates/index.html:548 app/templates/welcome_modal.html:22
 msgid "Personal Info"
-msgstr ""
+msgstr "Información Personal"
 
 #: app/templates/index.html:551 app/templates/welcome_modal.html:23
 msgid "Work Setup"
-msgstr ""
+msgstr "Configuración de Trabajo"
 
 #: app/templates/index.html:554 app/templates/welcome_modal.html:24
 msgid "Clinic Info"
-msgstr ""
+msgstr "Información de la Clínica"
 
 #: app/templates/index.html:557 app/templates/locations/manage.html:50
 #: app/templates/welcome_modal.html:25
 #, fuzzy
 msgid "Fees"
-msgstr "Tarifa"
+msgstr "Tarifas"
 
 #: app/templates/index.html:568
 msgid "Let's get to know you!"
-msgstr ""
+msgstr "¡Vamos a conocerte!"
 
 #: app/templates/index.html:569
 msgid "Which language would you prefer to use?"
-msgstr ""
+msgstr "¿Qué idioma prefieres usar?"
 
 #: app/templates/index.html:582 app/templates/welcome_modal.html:56
 msgid "Nice to meet you!"
-msgstr ""
+msgstr "¡Encantado de conocerte!"
 
 #: app/templates/index.html:583
 msgid "What should we call you?"
-msgstr ""
+msgstr "¿Cómo deberíamos llamarte?"
 
 #: app/templates/index.html:601
 msgid "Professional Registration"
-msgstr ""
+msgstr "Registro Profesional"
 
 #: app/templates/index.html:601 app/templates/new_recurring_appointment.html:27
 msgid "Optional"
@@ -1827,7 +1827,7 @@ msgstr "Opcional"
 
 #: app/templates/index.html:605
 msgid "e.g. 12345"
-msgstr ""
+msgstr "ej. 12345"
 
 #: app/templates/index.html:619
 msgid "Tell us about your work"
@@ -1839,309 +1839,309 @@ msgstr ""
 
 #: app/templates/index.html:630
 msgid "Freelancer"
-msgstr ""
+msgstr "Autónomo"
 
 #: app/templates/index.html:631
 msgid "I work independently"
-msgstr ""
+msgstr "Trabajo de forma independiente"
 
 #: app/templates/index.html:641
 msgid "Clinic Employee"
-msgstr ""
+msgstr "Empleado de Clínica"
 
 #: app/templates/index.html:642
 msgid "I work in a clinic"
-msgstr ""
+msgstr "Trabajo en una clínica"
 
 #: app/templates/index.html:652
 msgid "Both"
-msgstr ""
+msgstr "Ambos"
 
 #: app/templates/index.html:653
 msgid "I do both freelance and clinic work"
-msgstr ""
+msgstr "Hago tanto trabajo autónomo como de clínica"
 
 #: app/templates/index.html:673 app/templates/welcome_modal.html:133
 msgid "About your clinic"
-msgstr ""
+msgstr "Sobre tu clínica"
 
 #: app/templates/index.html:674
 msgid "If you work in a clinic, tell us about it"
-msgstr ""
+msgstr "Si trabajas en una clínica, cuéntanos sobre ella"
 
 #: app/templates/index.html:703 app/templates/welcome_modal.html:168
 msgid "Perfect!"
-msgstr ""
+msgstr "¡Perfecto!"
 
 #: app/templates/index.html:704
 msgid "We'll help you configure your fees in the next step."
-msgstr ""
+msgstr "Te ayudaremos a configurar tus tarifas en el siguiente paso."
 
 #: app/templates/index.html:711
 msgid "Fee structure"
-msgstr ""
+msgstr "Estructura de tarifas"
 
 #: app/templates/index.html:712
 msgid "What do you typically charge for your sessions?"
-msgstr ""
+msgstr "¿Qué sueles cobrar por tus sesiones?"
 
 #: app/templates/index.html:739 app/templates/welcome_modal.html:210
 msgid "Previous"
-msgstr ""
+msgstr "Anterior"
 
 #: app/templates/index.html:742 app/templates/welcome_modal.html:213
 msgid "Next"
-msgstr ""
+msgstr "Siguiente"
 
 #: app/templates/index.html:1285
 msgid "Are you sure you want to exit?"
-msgstr ""
+msgstr "¿Estás seguro de que quieres salir?"
 
 #: app/templates/index.html:1288
 msgid ""
 "If you exit now, some features may not work properly. You can always "
 "complete the setup later from your account settings."
-msgstr ""
+msgstr "Si sales ahora, algunas funciones pueden no funcionar correctamente. Siempre puedes completar la configuración más tarde desde la configuración de tu cuenta."
 
 #: app/templates/index.html:1291
 msgid "Continue setup"
-msgstr ""
+msgstr "Continuar configuración"
 
 #: app/templates/index.html:1292
 msgid "Yes, exit setup"
-msgstr ""
+msgstr "Sí, salir de la configuración"
 
 #: app/templates/manage_subscription.html:2
 #: app/templates/manage_subscription.html:9 app/templates/my_account.html:49
 msgid "Manage Subscription"
-msgstr ""
+msgstr "Gestionar Suscripción"
 
 #: app/templates/manage_subscription.html:12
 msgid "Subscription management coming soon..."
-msgstr ""
+msgstr "Gestión de suscripción próximamente..."
 
 #: app/templates/monitoring.html:3 app/templates/monitoring.html:10
 msgid "System Monitoring"
-msgstr ""
+msgstr "Monitoreo del Sistema"
 
 #: app/templates/monitoring.html:12
 msgid "Refresh"
-msgstr ""
+msgstr "Actualizar"
 
 #: app/templates/monitoring.html:25
 msgid "System Status"
-msgstr ""
+msgstr "Estado del Sistema"
 
 #: app/templates/monitoring.html:40
 msgid "Database"
-msgstr ""
+msgstr "Base de Datos"
 
 #: app/templates/monitoring.html:55
 msgid "Total Users"
-msgstr ""
+msgstr "Total de Usuarios"
 
 #: app/templates/monitoring.html:87
 msgid "Recent System Logs"
-msgstr ""
+msgstr "Registros Recientes del Sistema"
 
 #: app/templates/monitoring.html:94 app/templates/monitoring.html:124
 msgid "Timestamp"
-msgstr ""
+msgstr "Marca de Tiempo"
 
 #: app/templates/monitoring.html:95
 msgid "Level"
-msgstr ""
+msgstr "Nivel"
 
 #: app/templates/monitoring.html:96
 msgid "Module"
-msgstr ""
+msgstr "Módulo"
 
 #: app/templates/monitoring.html:97
 msgid "Message"
-msgstr ""
+msgstr "Mensaje"
 
 #: app/templates/monitoring.html:102
 msgid "Loading logs..."
-msgstr ""
+msgstr "Cargando registros..."
 
 #: app/templates/monitoring.html:117
 msgid "Recent Security Events"
-msgstr ""
+msgstr "Eventos de Seguridad Recientes"
 
 #: app/templates/monitoring.html:125
 msgid "User"
-msgstr ""
+msgstr "Usuario"
 
 #: app/templates/monitoring.html:126
 #, fuzzy
 msgid "Event Type"
-msgstr "Tipo de Recurrencia"
+msgstr "Tipo de Evento"
 
 #: app/templates/monitoring.html:127
 msgid "IP Address"
-msgstr ""
+msgstr "Dirección IP"
 
 #: app/templates/monitoring.html:129
 msgid "Details"
-msgstr ""
+msgstr "Detalles"
 
 #: app/templates/monitoring.html:134
 msgid "Loading security events..."
-msgstr ""
+msgstr "Cargando eventos de seguridad..."
 
 #: app/templates/monitoring.html:174
 msgid "Log viewing requires additional backend implementation"
-msgstr ""
+msgstr "La visualización de registros requiere implementación adicional del backend"
 
 #: app/templates/monitoring.html:183
 msgid "Security events viewing requires additional backend implementation"
-msgstr ""
+msgstr "La visualización de eventos de seguridad requiere implementación adicional del backend"
 
 #: app/templates/my_account.html:52
 #, fuzzy
 msgid "Profile"
-msgstr "Proveedor"
+msgstr "Perfil"
 
 #: app/templates/my_account.html:55 app/templates/my_account.html:249
 msgid "Billing History"
-msgstr ""
+msgstr "Historial de Facturación"
 
 #: app/templates/my_account.html:61
 msgid "Current Subscription"
-msgstr ""
+msgstr "Suscripción Actual"
 
 #: app/templates/my_account.html:76 app/templates/patient_detail.html:218
 #: app/templates/patient_detail_BACKUP.html:172
 msgid "Status:"
-msgstr ""
+msgstr "Estado:"
 
 #: app/templates/my_account.html:82
 msgid "Pending Cancellation"
-msgstr ""
+msgstr "Cancelación Pendiente"
 
 #: app/templates/my_account.html:86
 msgid "Trialing"
-msgstr ""
+msgstr "En Prueba"
 
 #: app/templates/my_account.html:93
 msgid "Price:"
-msgstr ""
+msgstr "Precio:"
 
 #: app/templates/my_account.html:96
 #, fuzzy
 msgid "Free"
-msgstr "Tarifa"
+msgstr "Gratis"
 
 #: app/templates/my_account.html:103
 msgid "Features:"
-msgstr ""
+msgstr "Características:"
 
 #: app/templates/my_account.html:104
 msgid "Basic features with limited capacity"
-msgstr ""
+msgstr "Características básicas con capacidad limitada"
 
 #: app/templates/my_account.html:108
 msgid "Renews/Expires on:"
-msgstr ""
+msgstr "Renueva/Expira el:"
 
 #: app/templates/my_account.html:113
 msgid "Trial Ends:"
-msgstr ""
+msgstr "La Prueba Termina:"
 
 #: app/templates/my_account.html:120
 msgid "Upgrade to Paid Plan"
-msgstr ""
+msgstr "Actualizar a Plan de Pago"
 
 #: app/templates/my_account.html:125 app/templates/my_account.html:141
 msgid "Your subscription for"
-msgstr ""
+msgstr "Tu suscripción para"
 
 #: app/templates/my_account.html:125
 msgid "is scheduled to cancel on"
-msgstr ""
+msgstr "está programada para cancelarse el"
 
 #: app/templates/my_account.html:126
 msgid "the end of the current period"
-msgstr ""
+msgstr "el final del período actual"
 
 #: app/templates/my_account.html:127
 msgid "You will retain access until then."
-msgstr ""
+msgstr "Mantendrás el acceso hasta entonces."
 
 #: app/templates/my_account.html:132
 msgid "Change Plan"
-msgstr ""
+msgstr "Cambiar Plan"
 
 #: app/templates/my_account.html:133
 msgid "Manage Billing Details"
-msgstr ""
+msgstr "Gestionar Detalles de Facturación"
 
 #: app/templates/my_account.html:135
 msgid "Cancel Subscription"
-msgstr ""
+msgstr "Cancelar Suscripción"
 
 #: app/templates/my_account.html:141
 msgid "is currently"
-msgstr ""
+msgstr "está actualmente"
 
 #: app/templates/my_account.html:143
 msgid "Please"
-msgstr ""
+msgstr "Por favor"
 
 #: app/templates/my_account.html:143
 msgid "update your billing information"
-msgstr ""
+msgstr "actualiza tu información de facturación"
 
 #: app/templates/my_account.html:146
 msgid "View Plans / Resubscribe"
-msgstr ""
+msgstr "Ver Planes / Re-suscribirse"
 
 #: app/templates/my_account.html:157
 msgid "Confirm Cancellation"
-msgstr ""
+msgstr "Confirmar Cancelación"
 
 #: app/templates/my_account.html:161
 msgid "Are you sure you want to cancel your"
-msgstr ""
+msgstr "¿Estás seguro de que quieres cancelar tu"
 
 #: app/templates/my_account.html:161
 #, fuzzy
 msgid "current"
-msgstr "Tipo de Recurrencia"
+msgstr "actual"
 
 #: app/templates/my_account.html:161
 msgid "subscription?"
-msgstr ""
+msgstr "suscripción?"
 
 #: app/templates/my_account.html:162
 msgid ""
 "If you cancel, your subscription will remain active until the end of your"
 " current billing period"
-msgstr ""
+msgstr "Si cancelas, tu suscripción permanecerá activa hasta el final de tu período de facturación actual"
 
 #: app/templates/my_account.html:162
 msgid "end of period"
-msgstr ""
+msgstr "final del período"
 
 #: app/templates/my_account.html:165
 msgid "Keep Subscription"
-msgstr ""
+msgstr "Mantener Suscripción"
 
 #: app/templates/my_account.html:168
 msgid "Yes, Cancel Subscription"
-msgstr ""
+msgstr "Sí, Cancelar Suscripción"
 
 #: app/templates/my_account.html:178
 msgid "User Profile"
-msgstr ""
+msgstr "Perfil de Usuario"
 
 #: app/templates/my_account.html:250
 msgid "Details about past invoices and payment methods will be displayed here."
-msgstr ""
+msgstr "Los detalles sobre facturas pasadas y métodos de pago se mostrarán aquí."
 
 #: app/templates/my_account.html:251
 msgid "Manage Billing Details on Stripe"
-msgstr ""
+msgstr "Gestionar Detalles de Facturación en Stripe"
 
 #: app/templates/new_patient.html:4 app/templates/new_patient.html:12
 #: app/templates/new_patient_backup.html:4
@@ -2151,7 +2151,7 @@ msgstr ""
 #: app/templates/new_patient_old.html:4 app/templates/new_patient_old.html:12
 #, fuzzy
 msgid "New Patient"
-msgstr "Para paciente:"
+msgstr "Nuevo Paciente"
 
 #: app/templates/new_patient.html:13 app/templates/new_patient_backup.html:13
 #: app/templates/new_patient_backup_final.html:13
@@ -2159,25 +2159,25 @@ msgstr "Para paciente:"
 msgid ""
 "Complete the anamnesis (clinical history) before proceeding to patient "
 "data"
-msgstr ""
+msgstr "Completa la anamnesis (historia clínica) antes de proceder con los datos del paciente"
 
 #: app/templates/new_patient.html:22 app/templates/new_patient_backup.html:22
 #: app/templates/new_patient_backup_final.html:22
 #: app/templates/new_patient_old.html:22
 msgid "Anamnesis & Patient Data"
-msgstr ""
+msgstr "Anamnesis y Datos del Paciente"
 
 #: app/templates/new_patient.html:26 app/templates/new_patient_backup.html:26
 #: app/templates/new_patient_backup_final.html:26
 #: app/templates/new_patient_old.html:26
 msgid "Portal Access"
-msgstr ""
+msgstr "Acceso al Portal"
 
 #: app/templates/new_patient.html:39 app/templates/new_patient_backup.html:39
 #: app/templates/new_patient_backup_final.html:39
 #: app/templates/new_patient_old.html:39
 msgid "Complete Patient Information & Clinical History"
-msgstr ""
+msgstr "Información Completa del Paciente e Historia Clínica"
 
 #: app/templates/new_patient.html:40 app/templates/new_patient_backup.html:40
 #: app/templates/new_patient_backup_final.html:40
@@ -2185,185 +2185,185 @@ msgstr ""
 msgid ""
 "Fill in patient data and clinical history. This information is essential "
 "for proper treatment planning."
-msgstr ""
+msgstr "Completa los datos del paciente y la historia clínica. Esta información es esencial para la planificación adecuada del tratamiento."
 
 #: app/templates/new_patient.html:47 app/templates/new_patient_backup.html:47
 #: app/templates/new_patient_backup_final.html:47
 #: app/templates/new_patient_old.html:47
 #, fuzzy
 msgid "Patient Data"
-msgstr "Fecha de Fin"
+msgstr "Datos del Paciente"
 
 #: app/templates/new_patient.html:85 app/templates/new_patient_backup.html:129
 #: app/templates/new_patient_backup_final.html:85
 #: app/templates/new_patient_old.html:85
 msgid "Basic Patient Information"
-msgstr ""
+msgstr "Información Básica del Paciente"
 
 #: app/templates/new_patient.html:98 app/templates/new_patient_backup.html:146
 #: app/templates/new_patient_backup_final.html:102
 #: app/templates/new_patient_old.html:102
 msgid "Email Address"
-msgstr ""
+msgstr "Dirección de Correo Electrónico"
 
 #: app/templates/new_patient.html:99 app/templates/new_patient.html:945
 msgid "patient@example.com"
-msgstr ""
+msgstr "paciente@ejemplo.com"
 
 #: app/templates/new_patient.html:103
 msgid "+34 600 123 456"
-msgstr ""
+msgstr "+34 600 123 456"
 
 #: app/templates/new_patient.html:116 app/templates/new_patient_backup.html:164
 #: app/templates/new_patient_backup_final.html:120
 #: app/templates/new_patient_old.html:120
 msgid "Address Information"
-msgstr ""
+msgstr "Información de Dirección"
 
 #: app/templates/new_patient.html:119 app/templates/new_patient_backup.html:167
 #: app/templates/new_patient_backup_final.html:123
 #: app/templates/new_patient_old.html:123
 msgid "Address Line 1"
-msgstr ""
+msgstr "Línea de Dirección 1"
 
 #: app/templates/new_patient.html:120 app/templates/new_patient_backup.html:168
 #: app/templates/new_patient_backup_final.html:124
 #: app/templates/new_patient_old.html:124
 msgid "Street address"
-msgstr ""
+msgstr "Dirección de la calle"
 
 #: app/templates/new_patient.html:123 app/templates/new_patient_backup.html:171
 #: app/templates/new_patient_backup_final.html:127
 #: app/templates/new_patient_old.html:127
 msgid "Address Line 2"
-msgstr ""
+msgstr "Línea de Dirección 2"
 
 #: app/templates/new_patient.html:124 app/templates/new_patient_backup.html:172
 #: app/templates/new_patient_backup_final.html:128
 #: app/templates/new_patient_old.html:128
 msgid "Apartment, suite, etc."
-msgstr ""
+msgstr "Apartamento, suite, etc."
 
 #: app/templates/new_patient.html:127 app/templates/new_patient_backup.html:175
 #: app/templates/new_patient_backup_final.html:131
 #: app/templates/new_patient_old.html:131
 msgid "City"
-msgstr ""
+msgstr "Ciudad"
 
 #: app/templates/new_patient.html:131 app/templates/new_patient_backup.html:179
 #: app/templates/new_patient_backup_final.html:135
 #: app/templates/new_patient_old.html:135
 msgid "Postal Code"
-msgstr ""
+msgstr "Código Postal"
 
 #: app/templates/new_patient.html:135 app/templates/new_patient_backup.html:183
 #: app/templates/new_patient_backup_final.html:139
 #: app/templates/new_patient_old.html:139
 msgid "Preferred Treatment Location"
-msgstr ""
+msgstr "Ubicación de Tratamiento Preferida"
 
 #: app/templates/new_patient.html:137 app/templates/new_patient_backup.html:185
 #: app/templates/new_patient_backup_final.html:141
 #: app/templates/new_patient_old.html:141
 #, fuzzy
 msgid "Select location"
-msgstr "Ubicación"
+msgstr "Seleccionar ubicación"
 
 #: app/templates/new_patient.html:146 app/templates/new_patient_backup.html:194
 #: app/templates/new_patient_backup_final.html:150
 #: app/templates/new_patient_old.html:150
 msgid "Basic Medical Information"
-msgstr ""
+msgstr "Información Médica Básica"
 
 #: app/templates/new_patient.html:149 app/templates/new_patient_backup.html:197
 #: app/templates/new_patient_backup_final.html:153
 #: app/templates/new_patient_old.html:153
 msgid "Primary Diagnosis"
-msgstr ""
+msgstr "Diagnóstico Principal"
 
 #: app/templates/new_patient.html:150 app/templates/new_patient_backup.html:198
 #: app/templates/new_patient_backup_final.html:154
 #: app/templates/new_patient_old.html:154
 msgid "Primary condition being treated"
-msgstr ""
+msgstr "Condición principal que se está tratando"
 
 #: app/templates/new_patient.html:165 app/templates/new_patient_backup.html:213
 #: app/templates/new_patient_backup_final.html:169
 #: app/templates/new_patient_old.html:169
 msgid "Personal Details"
-msgstr ""
+msgstr "Detalles Personales"
 
 #: app/templates/new_patient.html:178 app/templates/new_patient_backup.html:226
 #: app/templates/new_patient_backup_final.html:182
 #: app/templates/new_patient_old.html:182
 msgid "Treatment Planning"
-msgstr ""
+msgstr "Planificación del Tratamiento"
 
 #: app/templates/new_patient.html:182 app/templates/new_patient_backup.html:230
 #: app/templates/new_patient_backup_final.html:186
 #: app/templates/new_patient_old.html:186
 msgid "Initial treatment strategy and goals"
-msgstr ""
+msgstr "Estrategia inicial de tratamiento y objetivos"
 
 #: app/templates/new_patient.html:186 app/templates/new_patient_backup.html:234
 #: app/templates/new_patient_backup_final.html:190
 #: app/templates/new_patient_old.html:190
 msgid "Any other relevant information"
-msgstr ""
+msgstr "Cualquier otra información relevante"
 
 #: app/templates/new_patient.html:193
 #: app/templates/new_patient_backup_final.html:197
 #: app/templates/new_patient_old.html:197
 msgid "Reason for Todays Visit"
-msgstr ""
+msgstr "Motivo de la Visita de Hoy"
 
 #: app/templates/new_patient.html:198 app/templates/new_patient_backup.html:246
 #: app/templates/new_patient_backup_final.html:202
 #: app/templates/new_patient_old.html:202
 msgid "Quick Diagnosis Selection"
-msgstr ""
+msgstr "Selección Rápida de Diagnóstico"
 
 #: app/templates/new_patient.html:201 app/templates/new_patient_backup.html:249
 #: app/templates/new_patient_backup_final.html:205
 #: app/templates/new_patient_old.html:205
 msgid "Select a common diagnosis..."
-msgstr ""
+msgstr "Selecciona un diagnóstico común..."
 
 #: app/templates/new_patient.html:202 app/templates/new_patient_backup.html:250
 #: app/templates/new_patient_backup_final.html:206
 #: app/templates/new_patient_old.html:206
 msgid "Musculoskeletal"
-msgstr ""
+msgstr "Musculoesquelético"
 
 #: app/templates/new_patient.html:203 app/templates/new_patient_backup.html:251
 #: app/templates/new_patient_backup_final.html:207
 #: app/templates/new_patient_old.html:207
 msgid "Tendinopathy"
-msgstr ""
+msgstr "Tendinopatía"
 
 #: app/templates/new_patient.html:204 app/templates/new_patient_backup.html:252
 #: app/templates/new_patient_backup_final.html:208
 #: app/templates/new_patient_old.html:208
 msgid "Grade II Sprain"
-msgstr ""
+msgstr "Esguince Grado II"
 
 #: app/templates/new_patient.html:205 app/templates/new_patient_backup.html:253
 #: app/templates/new_patient_backup_final.html:209
 #: app/templates/new_patient_old.html:209
 msgid "Grade I Sprain"
-msgstr ""
+msgstr "Esguince Grado I"
 
 #: app/templates/new_patient.html:206 app/templates/new_patient_backup.html:254
 #: app/templates/new_patient_backup_final.html:210
 #: app/templates/new_patient_old.html:210
 msgid "Muscle Strain"
-msgstr ""
+msgstr "Distensión Muscular"
 
 #: app/templates/new_patient.html:207 app/templates/new_patient_backup.html:255
 #: app/templates/new_patient_backup_final.html:211
 #: app/templates/new_patient_old.html:211
 msgid "Joint Stiffness"
-msgstr ""
+msgstr "Rigidez Articular"
 
 #: app/templates/new_patient.html:208 app/templates/new_patient.html:321
 #: app/templates/new_patient_backup.html:256
@@ -2373,183 +2373,183 @@ msgstr ""
 #: app/templates/new_patient_old.html:212
 #: app/templates/new_patient_old.html:325
 msgid "Chronic Pain"
-msgstr ""
+msgstr "Dolor Crónico"
 
 #: app/templates/new_patient.html:210 app/templates/new_patient_backup.html:258
 #: app/templates/new_patient_backup_final.html:214
 #: app/templates/new_patient_old.html:214
 msgid "Spine"
-msgstr ""
+msgstr "Columna"
 
 #: app/templates/new_patient.html:211 app/templates/new_patient_backup.html:259
 #: app/templates/new_patient_backup_final.html:215
 #: app/templates/new_patient_old.html:215
 #, fuzzy
 msgid "Lower Back Pain"
-msgstr "Volver al Paciente"
+msgstr "Dolor Lumbar"
 
 #: app/templates/new_patient.html:212 app/templates/new_patient_backup.html:260
 #: app/templates/new_patient_backup_final.html:216
 #: app/templates/new_patient_old.html:216
 msgid "Cervical Pain"
-msgstr ""
+msgstr "Dolor Cervical"
 
 #: app/templates/new_patient.html:213 app/templates/new_patient_backup.html:261
 #: app/templates/new_patient_backup_final.html:217
 #: app/templates/new_patient_old.html:217
 msgid "Herniated Disc"
-msgstr ""
+msgstr "Hernia Discal"
 
 #: app/templates/new_patient.html:214 app/templates/new_patient_backup.html:262
 #: app/templates/new_patient_backup_final.html:218
 #: app/templates/new_patient_old.html:218
 msgid "Sciatica"
-msgstr ""
+msgstr "Ciática"
 
 #: app/templates/new_patient.html:215 app/templates/new_patient_backup.html:263
 #: app/templates/new_patient_backup_final.html:219
 #: app/templates/new_patient_old.html:219
 msgid "Whiplash"
-msgstr ""
+msgstr "Latigazo Cervical"
 
 #: app/templates/new_patient.html:217 app/templates/new_patient_backup.html:265
 #: app/templates/new_patient_backup_final.html:221
 #: app/templates/new_patient_old.html:221
 msgid "Sports Injuries"
-msgstr ""
+msgstr "Lesiones Deportivas"
 
 #: app/templates/new_patient.html:218
 #: app/templates/new_patient_backup_final.html:222
 #: app/templates/new_patient_old.html:222
 msgid "Runners Knee"
-msgstr ""
+msgstr "Rodilla del Corredor"
 
 #: app/templates/new_patient.html:219 app/templates/new_patient_backup.html:267
 #: app/templates/new_patient_backup_final.html:223
 #: app/templates/new_patient_old.html:223
 msgid "Tennis Elbow"
-msgstr ""
+msgstr "Codo de Tenista"
 
 #: app/templates/new_patient.html:220 app/templates/new_patient_backup.html:268
 #: app/templates/new_patient_backup_final.html:224
 #: app/templates/new_patient_old.html:224
 msgid "Shoulder Impingement"
-msgstr ""
+msgstr "Síndrome de Pinzamiento de Hombro"
 
 #: app/templates/new_patient.html:221 app/templates/new_patient_backup.html:269
 #: app/templates/new_patient_backup_final.html:225
 #: app/templates/new_patient_old.html:225
 msgid "ACL Injury"
-msgstr ""
+msgstr "Lesión LCA"
 
 #: app/templates/new_patient.html:222 app/templates/new_patient_backup.html:270
 #: app/templates/new_patient_backup_final.html:226
 #: app/templates/new_patient_old.html:226
 msgid "Rotator Cuff Injury"
-msgstr ""
+msgstr "Lesión del Manguito Rotador"
 
 #: app/templates/new_patient.html:224 app/templates/new_patient_backup.html:272
 #: app/templates/new_patient_backup_final.html:228
 #: app/templates/new_patient_old.html:228
 msgid "Post-Surgical"
-msgstr ""
+msgstr "Post-Quirúrgico"
 
 #: app/templates/new_patient.html:225 app/templates/new_patient_backup.html:273
 #: app/templates/new_patient_backup_final.html:229
 #: app/templates/new_patient_old.html:229
 msgid "Post-Surgery Knee Rehabilitation"
-msgstr ""
+msgstr "Rehabilitación de Rodilla Post-Quirúrgica"
 
 #: app/templates/new_patient.html:226 app/templates/new_patient_backup.html:274
 #: app/templates/new_patient_backup_final.html:230
 #: app/templates/new_patient_old.html:230
 msgid "Post-Surgery Shoulder Rehabilitation"
-msgstr ""
+msgstr "Rehabilitación de Hombro Post-Quirúrgica"
 
 #: app/templates/new_patient.html:227 app/templates/new_patient_backup.html:275
 #: app/templates/new_patient_backup_final.html:231
 #: app/templates/new_patient_old.html:231
 msgid "Post-Surgery Hip Rehabilitation"
-msgstr ""
+msgstr "Rehabilitación de Cadera Post-Quirúrgica"
 
 #: app/templates/new_patient.html:246 app/templates/new_patient_backup.html:294
 #: app/templates/new_patient_backup_final.html:250
 #: app/templates/new_patient_old.html:250
 msgid "Approximate date when symptoms began"
-msgstr ""
+msgstr "Fecha aproximada cuando comenzaron los síntomas"
 
 #: app/templates/new_patient.html:251 app/templates/new_patient_backup.html:299
 #: app/templates/new_patient_backup_final.html:255
 #: app/templates/new_patient_old.html:255
 #, fuzzy
 msgid "Select mechanism..."
-msgstr "Seleccionar método de pago..."
+msgstr "Seleccionar mecanismo..."
 
 #: app/templates/new_patient.html:252 app/templates/new_patient_backup.html:300
 #: app/templates/new_patient_backup_final.html:256
 #: app/templates/new_patient_old.html:256
 msgid "Sudden onset"
-msgstr ""
+msgstr "Inicio súbito"
 
 #: app/templates/new_patient.html:253 app/templates/new_patient_backup.html:301
 #: app/templates/new_patient_backup_final.html:257
 #: app/templates/new_patient_old.html:257
 msgid "Gradual onset"
-msgstr ""
+msgstr "Inicio gradual"
 
 #: app/templates/new_patient.html:254 app/templates/new_patient_backup.html:302
 #: app/templates/new_patient_backup_final.html:258
 #: app/templates/new_patient_old.html:258
 msgid "Trauma/Accident"
-msgstr ""
+msgstr "Trauma/Accidente"
 
 #: app/templates/new_patient.html:255 app/templates/new_patient_backup.html:303
 #: app/templates/new_patient_backup_final.html:259
 #: app/templates/new_patient_old.html:259
 msgid "Overuse/Repetitive"
-msgstr ""
+msgstr "Sobreuso/Repetitivo"
 
 #: app/templates/new_patient.html:256 app/templates/new_patient_backup.html:304
 #: app/templates/new_patient_backup_final.html:260
 #: app/templates/new_patient_old.html:260
 msgid "Sports activity"
-msgstr ""
+msgstr "Actividad deportiva"
 
 #: app/templates/new_patient.html:257 app/templates/new_patient_backup.html:305
 #: app/templates/new_patient_backup_final.html:261
 #: app/templates/new_patient_old.html:261
 msgid "Work-related"
-msgstr ""
+msgstr "Relacionado con el trabajo"
 
 #: app/templates/new_patient.html:258 app/templates/new_patient_backup.html:306
 #: app/templates/new_patient_backup_final.html:262
 #: app/templates/new_patient_old.html:262
 msgid "Unknown/Idiopathic"
-msgstr ""
+msgstr "Desconocido/Idiopático"
 
 #: app/templates/new_patient.html:264 app/templates/new_patient_backup.html:312
 #: app/templates/new_patient_backup_final.html:268
 #: app/templates/new_patient_old.html:268
 msgid "Additional onset details"
-msgstr ""
+msgstr "Detalles adicionales del inicio"
 
 #: app/templates/new_patient.html:266 app/templates/new_patient_backup.html:314
 #: app/templates/new_patient_backup_final.html:270
 #: app/templates/new_patient_old.html:270
 msgid "e.g., after lifting heavy box, during morning run, working at computer..."
-msgstr ""
+msgstr "ej., después de levantar una caja pesada, durante la carrera matutina, trabajando en la computadora..."
 
 #: app/templates/new_patient.html:272 app/templates/new_patient_backup.html:320
 #: app/templates/new_patient_backup_final.html:276
 #: app/templates/new_patient_old.html:276
 msgid "Previous Medical History"
-msgstr ""
+msgstr "Historia Médica Previa"
 
 #: app/templates/new_patient.html:277 app/templates/new_patient_backup.html:325
 #: app/templates/new_patient_backup_final.html:281
 #: app/templates/new_patient_old.html:281
 msgid "Common Previous Conditions"
-msgstr ""
+msgstr "Condiciones Previas Comunes"
 
 #: app/templates/new_patient.html:283 app/templates/new_patient.html:436
 #: app/templates/new_patient_backup.html:331
@@ -2559,7 +2559,7 @@ msgstr ""
 #: app/templates/new_patient_old.html:287
 #: app/templates/new_patient_old.html:440
 msgid "Diabetes"
-msgstr ""
+msgstr "Diabetes"
 
 #: app/templates/new_patient.html:287 app/templates/new_patient.html:452
 #: app/templates/new_patient_backup.html:335
@@ -2569,7 +2569,7 @@ msgstr ""
 #: app/templates/new_patient_old.html:291
 #: app/templates/new_patient_old.html:456
 msgid "Hypertension"
-msgstr ""
+msgstr "Hipertensión"
 
 #: app/templates/new_patient.html:291 app/templates/new_patient.html:458
 #: app/templates/new_patient_backup.html:339
@@ -2579,7 +2579,7 @@ msgstr ""
 #: app/templates/new_patient_old.html:295
 #: app/templates/new_patient_old.html:462
 msgid "Arthritis"
-msgstr ""
+msgstr "Artritis"
 
 #: app/templates/new_patient.html:295 app/templates/new_patient.html:462
 #: app/templates/new_patient_backup.html:343
@@ -2589,13 +2589,13 @@ msgstr ""
 #: app/templates/new_patient_old.html:299
 #: app/templates/new_patient_old.html:466
 msgid "Osteoporosis"
-msgstr ""
+msgstr "Osteoporosis"
 
 #: app/templates/new_patient.html:299 app/templates/new_patient_backup.html:347
 #: app/templates/new_patient_backup_final.html:303
 #: app/templates/new_patient_old.html:303
 msgid "Fibromyalgia"
-msgstr ""
+msgstr "Fibromialgia"
 
 #: app/templates/new_patient.html:305 app/templates/new_patient.html:440
 #: app/templates/new_patient_backup.html:353
@@ -2606,51 +2606,51 @@ msgstr ""
 #: app/templates/new_patient_old.html:444
 #, fuzzy
 msgid "Heart Disease"
-msgstr "Fecha de Inicio"
+msgstr "Enfermedad Cardíaca"
 
 #: app/templates/new_patient.html:309 app/templates/new_patient_backup.html:357
 #: app/templates/new_patient_backup_final.html:313
 #: app/templates/new_patient_old.html:313
 #, fuzzy
 msgid "Asthma"
-msgstr "Efectivo"
+msgstr "Asma"
 
 #: app/templates/new_patient.html:313 app/templates/new_patient_backup.html:361
 #: app/templates/new_patient_backup_final.html:317
 #: app/templates/new_patient_old.html:317
 msgid "Depression/Anxiety"
-msgstr ""
+msgstr "Depresión/Ansiedad"
 
 #: app/templates/new_patient.html:317 app/templates/new_patient_backup.html:365
 #: app/templates/new_patient_backup_final.html:321
 #: app/templates/new_patient_old.html:321
 msgid "Thyroid Disorders"
-msgstr ""
+msgstr "Trastornos de la Tiroides"
 
 #: app/templates/new_patient.html:328 app/templates/new_patient_backup.html:376
 #: app/templates/new_patient_backup_final.html:332
 #: app/templates/new_patient_old.html:332
 msgid "Other previous conditions"
-msgstr ""
+msgstr "Otras condiciones previas"
 
 #: app/templates/new_patient.html:330 app/templates/new_patient_backup.html:378
 #: app/templates/new_patient_backup_final.html:334
 #: app/templates/new_patient_old.html:334
 msgid "Any other medical conditions not listed above..."
-msgstr ""
+msgstr "Cualquier otra condición médica no listada arriba..."
 
 #: app/templates/new_patient.html:341 app/templates/new_patient.html:1151
 #: app/templates/new_patient.html:1540
 #: app/templates/new_patient_backup.html:389
 #: app/templates/new_patient_backup.html:1185
 msgid "Type of surgery"
-msgstr ""
+msgstr "Tipo de cirugía"
 
 #: app/templates/new_patient.html:354
 #: app/templates/new_patient_backup_final.html:358
 #: app/templates/new_patient_old.html:358
 msgid "Add Surgery"
-msgstr ""
+msgstr "Añadir Cirugía"
 
 #: app/templates/new_patient.html:364 app/templates/new_patient_backup.html:409
 #: app/templates/new_patient_backup_final.html:368
@@ -2658,123 +2658,124 @@ msgstr ""
 msgid ""
 "Include prescription drugs, supplements, and over-the-counter medications"
 " with dosages..."
+msgstr "Incluir medicamentos recetados, suplementos y medicamentos de venta libre con dosis..."
 msgstr ""
 
 #: app/templates/new_patient.html:370 app/templates/new_patient_backup.html:415
 #: app/templates/new_patient_backup_final.html:374
 #: app/templates/new_patient_old.html:374
 msgid "Known allergies"
-msgstr ""
+msgstr "Alergias conocidas"
 
 #: app/templates/new_patient.html:376 app/templates/new_patient_backup.html:421
 #: app/templates/new_patient_backup_final.html:380
 #: app/templates/new_patient_old.html:380
 msgid "Penicillin"
-msgstr ""
+msgstr "Penicilina"
 
 #: app/templates/new_patient.html:380 app/templates/new_patient_backup.html:425
 #: app/templates/new_patient_backup_final.html:384
 #: app/templates/new_patient_old.html:384
 msgid "NSAIDs"
-msgstr ""
+msgstr "AINEs"
 
 #: app/templates/new_patient.html:384 app/templates/new_patient_backup.html:429
 #: app/templates/new_patient_backup_final.html:388
 #: app/templates/new_patient_old.html:388
 msgid "Latex"
-msgstr ""
+msgstr "Látex"
 
 #: app/templates/new_patient.html:390 app/templates/new_patient_backup.html:435
 #: app/templates/new_patient_backup_final.html:394
 #: app/templates/new_patient_old.html:394
 #, fuzzy
 msgid "Nuts"
-msgstr "Notas"
+msgstr "Frutos secos"
 
 #: app/templates/new_patient.html:394 app/templates/new_patient_backup.html:439
 #: app/templates/new_patient_backup_final.html:398
 #: app/templates/new_patient_old.html:398
 msgid "Shellfish"
-msgstr ""
+msgstr "Mariscos"
 
 #: app/templates/new_patient.html:398 app/templates/new_patient_backup.html:443
 #: app/templates/new_patient_backup_final.html:402
 #: app/templates/new_patient_old.html:402
 msgid "Dairy"
-msgstr ""
+msgstr "Lácteos"
 
 #: app/templates/new_patient.html:404 app/templates/new_patient_backup.html:449
 #: app/templates/new_patient_backup_final.html:408
 #: app/templates/new_patient_old.html:408
 msgid "Pollen"
-msgstr ""
+msgstr "Polen"
 
 #: app/templates/new_patient.html:408 app/templates/new_patient_backup.html:453
 #: app/templates/new_patient_backup_final.html:412
 #: app/templates/new_patient_old.html:412
 msgid "Dust mites"
-msgstr ""
+msgstr "Ácaros del polvo"
 
 #: app/templates/new_patient.html:412 app/templates/new_patient_backup.html:457
 #: app/templates/new_patient_backup_final.html:416
 #: app/templates/new_patient_old.html:416
 msgid "No known allergies"
-msgstr ""
+msgstr "Ninguna alergia conocida"
 
 #: app/templates/new_patient.html:418 app/templates/new_patient_backup.html:463
 #: app/templates/new_patient_backup_final.html:422
 #: app/templates/new_patient_old.html:422
 msgid "Other allergies or specific reactions..."
-msgstr ""
+msgstr "Otras alergias o reacciones específicas..."
 
 #: app/templates/new_patient.html:425 app/templates/new_patient_backup.html:470
 #: app/templates/new_patient_backup_final.html:429
 #: app/templates/new_patient_old.html:429
 msgid "Family Medical History"
-msgstr ""
+msgstr "Historia Médica Familiar"
 
 #: app/templates/new_patient.html:430 app/templates/new_patient_backup.html:475
 #: app/templates/new_patient_backup_final.html:434
 #: app/templates/new_patient_old.html:434
 msgid "Common family conditions"
-msgstr ""
+msgstr "Condiciones familiares comunes"
 
 #: app/templates/new_patient.html:444 app/templates/new_patient_backup.html:489
 #: app/templates/new_patient_backup_final.html:448
 #: app/templates/new_patient_old.html:448
 #, fuzzy
 msgid "Cancer"
-msgstr "Cancelar"
+msgstr "Cáncer"
 
 #: app/templates/new_patient.html:448 app/templates/new_patient_backup.html:493
 #: app/templates/new_patient_backup_final.html:452
 #: app/templates/new_patient_old.html:452
 msgid "Stroke"
-msgstr ""
+msgstr "Accidente Cerebrovascular"
 
 #: app/templates/new_patient.html:466 app/templates/new_patient_backup.html:511
 #: app/templates/new_patient_backup_final.html:470
 #: app/templates/new_patient_old.html:470
 msgid "Mental Health Disorders"
-msgstr ""
+msgstr "Trastornos de Salud Mental"
 
 #: app/templates/new_patient.html:470 app/templates/new_patient_backup.html:515
 #: app/templates/new_patient_backup_final.html:474
 #: app/templates/new_patient_old.html:474
 msgid "Autoimmune Disorders"
-msgstr ""
+msgstr "Trastornos Autoinmunes"
 
 #: app/templates/new_patient.html:474 app/templates/new_patient_backup.html:519
 #: app/templates/new_patient_backup_final.html:478
 #: app/templates/new_patient_old.html:478
 msgid "No significant family history"
-msgstr ""
+msgstr "Ninguna historia familiar significativa"
 
 #: app/templates/new_patient.html:481 app/templates/new_patient_backup.html:526
 #: app/templates/new_patient_backup_final.html:485
 #: app/templates/new_patient_old.html:485
 msgid "Additional family history details"
-msgstr ""
+msgstr "Detalles adicionales de la historia familiar"
 
 #: app/templates/new_patient.html:483 app/templates/new_patient_backup.html:528
 #: app/templates/new_patient_backup_final.html:487
@@ -2782,19 +2783,19 @@ msgstr ""
 msgid ""
 "Include specific family member relationships, ages of onset, genetic "
 "disorders, etc."
-msgstr ""
+msgstr "Incluir relaciones específicas de miembros familiares, edades de inicio, trastornos genéticos, etc."
 
 #: app/templates/new_patient.html:489 app/templates/new_patient_backup.html:534
 #: app/templates/new_patient_backup_final.html:493
 #: app/templates/new_patient_old.html:493
 msgid "Lifestyle and Habits"
-msgstr ""
+msgstr "Estilo de Vida y Hábitos"
 
 #: app/templates/new_patient.html:521 app/templates/new_patient_backup.html:566
 #: app/templates/new_patient_backup_final.html:525
 #: app/templates/new_patient_old.html:525
 msgid "Activity details"
-msgstr ""
+msgstr "Detalles de actividad"
 
 #: app/templates/new_patient.html:523 app/templates/new_patient_backup.html:568
 #: app/templates/new_patient_backup_final.html:527
@@ -2802,110 +2803,111 @@ msgstr ""
 msgid ""
 "What types of activities do you do? How often? Any sports or specific "
 "exercises?"
+msgstr "¿Qué tipos de actividades haces? ¿Con qué frecuencia? ¿Algún deporte o ejercicios específicos?"
 msgstr ""
 
 #: app/templates/new_patient.html:529 app/templates/new_patient_backup.html:574
 #: app/templates/new_patient_backup_final.html:533
 #: app/templates/new_patient_old.html:533
 msgid "Work environment"
-msgstr ""
+msgstr "Ambiente de trabajo"
 
 #: app/templates/new_patient.html:532 app/templates/new_patient_backup.html:577
 #: app/templates/new_patient_backup_final.html:536
 #: app/templates/new_patient_old.html:536
 #, fuzzy
 msgid "Select work type..."
-msgstr "Seleccionar frecuencia..."
+msgstr "Seleccionar tipo de trabajo..."
 
 #: app/templates/new_patient.html:533 app/templates/new_patient_backup.html:578
 #: app/templates/new_patient_backup_final.html:537
 #: app/templates/new_patient_old.html:537
 msgid "Desk job (computer work)"
-msgstr ""
+msgstr "Trabajo de escritorio (trabajo con computadora)"
 
 #: app/templates/new_patient.html:534 app/templates/new_patient_backup.html:579
 #: app/templates/new_patient_backup_final.html:538
 #: app/templates/new_patient_old.html:538
 msgid "Standing work"
-msgstr ""
+msgstr "Trabajo de pie"
 
 #: app/templates/new_patient.html:535 app/templates/new_patient_backup.html:580
 #: app/templates/new_patient_backup_final.html:539
 #: app/templates/new_patient_old.html:539
 msgid "Physical labor"
-msgstr ""
+msgstr "Trabajo físico"
 
 #: app/templates/new_patient.html:536 app/templates/new_patient_backup.html:581
 #: app/templates/new_patient_backup_final.html:540
 #: app/templates/new_patient_old.html:540
 msgid "Mixed (sitting/standing)"
-msgstr ""
+msgstr "Mixto (sentado/de pie)"
 
 #: app/templates/new_patient.html:537 app/templates/new_patient_backup.html:582
 #: app/templates/new_patient_backup_final.html:541
 #: app/templates/new_patient_old.html:541
 msgid "Driving/Transport"
-msgstr ""
+msgstr "Conducción/Transporte"
 
 #: app/templates/new_patient.html:538 app/templates/new_patient_backup.html:583
 #: app/templates/new_patient_backup_final.html:542
 #: app/templates/new_patient_old.html:542
 msgid "Healthcare worker"
-msgstr ""
+msgstr "Trabajador sanitario"
 
 #: app/templates/new_patient.html:539 app/templates/new_patient_backup.html:584
 #: app/templates/new_patient_backup_final.html:543
 #: app/templates/new_patient_old.html:543
 msgid "Retired"
-msgstr ""
+msgstr "Jubilado"
 
 #: app/templates/new_patient.html:560 app/templates/new_patient_backup.html:605
 #: app/templates/new_patient_backup_final.html:564
 #: app/templates/new_patient_old.html:564
 msgid "Lifestyle habits"
-msgstr ""
+msgstr "Hábitos de vida"
 
 #: app/templates/new_patient.html:566 app/templates/new_patient_backup.html:611
 #: app/templates/new_patient_backup_final.html:570
 #: app/templates/new_patient_old.html:570
 msgid "Smoking"
-msgstr ""
+msgstr "Fumar"
 
 #: app/templates/new_patient.html:570 app/templates/new_patient_backup.html:615
 #: app/templates/new_patient_backup_final.html:574
 #: app/templates/new_patient_old.html:574
 msgid "Regular alcohol consumption"
-msgstr ""
+msgstr "Consumo regular de alcohol"
 
 #: app/templates/new_patient.html:574 app/templates/new_patient_backup.html:619
 #: app/templates/new_patient_backup_final.html:578
 #: app/templates/new_patient_old.html:578
 msgid "High caffeine intake"
-msgstr ""
+msgstr "Alto consumo de cafeína"
 
 #: app/templates/new_patient.html:580 app/templates/new_patient_backup.html:625
 #: app/templates/new_patient_backup_final.html:584
 #: app/templates/new_patient_old.html:584
 msgid "Healthy balanced diet"
-msgstr ""
+msgstr "Dieta sana y equilibrada"
 
 #: app/templates/new_patient.html:584 app/templates/new_patient_backup.html:629
 #: app/templates/new_patient_backup_final.html:588
 #: app/templates/new_patient_old.html:588
 msgid "Good hydration (>2L/day)"
-msgstr ""
+msgstr "Buena hidratación (>2L/día)"
 
 #: app/templates/new_patient.html:588 app/templates/new_patient_backup.html:633
 #: app/templates/new_patient_backup_final.html:592
 #: app/templates/new_patient_old.html:592
 msgid "Takes supplements"
-msgstr ""
+msgstr "Toma suplementos"
 
 #: app/templates/new_patient.html:595 app/templates/new_patient_backup.html:640
 #: app/templates/new_patient_backup_final.html:599
 #: app/templates/new_patient_old.html:599
 msgid "Additional lifestyle notes"
-msgstr ""
+msgstr "Notas adicionales del estilo de vida"
 
 #: app/templates/new_patient.html:597 app/templates/new_patient_backup.html:642
 #: app/templates/new_patient_backup_final.html:601
@@ -2913,183 +2915,184 @@ msgstr ""
 msgid ""
 "Any dietary restrictions, special habits, or lifestyle factors affecting "
 "health..."
+msgstr "Cualquier restricción dietética, hábitos especiales, o factores del estilo de vida que afecten la salud..."
 msgstr ""
 
 #: app/templates/new_patient.html:603 app/templates/new_patient_backup.html:648
 #: app/templates/new_patient_backup_final.html:607
 #: app/templates/new_patient_old.html:607
 msgid "Current Pain Assessment"
-msgstr ""
+msgstr "Evaluación Actual del Dolor"
 
 #: app/templates/new_patient.html:608 app/templates/new_patient_backup.html:653
 #: app/templates/new_patient_backup_final.html:612
 #: app/templates/new_patient_old.html:612
 msgid "Pain level (0-10)"
-msgstr ""
+msgstr "Nivel de dolor (0-10)"
 
 #: app/templates/new_patient.html:616 app/templates/new_patient_backup.html:661
 #: app/templates/new_patient_backup_final.html:620
 #: app/templates/new_patient_old.html:620
 #, fuzzy
 msgid "No pain"
-msgstr "Para paciente:"
+msgstr "Sin dolor"
 
 #: app/templates/new_patient.html:625 app/templates/new_patient_backup.html:670
 #: app/templates/new_patient_backup_final.html:629
 #: app/templates/new_patient_old.html:629
 msgid "Pain characteristics"
-msgstr ""
+msgstr "Características del dolor"
 
 #: app/templates/new_patient.html:631 app/templates/new_patient_backup.html:676
 #: app/templates/new_patient_backup_final.html:635
 #: app/templates/new_patient_old.html:635
 msgid "Sharp/Stabbing"
-msgstr ""
+msgstr "Agudo/Punzante"
 
 #: app/templates/new_patient.html:635 app/templates/new_patient_backup.html:680
 #: app/templates/new_patient_backup_final.html:639
 #: app/templates/new_patient_old.html:639
 msgid "Dull/Aching"
-msgstr ""
+msgstr "Sordo/Doloroso"
 
 #: app/templates/new_patient.html:639 app/templates/new_patient_backup.html:684
 #: app/templates/new_patient_backup_final.html:643
 #: app/templates/new_patient_old.html:643
 msgid "Burning"
-msgstr ""
+msgstr "Ardor"
 
 #: app/templates/new_patient.html:643 app/templates/new_patient_backup.html:688
 #: app/templates/new_patient_backup_final.html:647
 #: app/templates/new_patient_old.html:647
 msgid "Throbbing"
-msgstr ""
+msgstr "Pulsante"
 
 #: app/templates/new_patient.html:649 app/templates/new_patient_backup.html:694
 #: app/templates/new_patient_backup_final.html:653
 #: app/templates/new_patient_old.html:653
 msgid "Tingling/Pins & needles"
-msgstr ""
+msgstr "Hormigueo/Agujas y alfileres"
 
 #: app/templates/new_patient.html:653 app/templates/new_patient_backup.html:698
 #: app/templates/new_patient_backup_final.html:657
 #: app/templates/new_patient_old.html:657
 msgid "Numbness"
-msgstr ""
+msgstr "Entumecimiento"
 
 #: app/templates/new_patient.html:657 app/templates/new_patient_backup.html:702
 #: app/templates/new_patient_backup_final.html:661
 #: app/templates/new_patient_old.html:661
 msgid "Stiffness"
-msgstr ""
+msgstr "Rigidez"
 
 #: app/templates/new_patient.html:661 app/templates/new_patient_backup.html:706
 #: app/templates/new_patient_backup_final.html:665
 #: app/templates/new_patient_old.html:665
 msgid "Cramping/Spasms"
-msgstr ""
+msgstr "Calambres/Espasmos"
 
 #: app/templates/new_patient.html:671 app/templates/new_patient_backup.html:716
 #: app/templates/new_patient_backup_final.html:675
 #: app/templates/new_patient_old.html:675
 msgid "When is pain worse?"
-msgstr ""
+msgstr "¿Cuándo es peor el dolor?"
 
 #: app/templates/new_patient.html:674 app/templates/new_patient_backup.html:719
 #: app/templates/new_patient_backup_final.html:678
 #: app/templates/new_patient_old.html:678
 msgid "Morning"
-msgstr ""
+msgstr "Mañana"
 
 #: app/templates/new_patient.html:675 app/templates/new_patient_backup.html:720
 #: app/templates/new_patient_backup_final.html:679
 #: app/templates/new_patient_old.html:679
 msgid "Afternoon"
-msgstr ""
+msgstr "Tarde"
 
 #: app/templates/new_patient.html:676 app/templates/new_patient_backup.html:721
 #: app/templates/new_patient_backup_final.html:680
 #: app/templates/new_patient_old.html:680
 msgid "Evening"
-msgstr ""
+msgstr "Noche"
 
 #: app/templates/new_patient.html:677 app/templates/new_patient_backup.html:722
 #: app/templates/new_patient_backup_final.html:681
 #: app/templates/new_patient_old.html:681
 msgid "Night"
-msgstr ""
+msgstr "Noche"
 
 #: app/templates/new_patient.html:678 app/templates/new_patient_backup.html:723
 #: app/templates/new_patient_backup_final.html:682
 #: app/templates/new_patient_old.html:682
 msgid "With movement"
-msgstr ""
+msgstr "Con movimiento"
 
 #: app/templates/new_patient.html:679 app/templates/new_patient_backup.html:724
 #: app/templates/new_patient_backup_final.html:683
 #: app/templates/new_patient_old.html:683
 msgid "At rest"
-msgstr ""
+msgstr "En reposo"
 
 #: app/templates/new_patient.html:680 app/templates/new_patient_backup.html:725
 #: app/templates/new_patient_backup_final.html:684
 #: app/templates/new_patient_old.html:684
 msgid "Weather changes"
-msgstr ""
+msgstr "Cambios de clima"
 
 #: app/templates/new_patient.html:681 app/templates/new_patient_backup.html:726
 #: app/templates/new_patient_backup_final.html:685
 #: app/templates/new_patient_old.html:685
 msgid "During stress"
-msgstr ""
+msgstr "Durante el estrés"
 
 #: app/templates/new_patient.html:683 app/templates/new_patient_backup.html:728
 #: app/templates/new_patient_backup_final.html:687
 #: app/templates/new_patient_old.html:687
 msgid "Hold Ctrl/Cmd to select multiple"
-msgstr ""
+msgstr "Mantén Ctrl/Cmd para seleccionar múltiples"
 
 #: app/templates/new_patient.html:688 app/templates/new_patient_backup.html:733
 #: app/templates/new_patient_backup_final.html:692
 #: app/templates/new_patient_old.html:692
 #, fuzzy
 msgid "Pain location"
-msgstr "Ubicación"
+msgstr "Ubicación del dolor"
 
 #: app/templates/new_patient.html:691 app/templates/new_patient_backup.html:736
 #: app/templates/new_patient_backup_final.html:695
 #: app/templates/new_patient_old.html:695
 msgid "Select primary location..."
-msgstr ""
+msgstr "Seleccionar ubicación principal..."
 
 #: app/templates/new_patient.html:692 app/templates/new_patient_backup.html:737
 #: app/templates/new_patient_backup_final.html:696
 #: app/templates/new_patient_old.html:696
 msgid "Head & Neck"
-msgstr ""
+msgstr "Cabeza y Cuello"
 
 #: app/templates/new_patient.html:693 app/templates/new_patient_backup.html:738
 #: app/templates/new_patient_backup_final.html:697
 #: app/templates/new_patient_old.html:697
 msgid "Head/Headache"
-msgstr ""
+msgstr "Cabeza/Dolor de cabeza"
 
 #: app/templates/new_patient.html:694 app/templates/new_patient_backup.html:739
 #: app/templates/new_patient_backup_final.html:698
 #: app/templates/new_patient_old.html:698
 msgid "Neck"
-msgstr ""
+msgstr "Cuello"
 
 #: app/templates/new_patient.html:695 app/templates/new_patient_backup.html:740
 #: app/templates/new_patient_backup_final.html:699
 #: app/templates/new_patient_old.html:699
 msgid "Jaw/TMJ"
-msgstr ""
+msgstr "Mandíbula/ATM"
 
 #: app/templates/new_patient.html:697 app/templates/new_patient_backup.html:742
 #: app/templates/new_patient_backup_final.html:701
 #: app/templates/new_patient_old.html:701
 msgid "Upper Body"
-msgstr ""
+msgstr "Parte Superior del Cuerpo"
 
 #: app/templates/new_patient.html:698 app/templates/new_patient.html:808
 #: app/templates/new_patient_backup.html:743
@@ -3099,13 +3102,13 @@ msgstr ""
 #: app/templates/new_patient_old.html:702
 #: app/templates/new_patient_old.html:812
 msgid "Shoulder"
-msgstr ""
+msgstr "Hombro"
 
 #: app/templates/new_patient.html:699 app/templates/new_patient_backup.html:744
 #: app/templates/new_patient_backup_final.html:703
 #: app/templates/new_patient_old.html:703
 msgid "Arm"
-msgstr ""
+msgstr "Brazo"
 
 #: app/templates/new_patient.html:700 app/templates/new_patient.html:809
 #: app/templates/new_patient_backup.html:745
@@ -3115,61 +3118,61 @@ msgstr ""
 #: app/templates/new_patient_old.html:704
 #: app/templates/new_patient_old.html:813
 msgid "Elbow"
-msgstr ""
+msgstr "Codo"
 
 #: app/templates/new_patient.html:701 app/templates/new_patient_backup.html:746
 #: app/templates/new_patient_backup_final.html:705
 #: app/templates/new_patient_old.html:705
 msgid "Wrist/Hand"
-msgstr ""
+msgstr "Muñeca/Mano"
 
 #: app/templates/new_patient.html:702 app/templates/new_patient_backup.html:747
 #: app/templates/new_patient_backup_final.html:706
 #: app/templates/new_patient_old.html:706
 msgid "Upper back"
-msgstr ""
+msgstr "Espalda superior"
 
 #: app/templates/new_patient.html:704 app/templates/new_patient_backup.html:749
 #: app/templates/new_patient_backup_final.html:708
 #: app/templates/new_patient_old.html:708
 msgid "Core & Spine"
-msgstr ""
+msgstr "Core y Columna"
 
 #: app/templates/new_patient.html:705 app/templates/new_patient_backup.html:750
 #: app/templates/new_patient_backup_final.html:709
 #: app/templates/new_patient_old.html:709
 msgid "Chest"
-msgstr ""
+msgstr "Pecho"
 
 #: app/templates/new_patient.html:706 app/templates/new_patient_backup.html:751
 #: app/templates/new_patient_backup_final.html:710
 #: app/templates/new_patient_old.html:710
 msgid "Mid back"
-msgstr ""
+msgstr "Espalda central"
 
 #: app/templates/new_patient.html:707 app/templates/new_patient_backup.html:752
 #: app/templates/new_patient_backup_final.html:711
 #: app/templates/new_patient_old.html:711
 msgid "Lower back"
-msgstr ""
+msgstr "Espalda inferior"
 
 #: app/templates/new_patient.html:708 app/templates/new_patient_backup.html:753
 #: app/templates/new_patient_backup_final.html:712
 #: app/templates/new_patient_old.html:712
 msgid "Pelvis/Hip"
-msgstr ""
+msgstr "Pelvis/Cadera"
 
 #: app/templates/new_patient.html:710 app/templates/new_patient_backup.html:755
 #: app/templates/new_patient_backup_final.html:714
 #: app/templates/new_patient_old.html:714
 msgid "Lower Body"
-msgstr ""
+msgstr "Parte Inferior del Cuerpo"
 
 #: app/templates/new_patient.html:711 app/templates/new_patient_backup.html:756
 #: app/templates/new_patient_backup_final.html:715
 #: app/templates/new_patient_old.html:715
 msgid "Thigh"
-msgstr ""
+msgstr "Muslo"
 
 #: app/templates/new_patient.html:712 app/templates/new_patient.html:812
 #: app/templates/new_patient_backup.html:757
@@ -3179,454 +3182,454 @@ msgstr ""
 #: app/templates/new_patient_old.html:716
 #: app/templates/new_patient_old.html:816
 msgid "Knee"
-msgstr ""
+msgstr "Rodilla"
 
 #: app/templates/new_patient.html:713 app/templates/new_patient_backup.html:758
 #: app/templates/new_patient_backup_final.html:717
 #: app/templates/new_patient_old.html:717
 #, fuzzy
 msgid "Calf/Shin"
-msgstr "Efectivo"
+msgstr "Pantorrilla/Espinilla"
 
 #: app/templates/new_patient.html:714 app/templates/new_patient_backup.html:759
 #: app/templates/new_patient_backup_final.html:718
 #: app/templates/new_patient_old.html:718
 msgid "Ankle/Foot"
-msgstr ""
+msgstr "Tobillo/Pie"
 
 #: app/templates/new_patient.html:727 app/templates/new_patient_backup.html:772
 #: app/templates/new_patient_backup_final.html:731
 #: app/templates/new_patient_old.html:731
 msgid "Activities, positions, or movements that increase pain..."
-msgstr ""
+msgstr "Actividades, posiciones o movimientos que aumentan el dolor..."
 
 #: app/templates/new_patient.html:734 app/templates/new_patient_backup.html:779
 #: app/templates/new_patient_backup_final.html:738
 #: app/templates/new_patient_old.html:738
 msgid "Rest, medications, positions, or treatments that help..."
-msgstr ""
+msgstr "Reposo, medicamentos, posiciones o tratamientos que ayudan..."
 
 #: app/templates/new_patient.html:741 app/templates/new_patient_backup.html:786
 #: app/templates/new_patient_backup_final.html:745
 #: app/templates/new_patient_old.html:745
 msgid "Functional Assessment"
-msgstr ""
+msgstr "Evaluación Funcional"
 
 #: app/templates/new_patient.html:746 app/templates/new_patient_backup.html:791
 #: app/templates/new_patient_backup_final.html:750
 #: app/templates/new_patient_old.html:750
 msgid "Current functional limitations"
-msgstr ""
+msgstr "Limitaciones funcionales actuales"
 
 #: app/templates/new_patient.html:752 app/templates/new_patient_backup.html:797
 #: app/templates/new_patient_backup_final.html:756
 #: app/templates/new_patient_old.html:756
 msgid "Walking difficulties"
-msgstr ""
+msgstr "Dificultades para caminar"
 
 #: app/templates/new_patient.html:756 app/templates/new_patient_backup.html:801
 #: app/templates/new_patient_backup_final.html:760
 #: app/templates/new_patient_old.html:760
 msgid "Stair climbing"
-msgstr ""
+msgstr "Subir escaleras"
 
 #: app/templates/new_patient.html:760 app/templates/new_patient_backup.html:805
 #: app/templates/new_patient_backup_final.html:764
 #: app/templates/new_patient_old.html:764
 msgid "Prolonged sitting"
-msgstr ""
+msgstr "Sedentarismo prolongado"
 
 #: app/templates/new_patient.html:764 app/templates/new_patient_backup.html:809
 #: app/templates/new_patient_backup_final.html:768
 #: app/templates/new_patient_old.html:768
 msgid "Prolonged standing"
-msgstr ""
+msgstr "Estación de pie prolongada"
 
 #: app/templates/new_patient.html:768 app/templates/new_patient_backup.html:813
 #: app/templates/new_patient_backup_final.html:772
 #: app/templates/new_patient_old.html:772
 msgid "Lifting/Carrying"
-msgstr ""
+msgstr "Levantar/Transportar"
 
 #: app/templates/new_patient.html:774 app/templates/new_patient_backup.html:819
 #: app/templates/new_patient_backup_final.html:778
 #: app/templates/new_patient_old.html:778
 msgid "Reaching overhead"
-msgstr ""
+msgstr "Alcanzar por encima de la cabeza"
 
 #: app/templates/new_patient.html:778 app/templates/new_patient_backup.html:823
 #: app/templates/new_patient_backup_final.html:782
 #: app/templates/new_patient_old.html:782
 msgid "Bending/Stooping"
-msgstr ""
+msgstr "Agacharse/Inclinarse"
 
 #: app/templates/new_patient.html:782 app/templates/new_patient_backup.html:827
 #: app/templates/new_patient_backup_final.html:786
 #: app/templates/new_patient_old.html:786
 msgid "Sleep disruption"
-msgstr ""
+msgstr "Alteración del sueño"
 
 #: app/templates/new_patient.html:786 app/templates/new_patient_backup.html:831
 #: app/templates/new_patient_backup_final.html:790
 #: app/templates/new_patient_old.html:790
 msgid "Work activities"
-msgstr ""
+msgstr "Actividades laborales"
 
 #: app/templates/new_patient.html:790 app/templates/new_patient_backup.html:835
 #: app/templates/new_patient_backup_final.html:794
 #: app/templates/new_patient_old.html:794
 msgid "Sports/Recreation"
-msgstr ""
+msgstr "Deportes/Recreación"
 
 #: app/templates/new_patient.html:799 app/templates/new_patient_backup.html:844
 #: app/templates/new_patient_backup_final.html:803
 #: app/templates/new_patient_old.html:803
 msgid "Range of Motion observations"
-msgstr ""
+msgstr "Observaciones del Rango de Movimiento"
 
 #: app/templates/new_patient.html:804 app/templates/new_patient_backup.html:849
 #: app/templates/new_patient_backup_final.html:808
 #: app/templates/new_patient_old.html:808
 #, fuzzy
 msgid "Select area to assess..."
-msgstr "Seleccionar método de pago..."
+msgstr "Seleccionar área a evaluar..."
 
 #: app/templates/new_patient.html:805 app/templates/new_patient_backup.html:850
 #: app/templates/new_patient_backup_final.html:809
 #: app/templates/new_patient_old.html:809
 msgid "Cervical spine"
-msgstr ""
+msgstr "Columna cervical"
 
 #: app/templates/new_patient.html:806 app/templates/new_patient_backup.html:851
 #: app/templates/new_patient_backup_final.html:810
 #: app/templates/new_patient_old.html:810
 msgid "Thoracic spine"
-msgstr ""
+msgstr "Columna torácica"
 
 #: app/templates/new_patient.html:807 app/templates/new_patient_backup.html:852
 #: app/templates/new_patient_backup_final.html:811
 #: app/templates/new_patient_old.html:811
 msgid "Lumbar spine"
-msgstr ""
+msgstr "Columna lumbar"
 
 #: app/templates/new_patient.html:810 app/templates/new_patient_backup.html:855
 #: app/templates/new_patient_backup_final.html:814
 #: app/templates/new_patient_old.html:814
 msgid "Wrist"
-msgstr ""
+msgstr "Muñeca"
 
 #: app/templates/new_patient.html:811 app/templates/new_patient_backup.html:856
 #: app/templates/new_patient_backup_final.html:815
 #: app/templates/new_patient_old.html:815
 msgid "Hip"
-msgstr ""
+msgstr "Cadera"
 
 #: app/templates/new_patient.html:813 app/templates/new_patient_backup.html:858
 #: app/templates/new_patient_backup_final.html:817
 #: app/templates/new_patient_old.html:817
 msgid "Ankle"
-msgstr ""
+msgstr "Tobillo"
 
 #: app/templates/new_patient.html:818 app/templates/new_patient_backup.html:863
 #: app/templates/new_patient_backup_final.html:822
 #: app/templates/new_patient_old.html:822
 msgid "ROM quality..."
-msgstr ""
+msgstr "Calidad del ROM..."
 
 #: app/templates/new_patient.html:819 app/templates/new_patient_backup.html:864
 #: app/templates/new_patient_backup_final.html:823
 #: app/templates/new_patient_old.html:823
 msgid "Normal/Full"
-msgstr ""
+msgstr "Normal/Completo"
 
 #: app/templates/new_patient.html:820 app/templates/new_patient_backup.html:865
 #: app/templates/new_patient_backup_final.html:824
 #: app/templates/new_patient_old.html:824
 msgid "Limited"
-msgstr ""
+msgstr "Limitado"
 
 #: app/templates/new_patient.html:821 app/templates/new_patient_backup.html:866
 #: app/templates/new_patient_backup_final.html:825
 #: app/templates/new_patient_old.html:825
 msgid "Painful"
-msgstr ""
+msgstr "Doloroso"
 
 #: app/templates/new_patient.html:822 app/templates/new_patient_backup.html:867
 #: app/templates/new_patient_backup_final.html:826
 #: app/templates/new_patient_old.html:826
 msgid "Severely restricted"
-msgstr ""
+msgstr "Severamente restringido"
 
 #: app/templates/new_patient.html:827 app/templates/new_patient_backup.html:872
 #: app/templates/new_patient_backup_final.html:831
 #: app/templates/new_patient_old.html:831
 msgid "Specific ROM findings, measurements, or movement patterns observed..."
-msgstr ""
+msgstr "Hallazgos específicos de ROM, mediciones o patrones de movimiento observados..."
 
 #: app/templates/new_patient.html:833 app/templates/new_patient_backup.html:878
 #: app/templates/new_patient_backup_final.html:837
 #: app/templates/new_patient_old.html:837
 msgid "Strength observations"
-msgstr ""
+msgstr "Observaciones de la fuerza"
 
 #: app/templates/new_patient.html:838 app/templates/new_patient_backup.html:883
 #: app/templates/new_patient_backup_final.html:842
 #: app/templates/new_patient_old.html:842
 msgid "Select muscle group..."
-msgstr ""
+msgstr "Seleccionar grupo muscular..."
 
 #: app/templates/new_patient.html:839 app/templates/new_patient_backup.html:884
 #: app/templates/new_patient_backup_final.html:843
 #: app/templates/new_patient_old.html:843
 msgid "Neck muscles"
-msgstr ""
+msgstr "Músculos del cuello"
 
 #: app/templates/new_patient.html:840 app/templates/new_patient_backup.html:885
 #: app/templates/new_patient_backup_final.html:844
 #: app/templates/new_patient_old.html:844
 msgid "Shoulder girdle"
-msgstr ""
+msgstr "Cintura escapular"
 
 #: app/templates/new_patient.html:841 app/templates/new_patient_backup.html:886
 #: app/templates/new_patient_backup_final.html:845
 #: app/templates/new_patient_old.html:845
 msgid "Arm muscles"
-msgstr ""
+msgstr "Músculos del brazo"
 
 #: app/templates/new_patient.html:842 app/templates/new_patient_backup.html:887
 #: app/templates/new_patient_backup_final.html:846
 #: app/templates/new_patient_old.html:846
 msgid "Core/Trunk"
-msgstr ""
+msgstr "Core/Tronco"
 
 #: app/templates/new_patient.html:843 app/templates/new_patient_backup.html:888
 #: app/templates/new_patient_backup_final.html:847
 #: app/templates/new_patient_old.html:847
 msgid "Hip muscles"
-msgstr ""
+msgstr "Músculos de la cadera"
 
 #: app/templates/new_patient.html:844 app/templates/new_patient_backup.html:889
 #: app/templates/new_patient_backup_final.html:848
 #: app/templates/new_patient_old.html:848
 msgid "Thigh muscles"
-msgstr ""
+msgstr "Músculos del muslo"
 
 #: app/templates/new_patient.html:845 app/templates/new_patient_backup.html:890
 #: app/templates/new_patient_backup_final.html:849
 #: app/templates/new_patient_old.html:849
 msgid "Calf muscles"
-msgstr ""
+msgstr "Músculos de la pantorrilla"
 
 #: app/templates/new_patient.html:850 app/templates/new_patient_backup.html:895
 #: app/templates/new_patient_backup_final.html:854
 #: app/templates/new_patient_old.html:854
 msgid "Strength grade..."
-msgstr ""
+msgstr "Grado de fuerza..."
 
 #: app/templates/new_patient.html:851 app/templates/new_patient_backup.html:896
 #: app/templates/new_patient_backup_final.html:855
 #: app/templates/new_patient_old.html:855
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 #: app/templates/new_patient.html:852 app/templates/new_patient_backup.html:897
 #: app/templates/new_patient_backup_final.html:856
 #: app/templates/new_patient_old.html:856
 msgid "Good"
-msgstr ""
+msgstr "Bueno"
 
 #: app/templates/new_patient.html:853 app/templates/new_patient_backup.html:898
 #: app/templates/new_patient_backup_final.html:857
 #: app/templates/new_patient_old.html:857
 msgid "Fair"
-msgstr ""
+msgstr "Regular"
 
 #: app/templates/new_patient.html:854 app/templates/new_patient_backup.html:899
 #: app/templates/new_patient_backup_final.html:858
 #: app/templates/new_patient_old.html:858
 msgid "Poor"
-msgstr ""
+msgstr "Pobre"
 
 #: app/templates/new_patient.html:855 app/templates/new_patient_backup.html:900
 #: app/templates/new_patient_backup_final.html:859
 #: app/templates/new_patient_old.html:859
 msgid "Trace"
-msgstr ""
+msgstr "Traza"
 
 #: app/templates/new_patient.html:856 app/templates/new_patient_backup.html:901
 #: app/templates/new_patient_backup_final.html:860
 #: app/templates/new_patient_old.html:860
 #, fuzzy
 msgid "None"
-msgstr "Notas"
+msgstr "Ninguno"
 
 #: app/templates/new_patient.html:861 app/templates/new_patient_backup.html:906
 #: app/templates/new_patient_backup_final.html:865
 #: app/templates/new_patient_old.html:865
 msgid "Manual muscle testing results, weakness patterns, compensations noted..."
-msgstr ""
+msgstr "Resultados del test muscular manual, patrones de debilidad, compensaciones notadas..."
 
 #: app/templates/new_patient.html:867 app/templates/new_patient_backup.html:912
 #: app/templates/new_patient_backup_final.html:871
 #: app/templates/new_patient_old.html:871
 msgid "Special tests performed"
-msgstr ""
+msgstr "Test especiales realizados"
 
 #: app/templates/new_patient.html:872 app/templates/new_patient_backup.html:917
 #: app/templates/new_patient_backup_final.html:876
 #: app/templates/new_patient_old.html:876
 msgid "Select a common test..."
-msgstr ""
+msgstr "Seleccionar un test común..."
 
 #: app/templates/new_patient.html:873 app/templates/new_patient_backup.html:918
 #: app/templates/new_patient_backup_final.html:877
 #: app/templates/new_patient_old.html:877
 msgid "Spine Tests"
-msgstr ""
+msgstr "Test de Columna"
 
 #: app/templates/new_patient.html:874 app/templates/new_patient_backup.html:919
 #: app/templates/new_patient_backup_final.html:878
 #: app/templates/new_patient_old.html:878
 msgid "Straight Leg Raise (SLR)"
-msgstr ""
+msgstr "Elevación de la Pierna Recta (SLR)"
 
 #: app/templates/new_patient.html:875 app/templates/new_patient_backup.html:920
 #: app/templates/new_patient_backup_final.html:879
 #: app/templates/new_patient_old.html:879
 msgid "Spurling's Test"
-msgstr ""
+msgstr "Test de Spurling"
 
 #: app/templates/new_patient.html:876 app/templates/new_patient_backup.html:921
 #: app/templates/new_patient_backup_final.html:880
 #: app/templates/new_patient_old.html:880
 msgid "Cervical Distraction"
-msgstr ""
+msgstr "Distracción Cervical"
 
 #: app/templates/new_patient.html:877 app/templates/new_patient_backup.html:922
 #: app/templates/new_patient_backup_final.html:881
 #: app/templates/new_patient_old.html:881
 msgid "Slump Test"
-msgstr ""
+msgstr "Test de Slump"
 
 #: app/templates/new_patient.html:879 app/templates/new_patient_backup.html:924
 #: app/templates/new_patient_backup_final.html:883
 #: app/templates/new_patient_old.html:883
 msgid "Shoulder Tests"
-msgstr ""
+msgstr "Test de Hombro"
 
 #: app/templates/new_patient.html:880 app/templates/new_patient_backup.html:925
 #: app/templates/new_patient_backup_final.html:884
 #: app/templates/new_patient_old.html:884
 msgid "Impingement Tests"
-msgstr ""
+msgstr "Test de Pinzamiento"
 
 #: app/templates/new_patient.html:881 app/templates/new_patient_backup.html:926
 #: app/templates/new_patient_backup_final.html:885
 #: app/templates/new_patient_old.html:885
 msgid "Apprehension Test"
-msgstr ""
+msgstr "Test de Aprensión"
 
 #: app/templates/new_patient.html:882 app/templates/new_patient_backup.html:927
 #: app/templates/new_patient_backup_final.html:886
 #: app/templates/new_patient_old.html:886
 msgid "Drop Arm Test"
-msgstr ""
+msgstr "Test del Brazo Caído"
 
 #: app/templates/new_patient.html:883 app/templates/new_patient_backup.html:928
 #: app/templates/new_patient_backup_final.html:887
 #: app/templates/new_patient_old.html:887
 msgid "Cross-over Test"
-msgstr ""
+msgstr "Test de Cross-over"
 
 #: app/templates/new_patient.html:885 app/templates/new_patient_backup.html:930
 #: app/templates/new_patient_backup_final.html:889
 #: app/templates/new_patient_old.html:889
 msgid "Knee Tests"
-msgstr ""
+msgstr "Test de Rodilla"
 
 #: app/templates/new_patient.html:886 app/templates/new_patient_backup.html:931
 #: app/templates/new_patient_backup_final.html:890
 #: app/templates/new_patient_old.html:890
 msgid "McMurray Test"
-msgstr ""
+msgstr "Test de McMurray"
 
 #: app/templates/new_patient.html:887 app/templates/new_patient_backup.html:932
 #: app/templates/new_patient_backup_final.html:891
 #: app/templates/new_patient_old.html:891
 msgid "Lachman Test"
-msgstr ""
+msgstr "Test de Lachman"
 
 #: app/templates/new_patient.html:888 app/templates/new_patient_backup.html:933
 #: app/templates/new_patient_backup_final.html:892
 #: app/templates/new_patient_old.html:892
 msgid "Drawer Test"
-msgstr ""
+msgstr "Test del Cajón"
 
 #: app/templates/new_patient.html:889 app/templates/new_patient_backup.html:934
 #: app/templates/new_patient_backup_final.html:893
 #: app/templates/new_patient_old.html:893
 msgid "Valgus/Varus Stress"
-msgstr ""
+msgstr "Estrés Valgo/Varo"
 
 #: app/templates/new_patient.html:891 app/templates/new_patient_backup.html:936
 #: app/templates/new_patient_backup_final.html:895
 #: app/templates/new_patient_old.html:895
 msgid "Hip Tests"
-msgstr ""
+msgstr "Test de Cadera"
 
 #: app/templates/new_patient.html:892 app/templates/new_patient_backup.html:937
 #: app/templates/new_patient_backup_final.html:896
 #: app/templates/new_patient_old.html:896
 msgid "Thomas Test"
-msgstr ""
+msgstr "Test de Thomas"
 
 #: app/templates/new_patient.html:893 app/templates/new_patient_backup.html:938
 #: app/templates/new_patient_backup_final.html:897
 #: app/templates/new_patient_old.html:897
 msgid "FABER Test"
-msgstr ""
+msgstr "Test FABER"
 
 #: app/templates/new_patient.html:894 app/templates/new_patient_backup.html:939
 #: app/templates/new_patient_backup_final.html:898
 #: app/templates/new_patient_old.html:898
 msgid "Trendelenburg Test"
-msgstr ""
+msgstr "Test de Trendelenburg"
 
 #: app/templates/new_patient.html:900 app/templates/new_patient_backup.html:945
 #: app/templates/new_patient_backup_final.html:904
 #: app/templates/new_patient_old.html:904
 msgid "Result..."
-msgstr ""
+msgstr "Resultado..."
 
 #: app/templates/new_patient.html:901 app/templates/new_patient_backup.html:946
 #: app/templates/new_patient_backup_final.html:905
 #: app/templates/new_patient_old.html:905
 msgid "Positive"
-msgstr ""
+msgstr "Positivo"
 
 #: app/templates/new_patient.html:902 app/templates/new_patient_backup.html:947
 #: app/templates/new_patient_backup_final.html:906
 #: app/templates/new_patient_old.html:906
 msgid "Negative"
-msgstr ""
+msgstr "Negativo"
 
 #: app/templates/new_patient.html:903 app/templates/new_patient_backup.html:948
 #: app/templates/new_patient_backup_final.html:907
 #: app/templates/new_patient_old.html:907
 msgid "Inconclusive"
-msgstr ""
+msgstr "Inconcluso"
 
 #: app/templates/new_patient.html:908 app/templates/new_patient_backup.html:953
 #: app/templates/new_patient_backup_final.html:912
 #: app/templates/new_patient_old.html:912
 msgid "Document special tests performed, results, and clinical relevance..."
-msgstr ""
+msgstr "Documentar pruebas especiales realizadas, resultados y relevancia clínica..."
 
 #: app/templates/new_patient.html:914 app/templates/new_patient_backup.html:959
 #: app/templates/new_patient_backup_final.html:918
 #: app/templates/new_patient_old.html:918
 msgid "Additional examination findings"
-msgstr ""
+msgstr "Hallazgos adicionales del examen"
 
 #: app/templates/new_patient.html:917 app/templates/new_patient_backup.html:962
 #: app/templates/new_patient_backup_final.html:921
@@ -3635,28 +3638,32 @@ msgid ""
 "Posture, gait, neurological findings, palpation, clinical impression, red"
 " flags, etc."
 msgstr ""
+"Postura, marcha, hallazgos neurológicos, palpación, impresión clínica, "
+"banderas rojas, etc."
 
 #: app/templates/new_patient.html:928 app/templates/new_patient_backup.html:973
 #: app/templates/new_patient_backup_final.html:932
 #: app/templates/new_patient_old.html:932
 msgid "Next: Portal Access"
-msgstr ""
+msgstr "Siguiente: Acceso al Portal"
 
 #: app/templates/new_patient.html:935 app/templates/new_patient_backup.html:980
 #: app/templates/new_patient_backup_final.html:939
 #: app/templates/new_patient_old.html:939
 msgid "Patient Portal Access (Optional)"
-msgstr ""
+msgstr "Acceso al Portal del Paciente (Opcional)"
 
 #: app/templates/new_patient.html:938
 msgid "This step is completely optional."
-msgstr ""
+msgstr "Este paso es completamente opcional."
 
 #: app/templates/new_patient.html:939
 msgid ""
 "If you do not want the patient to have portal access, simply click "
 "\"Create Patient\" without filling anything."
 msgstr ""
+"Si no quieres que el paciente tenga acceso al portal, simplemente haz "
+"clic en \"Crear Paciente\" sin llenar nada."
 
 #: app/templates/new_patient.html:941 app/templates/new_patient_backup.html:981
 #: app/templates/new_patient_backup_final.html:940
@@ -3665,6 +3672,8 @@ msgid ""
 "Enter an email and password if you want the patient to be able to log in "
 "and view their exercise prescriptions."
 msgstr ""
+"Ingresa un correo electrónico y contraseña si quieres que el paciente "
+"pueda iniciar sesión y ver sus prescripciones de ejercicios."
 
 #: app/templates/new_patient.html:944
 #, fuzzy
@@ -3673,7 +3682,7 @@ msgstr "Opcional"
 
 #: app/templates/new_patient.html:948
 msgid "(Only if you provide email)"
-msgstr ""
+msgstr "(Solo si proporcionas correo electrónico)"
 
 #: app/templates/new_patient.html:949 app/templates/new_patient_backup.html:989
 #: app/templates/new_patient_backup_final.html:948

@@ -539,12 +539,12 @@ msgstr "Trattamenti medi/pazienti"
 #: app/templates/analytics.html:61
 #, fuzzy, python-format
 msgid "%(clinic_name)s Fee (This Week)"
-msgstr "Costaspine Tasso (questa settimana)"
+msgstr "%(clinic_name)s Tariffa (Questa Settimana)"
 
 #: app/templates/analytics.html:63
 #, fuzzy, python-format
 msgid "Total Weekly %(clinic_name)s Revenue:"
-msgstr "Reddito settimanale CS:"
+msgstr "Ricavi Settimanali Totali %(clinic_name)s:"
 
 #: app/templates/analytics.html:71
 msgid "Est. Total Autónomo Contr. (€)"
@@ -561,7 +561,7 @@ msgstr "Fai clic per vedere l'elenco"
 #: app/templates/analytics.html:87 app/templates/analytics.html:279
 #, fuzzy
 msgid "Inactive Patients (>90d)"
-msgstr "Pazienti inattivi (>90 giorni)"
+msgstr "Pazienti Inattivi (>90g)"
 
 #: app/templates/analytics.html:99
 msgid "Treatments by Month"
@@ -580,27 +580,27 @@ msgstr "Nuovi pazienti al mese"
 
 #: app/templates/analytics.html:125
 msgid "Revenue by Visit Type"
-msgstr "Visita il reddito del tipo"
+msgstr "Ricavi per Tipo di Visita"
 
 #: app/templates/analytics.html:136
 msgid "Revenue by Location (Top 10)"
-msgstr "Reddito di posizione (top 10)"
+msgstr "Ricavi per Sede (Top 10)"
 
 #: app/templates/analytics.html:151
 msgid "Common Diagnoses"
-msgstr "Diagnosi comuni"
+msgstr "Diagnosi Comuni"
 
 #: app/templates/analytics.html:162
 msgid "Patient Status Distribution"
-msgstr "Distribuzione dello stato del paziente"
+msgstr "Distribuzione Stato Pazienti"
 
 #: app/templates/analytics.html:173
 msgid "Payment Method Distribution"
-msgstr "Distribuzione dei metodi di pagamento"
+msgstr "Distribuzione Metodi di Pagamento"
 
 #: app/templates/analytics.html:188
 msgid "Top Patients by Revenue"
-msgstr "Pazienti con reddito più alto"
+msgstr "Pazienti Top per Ricavi"
 
 #: app/templates/analytics.html:192 app/templates/analytics.html:249
 #: app/templates/analytics.html:253 app/templates/analytics.html:257
@@ -720,7 +720,7 @@ msgstr "Nuovi Pazienti"
 
 #: app/templates/analytics.html:567 app/templates/analytics.html:584
 msgid "Revenue"
-msgstr "Entrate"
+msgstr "Ricavi"
 
 #: app/templates/analytics.html:601 app/templates/analytics.html:648
 msgid "Count"
@@ -2390,7 +2390,7 @@ msgstr "Eventi di Sicurezza Recenti"
 #: app/templates/monitoring.html:125
 #, fuzzy
 msgid "User"
-msgstr "Nome utente"
+msgstr "Utente"
 
 #: app/templates/monitoring.html:126
 #, fuzzy
@@ -6216,45 +6216,47 @@ msgid ""
 "Choose from:\n"
 "\t{choices}"
 msgstr ""
+"Scegli tra:\n"
+"\t{choices}"
 
 #: venv/lib/python3.9/site-packages/click/types.py:299
 #, python-brace-format
 msgid "{value!r} is not {choice}."
 msgid_plural "{value!r} is not one of {choices}."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "{value!r} non è {choice}."
+msgstr[1] "{value!r} non è uno di {choices}."
 
 #: venv/lib/python3.9/site-packages/click/types.py:393
 #, python-brace-format
 msgid "{value!r} does not match the format {format}."
 msgid_plural "{value!r} does not match the formats {formats}."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "{value!r} non corrisponde al formato {format}."
+msgstr[1] "{value!r} non corrisponde ai formati {formats}."
 
 #: venv/lib/python3.9/site-packages/click/types.py:415
 #, python-brace-format
 msgid "{value!r} is not a valid {number_type}."
-msgstr ""
+msgstr "{value!r} non è un {number_type} valido."
 
 #: venv/lib/python3.9/site-packages/click/types.py:471
 #, python-brace-format
 msgid "{value} is not in the range {range}."
-msgstr ""
+msgstr "{value} non è nell'intervallo {range}."
 
 #: venv/lib/python3.9/site-packages/click/types.py:612
 #, python-brace-format
 msgid "{value!r} is not a valid boolean."
-msgstr ""
+msgstr "{value!r} non è un booleano valido."
 
 #: venv/lib/python3.9/site-packages/click/types.py:636
 #, python-brace-format
 msgid "{value!r} is not a valid UUID."
-msgstr ""
+msgstr "{value!r} non è un UUID valido."
 
 #: venv/lib/python3.9/site-packages/click/types.py:826
 #, fuzzy
 msgid "file"
-msgstr "Filtra"
+msgstr "file"
 
 #: venv/lib/python3.9/site-packages/click/types.py:828
 msgid "directory"
@@ -6263,44 +6265,44 @@ msgstr "directory"
 #: venv/lib/python3.9/site-packages/click/types.py:830
 #, fuzzy
 msgid "path"
-msgstr "Contanti"
+msgstr "percorso"
 
 #: venv/lib/python3.9/site-packages/click/types.py:881
 #, python-brace-format
 msgid "{name} {filename!r} does not exist."
-msgstr ""
+msgstr "{name} {filename!r} non esiste."
 
 #: venv/lib/python3.9/site-packages/click/types.py:890
 #, python-brace-format
 msgid "{name} {filename!r} is a file."
-msgstr ""
+msgstr "{name} {filename!r} è un file."
 
 #: venv/lib/python3.9/site-packages/click/types.py:898
 #, python-brace-format
 msgid "{name} {filename!r} is a directory."
-msgstr ""
+msgstr "{name} {filename!r} è una directory."
 
 #: venv/lib/python3.9/site-packages/click/types.py:907
 #, python-brace-format
 msgid "{name} {filename!r} is not readable."
-msgstr ""
+msgstr "{name} {filename!r} non è leggibile."
 
 #: venv/lib/python3.9/site-packages/click/types.py:916
 #, python-brace-format
 msgid "{name} {filename!r} is not writable."
-msgstr ""
+msgstr "{name} {filename!r} non è scrivibile."
 
 #: venv/lib/python3.9/site-packages/click/types.py:925
 #, python-brace-format
 msgid "{name} {filename!r} is not executable."
-msgstr ""
+msgstr "{name} {filename!r} non è eseguibile."
 
 #: venv/lib/python3.9/site-packages/click/types.py:992
 #, python-brace-format
 msgid "{len_type} values are required, but {len_value} was given."
 msgid_plural "{len_type} values are required, but {len_value} were given."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "{len_type} valori sono richiesti, ma ne è stato fornito {len_value}."
+msgstr[1] "{len_type} valori sono richiesti, ma ne sono stati forniti {len_value}."
 
 #: venv/lib/python3.9/site-packages/flask_wtf/file.py:55
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:293
@@ -6311,7 +6313,7 @@ msgstr "Questo campo è obbligatorio."
 #: venv/lib/python3.9/site-packages/flask_wtf/file.py:94
 #, python-brace-format
 msgid "File does not have an approved extension: {extensions}"
-msgstr ""
+msgstr "Il file non ha un'estensione approvata: {extensions}"
 
 #: venv/lib/python3.9/site-packages/flask_wtf/file.py:101
 msgid "File does not have an approved extension."
@@ -6331,22 +6333,22 @@ msgstr "Il campo deve essere uguale a %(other_name)s."
 #, python-format
 msgid "Field must be at least %(min)d character long."
 msgid_plural "Field must be at least %(min)d characters long."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Il campo deve essere di almeno %(min)d carattere."
+msgstr[1] "Il campo deve essere di almeno %(min)d caratteri."
 
-#: venv/lib/python3.9/site-packages/wtforms/validators.py:152
+#: venv/lib/python3.9/site-packages/click/types.py:152
 #, python-format
 msgid "Field cannot be longer than %(max)d character."
 msgid_plural "Field cannot be longer than %(max)d characters."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Il campo non può essere più lungo di %(max)d carattere."
+msgstr[1] "Il campo non può essere più lungo di %(max)d caratteri."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:158
 #, python-format
 msgid "Field must be exactly %(max)d character long."
 msgid_plural "Field must be exactly %(max)d characters long."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Il campo deve essere esattamente di %(max)d carattere."
+msgstr[1] "Il campo deve essere esattamente di %(max)d caratteri."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:164
 #, python-format
@@ -6375,17 +6377,17 @@ msgstr "Input non valido."
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:422
 #, fuzzy
 msgid "Invalid email address."
-msgstr "Indirizzo IP"
+msgstr "Indirizzo email non valido."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:460
 #, fuzzy
 msgid "Invalid IP address."
-msgstr "Indirizzo IP"
+msgstr "Indirizzo IP non valido."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:503
 #, fuzzy
 msgid "Invalid Mac address."
-msgstr "Indirizzo IP"
+msgstr "Indirizzo Mac non valido."
 
 #: venv/lib/python3.9/site-packages/wtforms/validators.py:540
 msgid "Invalid URL."
@@ -6450,8 +6452,8 @@ msgstr "Scelta/e non valida/e: uno o più input di dati non sono stati convertib
 #, python-format
 msgid "'%(value)s' is not a valid choice for this field."
 msgid_plural "'%(value)s' are not valid choices for this field."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "'%(value)s' non è una scelta valida per questo campo."
+msgstr[1] "'%(value)s' non sono scelte valide per questo campo."
 
 #: venv/lib/python3.9/site-packages/wtforms/fields/datetime.py:52
 msgid "Not a valid datetime value."
