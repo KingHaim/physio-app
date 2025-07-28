@@ -400,7 +400,7 @@
                                         </div>
 
                                 <!-- Hidden field to store compiled anamnesis -->
-                                <input type="hidden" id="edit_compiled_anamnesis" name="anamnesis">
+                                <input type="hidden" id="edit_compiled_anamnesis" name="anamnesis" value="{{ patient.anamnesis if patient.anamnesis else '' }}">
                                     </div>
                                 </div>
                             </div>
@@ -800,7 +800,14 @@
         const anamnesisField = document.getElementById('edit_compiled_anamnesis');
         if (anamnesisField && anamnesisField.value) {
             try {
-                const existingData = JSON.parse(anamnesisField.value);
+                let existingData = JSON.parse(anamnesisField.value);
+                
+                // Handle double-encoded JSON (same as patient_detail.html)
+                if (typeof existingData === 'string') {
+                    existingData = JSON.parse(existingData);
+                }
+                
+                console.log('Parsed anamnesis data for edit form:', existingData);
                 populateEditFormFromAnamnesis(existingData);
             } catch (e) {
                 console.log('Legacy anamnesis format, keeping as-is');
@@ -812,39 +819,68 @@
     }
 
     function populateEditFormFromAnamnesis(data) {
-        // Essential Information
-        if (data.chief_complaint) document.getElementById('edit_anamnesis_chief_complaint').value = data.chief_complaint;
-        if (data.pain_scale !== undefined) {
-            document.getElementById('edit_anamnesis_pain_scale').value = data.pain_scale;
-            updateEditPainDisplay(data.pain_scale);
+        console.log('Populating edit form with data:', data);
+        
+        // Essential Information - access nested structure correctly
+        if (data.chief_complaint && data.chief_complaint.main_complaint) {
+            document.getElementById('edit_anamnesis_chief_complaint').value = data.chief_complaint.main_complaint;
         }
-        if (data.onset_date) document.getElementById('edit_anamnesis_onset_date').value = data.onset_date;
-        if (data.mechanism) document.getElementById('edit_anamnesis_mechanism').value = data.mechanism;
+        if (data.pain_details && data.pain_details.pain_scale !== undefined) {
+            document.getElementById('edit_anamnesis_pain_scale').value = data.pain_details.pain_scale;
+            updateEditPainDisplay(data.pain_details.pain_scale);
+        }
+        if (data.chief_complaint && data.chief_complaint.onset) {
+            document.getElementById('edit_anamnesis_onset').value = data.chief_complaint.onset;
+        }
+        if (data.chief_complaint && data.chief_complaint.mechanism) {
+            document.getElementById('edit_anamnesis_mechanism').value = data.chief_complaint.mechanism;
+        }
         
         // Personal Information
-        if (data.personal_data.age) document.getElementById('edit_anamnesis_age').value = data.personal_data.age;
-        if (data.personal_data.gender) document.getElementById('edit_anamnesis_gender').value = data.personal_data.gender;
-        if (data.personal_data.occupation) document.getElementById('edit_anamnesis_occupation').value = data.personal_data.occupation;
-        if (data.personal_data.emergency_contact) document.getElementById('edit_anamnesis_emergency_contact').value = data.personal_data.emergency_contact;
+        if (data.personal_data) {
+            if (data.personal_data.age) document.getElementById('edit_anamnesis_age').value = data.personal_data.age;
+            if (data.personal_data.gender) document.getElementById('edit_anamnesis_gender').value = data.personal_data.gender;
+            if (data.personal_data.occupation) document.getElementById('edit_anamnesis_occupation').value = data.personal_data.occupation;
+            if (data.personal_data.emergency_contact) document.getElementById('edit_anamnesis_emergency_contact').value = data.personal_data.emergency_contact;
+        }
         
         // Medical History
-        if (data.medical_history.previous_conditions) document.getElementById('edit_anamnesis_previous_conditions').value = data.medical_history.previous_conditions;
-        if (data.medical_history.surgeries) document.getElementById('edit_anamnesis_surgeries').value = data.medical_history.surgeries;
-        if (data.medical_history.medications) document.getElementById('edit_anamnesis_medications').value = data.medical_history.medications;
-        if (data.medical_history.allergies) document.getElementById('edit_anamnesis_allergies').value = data.medical_history.allergies;
+        if (data.medical_history) {
+            if (data.medical_history.previous_conditions) document.getElementById('edit_anamnesis_previous_conditions').value = data.medical_history.previous_conditions;
+            if (data.medical_history.surgeries) document.getElementById('edit_anamnesis_surgeries').value = data.medical_history.surgeries;
+            if (data.medical_history.medications) document.getElementById('edit_anamnesis_medications').value = data.medical_history.medications;
+            if (data.medical_history.allergies) document.getElementById('edit_anamnesis_allergies').value = data.medical_history.allergies;
+        }
+        
+        // Family History
+        if (data.family_history && data.family_history.family_history) {
+            document.getElementById('edit_anamnesis_family_history').value = data.family_history.family_history;
+        }
+        
+        // Lifestyle
+        if (data.lifestyle) {
+            if (data.lifestyle.physical_activity) document.getElementById('edit_anamnesis_physical_activity').value = data.lifestyle.physical_activity;
+            if (data.lifestyle.sleep) document.getElementById('edit_anamnesis_sleep').value = data.lifestyle.sleep;
+            if (data.lifestyle.work_posture) document.getElementById('edit_anamnesis_work_posture').value = data.lifestyle.work_posture;
+            if (data.lifestyle.stress_level) document.getElementById('edit_anamnesis_stress_level').value = data.lifestyle.stress_level;
+            if (data.lifestyle.diet_habits) document.getElementById('edit_anamnesis_diet_habits').value = data.lifestyle.diet_habits;
+        }
         
         // Pain Details
-        if (data.pain_details.pain_type) document.getElementById('edit_anamnesis_pain_type').value = data.pain_details.pain_type;
-        if (data.pain_details.pain_location) document.getElementById('edit_anamnesis_pain_location').value = data.pain_details.pain_location;
-        if (data.pain_details.pain_triggers) document.getElementById('edit_anamnesis_pain_triggers').value = data.pain_details.pain_triggers;
-        if (data.pain_details.pain_relievers) document.getElementById('edit_anamnesis_pain_relievers').value = data.pain_details.pain_relievers;
+        if (data.pain_details) {
+            if (data.pain_details.pain_type) document.getElementById('edit_anamnesis_pain_type').value = data.pain_details.pain_type;
+            if (data.pain_details.pain_location) document.getElementById('edit_anamnesis_pain_location').value = data.pain_details.pain_location;
+            if (data.pain_details.pain_triggers) document.getElementById('edit_anamnesis_pain_triggers').value = data.pain_details.pain_triggers;
+            if (data.pain_details.pain_relievers) document.getElementById('edit_anamnesis_pain_relievers').value = data.pain_details.pain_relievers;
+        }
         
         // Functional Assessment
-        if (data.functional_assessment.functional_limitations) document.getElementById('edit_anamnesis_functional_limitations').value = data.functional_assessment.functional_limitations;
-        if (data.functional_assessment.onset_date) document.getElementById('edit_anamnesis_onset_date').value = data.functional_assessment.onset_date;
-        if (data.physical_activity) document.getElementById('edit_anamnesis_physical_activity').value = data.physical_activity;
-        if (data.work_posture) document.getElementById('edit_anamnesis_work_posture').value = data.work_posture;
-        if (data.sleep) document.getElementById('edit_anamnesis_sleep').value = data.sleep;
+        if (data.functional_assessment) {
+            if (data.functional_assessment.functional_limitations) document.getElementById('edit_anamnesis_functional_limitations').value = data.functional_assessment.functional_limitations;
+            if (data.functional_assessment.onset_date) document.getElementById('edit_anamnesis_onset_date').value = data.functional_assessment.onset_date;
+        }
+        
+        console.log('Edit form populated successfully');
     }
 
     function updateEditProgress() {

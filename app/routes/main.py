@@ -764,6 +764,26 @@ def patient_detail(id):
         return redirect(url_for('main.index'))
     # --- End Access Control ---
 
+    # DEBUG: Log anamnesis state for troubleshooting
+    print(f"DEBUG patient_detail: Patient ID={patient.id}, Name={patient.name}")
+    print(f"DEBUG patient_detail: Raw _anamnesis field={patient._anamnesis}")
+    print(f"DEBUG patient_detail: Decrypted anamnesis property={patient.anamnesis}")
+    print(f"DEBUG patient_detail: Anamnesis length={len(patient.anamnesis) if patient.anamnesis else 0}")
+    print(f"DEBUG patient_detail: Anamnesis is empty={not patient.anamnesis or not patient.anamnesis.strip()}")
+    
+    if patient.anamnesis:
+        print(f"DEBUG patient_detail: First 200 chars of anamnesis: {patient.anamnesis[:200]}")
+        # Try to parse as JSON to see if it's structured
+        try:
+            import json
+            parsed = json.loads(patient.anamnesis)
+            print(f"DEBUG patient_detail: Anamnesis parsed as JSON successfully")
+            print(f"DEBUG patient_detail: Chief complaint from JSON: {parsed.get('anamnesis_chief_complaint', 'NOT FOUND')}")
+        except (json.JSONDecodeError, TypeError) as e:
+            print(f"DEBUG patient_detail: Anamnesis is not valid JSON: {e}")
+    else:
+        print(f"DEBUG patient_detail: Anamnesis is None or empty")
+
     print(f"Treatments for patient {patient.name}:")
     treatments = Treatment.query.filter_by(patient_id=id).options(joinedload(Treatment.patient)).all()
     for treatment in treatments:
@@ -5250,4 +5270,10 @@ def debug_patients():
     }
     
     return jsonify(debug_info)
+
+@main.route('/test_anamnesis')
+@login_required
+def test_anamnesis():
+    """Test route for anamnesis display debugging"""
+    return render_template('test_anamnesis.html')
 

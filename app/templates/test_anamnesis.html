@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block title %}Test Anamnesis{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .anamnesis-section {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .section-title {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .section-content {
+        padding: 1.25rem;
+    }
+
+    .info-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        height: 100%;
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .info-value {
+        font-size: 0.95rem;
+        color: #2c3e50;
+        line-height: 1.4;
+        word-wrap: break-word;
+    }
+
+    .pain-indicator {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .pain-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 50%;
+        min-width: 3.5rem;
+        height: 3.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .pain-desc {
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .bg-success {
+        background-color: #28a745 !important;
+    }
+
+    .bg-info {
+        background-color: #17a2b8 !important;
+    }
+
+    .bg-warning {
+        background-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+
+    .bg-danger {
+        background-color: #dc3545 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Test Anamnesis</h5>
+        </div>
+        <div class="card-body">
+            <!-- Structured Anamnesis Display -->
+            <script type="application/json" id="anamnesis-data">
+            {
+                "personal_data": {
+                    "age": "",
+                    "gender": "",
+                    "occupation": "",
+                    "emergency_contact": ""
+                },
+                "chief_complaint": {
+                    "main_complaint": "pregnancy 7 meses",
+                    "onset": "",
+                    "mechanism": ""
+                },
+                "medical_history": {
+                    "previous_conditions": "",
+                    "surgeries": "",
+                    "medications": "",
+                    "allergies": ""
+                },
+                "family_history": {
+                    "family_history": ""
+                },
+                "lifestyle": {
+                    "physical_activity": "",
+                    "sleep": "",
+                    "work_posture": "",
+                    "stress_level": "",
+                    "diet_habits": ""
+                },
+                "pain_details": {
+                    "pain_scale": "2",
+                    "pain_type": "",
+                    "pain_location": "",
+                    "pain_triggers": "",
+                    "pain_relievers": ""
+                },
+                "functional_assessment": {
+                    "functional_limitations": "",
+                    "onset_date": ""
+                },
+                "metadata": {
+                    "form_version": "2.0_edit",
+                    "updated_date": "2025-07-28T11:28:47.849Z"
+                }
+            }
+            </script>
+
+            <!-- Debug Button -->
+            <div class="mb-3">
+                <button onclick="debugAnamnesis(); return false;" class="btn btn-sm btn-info">
+                    <i class="bi bi-bug"></i> Debug Anamnesis
+                </button>
+                <button onclick="showRawData(); return false;" class="btn btn-sm btn-warning ms-2">
+                    <i class="bi bi-code"></i> Show Raw Data
+                </button>
+            </div>
+            
+            <!-- Debug Output -->
+            <div id="debug-output" class="mb-3" style="background: #f8f9fa; padding: 10px; border: 1px solid #dee2e6; border-radius: 5px;">
+                <h6>Debug Output:</h6>
+                <pre id="debug-text" style="margin: 0; font-size: 12px; max-height: 200px; overflow-y: auto;"></pre>
+            </div>
+
+            <!-- Essential Information -->
+            <div class="anamnesis-section mb-4">
+                <div class="section-header">
+                    <h6 class="section-title">
+                        <i class="bi bi-exclamation-circle-fill text-danger me-2"></i>
+                        Chief Complaint & Pain Assessment
+                    </h6>
+                </div>
+                <div class="section-content">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="info-card">
+                                <label class="info-label">Chief Complaint</label>
+                                <div class="info-value" id="display-chief-complaint">-</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-card text-center">
+                                <label class="info-label">Pain Level</label>
+                                <div class="pain-indicator">
+                                    <span class="pain-number" id="display-pain-scale">0</span>
+                                    <small class="pain-desc" id="display-pain-desc">No pain</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    console.log('🔄 Script block loaded');
+    
+    function log(message) {
+        console.log(message);
+        const debugText = document.getElementById('debug-text');
+        if (debugText) {
+            debugText.textContent += message + '\n';
+        }
+    }
+    
+    function showRawData() {
+        const anamnesisDataElement = document.getElementById('anamnesis-data');
+        if (anamnesisDataElement) {
+            log('Raw JSON content:');
+            log(anamnesisDataElement.textContent);
+        } else {
+            log('❌ No anamnesis-data element found!');
+        }
+    }
+    
+    function debugAnamnesis() {
+        // Clear previous debug output
+        const debugText = document.getElementById('debug-text');
+        if (debugText) debugText.textContent = '';
+        
+        log('🐛 Starting debug...');
+        
+        // Check if anamnesis data exists
+        const anamnesisDataElement = document.getElementById('anamnesis-data');
+        if (!anamnesisDataElement) {
+            log('❌ No anamnesis data element found!');
+            return;
+        }
+        
+        try {
+            // Parse anamnesis data
+            const rawContent = anamnesisDataElement.textContent;
+            log('📝 Raw content length: ' + rawContent.length);
+            
+            const anamnesisData = JSON.parse(rawContent);
+            log('📋 Parsed data successfully');
+            log('📋 Data structure: ' + JSON.stringify(anamnesisData, null, 2));
+            
+            // Extract and validate chief complaint
+            const chiefComplaint = anamnesisData.chief_complaint?.main_complaint;
+            log('🗣️ Chief complaint value: "' + chiefComplaint + '"');
+            log('🗣️ Chief complaint type: ' + typeof chiefComplaint);
+            log('🗣️ Chief complaint exists: ' + !!chiefComplaint);
+            
+            // Extract and validate pain scale
+            const painScale = anamnesisData.pain_details?.pain_scale;
+            log('🔢 Pain scale value: "' + painScale + '"');
+            log('🔢 Pain scale type: ' + typeof painScale);
+            log('🔢 Pain scale exists: ' + !!painScale);
+            
+            // Find and validate DOM elements
+            const elements = {
+                chiefComplaint: document.getElementById('display-chief-complaint'),
+                painScale: document.getElementById('display-pain-scale'),
+                painDesc: document.getElementById('display-pain-desc'),
+                painIndicator: document.querySelector('.pain-indicator')
+            };
+            
+            log('🔍 Chief complaint element found: ' + !!elements.chiefComplaint);
+            log('🔍 Pain scale element found: ' + !!elements.painScale);
+            log('🔍 Pain desc element found: ' + !!elements.painDesc);
+            log('🔍 Pain indicator element found: ' + !!elements.painIndicator);
+            
+            if (elements.chiefComplaint) {
+                log('🔍 Chief complaint current text: "' + elements.chiefComplaint.textContent + '"');
+                log('🔍 Chief complaint current display: ' + elements.chiefComplaint.style.display);
+            }
+            
+            // Update chief complaint
+            if (elements.chiefComplaint) {
+                elements.chiefComplaint.textContent = chiefComplaint || '-';
+                elements.chiefComplaint.style.display = 'block';
+                log('✅ Updated chief complaint to: "' + elements.chiefComplaint.textContent + '"');
+                log('✅ Set display to: ' + elements.chiefComplaint.style.display);
+            } else {
+                log('❌ Chief complaint element not found');
+            }
+            
+            // Update pain scale
+            if (elements.painScale && elements.painDesc && elements.painIndicator) {
+                if (painScale) {
+                    const level = parseInt(painScale);
+                    elements.painScale.textContent = level;
+                    
+                    // Update color and description based on pain level
+                    if (level === 0) {
+                        elements.painScale.className = 'pain-number bg-success';
+                        elements.painDesc.textContent = 'No pain';
+                    } else if (level <= 3) {
+                        elements.painScale.className = 'pain-number bg-info';
+                        elements.painDesc.textContent = 'Mild pain';
+                    } else if (level <= 6) {
+                        elements.painScale.className = 'pain-number bg-warning';
+                        elements.painDesc.textContent = 'Moderate pain';
+                    } else {
+                        elements.painScale.className = 'pain-number bg-danger';
+                        elements.painDesc.textContent = 'Severe pain';
+                    }
+                    
+                    elements.painIndicator.style.display = 'block';
+                    log('✅ Updated pain scale to: ' + level + ' (' + elements.painDesc.textContent + ')');
+                } else {
+                    elements.painScale.textContent = '0';
+                    elements.painScale.className = 'pain-number bg-success';
+                    elements.painDesc.textContent = 'No pain';
+                    elements.painIndicator.style.display = 'block';
+                    log('ℹ️ No pain scale provided, defaulting to 0');
+                }
+            } else {
+                log('❌ Pain scale elements not found');
+            }
+            
+        } catch (e) {
+            log('❌ Error during debug: ' + e.message);
+        }
+    }
+    
+    // Auto-run debug on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔄 Page loaded, running debug...');
+        setTimeout(debugAnamnesis, 500);
+    });
+</script>
+{% endblock %} 
