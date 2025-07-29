@@ -860,12 +860,12 @@ def start_of_month(dt):
 def treatments_by_month():
     try:
         data_query = db.session.query(
-            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
             func.count(Treatment.id).label('count')
         ).join(Patient, Patient.id == Treatment.patient_id) \
          .filter(Patient.user_id == current_user.id) \
-         .group_by(func.to_char(Treatment.created_at, 'YYYY-MM')) \
-         .order_by(func.to_char(Treatment.created_at, 'YYYY-MM')) \
+         .group_by(func.strftime('%Y-%m', Treatment.created_at)) \
+         .order_by(func.strftime('%Y-%m', Treatment.created_at)) \
          .all()
         
         result = [{'month': item.month, 'count': item.count} for item in data_query]
@@ -879,11 +879,11 @@ def treatments_by_month():
 def patients_by_month():
     try:
         data = db.session.query(
-            func.to_char(Patient.created_at, 'YYYY-MM').label('month'),
+            func.strftime('%Y-%m', Patient.created_at).label('month'),
             func.count(Patient.id).label('count')
         ).filter(Patient.user_id == current_user.id) \
-         .group_by(func.to_char(Patient.created_at, 'YYYY-MM')) \
-         .order_by(func.to_char(Patient.created_at, 'YYYY-MM')) \
+         .group_by(func.strftime('%Y-%m', Patient.created_at)) \
+         .order_by(func.strftime('%Y-%m', Patient.created_at)) \
          .all()
         result = [{'month': r.month, 'count': r.count} for r in data]
         return jsonify(result)

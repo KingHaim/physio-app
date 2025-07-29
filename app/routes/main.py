@@ -1433,10 +1433,10 @@ def reports():
         active_patients = Patient.query.filter_by(status='Active').count()
 
         monthly_treatments_query = db.session.query(
-            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
             func.count(Treatment.id).label('count')
-        ).group_by(func.to_char(Treatment.created_at, 'YYYY-MM')) \
-            .order_by(func.to_char(Treatment.created_at, 'YYYY-MM').desc()) \
+        ).group_by(func.strftime('%Y-%m', Treatment.created_at)) \
+            .order_by(func.strftime('%Y-%m', Treatment.created_at).desc()) \
             .limit(12).all()
 
         monthly_treatments = [(row[0], row[1]) for row in monthly_treatments_query]
@@ -1487,10 +1487,10 @@ def reports():
 def treatments_by_month():
     try:
         treatments = db.session.query(
-            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
             func.count(Treatment.id).label('count')
-        ).group_by(func.to_char(Treatment.created_at, 'YYYY-MM')) \
-            .order_by(func.to_char(Treatment.created_at, 'YYYY-MM')) \
+        ).group_by(func.strftime('%Y-%m', Treatment.created_at)) \
+            .order_by(func.strftime('%Y-%m', Treatment.created_at)) \
             .all()
 
         return jsonify({
@@ -2250,7 +2250,7 @@ def generate_deepseek_report(analytics_data):
             {"role": "system", "content": "You are an expert AI assistant analyzing physiotherapy practice data to provide insightful reports."}, # Updated system message
             {"role": "user", "content": prompt}
         ],
-        "max_tokens": 800, # Increased max_tokens for a more detailed report
+        "max_tokens": 3000, # Increased to allow for comprehensive reports
         "temperature": 0.6, # Slightly increased temperature for potentially more nuanced insights
     }
 
@@ -2307,6 +2307,12 @@ def analytics():
     latest_report = PracticeReport.query.filter_by(
         user_id=current_user.id
     ).order_by(PracticeReport.generated_at.desc()).first()
+    
+    # If no user-specific report found and user is admin, try to find admin reports (user_id=None)
+    if not latest_report and current_user.is_admin:
+        latest_report = PracticeReport.query.filter_by(
+            user_id=None
+        ).order_by(PracticeReport.generated_at.desc()).first()
     
     ai_report_html = None
     ai_report_generated_at = None
@@ -3944,14 +3950,14 @@ def generate_new_analytics_report():
 
         # Average Monthly Revenue
         monthly_revenue_base_query = db.session.query(
-            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
             func.sum(Treatment.fee_charged).label('monthly_total')
         ).filter(Treatment.fee_charged.isnot(None))
 
         if not is_admin_generating:
             monthly_revenue_base_query = monthly_revenue_base_query.join(Patient).filter(Patient.user_id == user_generating_report.id)
         
-        monthly_revenue_data = monthly_revenue_base_query.group_by('month').all()
+        monthly_revenue_data = monthly_revenue_base_query.group_by(func.strftime('%Y-%m', Treatment.created_at)).all()
         total_revenue_all_time = sum(m.monthly_total for m in monthly_revenue_data if m.monthly_total)
         num_months_with_revenue = len(monthly_revenue_data)
         avg_monthly_revenue = total_revenue_all_time / num_months_with_revenue if num_months_with_revenue else 0
@@ -4011,7 +4017,7 @@ def generate_new_analytics_report():
         
         # Treatments by Month
         treatments_by_month_base_query = (db.session.query(
-            func.to_char(Treatment.created_at, 'YYYY-MM').label('month'),
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
             func.count(Treatment.id).label('count')
             ).filter(Treatment.created_at >= twelve_months_ago))
         
@@ -4019,15 +4025,15 @@ def generate_new_analytics_report():
             treatments_by_month_base_query = treatments_by_month_base_query.join(Patient).filter(Patient.user_id == user_generating_report.id)
 
         treatments_by_month_query_result = (treatments_by_month_base_query
-            .group_by(func.to_char(Treatment.created_at, 'YYYY-MM'))
-            .order_by(func.to_char(Treatment.created_at, 'YYYY-MM').asc()).all())
+            .group_by(func.strftime('%Y-%m', Treatment.created_at))
+            .order_by(func.strftime('%Y-%m', Treatment.created_at).asc()).all())
         treatments_by_month = [
             {'month': format_month(t[0]), 'count': t[1]} for t in treatments_by_month_query_result
         ]
 
         # New Patients by Month
         new_patients_by_month_base_query = (db.session.query(
-            func.to_char(Patient.created_at, 'YYYY-MM').label('month'),
+            func.strftime('%Y-%m', Patient.created_at).label('month'),
             func.count(Patient.id).label('count')
             ).filter(Patient.created_at >= twelve_months_ago))
 
@@ -4035,8 +4041,8 @@ def generate_new_analytics_report():
             new_patients_by_month_base_query = new_patients_by_month_base_query.filter(Patient.user_id == user_generating_report.id)
 
         new_patients_by_month_query_result = (new_patients_by_month_base_query
-            .group_by(func.to_char(Patient.created_at, 'YYYY-MM'))
-            .order_by(func.to_char(Patient.created_at, 'YYYY-MM').asc()).all())
+            .group_by(func.strftime('%Y-%m', Patient.created_at))
+            .order_by(func.strftime('%Y-%m', Patient.created_at).asc()).all())
         new_patients_by_month = [
             {'month': format_month(p[0]), 'count': p[1]} for p in new_patients_by_month_query_result
         ]
@@ -4065,9 +4071,8 @@ def generate_new_analytics_report():
             else:
                 flash(f"Failed to generate AI report: {report_content}", "danger")
         else:
-            report_user_id = None
-            if not is_admin_generating:
-                report_user_id = user_generating_report.id
+            # Always save with the user's ID, even for admins
+            report_user_id = user_generating_report.id
             new_report = PracticeReport(
                 content=report_content, 
                 generated_at=datetime.utcnow(),
