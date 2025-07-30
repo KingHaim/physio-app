@@ -509,7 +509,9 @@
                         {% endif %}
                         
                         {% set show_analytics = not current_user.is_in_clinic or current_user.can_view_clinic_reports() %}
-                        {% set show_finances = (not current_user.is_in_clinic or current_user.can_manage_clinic_billing()) and (current_user.can_use_clinic_feature('reporting_advanced_ai') or current_user.is_admin) %}
+                        {# Temporarily hidden: Financial features #}
+                        {% set show_finances = false %}
+                        {# Original: {% set show_finances = (not current_user.is_in_clinic or current_user.can_manage_clinic_billing()) and (current_user.can_use_clinic_feature('reporting_advanced_ai') or current_user.is_admin) %} #}
                         
                         {% if show_analytics or show_finances %}
                         <li class="nav-section">
@@ -533,8 +535,8 @@
                         </li>
                         {% endif %}
                         
-                        {# Show upgrade prompt for financial features if user doesn't have Premium #}
-                        {% if not current_user.can_use_clinic_feature('reporting_advanced_ai') and not current_user.is_admin %}
+                        {# Temporarily hidden: Premium features promotion for finances since show_finances=false #}
+                        {% if not current_user.can_use_clinic_feature('reporting_advanced_ai') and not current_user.is_admin and show_finances %}
                         <li class="nav-section">
                             <div class="nav-section-title">{{ _('Premium Features') }}</div>
                             <ul class="nav flex-column">
