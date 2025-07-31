@@ -4684,3 +4684,35 @@ msgstr "Encontrados"
 msgid "completed treatment(s) with missing fee or payment method."
 msgstr "tratamiento(s) completado(s) con tarifa o método de pago faltante."
 
+#: app/templates/view_treatment.html
+msgid "Delete Treatment"
+msgstr "Eliminar Tratamiento"
+
+#: app/templates/view_treatment.html
+msgid "Edit Treatment"
+msgstr "Editar Tratamiento"
+
+#: app/templates/view_treatment.html
+msgid "Trigger Points Map"
+msgstr "Mapa de Puntos Gatillo"
+
+#: app/templates/view_treatment.html
+msgid "Trigger Points Analysis"
+msgstr "Análisis de Puntos Gatillo"
+
+#: app/templates/view_treatment.html
+msgid "Treatment Information"
+msgstr "Información del Tratamiento"
+
+#: app/templates/view_treatment.html
+msgid "Viewing treatment for"
+msgstr "Viendo tratamiento para"
+
+#: app/templates/view_treatment.html
+msgid "Provider"
+msgstr "Proveedor"
+
+#: app/templates/view_treatment.html
+msgid "Location & Financial"
+msgstr "Ubicación y Financiero"
+

@@ -4165,3 +4165,35 @@ msgstr ""
 "Veuillez remplir tous les champs de données patient requis avant de "
 "créer le dossier patient."
 
+#: app/templates/view_treatment.html
+msgid "Delete Treatment"
+msgstr "Supprimer le Traitement"
+
+#: app/templates/view_treatment.html
+msgid "Edit Treatment"
+msgstr "Modifier le Traitement"
+
+#: app/templates/view_treatment.html
+msgid "Trigger Points Map"
+msgstr "Carte des Points de Déclenchement"
+
+#: app/templates/view_treatment.html
+msgid "Trigger Points Analysis"
+msgstr "Analyse des Points de Déclenchement"
+
+#: app/templates/view_treatment.html
+msgid "Treatment Information"
+msgstr "Informations de Traitement"
+
+#: app/templates/view_treatment.html
+msgid "Viewing treatment for"
+msgstr "Affichage du traitement pour"
+
+#: app/templates/view_treatment.html
+msgid "Provider"
+msgstr "Fournisseur"
+
+#: app/templates/view_treatment.html
+msgid "Location & Financial"
+msgstr "Lieu et Financier"
+
