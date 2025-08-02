@@ -211,11 +211,19 @@
 <div class="container-fluid px-4">
     
     <!-- Auto-sync notification -->
-    {% if session.get('auto_completed_treatments') %}
+    {% if session.get('auto_completed_treatments') or session.get('auto_calendly_treatments') or session.get('auto_calendly_bookings') %}
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
-        <strong>{{ _('Appointments Synchronized!') }}</strong> 
-        {{ _('Automatically created') }} {{ session.get('auto_completed_treatments') }} {{ _('new treatments from your recurring appointments.') }}
+        <strong>{{ _('Appointments Synchronized!') }}</strong>
+        {% if session.get('auto_completed_treatments') %}
+            {{ _('Created') }} {{ session.get('auto_completed_treatments') }} {{ _('treatments from recurring appointments.') }}
+        {% endif %}
+        {% if session.get('auto_calendly_treatments') %}
+            {{ _('Created') }} {{ session.get('auto_calendly_treatments') }} {{ _('Calendly treatments.') }}
+        {% endif %}
+        {% if session.get('auto_calendly_bookings') %}
+            {{ _('Found') }} {{ session.get('auto_calendly_bookings') }} {{ _('new Calendly bookings for review.') }}
+        {% endif %}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ _('Close') }}"></button>
     </div>
     {% endif %}
@@ -390,6 +398,11 @@
                             <button id="syncAppointmentsBtn" class="btn btn-sm btn-outline-secondary" title="{{ _('Sync recurring appointments') }}">
                                 <i class="bi bi-arrow-clockwise"></i> {{ _('Sync') }}
                             </button>
+                            {% if current_user.calendly_api_token and current_user.calendly_user_uri %}
+                            <button id="syncCalendlyBtn" class="btn btn-sm btn-outline-success" title="{{ _('Sync Calendly appointments') }}">
+                                <i class="bi bi-calendar-check"></i> {{ _('Calendly') }}
+                            </button>
+                            {% endif %}
                             <a href="{{ url_for('main.appointments') }}" class="btn btn-sm btn-outline-primary">{{ _('View All') }}</a>
                         </div>
                     </div>
@@ -1800,6 +1813,53 @@ document.addEventListener('DOMContentLoaded', function() {
          })
          .catch(error => {
            alert('{{ _("Error synchronizing appointments:") }} ' + error.message);
+         })
+         .finally(() => {
+           // Re-enable button
+           this.disabled = false;
+           this.innerHTML = originalText;
+         });
+       });
+     }
+
+     // Handle Calendly synchronization
+     const syncCalendlyBtn = document.getElementById('syncCalendlyBtn');
+     if (syncCalendlyBtn) {
+       syncCalendlyBtn.addEventListener('click', function() {
+         const originalText = this.innerHTML;
+         
+         // Disable button and show loading state
+         this.disabled = true;
+         this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>{{ _("Syncing...") }}';
+         
+         fetch('/api/sync-calendly-events', {
+           method: 'GET',
+           headers: {
+             'Content-Type': 'application/json',
+             'X-CSRFToken': dashboardCsrfToken
+           }
+         })
+         .then(response => response.json())
+         .then(data => {
+           if (data.success) {
+             let message = '{{ _("Calendly appointments synchronized successfully!") }}';
+             if (data.new_treatments > 0) {
+               message += `\n{{ _("Created") }} ${data.new_treatments} {{ _("new treatments.") }}`;
+             }
+             if (data.new_unmatched_bookings > 0) {
+               message += `\n{{ _("Created") }} ${data.new_unmatched_bookings} {{ _("new bookings for review.") }}`;
+             }
+             
+             alert(message);
+             
+             // Refresh the page to show updated appointments
+             window.location.reload();
+           } else {
+             alert('{{ _("Error synchronizing Calendly:") }} ' + (data.error || ''));
+           }
+         })
+         .catch(error => {
+           alert('{{ _("Error synchronizing Calendly:") }} ' + error.message);
          })
          .finally(() => {
            // Re-enable button

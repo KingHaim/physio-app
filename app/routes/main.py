@@ -336,6 +336,10 @@ def index():
             sync_result = auto_sync_appointments(user_id)
             if sync_result['created_treatments'] > 0:
                 session['auto_completed_treatments'] = sync_result['created_treatments']
+            if sync_result['calendly_treatments'] > 0:
+                session['auto_calendly_treatments'] = sync_result['calendly_treatments']
+            if sync_result['calendly_bookings'] > 0:
+                session['auto_calendly_bookings'] = sync_result['calendly_bookings']
     except Exception as e:
         current_app.logger.error(f"Error auto-syncing appointments for user {current_user.id}: {e}")
     # Check if user is new and needs to make initial choice
@@ -657,9 +661,13 @@ def index():
     # Show welcome flow for new users who haven't completed basic setup
     show_welcome_flow = is_new_user and not current_user.is_in_clinic
     
-    # Clear the auto-completed treatments notification flag after showing it
+    # Clear the auto-sync notification flags after showing them
     if 'auto_completed_treatments' in session:
         session.pop('auto_completed_treatments', None)
+    if 'auto_calendly_treatments' in session:
+        session.pop('auto_calendly_treatments', None)
+    if 'auto_calendly_bookings' in session:
+        session.pop('auto_calendly_bookings', None)
     
     return render_template('index.html',
                          current_plan_name=current_plan_name,

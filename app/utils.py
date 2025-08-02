@@ -136,19 +136,146 @@ def convert_past_recurring_to_treatments(user_id=None):
         raise
 
 
+def sync_calendly_for_user(user):
+    """
+    Sync Calendly events for a specific user
+    """
+    try:
+        if not user.calendly_api_token or not user.calendly_user_uri:
+            return {'new_treatments': 0, 'new_unmatched_bookings': 0}
+        
+        import requests
+        from datetime import timedelta
+        from app.models import UnmatchedCalendlyBooking, Patient, Treatment
+        
+        api_token = user.calendly_api_token
+        user_calendly_uri_for_events = user.calendly_user_uri
+        
+        headers = {
+            'Authorization': f'Bearer {api_token}',
+            'Content-Type': 'application/json',
+            'User-Agent': 'PhysioTracker/1.0'
+        }
+        
+        # Get scheduled events for the next 30 days
+        min_time = datetime.utcnow().isoformat() + 'Z'
+        max_time = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
+        
+        events_url = 'https://api.calendly.com/scheduled_events'
+        params = {
+            'user': user_calendly_uri_for_events,
+            'min_start_time': min_time,
+            'max_start_time': max_time,
+            'status': 'active',
+            'sort': 'start_time:asc'
+        }
+        
+        events_response = requests.get(events_url, headers=headers, params=params, timeout=10)
+        
+        if events_response.status_code != 200:
+            current_app.logger.warning(f"Calendly sync failed for user {user.id}: {events_response.status_code}")
+            return {'new_treatments': 0, 'new_unmatched_bookings': 0}
+        
+        events = events_response.json()['collection']
+        synced_treatments_count = 0
+        newly_created_unmatched_bookings_count = 0
+        
+        for event in events:
+            event_uri = event['uri']
+            event_uuid = event_uri.split('/')[-1]
+            
+            invitees_url = f'https://api.calendly.com/scheduled_events/{event_uuid}/invitees'
+            invitees_response = requests.get(invitees_url, headers=headers, timeout=10)
+            
+            if invitees_response.status_code != 200:
+                continue
+            
+            invitees = invitees_response.json()['collection']
+            
+            for invitee in invitees:
+                invitee_uri = invitee['uri']
+                invitee_uuid = invitee_uri.split('/')[-1]
+                
+                name = invitee['name']
+                email = invitee['email']
+                start_time = datetime.fromisoformat(event['start_time'].replace('Z', '+00:00'))
+                event_type_name = event['name']
+                
+                # Check if already exists
+                existing_unmatched_booking = UnmatchedCalendlyBooking.query.filter_by(
+                    calendly_invitee_id=invitee_uuid,
+                    user_id=user.id
+                ).first()
+                
+                if existing_unmatched_booking:
+                    continue  # Skip if already processed
+                
+                # Try to find matching patient by email
+                patient = Patient.query.filter_by(email=email, user_id=user.id).first()
+                
+                if patient:
+                    # Create treatment directly
+                    treatment = Treatment(
+                        patient_id=patient.id,
+                        created_at=start_time,
+                        treatment_type=event_type_name,
+                        status="Scheduled",
+                        provider=user.email,
+                        notes=f"Auto-synced from Calendly. Invitee: {name} ({email})",
+                        calendly_invitee_uri=invitee_uuid
+                    )
+                    db.session.add(treatment)
+                    synced_treatments_count += 1
+                else:
+                    # Create unmatched booking for review
+                    unmatched_booking = UnmatchedCalendlyBooking(
+                        user_id=user.id,
+                        name=name,
+                        email=email,
+                        event_type=event_type_name,
+                        start_time=start_time,
+                        calendly_invitee_id=invitee_uuid,
+                        status='Pending'
+                    )
+                    db.session.add(unmatched_booking)
+                    newly_created_unmatched_bookings_count += 1
+        
+        db.session.commit()
+        
+        return {
+            'new_treatments': synced_treatments_count,
+            'new_unmatched_bookings': newly_created_unmatched_bookings_count
+        }
+        
+    except Exception as e:
+        current_app.logger.error(f"Error syncing Calendly for user {user.id}: {str(e)}")
+        return {'new_treatments': 0, 'new_unmatched_bookings': 0}
+
+
 def auto_sync_appointments(user_id=None):
     """
     Combined function to sync all appointment data:
     1. Convert past recurring appointments to treatments
     2. Mark past treatments as completed
+    3. Sync Calendly events (if configured)
     """
     try:
         created_count = convert_past_recurring_to_treatments(user_id)
         completed_count = mark_past_treatments_as_completed(user_id)
         
+        # Sync Calendly for the specific user
+        calendly_synced = {'new_treatments': 0, 'new_unmatched_bookings': 0}
+        if user_id:
+            from app.models import User
+            user = User.query.get(user_id)
+            if user:
+                calendly_synced = sync_calendly_for_user(user)
+        
         return {
             'created_treatments': created_count,
-            'completed_treatments': completed_count
+            'completed_treatments': completed_count,
+            'calendly_treatments': calendly_synced['new_treatments'],
+            'calendly_bookings': calendly_synced['new_unmatched_bookings']
         }
     except Exception as e:
         current_app.logger.error(f"Error in auto_sync_appointments: {str(e)}")
