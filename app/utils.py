@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from flask import current_app
-from app.models import Treatment, Patient, db
+from app.models import Treatment, Patient, RecurringAppointment, db
 from sqlalchemy import func, and_
 import logging
 import json
@@ -39,6 +39,119 @@ def mark_past_treatments_as_completed(user_id=None):
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error marking past treatments as completed: {str(e)}")
+        raise
+
+
+def convert_past_recurring_to_treatments(user_id=None):
+    """
+    Convert past recurring appointment occurrences to actual Treatment records.
+    This ensures all past appointments are properly recorded in the treatment history.
+    """
+    try:
+        today = datetime.now().date()
+        created_count = 0
+        
+        # Get recurring appointments to process
+        recurring_query = RecurringAppointment.query.filter(
+            RecurringAppointment.is_active == True,
+            RecurringAppointment.start_date <= today
+        )
+        
+        if user_id:
+            recurring_query = recurring_query.join(Patient).filter(Patient.user_id == user_id)
+        
+        active_rules = recurring_query.all()
+        
+        for rule in active_rules:
+            if not rule.patient or not rule.time_of_day:
+                continue
+                
+            # Start from rule start date, end at today (don't create future treatments)
+            current_date = rule.start_date
+            end_date = min(today, rule.end_date) if rule.end_date else today
+            
+            while current_date <= end_date:
+                is_valid_occurrence = False
+                
+                # Check based on recurrence type
+                if rule.recurrence_type == 'weekly':
+                    if current_date.weekday() == rule.start_date.weekday():
+                        is_valid_occurrence = True
+                elif rule.recurrence_type == 'daily-mon-fri':
+                    if current_date.weekday() < 5:  # Monday to Friday
+                        is_valid_occurrence = True
+                elif rule.recurrence_type == 'daily':
+                    is_valid_occurrence = True
+                
+                if is_valid_occurrence:
+                    # Combine date with the rule's time_of_day
+                    occurrence_datetime = datetime.combine(current_date, rule.time_of_day)
+                    
+                    # Check if a treatment already exists for this exact datetime and patient
+                    exists = Treatment.query.filter_by(
+                        patient_id=rule.patient_id,
+                        created_at=occurrence_datetime
+                    ).first()
+                    
+                    if not exists:
+                        # Determine status based on how old the appointment is
+                        if current_date < today:
+                            # Past appointments default to completed
+                            status = 'Completed'
+                        else:
+                            # Today's appointments are scheduled
+                            status = 'Scheduled'
+                        
+                        # Create the new treatment record
+                        new_treatment = Treatment(
+                            patient_id=rule.patient_id,
+                            treatment_type=rule.treatment_type,
+                            notes=f"Auto-generated from recurring rule #{rule.id}",
+                            status=status,
+                            provider=rule.provider,
+                            created_at=occurrence_datetime,
+                            updated_at=datetime.now(),
+                            location=rule.location,
+                            fee_charged=rule.fee_charged,
+                            payment_method=rule.payment_method
+                        )
+                        db.session.add(new_treatment)
+                        created_count += 1
+                
+                # Move to the next day
+                current_date += timedelta(days=1)
+        
+        if created_count > 0:
+            db.session.commit()
+            current_app.logger.info(
+                "Auto-converted %s past recurring appointments to treatments (user_id: %s)",
+                created_count,
+                user_id if user_id else 'global'
+            )
+        
+        return created_count
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error converting past recurring appointments: {str(e)}")
+        raise
+
+
+def auto_sync_appointments(user_id=None):
+    """
+    Combined function to sync all appointment data:
+    1. Convert past recurring appointments to treatments
+    2. Mark past treatments as completed
+    """
+    try:
+        created_count = convert_past_recurring_to_treatments(user_id)
+        completed_count = mark_past_treatments_as_completed(user_id)
+        
+        return {
+            'created_treatments': created_count,
+            'completed_treatments': completed_count
+        }
+    except Exception as e:
+        current_app.logger.error(f"Error in auto_sync_appointments: {str(e)}")
         raise
 
 

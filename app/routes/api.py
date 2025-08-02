@@ -3,7 +3,7 @@ import requests
 from datetime import datetime, timedelta, date
 from app.models import Treatment, Treatment as Appointment, Patient, UnmatchedCalendlyBooking, PatientReport, Plan, User, UserSubscription
 from app import db, csrf
-from sqlalchemy.sql import func, or_
+from sqlalchemy.sql import func, or_, case
 import os
 import json
 from flask_login import login_required, current_user
@@ -992,6 +992,254 @@ def get_costaspine_fee_data():
     except Exception as e:
         current_app.logger.error(f"Error fetching costaspine-fee-data for user {current_user.id}: {e}\n{traceback.format_exc()}")
         return jsonify({"error": "Failed to fetch data"}), 500
+
+@api.route('/analytics/cancellations-by-month')
+@login_required
+def cancellations_by_month():
+    """Get monthly cancellation statistics"""
+    try:
+        data_query = db.session.query(
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.count(Treatment.id).label('count')
+        ).join(Patient, Patient.id == Treatment.patient_id) \
+         .filter(
+            Patient.user_id == current_user.id,
+            Treatment.status == 'Cancelled'
+         ) \
+         .group_by(func.strftime('%Y-%m', Treatment.created_at)) \
+         .order_by(func.strftime('%Y-%m', Treatment.created_at)) \
+         .all()
+        
+        result = [{'month': item.month, 'count': item.count} for item in data_query]
+        return jsonify(result)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching cancellations-by-month for user {current_user.id}: {e}\n{traceback.format_exc()}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+
+@api.route('/analytics/cancellation-rates')
+@login_required
+def cancellation_rates():
+    """Get cancellation rates by month"""
+    try:
+        # Get total appointments and cancellations by month
+        monthly_stats = db.session.query(
+            func.strftime('%Y-%m', Treatment.created_at).label('month'),
+            func.count(Treatment.id).label('total'),
+            func.sum(case(
+                (Treatment.status == 'Cancelled', 1),
+                else_=0
+            )).label('cancelled')
+        ).join(Patient, Patient.id == Treatment.patient_id) \
+         .filter(Patient.user_id == current_user.id) \
+         .group_by(func.strftime('%Y-%m', Treatment.created_at)) \
+         .order_by(func.strftime('%Y-%m', Treatment.created_at)) \
+         .all()
+        
+        result = []
+        for item in monthly_stats:
+            cancellation_rate = (item.cancelled / item.total * 100) if item.total > 0 else 0
+            result.append({
+                'month': item.month,
+                'total': item.total,
+                'cancelled': item.cancelled,
+                'cancellation_rate': round(cancellation_rate, 2)
+            })
+        
+        return jsonify(result)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching cancellation-rates for user {current_user.id}: {e}\n{traceback.format_exc()}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+
+@api.route('/patient/<int:patient_id>/cancellation-rate')
+@login_required
+def patient_cancellation_rate(patient_id):
+    """Get cancellation rate for a specific patient"""
+    try:
+        # Verify patient belongs to current user
+        patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first_or_404()
+        
+        # Get total appointments and cancellations for this patient
+        stats = db.session.query(
+            func.count(Treatment.id).label('total'),
+            func.sum(case(
+                (Treatment.status == 'Cancelled', 1),
+                else_=0
+            )).label('cancelled')
+        ).filter(Treatment.patient_id == patient_id).first()
+        
+        total = stats.total or 0
+        cancelled = stats.cancelled or 0
+        cancellation_rate = (cancelled / total * 100) if total > 0 else 0
+        
+        return jsonify({
+            'patient_id': patient_id,
+            'patient_name': patient.name,
+            'total_appointments': total,
+            'cancelled_appointments': cancelled,
+            'cancellation_rate': round(cancellation_rate, 2)
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error fetching cancellation rate for patient {patient_id}: {e}\n{traceback.format_exc()}")
+        return jsonify({"error": "Failed to fetch data"}), 500
+
+@api.route('/treatment/<int:treatment_id>/cancel', methods=['POST'])
+@login_required
+def cancel_treatment(treatment_id):
+    """Cancel a specific treatment/appointment"""
+    try:
+        # Get the treatment and verify it belongs to current user's patient
+        treatment = Treatment.query.join(Patient).filter(
+            Treatment.id == treatment_id,
+            Patient.user_id == current_user.id
+        ).first_or_404()
+        
+        # Get cancellation reason from request
+        data = request.get_json() or {}
+        cancellation_reason = data.get('reason', 'No reason provided')
+        
+        # Update treatment status
+        treatment.status = 'Cancelled'
+        
+        # Optionally store cancellation reason in notes
+        current_notes = treatment.notes or ''
+        if current_notes:
+            treatment.notes = f"{current_notes}\n\n--- CANCELLED ---\nReason: {cancellation_reason}\nCancelled at: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        else:
+            treatment.notes = f"--- CANCELLED ---\nReason: {cancellation_reason}\nCancelled at: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Treatment cancelled successfully',
+            'treatment_id': treatment_id,
+            'status': treatment.status
+        })
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error cancelling treatment {treatment_id}: {e}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@api.route('/recurring-appointment/cancel-occurrence', methods=['POST'])
+@login_required
+def cancel_recurring_occurrence():
+    """Cancel a specific occurrence of a recurring appointment"""
+    try:
+        data = request.get_json() or {}
+        
+        # Get parameters from request
+        recurring_rule_id = data.get('recurring_rule_id')
+        appointment_date = data.get('date')
+        appointment_time = data.get('time')
+        cancellation_reason = data.get('reason', 'Recurring appointment cancelled')
+        
+        if not all([recurring_rule_id, appointment_date, appointment_time]):
+            return jsonify({'success': False, 'error': 'Missing required parameters'}), 400
+        
+        # Get the recurring rule and verify it belongs to current user
+        from app.models import RecurringAppointment
+        recurring_rule = RecurringAppointment.query.join(Patient).filter(
+            RecurringAppointment.id == recurring_rule_id,
+            Patient.user_id == current_user.id
+        ).first_or_404()
+        
+        # Parse the date and time to create a datetime
+        try:
+            # Convert relative date to actual date
+            today = datetime.utcnow().date()
+            if appointment_date == 'Today':
+                appt_date = today
+            elif appointment_date == 'Tomorrow':
+                appt_date = today + timedelta(days=1)
+            elif appointment_date in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
+                # Find next occurrence of this weekday
+                weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+                target_weekday = weekdays.index(appointment_date)
+                current_weekday = today.weekday()
+                if target_weekday <= current_weekday:
+                    days_ahead = target_weekday + 7 - current_weekday
+                else:
+                    days_ahead = target_weekday - current_weekday
+                appt_date = today + timedelta(days=days_ahead)
+            else:
+                # Try to parse date format like "Jan 15"
+                current_year = today.year
+                try:
+                    appt_date = datetime.strptime(f"{current_year} {appointment_date}", '%Y %b %d').date()
+                    if appt_date < today:
+                        appt_date = datetime.strptime(f"{current_year + 1} {appointment_date}", '%Y %b %d').date()
+                except ValueError:
+                    return jsonify({'success': False, 'error': 'Invalid date format'}), 400
+            
+            # Parse time
+            appt_time = datetime.strptime(appointment_time, '%H:%M').time()
+            appointment_datetime = datetime.combine(appt_date, appt_time)
+            
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'Error parsing date/time: {str(e)}'}), 400
+        
+        # Check if a treatment already exists for this datetime
+        existing_treatment = Treatment.query.filter(
+            Treatment.patient_id == recurring_rule.patient_id,
+            Treatment.created_at == appointment_datetime
+        ).first()
+        
+        if existing_treatment:
+            # If treatment exists, just cancel it
+            existing_treatment.status = 'Cancelled'
+            existing_treatment.notes = f"{existing_treatment.notes or ''}\n\n--- CANCELLED ---\nReason: {cancellation_reason}\nCancelled at: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            treatment_id = existing_treatment.id
+        else:
+            # Create a new cancelled treatment to "block" this slot
+            new_treatment = Treatment(
+                patient_id=recurring_rule.patient_id,
+                treatment_type=recurring_rule.treatment_type,
+                status='Cancelled',
+                created_at=appointment_datetime,
+                location=recurring_rule.location,
+                fee_charged=recurring_rule.fee_charged,
+                notes=f"--- CANCELLED ---\nReason: {cancellation_reason}\nCancelled at: {datetime.now().strftime('%Y-%m-%d %H:%M')}\nOriginally from recurring rule #{recurring_rule_id}"
+            )
+            db.session.add(new_treatment)
+            db.session.flush()  # Get the ID
+            treatment_id = new_treatment.id
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Recurring appointment occurrence cancelled successfully',
+            'treatment_id': treatment_id,
+            'appointment_datetime': appointment_datetime.isoformat()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error cancelling recurring occurrence: {e}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@api.route('/sync-appointments', methods=['POST'])
+@login_required
+def sync_appointments_manually():
+    """Manually trigger appointment synchronization"""
+    try:
+        if current_user.role not in ['physio', 'admin']:
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+        user_id = None if current_user.is_admin else current_user.id
+        
+        from app.utils import auto_sync_appointments
+        sync_result = auto_sync_appointments(user_id)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Appointments synchronized successfully',
+            'created_treatments': sync_result['created_treatments'],
+            'completed_treatments': sync_result['completed_treatments']
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error in manual appointment sync for user {current_user.id}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @api.route('/analytics/recently-inactive-patients')
 @login_required

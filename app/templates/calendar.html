@@ -26,6 +26,22 @@
         align-items: flex-start; /* Align items to the start of the cross axis (top) */
     }
     /* Add more custom calendar styles if needed */
+    
+    /* Make calendar events appear clickable */
+    .fc-event {
+        cursor: pointer !important;
+        transition: all 0.2s ease;
+    }
+    
+    .fc-event:hover {
+        transform: scale(1.02);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        z-index: 10;
+    }
+    
+    .fc-event-title {
+        font-weight: 500;
+    }
 </style>
 {% endblock %}
 
@@ -178,24 +194,45 @@
                     newAppointmentModal.show();
                 },
                 eventClick: function(info) {
-                    // Redirect to the treatment view page
+                    console.log('Calendar event clicked:', info.event);
+                    
+                    // Add visual feedback
+                    info.el.style.opacity = '0.5';
+                    setTimeout(() => {
+                        info.el.style.opacity = '1';
+                    }, 200);
+                    
+                    // Handle different types of appointments
                     if (info.event.id) {
-                        // Ensure the ID is a number, as our route expects an integer
+                        // Check if it's a recurring appointment
+                        if (info.event.id.startsWith('recurring_')) {
+                            // For recurring appointments, show options
+                            const patientName = info.event.extendedProps?.patient_name || 'Unknown Patient';
+                            const treatmentType = info.event.title.split(' - ')[1] || 'Appointment';
+                            
+                            if (confirm(`This is a recurring appointment for ${patientName}.\n\nWould you like to:\n- OK: Create a specific treatment for this date\n- Cancel: Edit the recurring rule`)) {
+                                // User wants to create a specific treatment
+                                alert('Feature coming soon: Create specific treatment from recurring appointment');
+                            } else {
+                                // User wants to edit the recurring rule
+                                const recurringId = info.event.id.replace('recurring_', '');
+                                window.location.href = `/recurring/${recurringId}/edit`;
+                            }
+                            return;
+                        }
+                        
+                        // Handle regular treatments
                         const treatmentId = parseInt(info.event.id, 10);
                         if (!isNaN(treatmentId)) {
-                            // Construct the URL. Assuming your view_treatment route is something like /treatment/<id>/view
-                            // We need to generate this URL dynamically or ensure it's passed correctly.
-                            // For now, constructing it manually. If you have a Flask url_for available in JS, that's better.
-                            // However, url_for is not directly available in static JS. We will construct it based on typical pattern.
-                            // A better way would be to pass the base URL for treatments via a JS variable if routes are complex.
+                            // Navigate to treatment view
                             window.location.href = `/treatment/${treatmentId}/view`;
                         } else {
                             console.error('Clicked event has an invalid ID:', info.event.id);
-                            alert('Could not navigate to event: Invalid event ID.');
+                            alert('Could not navigate to appointment: Invalid ID format.');
                         }
                     } else {
                         console.error('Clicked event has no ID:', info.event);
-                        alert('Could not navigate to event: Event ID missing.');
+                        alert('Could not navigate to appointment: Missing ID.');
                     }
                 }
             });

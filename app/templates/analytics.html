@@ -89,6 +89,24 @@
                 </div>
             </div>
         </div>
+        {# New Card for Monthly Cancellations #}
+        <div class="col-md-3 mt-3"> 
+            <div class="card shadow-sm stats-card bg-warning text-dark">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-calendar-x"></i> {{ _('Cancellations This Month') }}</h5>
+                    <h2 class="display-4"><span id="monthly-cancellations-count">...</span></h2>
+                </div>
+            </div>
+        </div>
+        {# New Card for Cancellation Rate #}
+        <div class="col-md-3 mt-3"> 
+            <div class="card shadow-sm stats-card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-percent"></i> {{ _('Avg. Cancellation Rate') }}</h5>
+                    <h2 class="display-4"><span id="avg-cancellation-rate">...</span>%</h2>
+                </div>
+            </div>
+        </div>
     </div>
     
     <!-- Treatment & Patient Charts -->
@@ -175,6 +193,32 @@
                 <div class="card-body d-flex flex-column">
                     <canvas id="paymentMethodChart"></canvas>
                     <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancellation Analytics Charts -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4" id="cancellationsChartCard">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-calendar-x"></i> {{ _('Cancellations by Month') }}</h5>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <canvas id="cancellationsChart"></canvas>
+                    <p class="text-center text-muted d-none no-data-message">{{ _('No cancellation data available to display.') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4" id="cancellationRatesChartCard">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-percent"></i> {{ _('Cancellation Rate by Month') }}</h5>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <canvas id="cancellationRatesChart"></canvas>
+                    <p class="text-center text-muted d-none no-data-message">{{ _('No cancellation rate data available to display.') }}</p>
                 </div>
             </div>
         </div>
@@ -654,6 +698,58 @@
             },
             options: { ...defaultPieChartOptions }
         }));
+
+        // Cancellations by Month Chart (Line)
+        const cancellationsApiData = await fetchChartData('/api/analytics/cancellations-by-month');
+        renderOrUpdateChart('cancellationsChart', 'cancellationsChartCard', cancellationsApiData, (data) => ({
+            type: 'line',
+            data: {
+                labels: data.map(item => item.month),
+                datasets: [{
+                    label: "{{ _('Cancellations') }}",
+                    data: data.map(item => item.count),
+                    borderColor: '#dc3545', // Red color for cancellations
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { ...defaultChartOptions }
+        }));
+
+        // Cancellation Rate by Month Chart (Line)
+        const cancellationRatesApiData = await fetchChartData('/api/analytics/cancellation-rates');
+        renderOrUpdateChart('cancellationRatesChart', 'cancellationRatesChartCard', cancellationRatesApiData, (data) => ({
+            type: 'line',
+            data: {
+                labels: data.map(item => item.month),
+                datasets: [{
+                    label: "{{ _('Cancellation Rate (%)') }}",
+                    data: data.map(item => item.cancellation_rate),
+                    borderColor: '#fd7e14', // Orange color for rates
+                    backgroundColor: 'rgba(253, 126, 20, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                ...defaultChartOptions,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        }));
+
+        // Load cancellation metrics for summary cards
+        loadCancellationMetrics();
         
         // --- Load list-based data ---
         loadTopPatientsRevenue();
@@ -703,6 +799,61 @@
         }
         
         loadCostaSpineFeeData();
+        
+        // --- Load Cancellation Metrics Function ---
+        async function loadCancellationMetrics() {
+            try {
+                // Get current month cancellations
+                const currentMonth = new Date().toISOString().substr(0, 7); // YYYY-MM format
+                const cancellationsResponse = await fetch('/api/analytics/cancellations-by-month');
+                const cancellationsData = await cancellationsResponse.json();
+                
+                const currentMonthCancellations = cancellationsData.find(item => item.month === currentMonth);
+                const monthlyCancellationsCount = currentMonthCancellations ? currentMonthCancellations.count : 0;
+                
+                // Get average cancellation rate
+                const ratesResponse = await fetch('/api/analytics/cancellation-rates');
+                const ratesData = await ratesResponse.json();
+                
+                let totalRate = 0;
+                let monthsWithData = 0;
+                ratesData.forEach(item => {
+                    if (item.cancellation_rate > 0) {
+                        totalRate += item.cancellation_rate;
+                        monthsWithData++;
+                    }
+                });
+                
+                const avgCancellationRate = monthsWithData > 0 ? (totalRate / monthsWithData).toFixed(1) : '0.0';
+                
+                // Update the summary cards
+                const monthlyCancellationsElement = document.getElementById('monthly-cancellations-count');
+                const avgCancellationRateElement = document.getElementById('avg-cancellation-rate');
+                
+                if (monthlyCancellationsElement) {
+                    monthlyCancellationsElement.textContent = monthlyCancellationsCount;
+                }
+                
+                if (avgCancellationRateElement) {
+                    avgCancellationRateElement.textContent = avgCancellationRate;
+                }
+                
+            } catch (error) {
+                console.error('Error loading cancellation metrics:', error);
+                
+                // Set default values on error
+                const monthlyCancellationsElement = document.getElementById('monthly-cancellations-count');
+                const avgCancellationRateElement = document.getElementById('avg-cancellation-rate');
+                
+                if (monthlyCancellationsElement) {
+                    monthlyCancellationsElement.textContent = '0';
+                }
+                
+                if (avgCancellationRateElement) {
+                    avgCancellationRateElement.textContent = '0.0';
+                }
+            }
+        }
         
         // --- Event Listener for the CostaSpine Fee Card ---
         document.getElementById('costaspineFeeCard').addEventListener('click', function() {

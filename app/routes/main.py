@@ -10,7 +10,7 @@ from app.models import (
     FixedCost, UserSubscription, DataProcessingActivity, UserConsent, 
     SecurityBreach, SecurityLog, Location
 )
-from app.utils import mark_past_treatments_as_completed, mark_inactive_patients
+from app.utils import mark_past_treatments_as_completed, mark_inactive_patients, auto_sync_appointments
 from flask_login import login_required, current_user, logout_user
 from io import BytesIO
 from xhtml2pdf import pisa
@@ -328,6 +328,16 @@ def switch_dashboard_mode():
 @login_required
 def index():
     """Dashboard route for authenticated users."""
+    
+    # Auto-sync appointments on dashboard load
+    try:
+        if current_user.role in ['physio', 'admin']:
+            user_id = None if current_user.is_admin else current_user.id
+            sync_result = auto_sync_appointments(user_id)
+            if sync_result['created_treatments'] > 0:
+                session['auto_completed_treatments'] = sync_result['created_treatments']
+    except Exception as e:
+        current_app.logger.error(f"Error auto-syncing appointments for user {current_user.id}: {e}")
     # Check if user is new and needs to make initial choice
     if current_user.is_new_user:
         return redirect(url_for('main.welcome_choice'))
@@ -647,6 +657,10 @@ def index():
     # Show welcome flow for new users who haven't completed basic setup
     show_welcome_flow = is_new_user and not current_user.is_in_clinic
     
+    # Clear the auto-completed treatments notification flag after showing it
+    if 'auto_completed_treatments' in session:
+        session.pop('auto_completed_treatments', None)
+    
     return render_template('index.html',
                          current_plan_name=current_plan_name,
                          current_subscription_status=current_subscription_status,
@@ -721,7 +735,15 @@ def get_treatment_details(id):
 @physio_required # Physio/admin only
 def delete_treatment(id):
     try:
-        treatment = Treatment.query.get_or_404(id)
+        treatment = Treatment.query.join(Patient).filter(
+            Treatment.id == id,
+            Patient.user_id == current_user.id
+        ).first_or_404()
+        
+        # Additional security check for admin users
+        if current_user.is_admin:
+            # Admins can delete any treatment, but verify it exists
+            treatment = Treatment.query.get_or_404(id)
         
         # First delete associated trigger points
         TriggerPoint.query.filter_by(treatment_id=id).delete()
@@ -730,20 +752,32 @@ def delete_treatment(id):
         db.session.delete(treatment)
         db.session.commit()
         
+        current_app.logger.info(f"Treatment {id} deleted by user {current_user.id}")
+        
         return jsonify({'success': True, 'message': 'Treatment deleted successfully'})
     except exc.SQLAlchemyError as e:
         db.session.rollback()
-        print(f"Database error: {str(e)}")  # For debugging
+        current_app.logger.error(f"Database error deleting treatment {id}: {str(e)}")
         return jsonify({'success': False, 'message': 'Database error occurred'}), 500
     except Exception as e:
         db.session.rollback()
-        print(f"General error: {str(e)}")  # For debugging
+        current_app.logger.error(f"Error deleting treatment {id}: {str(e)}")
         return jsonify({'success': False, 'message': 'An error occurred'}), 500
 
 @main.route('/patient/<int:id>')
 @login_required
 def patient_detail(id):
     patient = Patient.query.get_or_404(id)
+    
+    # Auto-sync appointments for this patient
+    try:
+        if current_user.role in ['physio', 'admin']:
+            user_id = None if current_user.is_admin else current_user.id
+            sync_result = auto_sync_appointments(user_id)
+            if sync_result['created_treatments'] > 0:
+                session['auto_completed_treatments'] = sync_result['created_treatments']
+    except Exception as e:
+        current_app.logger.error(f"Error auto-syncing appointments in patient detail for user {current_user.id}: {e}")
     
     # --- Access Control ---
     # SECURITY FIX: All users (including admins) must follow access control rules
@@ -1173,6 +1207,15 @@ def delete_recurring_appointment(id):
 @login_required
 @physio_required # <<< ADD DECORATOR
 def appointments():
+    # Auto-sync appointments on appointments page load
+    try:
+        user_id = None if current_user.is_admin else current_user.id
+        sync_result = auto_sync_appointments(user_id)
+        if sync_result['created_treatments'] > 0:
+            session['auto_completed_treatments'] = sync_result['created_treatments']
+    except Exception as e:
+        current_app.logger.error(f"Error auto-syncing appointments in appointments view for user {current_user.id}: {e}")
+    
     start_date = request.args.get('start_date',
                                datetime.now().date().isoformat())
     end_date = request.args.get('end_date',

@@ -210,6 +210,16 @@
 {% block content %}
 <div class="container-fluid px-4">
     
+    <!-- Auto-sync notification -->
+    {% if session.get('auto_completed_treatments') %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <strong>{{ _('Appointments Synchronized!') }}</strong> 
+        {{ _('Automatically created') }} {{ session.get('auto_completed_treatments') }} {{ _('new treatments from your recurring appointments.') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ _('Close') }}"></button>
+    </div>
+    {% endif %}
+    
     {% if show_welcome_flow and is_new_user %}
     <div class="card border-primary mb-4 mt-4">
       <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
@@ -376,7 +386,12 @@
                 <div class="card-header dashboard-card-header"> {# Added dashboard-card-header class #}
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 card-title-icon"><i class="bi bi-calendar-week me-2"></i>{{ _('Upcoming Appointments') }}</h5>
-                        <a href="{{ url_for('main.appointments') }}" class="btn btn-sm btn-outline-primary">{{ _('View All') }}</a>
+                        <div class="d-flex gap-2">
+                            <button id="syncAppointmentsBtn" class="btn btn-sm btn-outline-secondary" title="{{ _('Sync recurring appointments') }}">
+                                <i class="bi bi-arrow-clockwise"></i> {{ _('Sync') }}
+                            </button>
+                            <a href="{{ url_for('main.appointments') }}" class="btn btn-sm btn-outline-primary">{{ _('View All') }}</a>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body p-0">
@@ -423,20 +438,51 @@
                                     </td>
                                     <td class="text-end">
                                         {% if appt.treatment %}
-                                        <a href="{{ url_for('main.view_treatment', id=appt.treatment.id) }}" 
-                                           class="btn btn-sm btn-outline-primary" title="{{ _('View Treatment') }}">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <a href="{{ url_for('main.edit_treatment', id=appt.treatment.id) }}" 
-                                           class="btn btn-sm btn-outline-secondary" title="{{ _('Edit Treatment') }}">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('main.view_treatment', id=appt.treatment.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" title="{{ _('View Treatment') }}">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('main.edit_treatment', id=appt.treatment.id) }}" 
+                                               class="btn btn-sm btn-outline-secondary" title="{{ _('Edit Treatment') }}">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            {% if appt.treatment.status != 'Cancelled' %}
+                                            <button class="btn btn-sm btn-outline-danger cancel-dashboard-treatment-btn" 
+                                                    data-treatment-id="{{ appt.treatment.id }}" 
+                                                    data-treatment-type="{{ appt.treatment.treatment_type or 'Unknown' }}"
+                                                    data-patient-name="{{ appt.patient_name }}"
+                                                    title="{{ _('Cancel Appointment') }}">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
                                         {% elif appt.is_recurring and appt.recurring_rule %}
-                                        <span class="badge bg-info">{{ _('Recurring') }}</span>
-                                        <a href="{{ url_for('main.edit_recurring_appointment', id=appt.recurring_rule.id) }}" 
-                                           class="btn btn-sm btn-outline-secondary ms-1" title="{{ _('Edit Recurring Rule') }}">
-                                            <i class="bi bi-arrow-repeat"></i>
-                                        </a>
+                                        <div class="btn-group" role="group">
+                                            <span class="badge bg-info me-2 align-self-center">{{ _('Recurring') }}</span>
+                                            <a href="{{ url_for('main.edit_recurring_appointment', id=appt.recurring_rule.id) }}" 
+                                               class="btn btn-sm btn-outline-secondary" title="{{ _('Edit Recurring Rule') }}">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-warning create-treatment-btn" 
+                                                    data-patient-name="{{ appt.patient_name }}"
+                                                    data-treatment-type="{{ appt.treatment_type }}"
+                                                    data-date="{{ appt.relative_date }}"
+                                                    data-time="{{ appt.time }}"
+                                                    data-recurring-rule-id="{{ appt.recurring_rule.id }}"
+                                                    title="{{ _('Create & Schedule This Appointment') }}">
+                                                <i class="bi bi-calendar-plus"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger cancel-recurring-btn" 
+                                                    data-patient-name="{{ appt.patient_name }}"
+                                                    data-treatment-type="{{ appt.treatment_type }}"
+                                                    data-date="{{ appt.relative_date }}"
+                                                    data-time="{{ appt.time }}"
+                                                    data-recurring-rule-id="{{ appt.recurring_rule.id }}"
+                                                    title="{{ _('Cancel This Occurrence') }}">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        </div>
                                         {% else %}
                                         <span class="text-muted">-</span>
                                         {% endif %}
@@ -785,6 +831,83 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Cancel Recurring Appointment Modal -->
+<div class="modal fade" id="cancelRecurringModal" tabindex="-1" aria-labelledby="cancelRecurringModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cancelRecurringModalLabel">
+          <i class="bi bi-calendar-x text-warning"></i> {{ _('Cancel Recurring Appointment') }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i>
+          <strong>{{ _('Cancel this specific occurrence') }}</strong>
+        </div>
+        <p><strong>{{ _('Patient:') }}</strong> <span id="cancel-recurring-patient-name"></span></p>
+        <p><strong>{{ _('Treatment:') }}</strong> <span id="cancel-recurring-treatment-type"></span></p>
+        <p><strong>{{ _('Date & Time:') }}</strong> <span id="cancel-recurring-date-time"></span></p>
+        <div class="mb-3">
+          <label for="recurring-cancellation-reason" class="form-label">{{ _('Cancellation Reason (Optional)') }}</label>
+          <textarea class="form-control" id="recurring-cancellation-reason" rows="3" placeholder="{{ _('Please provide a reason for cancellation...') }}"></textarea>
+        </div>
+        <p class="text-muted small">
+          <i class="bi bi-info-circle"></i> 
+          {{ _('This will only cancel this specific occurrence. Future appointments from this recurring rule will continue as scheduled.') }}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i> {{ _('Keep Appointment') }}
+        </button>
+        <button type="button" class="btn btn-danger" id="confirmCancelRecurring">
+          <i class="bi bi-check-circle"></i> {{ _('Cancel This Occurrence') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Treatment Modal for Dashboard -->
+<div class="modal fade" id="cancelDashboardTreatmentModal" tabindex="-1" aria-labelledby="cancelDashboardTreatmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cancelDashboardTreatmentModalLabel">
+          <i class="bi bi-exclamation-triangle text-warning"></i> {{ _('Cancel Appointment') }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <i class="bi bi-info-circle"></i>
+          <strong>{{ _('Are you sure you want to cancel this appointment?') }}</strong>
+        </div>
+        <p><strong>{{ _('Patient:') }}</strong> <span id="cancel-dashboard-patient-name"></span></p>
+        <p><strong>{{ _('Treatment:') }}</strong> <span id="cancel-dashboard-treatment-type"></span></p>
+        <div class="mb-3">
+          <label for="dashboard-cancellation-reason" class="form-label">{{ _('Cancellation Reason (Optional)') }}</label>
+          <textarea class="form-control" id="dashboard-cancellation-reason" rows="3" placeholder="{{ _('Please provide a reason for cancellation...') }}"></textarea>
+        </div>
+        <p class="text-muted small">
+          <i class="bi bi-info-circle"></i> 
+          {{ _('This action will mark the appointment as cancelled and update your analytics.') }}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i> {{ _('Keep Appointment') }}
+        </button>
+        <button type="button" class="btn btn-danger" id="confirmCancelDashboardTreatment">
+          <i class="bi bi-check-circle"></i> {{ _('Cancel Appointment') }}
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1478,6 +1601,213 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('An error occurred while creating the appointment.');
         });
     }
+
+    // Handle treatment cancellation from dashboard
+    let currentDashboardTreatmentToCancel = null;
+    
+    // CSRF Token for dashboard cancellation
+    const dashboardCsrfToken = document.querySelector('input[name="csrf_token"]')?.value || 
+                              document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                              '{{ csrf_token() }}';
+
+    // Add event listeners to all cancel treatment buttons in dashboard
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.cancel-dashboard-treatment-btn')) {
+        const btn = e.target.closest('.cancel-dashboard-treatment-btn');
+        const treatmentId = btn.getAttribute('data-treatment-id');
+        const treatmentType = btn.getAttribute('data-treatment-type');
+        const patientName = btn.getAttribute('data-patient-name');
+        
+        // Store the treatment ID for later use
+        currentDashboardTreatmentToCancel = treatmentId;
+        
+        // Update modal content
+        document.getElementById('cancel-dashboard-patient-name').textContent = patientName;
+        document.getElementById('cancel-dashboard-treatment-type').textContent = treatmentType;
+        document.getElementById('dashboard-cancellation-reason').value = '';
+        
+        // Show the modal
+        const cancelModal = new bootstrap.Modal(document.getElementById('cancelDashboardTreatmentModal'));
+        cancelModal.show();
+      }
+    });
+
+    // Handle confirm cancellation button for dashboard
+    const confirmCancelDashboardTreatmentBtn = document.getElementById('confirmCancelDashboardTreatment');
+    if (confirmCancelDashboardTreatmentBtn) {
+      confirmCancelDashboardTreatmentBtn.onclick = function() {
+        if (!currentDashboardTreatmentToCancel) return;
+        
+        const reason = document.getElementById('dashboard-cancellation-reason').value.trim();
+        const cancelModal = bootstrap.Modal.getInstance(document.getElementById('cancelDashboardTreatmentModal'));
+        
+        // Disable the button and show loading state
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> {{ _("Cancelling...") }}';
+        
+        fetch(`/api/treatment/${currentDashboardTreatmentToCancel}/cancel`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': dashboardCsrfToken
+          },
+          body: JSON.stringify({
+            reason: reason || 'No reason provided'
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            cancelModal.hide();
+            
+            // Refresh the page to update the dashboard
+            window.location.reload();
+          } else {
+            alert('{{ _("Error cancelling appointment:") }} ' + (data.error || ''));
+          }
+        })
+        .catch(error => {
+          alert('{{ _("Error cancelling appointment:") }} ' + error.message);
+        })
+        .finally(() => {
+          // Re-enable the button
+          this.disabled = false;
+          this.innerHTML = '<i class="bi bi-check-circle"></i> {{ _("Cancel Appointment") }}';
+          currentDashboardTreatmentToCancel = null;
+                 });
+       };
+     }
+
+     // Handle recurring appointment cancellation
+     let currentRecurringToCancel = null;
+
+     // Add event listeners for cancel recurring appointment buttons
+     document.addEventListener('click', function(e) {
+       if (e.target.closest('.cancel-recurring-btn')) {
+         const btn = e.target.closest('.cancel-recurring-btn');
+         const patientName = btn.getAttribute('data-patient-name');
+         const treatmentType = btn.getAttribute('data-treatment-type');
+         const date = btn.getAttribute('data-date');
+         const time = btn.getAttribute('data-time');
+         const recurringRuleId = btn.getAttribute('data-recurring-rule-id');
+         
+         // Store the data for later use
+         currentRecurringToCancel = {
+           patientName: patientName,
+           treatmentType: treatmentType,
+           date: date,
+           time: time,
+           recurringRuleId: recurringRuleId
+         };
+         
+         // Update modal content
+         document.getElementById('cancel-recurring-patient-name').textContent = patientName;
+         document.getElementById('cancel-recurring-treatment-type').textContent = treatmentType;
+         document.getElementById('cancel-recurring-date-time').textContent = `${date} at ${time}`;
+         document.getElementById('recurring-cancellation-reason').value = '';
+         
+         // Show the modal
+         const cancelModal = new bootstrap.Modal(document.getElementById('cancelRecurringModal'));
+         cancelModal.show();
+       }
+     });
+
+     // Handle confirm cancellation button for recurring appointments
+     const confirmCancelRecurringBtn = document.getElementById('confirmCancelRecurring');
+     if (confirmCancelRecurringBtn) {
+       confirmCancelRecurringBtn.onclick = function() {
+         if (!currentRecurringToCancel) return;
+         
+         const reason = document.getElementById('recurring-cancellation-reason').value.trim();
+         const cancelModal = bootstrap.Modal.getInstance(document.getElementById('cancelRecurringModal'));
+         
+         // Disable the button and show loading state
+         this.disabled = true;
+         this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> {{ _("Cancelling...") }}';
+         
+         fetch('/api/recurring-appointment/cancel-occurrence', {
+           method: 'POST',
+           headers: {
+             'Content-Type': 'application/json',
+             'X-CSRFToken': dashboardCsrfToken
+           },
+           body: JSON.stringify({
+             recurring_rule_id: currentRecurringToCancel.recurringRuleId,
+             date: currentRecurringToCancel.date,
+             time: currentRecurringToCancel.time,
+             reason: reason || 'No reason provided'
+           })
+         })
+         .then(response => response.json())
+         .then(data => {
+           if (data.success) {
+             cancelModal.hide();
+             alert('{{ _("Recurring appointment occurrence cancelled successfully.") }}');
+             
+             // Refresh the page to update the dashboard
+             window.location.reload();
+           } else {
+             alert('{{ _("Error cancelling recurring appointment:") }} ' + (data.error || ''));
+           }
+         })
+         .catch(error => {
+           alert('{{ _("Error cancelling recurring appointment:") }} ' + error.message);
+         })
+         .finally(() => {
+           // Re-enable the button
+           this.disabled = false;
+           this.innerHTML = '<i class="bi bi-check-circle"></i> {{ _("Cancel This Occurrence") }}';
+           currentRecurringToCancel = null;
+         });
+       };
+     }
+
+     // Handle manual appointment synchronization
+     const syncAppointmentsBtn = document.getElementById('syncAppointmentsBtn');
+     if (syncAppointmentsBtn) {
+       syncAppointmentsBtn.addEventListener('click', function() {
+         const originalText = this.innerHTML;
+         
+         // Disable button and show loading state
+         this.disabled = true;
+         this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>{{ _("Syncing...") }}';
+         
+         fetch('/api/sync-appointments', {
+           method: 'POST',
+           headers: {
+             'Content-Type': 'application/json',
+             'X-CSRFToken': dashboardCsrfToken
+           }
+         })
+         .then(response => response.json())
+         .then(data => {
+           if (data.success) {
+             let message = '{{ _("Appointments synchronized successfully!") }}';
+             if (data.created_treatments > 0) {
+               message += `\n{{ _("Created") }} ${data.created_treatments} {{ _("new treatments from recurring appointments.") }}`;
+             }
+             if (data.completed_treatments > 0) {
+               message += `\n{{ _("Marked") }} ${data.completed_treatments} {{ _("past treatments as completed.") }}`;
+             }
+             
+             alert(message);
+             
+             // Refresh the page to show updated appointments
+             window.location.reload();
+           } else {
+             alert('{{ _("Error synchronizing appointments:") }} ' + (data.error || ''));
+           }
+         })
+         .catch(error => {
+           alert('{{ _("Error synchronizing appointments:") }} ' + error.message);
+         })
+         .finally(() => {
+           // Re-enable button
+           this.disabled = false;
+           this.innerHTML = originalText;
+         });
+       });
+     }
 });
 </script>
 {% endblock %}

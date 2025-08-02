@@ -51,6 +51,23 @@
     .input-group .input-group-text {
         border-radius: 0.375rem;
     }
+    
+    /* Make calendar events appear clickable */
+    .fc-event {
+        cursor: pointer !important;
+        transition: all 0.2s ease;
+    }
+    
+    .fc-event:hover {
+        transform: scale(1.02);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        z-index: 10;
+        opacity: 0.9;
+    }
+    
+    .fc-event-title {
+        font-weight: 500;
+    }
 </style>
 {% endblock %}
 
@@ -405,10 +422,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Calendar loading:', isLoading);
             },
             eventClick: function(info) {
-                console.log('Event clicked:', info.event);
+                console.log('Appointment event clicked:', info.event);
+                
+                // Add visual feedback
+                info.el.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    info.el.style.transform = 'scale(1)';
+                }, 150);
+                
                 // Handle event click - navigate to treatment details
-                if (info.event.id && !info.event.id.startsWith('recurring_')) {
-                    window.location.href = `/treatment/${info.event.id}/view`;
+                if (info.event.id) {
+                    if (info.event.id.startsWith('recurring_')) {
+                        // Handle recurring appointments
+                        const patientName = info.event.extendedProps?.patient_name || 'Unknown Patient';
+                        const treatmentType = info.event.title.split(' - ')[1] || 'Appointment';
+                        
+                        if (confirm(`This is a recurring appointment for ${patientName}.\n\nClick OK to edit the recurring rule.`)) {
+                            const recurringId = info.event.id.replace('recurring_', '');
+                            window.location.href = `/recurring/${recurringId}/edit`;
+                        }
+                    } else {
+                        // Handle regular treatments
+                        const treatmentId = parseInt(info.event.id, 10);
+                        if (!isNaN(treatmentId)) {
+                            window.location.href = `/treatment/${treatmentId}/view`;
+                        } else {
+                            alert('Could not navigate to appointment: Invalid ID format.');
+                        }
+                    }
+                } else {
+                    alert('Could not navigate to appointment: Missing ID.');
                 }
             },
             height: 'auto'

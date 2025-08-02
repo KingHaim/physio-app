@@ -406,6 +406,10 @@
     function deleteTreatment(treatmentId) {
         fetch(`/api/treatment/${treatmentId}`, {
             method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
         })
         .then(response => {
             if (!response.ok) {
@@ -418,12 +422,14 @@
                 // Remove the row from the table
                 const row = document.querySelector(`button[data-treatment-id="${treatmentId}"]`).closest('tr');
                 row.remove();
-                alert('Treatment record deleted successfully.');
+                alert('{{ _("Treatment record deleted successfully.") }}');
+            } else {
+                alert('{{ _("Error deleting treatment:") }} ' + (data.message || data.error || '{{ _("Unknown error") }}'));
             }
         })
         .catch(error => {
             console.error('Error deleting treatment:', error);
-            alert('Error deleting treatment. Please try again.');
+            alert('{{ _("Error deleting treatment. Please try again.") }}');
         });
     }
 

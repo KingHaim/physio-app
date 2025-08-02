@@ -338,20 +338,28 @@
 <script>
     function confirmDelete(treatmentId) {
         if (confirm('{{ _("Are you sure you want to delete this treatment? This action cannot be undone.") }}')) {
-            // Create a form to submit the delete request
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `/treatment/${treatmentId}/delete`;
-            
-            // Add CSRF token
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = 'csrf_token';
-            csrfToken.value = '{{ csrf_token() }}';
-            form.appendChild(csrfToken);
-            
-            document.body.appendChild(form);
-            form.submit();
+            // Use fetch to make a DELETE request to the API
+            fetch(`/api/treatment/${treatmentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('{{ _("Treatment deleted successfully") }}');
+                    // Redirect to patient detail page
+                    window.location.href = '/patient/{{ treatment.patient.id }}';
+                } else {
+                    alert('{{ _("Error deleting treatment:") }} ' + (data.message || data.error || '{{ _("Unknown error") }}'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('{{ _("Error deleting treatment:") }} ' + error.message);
+            });
         }
     }
 

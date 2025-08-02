@@ -181,6 +181,32 @@
         color: #2c3e50;
         font-weight: 600;
     }
+
+    /* Patient Statistics Styles */
+    .stat-item {
+        padding: 10px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+    }
+
+    .stat-number {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
 </style>
 {% endblock %}
 
@@ -272,6 +298,53 @@
                             </a>
                         </li>
                     </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-light">
+                <div class="card-body py-3">
+                    <h6 class="card-subtitle mb-3 text-muted">
+                        <i class="bi bi-graph-up"></i> {{ _('Patient Statistics') }}
+                    </h6>
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-number text-primary" id="total-appointments">
+                                    <i class="bi bi-hourglass"></i> {{ _('Loading...') }}
+                                </div>
+                                <div class="stat-label">{{ _('Total Appointments') }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-number text-success" id="completed-appointments">
+                                    <i class="bi bi-hourglass"></i> {{ _('Loading...') }}
+                                </div>
+                                <div class="stat-label">{{ _('Completed') }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-number text-danger" id="cancelled-appointments">
+                                    <i class="bi bi-hourglass"></i> {{ _('Loading...') }}
+                                </div>
+                                <div class="stat-label">{{ _('Cancelled') }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-number" id="cancellation-rate" style="color: #fd7e14;">
+                                    <i class="bi bi-hourglass"></i> {{ _('Loading...') }}
+                                </div>
+                                <div class="stat-label">{{ _('Cancellation Rate') }}</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -488,6 +561,14 @@
                                                             <a href="{{ url_for('main.edit_treatment', id=treatment.id) }}" class="btn btn-sm btn-secondary">
                                                                 <i class="bi bi-pencil"></i> {{ _('Edit') }}
                                                             </a>
+                                                            {% if treatment.status != 'Cancelled' %}
+                                                            <button class="btn btn-sm btn-outline-danger cancel-treatment-btn" 
+                                                                    data-treatment-id="{{ treatment.id }}" 
+                                                                    data-treatment-type="{{ treatment.treatment_type }}"
+                                                                    title="{{ _('Cancel Appointment') }}">
+                                                                <i class="bi bi-x-circle"></i> {{ _('Cancel') }}
+                                                            </button>
+                                                            {% endif %}
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -1208,6 +1289,43 @@
   </div>
 </div>
 
+<!-- Cancel Treatment Confirmation Modal -->
+<div class="modal fade" id="cancelTreatmentModal" tabindex="-1" aria-labelledby="cancelTreatmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cancelTreatmentModalLabel">
+          <i class="bi bi-exclamation-triangle text-warning"></i> {{ _('Cancel Appointment') }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <i class="bi bi-info-circle"></i>
+          <strong>{{ _('Are you sure you want to cancel this appointment?') }}</strong>
+        </div>
+        <p><strong>{{ _('Treatment:') }}</strong> <span id="cancel-treatment-type"></span></p>
+        <div class="mb-3">
+          <label for="cancellation-reason" class="form-label">{{ _('Cancellation Reason (Optional)') }}</label>
+          <textarea class="form-control" id="cancellation-reason" rows="3" placeholder="{{ _('Please provide a reason for cancellation...') }}"></textarea>
+        </div>
+        <p class="text-muted small">
+          <i class="bi bi-info-circle"></i> 
+          {{ _('This action will mark the appointment as cancelled and update your analytics.') }}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i> {{ _('Keep Appointment') }}
+        </button>
+        <button type="button" class="btn btn-danger" id="confirmCancelTreatment">
+          <i class="bi bi-check-circle"></i> {{ _('Cancel Appointment') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Clinical Analysis Confirmation Modal -->
 <div class="modal fade" id="clinicalAnalysisConfirmModal" tabindex="-1" aria-labelledby="clinicalAnalysisConfirmModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -1460,9 +1578,50 @@ function displayAnamnesis() {
   }
 }
 
+// Load patient statistics including cancellation rate
+async function loadPatientStatistics() {
+  try {
+    const response = await fetch(`/api/patient/{{ patient.id }}/cancellation-rate`);
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    
+    // Update the statistics display
+    document.getElementById('total-appointments').textContent = data.total_appointments;
+    document.getElementById('cancelled-appointments').textContent = data.cancelled_appointments;
+    document.getElementById('cancellation-rate').textContent = data.cancellation_rate + '%';
+    
+    // Calculate completed appointments (assuming total - cancelled = completed for simplicity)
+    const completed = data.total_appointments - data.cancelled_appointments;
+    document.getElementById('completed-appointments').textContent = completed;
+    
+    // Add visual indicators based on cancellation rate
+    const cancellationRateElement = document.getElementById('cancellation-rate');
+    if (data.cancellation_rate > 30) {
+      cancellationRateElement.style.color = '#dc3545'; // Red for high cancellation rate
+    } else if (data.cancellation_rate > 15) {
+      cancellationRateElement.style.color = '#fd7e14'; // Orange for moderate cancellation rate
+    } else {
+      cancellationRateElement.style.color = '#198754'; // Green for low cancellation rate
+    }
+    
+  } catch (error) {
+    console.error('Error loading patient statistics:', error);
+    
+    // Set default values on error
+    document.getElementById('total-appointments').textContent = '0';
+    document.getElementById('completed-appointments').textContent = '0';
+    document.getElementById('cancelled-appointments').textContent = '0';
+    document.getElementById('cancellation-rate').textContent = '0%';
+  }
+}
+
 // Run when page loads
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(displayAnamnesis, 500);
+  loadPatientStatistics();
 });
 
 // Run when anamnesis tab is clicked
@@ -1695,6 +1854,90 @@ if (generateClinicalAnalysisBtn) {
     const confirmModal = new bootstrap.Modal(document.getElementById('clinicalAnalysisConfirmModal'));
     confirmModal.show();
   });
+}
+
+// Handle treatment cancellation
+let currentTreatmentToCancel = null;
+
+// Add event listeners to all cancel treatment buttons
+document.addEventListener('click', function(e) {
+  if (e.target.closest('.cancel-treatment-btn')) {
+    const btn = e.target.closest('.cancel-treatment-btn');
+    const treatmentId = btn.getAttribute('data-treatment-id');
+    const treatmentType = btn.getAttribute('data-treatment-type');
+    
+    // Store the treatment ID for later use
+    currentTreatmentToCancel = treatmentId;
+    
+    // Update modal content
+    document.getElementById('cancel-treatment-type').textContent = treatmentType;
+    document.getElementById('cancellation-reason').value = '';
+    
+    // Show the modal
+    const cancelModal = new bootstrap.Modal(document.getElementById('cancelTreatmentModal'));
+    cancelModal.show();
+  }
+});
+
+// Handle confirm cancellation button
+var confirmCancelTreatmentBtn = document.getElementById('confirmCancelTreatment');
+if (confirmCancelTreatmentBtn) {
+  confirmCancelTreatmentBtn.onclick = function() {
+    if (!currentTreatmentToCancel) return;
+    
+    const reason = document.getElementById('cancellation-reason').value.trim();
+    const cancelModal = bootstrap.Modal.getInstance(document.getElementById('cancelTreatmentModal'));
+    
+    // Disable the button and show loading state
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> {{ _("Cancelling...") }}';
+    
+    fetch(`/api/treatment/${currentTreatmentToCancel}/cancel`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify({
+        reason: reason || 'No reason provided'
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        cancelModal.hide();
+        
+        // Update the treatment row status
+        const statusBadge = document.querySelector(`#treatment-row-${currentTreatmentToCancel} .status-badge`);
+        if (statusBadge) {
+          statusBadge.className = 'badge bg-danger status-badge';
+          statusBadge.textContent = '{{ _("Cancelled") }}';
+        }
+        
+        // Hide the cancel button for this treatment
+        const cancelBtn = document.querySelector(`[data-treatment-id="${currentTreatmentToCancel}"]`);
+        if (cancelBtn) {
+          cancelBtn.style.display = 'none';
+        }
+        
+        // Update patient statistics
+        loadPatientStatistics();
+        
+        alert('{{ _("Appointment cancelled successfully.") }}');
+      } else {
+        alert('{{ _("Error cancelling appointment:") }} ' + (data.error || ''));
+      }
+    })
+    .catch(error => {
+      alert('{{ _("Error cancelling appointment:") }} ' + error.message);
+    })
+    .finally(() => {
+      // Re-enable the button
+      this.disabled = false;
+      this.innerHTML = '<i class="bi bi-check-circle"></i> {{ _("Cancel Appointment") }}';
+      currentTreatmentToCancel = null;
+    });
+  };
 }
 
 // Other patient detail functionality (consent, reports, etc.)
