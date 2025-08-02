@@ -1473,6 +1473,230 @@ if (anamnesisTab) {
   });
 }
 
+// CSRF Token handling
+const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || 
+                 document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                 '{{ csrf_token() }}';
+
+// Generate Report Button Event Listener
+let isGenerating = false; // Add a flag to prevent multiple submissions
+var generateBtn = document.getElementById('generateReportBtn');
+if (generateBtn) {
+  generateBtn.addEventListener('click', function() {
+    // Show the language selection modal instead of generating directly
+    const languageModal = new bootstrap.Modal(document.getElementById('languageSelectionModal'));
+    languageModal.show();
+  });
+}
+
+// Handle the generate report button in the modal
+var generateReportWithLanguageBtn = document.getElementById('generateReportWithLanguage');
+if (generateReportWithLanguageBtn) {
+  generateReportWithLanguageBtn.onclick = function() {
+    if (isGenerating) {
+      return; // Prevent multiple clicks
+    }
+
+    const selectedLanguage = document.querySelector('input[name="reportLanguage"]:checked').value;
+    const languageModal = bootstrap.Modal.getInstance(document.getElementById('languageSelectionModal'));
+    
+    isGenerating = true; // Set the flag
+    // Disable the button and show loading state
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> {{ _("Generating...") }}';
+    
+    fetch(`/api/patient/{{ patient.id }}/generate-report`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify({
+        language: selectedLanguage
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        languageModal.hide();
+        // Show the review modal with the generated content
+        document.getElementById('reportContent').value = data.content;
+        const reviewModal = new bootstrap.Modal(document.getElementById('reportReviewModal'));
+        reviewModal.show();
+      } else {
+        alert('{{ _("Error generating report:") }} ' + (data.message || ''));
+      }
+    })
+    .catch(error => {
+      alert('{{ _("Error generating report:") }} ' + error.message);
+    })
+    .finally(() => {
+      // Re-enable the button
+      this.disabled = false;
+      this.innerHTML = '<i class="bi bi-file-earmark-text"></i> {{ _("Generate Report") }}';
+      isGenerating = false; // Reset the flag
+    });
+  };
+}
+
+// Save Report Button
+var saveReportBtn = document.getElementById('saveReportBtn');
+if (saveReportBtn) {
+  saveReportBtn.onclick = function() {
+    const reportContent = document.getElementById('reportContent').value;
+    const reviewModal = bootstrap.Modal.getInstance(document.getElementById('reportReviewModal'));
+    
+    // Disable the button and show loading state
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> {{ _("Saving...") }}';
+    
+    fetch(`/api/patient/{{ patient.id }}/save-report`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify({
+        content: reportContent
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        reviewModal.hide();
+        alert('{{ _("Report saved successfully.") }}');
+        window.location.reload();
+      } else {
+        alert('{{ _("Error saving report:") }} ' + (data.message || ''));
+      }
+    })
+    .catch(error => {
+      alert('{{ _("Error saving report:") }} ' + error.message);
+    })
+    .finally(() => {
+      // Re-enable the button
+      this.disabled = false;
+      this.innerHTML = '<i class="bi bi-check-circle"></i> {{ _("Save Report") }}';
+    });
+  };
+}
+
+// Generate Exercise Button Event Listener
+var generateExerciseBtn = document.getElementById('generateExerciseBtn');
+if (generateExerciseBtn) {
+  generateExerciseBtn.addEventListener('click', function() {
+    // Show the language selection modal instead of generating directly
+    const languageModal = new bootstrap.Modal(document.getElementById('exerciseLanguageSelectionModal'));
+    languageModal.show();
+  });
+}
+
+// Handle the generate exercise button in the modal
+var generateExerciseWithLanguageBtn = document.getElementById('generateExerciseWithLanguage');
+if (generateExerciseWithLanguageBtn) {
+  generateExerciseWithLanguageBtn.onclick = function() {
+    const selectedLanguage = document.querySelector('input[name="exerciseLanguage"]:checked').value;
+    const languageModal = bootstrap.Modal.getInstance(document.getElementById('exerciseLanguageSelectionModal'));
+    
+    // Disable the button and show loading state
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> {{ _("Generating...") }}';
+    
+    fetch(`/api/patient/{{ patient.id }}/generate-exercise-prescription`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify({
+        language: selectedLanguage
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        languageModal.hide();
+        alert('{{ _("Exercise prescription generated successfully.") }}');
+        window.location.reload();
+      } else {
+        alert('{{ _("Error generating exercises:") }} ' + (data.message || ''));
+      }
+    })
+    .catch(error => {
+      alert('{{ _("Error generating exercises:") }} ' + error.message);
+    })
+    .finally(() => {
+      // Re-enable the button
+      this.disabled = false;
+      this.innerHTML = '<i class="bi bi-clipboard-heart"></i> {{ _("Generate Exercise Homework") }}';
+    });
+  };
+}
+
+// Generate Clinical Analysis Button Event Listener
+var generateAnalysisBtn = document.getElementById('generateAnalysisBtn');
+if (generateAnalysisBtn) {
+  generateAnalysisBtn.addEventListener('click', function() {
+    const confirmModal = new bootstrap.Modal(document.getElementById('clinicalAnalysisConfirmModal'));
+    confirmModal.show();
+  });
+}
+
+var regenerateAnalysisBtn = document.getElementById('regenerateAnalysisBtn');
+if (regenerateAnalysisBtn) {
+  regenerateAnalysisBtn.addEventListener('click', function() {
+    const confirmModal = new bootstrap.Modal(document.getElementById('clinicalAnalysisConfirmModal'));
+    confirmModal.show();
+  });
+}
+
+// Confirm Clinical Analysis Generation
+var confirmClinicalAnalysis = document.getElementById('confirmClinicalAnalysis');
+if (confirmClinicalAnalysis) {
+  confirmClinicalAnalysis.onclick = function() {
+    const confirmModal = bootstrap.Modal.getInstance(document.getElementById('clinicalAnalysisConfirmModal'));
+    
+    // Disable the button and show loading state
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> {{ _("Generating...") }}';
+    
+    fetch(`/api/patient/{{ patient.id }}/generate-clinical-analysis`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        confirmModal.hide();
+        alert('{{ _("Clinical analysis generated successfully.") }}');
+        window.location.reload();
+      } else {
+        alert('{{ _("Error generating clinical analysis:") }} ' + (data.message || data.error || ''));
+      }
+    })
+    .catch(error => {
+      alert('{{ _("Error generating clinical analysis:") }} ' + error.message);
+    })
+    .finally(() => {
+      // Re-enable the button
+      this.disabled = false;
+      this.innerHTML = '<i class="bi bi-robot"></i> {{ _("Generate Analysis") }}';
+    });
+  };
+}
+
+// Handle the generate clinical analysis button in the AI Analysis tab
+var generateClinicalAnalysisBtn = document.getElementById('generateClinicalAnalysisBtn');
+if (generateClinicalAnalysisBtn) {
+  generateClinicalAnalysisBtn.addEventListener('click', function() {
+    const confirmModal = new bootstrap.Modal(document.getElementById('clinicalAnalysisConfirmModal'));
+    confirmModal.show();
+  });
+}
+
 // Other patient detail functionality (consent, reports, etc.)
 // ... simplified version of existing code ...
 </script>
