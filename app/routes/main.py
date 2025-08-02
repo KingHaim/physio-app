@@ -534,7 +534,7 @@ def index():
     upcoming_appointments_query = Treatment.query.filter(
         Treatment.patient_id.in_(accessible_patient_ids),
         Treatment.status == 'Scheduled',
-        Treatment.created_at >= datetime.utcnow()
+        func.date(Treatment.created_at) >= today
     ).order_by(Treatment.created_at.asc()).limit(10)
     
     upcoming_appointments = []
@@ -3895,7 +3895,7 @@ def patient_dashboard():
     upcoming_appointments = Treatment.query.filter(
         Treatment.patient_id == patient_record.id,
         Treatment.status == 'Scheduled',
-        Treatment.created_at >= today 
+        func.date(Treatment.created_at) >= today.date()
     ).order_by(Treatment.created_at.asc()).limit(5).all()
     
     latest_homework = PatientReport.query.filter(
