@@ -246,37 +246,122 @@ def sync_calendly_for_user(user):
                     current_app.logger.debug(f"Calendly sync for user {user.id}: skipping existing treatment {invitee_uuid}")
                     continue  # Skip if treatment already exists
                 
-                # Try to find matching patient by email
+                # SMART MATCHING LOGIC - Try multiple strategies to find the right patient
+                patient = None
+                action_taken = None
+                
+                # 1. Try exact email match first
                 patient = Patient.query.filter_by(email=email, user_id=user.id).first()
+                if patient:
+                    action_taken = "exact_email_match"
+                else:
+                    # 2. Try name-based matching (fuzzy)
+                    from sqlalchemy import func
+                    
+                    # Split the Calendly name to handle various formats
+                    name_parts = name.lower().split()
+                    
+                    # Get all patients for this user
+                    all_patients = Patient.query.filter_by(user_id=user.id).all()
+                    
+                    for existing_patient in all_patients:
+                        if not existing_patient.name:
+                            continue
+                            
+                        existing_name_lower = existing_patient.name.lower()
+                        existing_name_parts = existing_name_lower.split()
+                        
+                        # Check if names match (fuzzy matching)
+                        name_match = False
+                        
+                        # Strategy 1: Check if all name parts from Calendly are in existing patient name
+                        if all(part in existing_name_lower for part in name_parts):
+                            name_match = True
+                        
+                        # Strategy 2: Check if all existing patient name parts are in Calendly name
+                        elif all(part in name.lower() for part in existing_name_parts):
+                            name_match = True
+                        
+                        # Strategy 3: Check for at least 2 matching parts (for longer names)
+                        elif len(name_parts) >= 2 and len(existing_name_parts) >= 2:
+                            matching_parts = sum(1 for part in name_parts if part in existing_name_parts)
+                            if matching_parts >= 2:
+                                name_match = True
+                        
+                        if name_match:
+                            # Found a name match! Check email compatibility
+                            if not existing_patient.email or existing_patient.email == email:
+                                # Perfect! Use this patient and update email if needed
+                                patient = existing_patient
+                                if not existing_patient.email:
+                                    existing_patient.email = email
+                                    action_taken = "name_match_email_updated"
+                                    current_app.logger.info(f"Calendly sync: Updated email for existing patient {existing_patient.name} -> {email}")
+                                else:
+                                    action_taken = "name_and_email_match"
+                                break
+                            else:
+                                # Email conflict - this needs manual review
+                                current_app.logger.warning(f"Calendly sync: Name match found but email conflict - {existing_patient.name} has {existing_patient.email} vs Calendly {email}")
+                                # Continue searching for other matches, but mark this as a potential conflict
+                                pass
                 
                 if patient:
-                    # Create treatment directly
+                    # Create treatment - either from exact email match, name match, or updated patient
                     treatment = Treatment(
                         patient_id=patient.id,
                         created_at=start_time,
                         treatment_type=event_type_name,
                         status="Scheduled",
                         provider=user.email,
-                        notes=f"Auto-synced from Calendly. Invitee: {name} ({email})",
+                        notes=f"Auto-synced from Calendly ({action_taken}). Invitee: {name} ({email})",
                         calendly_invitee_uri=invitee_uuid
                     )
                     db.session.add(treatment)
                     synced_treatments_count += 1
-                    current_app.logger.info(f"Calendly sync for user {user.id}: created treatment for {name} ({email}) on {start_time}")
+                    current_app.logger.info(f"Calendly sync for user {user.id}: created treatment for {name} ({email}) on {start_time} via {action_taken}")
                 else:
-                    # Create unmatched booking for review
-                    unmatched_booking = UnmatchedCalendlyBooking(
-                        user_id=user.id,
-                        name=name,
-                        email=email,
-                        event_type=event_type_name,
-                        start_time=start_time,
-                        calendly_invitee_id=invitee_uuid,
-                        status='Pending'
-                    )
-                    db.session.add(unmatched_booking)
-                    newly_created_unmatched_bookings_count += 1
-                    current_app.logger.info(f"Calendly sync for user {user.id}: created unmatched booking for {name} ({email}) on {start_time}")
+                    # No match found - create new patient automatically
+                    try:
+                        new_patient = Patient(
+                            name=name,
+                            email=email,
+                            phone="",  # Will be empty until manually updated
+                            user_id=user.id,
+                            status='Active'
+                        )
+                        db.session.add(new_patient)
+                        db.session.flush()  # Get the patient ID
+                        
+                        # Create treatment for the new patient
+                        treatment = Treatment(
+                            patient_id=new_patient.id,
+                            created_at=start_time,
+                            treatment_type=event_type_name,
+                            status="Scheduled",
+                            provider=user.email,
+                            notes=f"Auto-synced from Calendly (new_patient_created). Invitee: {name} ({email})",
+                            calendly_invitee_uri=invitee_uuid
+                        )
+                        db.session.add(treatment)
+                        synced_treatments_count += 1
+                        current_app.logger.info(f"Calendly sync for user {user.id}: created NEW patient and treatment for {name} ({email}) on {start_time}")
+                        
+                    except Exception as create_error:
+                        # If patient creation fails, fall back to unmatched booking
+                        current_app.logger.error(f"Failed to create new patient for {name} ({email}): {str(create_error)}")
+                        unmatched_booking = UnmatchedCalendlyBooking(
+                            user_id=user.id,
+                            name=name,
+                            email=email,
+                            event_type=event_type_name,
+                            start_time=start_time,
+                            calendly_invitee_id=invitee_uuid,
+                            status='Pending'
+                        )
+                        db.session.add(unmatched_booking)
+                        newly_created_unmatched_bookings_count += 1
+                        current_app.logger.info(f"Calendly sync for user {user.id}: created unmatched booking for {name} ({email}) on {start_time}")
         
         db.session.commit()
         
