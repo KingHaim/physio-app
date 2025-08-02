@@ -157,9 +157,9 @@ def sync_calendly_for_user(user):
             'User-Agent': 'PhysioTracker/1.0'
         }
         
-        # Get scheduled events for the next 30 days
+        # Get scheduled events for the next 90 days (increased range)
         min_time = datetime.utcnow().isoformat() + 'Z'
-        max_time = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
+        max_time = (datetime.utcnow() + timedelta(days=90)).isoformat() + 'Z'
         
         events_url = 'https://api.calendly.com/scheduled_events'
         params = {
@@ -167,20 +167,46 @@ def sync_calendly_for_user(user):
             'min_start_time': min_time,
             'max_start_time': max_time,
             'status': 'active',
-            'sort': 'start_time:asc'
+            'sort': 'start_time:asc',
+            'count': 100  # Request more events per page
         }
         
-        events_response = requests.get(events_url, headers=headers, params=params, timeout=10)
+        current_app.logger.info(f"Calendly sync for user {user.id}: requesting events from {min_time} to {max_time}")
+        events_response = requests.get(events_url, headers=headers, params=params, timeout=30)
         
         if events_response.status_code != 200:
-            current_app.logger.warning(f"Calendly sync failed for user {user.id}: {events_response.status_code}")
+            current_app.logger.warning(f"Calendly sync failed for user {user.id}: {events_response.status_code} - {events_response.text}")
             return {'new_treatments': 0, 'new_unmatched_bookings': 0}
         
-        events = events_response.json()['collection']
+        # Handle pagination to get ALL events
+        all_events = []
+        data = events_response.json()
+        all_events.extend(data.get('collection', []))
+        pagination = data.get('pagination', {})
+        
+        current_app.logger.info(f"Calendly sync for user {user.id}: found {len(all_events)} events on first page")
+        
+        # Get additional pages if they exist
+        while pagination.get('next_page'):
+            next_page_url = pagination['next_page']
+            current_app.logger.info(f"Calendly sync for user {user.id}: fetching next page {next_page_url}")
+            
+            next_response = requests.get(next_page_url, headers=headers, timeout=30)
+            if next_response.status_code == 200:
+                next_data = next_response.json()
+                all_events.extend(next_data.get('collection', []))
+                pagination = next_data.get('pagination', {})
+                current_app.logger.info(f"Calendly sync for user {user.id}: total events now {len(all_events)}")
+            else:
+                current_app.logger.warning(f"Failed to fetch next page for user {user.id}: {next_response.status_code}")
+                break
+        
+        current_app.logger.info(f"Calendly sync for user {user.id}: processing {len(all_events)} total events")
+        
         synced_treatments_count = 0
         newly_created_unmatched_bookings_count = 0
         
-        for event in events:
+        for event in all_events:
             event_uri = event['uri']
             event_uuid = event_uri.split('/')[-1]
             
@@ -208,7 +234,17 @@ def sync_calendly_for_user(user):
                 ).first()
                 
                 if existing_unmatched_booking:
+                    current_app.logger.debug(f"Calendly sync for user {user.id}: skipping existing booking {invitee_uuid}")
                     continue  # Skip if already processed
+                
+                # Check if treatment already exists
+                existing_treatment = Treatment.query.filter_by(
+                    calendly_invitee_uri=invitee_uuid
+                ).join(Patient).filter(Patient.user_id == user.id).first()
+                
+                if existing_treatment:
+                    current_app.logger.debug(f"Calendly sync for user {user.id}: skipping existing treatment {invitee_uuid}")
+                    continue  # Skip if treatment already exists
                 
                 # Try to find matching patient by email
                 patient = Patient.query.filter_by(email=email, user_id=user.id).first()
@@ -226,6 +262,7 @@ def sync_calendly_for_user(user):
                     )
                     db.session.add(treatment)
                     synced_treatments_count += 1
+                    current_app.logger.info(f"Calendly sync for user {user.id}: created treatment for {name} ({email}) on {start_time}")
                 else:
                     # Create unmatched booking for review
                     unmatched_booking = UnmatchedCalendlyBooking(
@@ -239,6 +276,7 @@ def sync_calendly_for_user(user):
                     )
                     db.session.add(unmatched_booking)
                     newly_created_unmatched_bookings_count += 1
+                    current_app.logger.info(f"Calendly sync for user {user.id}: created unmatched booking for {name} ({email}) on {start_time}")
         
         db.session.commit()
         

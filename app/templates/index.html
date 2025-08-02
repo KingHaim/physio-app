@@ -228,6 +228,17 @@
     </div>
     {% endif %}
     
+    <!-- Calendly configuration reminder -->
+    {% if current_user.role in ['physio', 'admin'] and not (current_user.calendly_api_token and current_user.calendly_user_uri) %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <strong>{{ _('Calendly Integration Available!') }}</strong> 
+        {{ _('Connect your Calendly account to automatically sync appointments.') }}
+        <a href="{{ url_for('main.user_settings') }}#api-integrations" class="alert-link">{{ _('Configure now') }}</a>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ _('Close') }}"></button>
+    </div>
+    {% endif %}
+    
     {% if show_welcome_flow and is_new_user %}
     <div class="card border-primary mb-4 mt-4">
       <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
@@ -402,6 +413,10 @@
                             <button id="syncCalendlyBtn" class="btn btn-sm btn-outline-success" title="{{ _('Sync Calendly appointments') }}">
                                 <i class="bi bi-calendar-check"></i> {{ _('Calendly') }}
                             </button>
+                            {% else %}
+                            <a href="{{ url_for('main.user_settings') }}#api-integrations" class="btn btn-sm btn-outline-warning" title="{{ _('Configure Calendly integration') }}">
+                                <i class="bi bi-calendar-plus"></i> {{ _('Setup Calendly') }}
+                            </a>
                             {% endif %}
                             <a href="{{ url_for('main.appointments') }}" class="btn btn-sm btn-outline-primary">{{ _('View All') }}</a>
                         </div>
