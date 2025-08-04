@@ -1639,7 +1639,8 @@ document.addEventListener('DOMContentLoaded', function() {
                               '{{ csrf_token() }}';
 
     // Add event listeners to all cancel treatment buttons in dashboard
-    document.addEventListener('click', function(e) {
+    document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('click', function(e) {
       if (e.target.closest('.cancel-dashboard-treatment-btn')) {
         const btn = e.target.closest('.cancel-dashboard-treatment-btn');
         const treatmentId = btn.getAttribute('data-treatment-id');
@@ -1649,13 +1650,32 @@ document.addEventListener('DOMContentLoaded', function() {
         // Store the treatment ID for later use
         currentDashboardTreatmentToCancel = treatmentId;
         
-        // Update modal content
-        document.getElementById('cancel-dashboard-patient-name').textContent = patientName;
-        document.getElementById('cancel-dashboard-treatment-type').textContent = treatmentType;
-        document.getElementById('dashboard-cancellation-reason').value = '';
+        // Update modal content - with null checks
+        const patientNameElement = document.getElementById('cancel-dashboard-patient-name');
+        const treatmentTypeElement = document.getElementById('cancel-dashboard-treatment-type');
+        const reasonElement = document.getElementById('dashboard-cancellation-reason');
+        
+        if (!patientNameElement || !treatmentTypeElement || !reasonElement) {
+            console.error('Modal elements not found:', {
+                patientName: !!patientNameElement,
+                treatmentType: !!treatmentTypeElement,
+                reason: !!reasonElement
+            });
+            return;
+        }
+        
+        patientNameElement.textContent = patientName;
+        treatmentTypeElement.textContent = treatmentType;
+        reasonElement.value = '';
         
         // Show the modal
-        const cancelModal = new bootstrap.Modal(document.getElementById('cancelDashboardTreatmentModal'));
+        const modalElement = document.getElementById('cancelDashboardTreatmentModal');
+        if (!modalElement) {
+            console.error('Cancel modal not found');
+            return;
+        }
+        
+        const cancelModal = new bootstrap.Modal(modalElement);
         cancelModal.show();
       }
     });
@@ -1705,12 +1725,14 @@ document.addEventListener('DOMContentLoaded', function() {
                  });
        };
      }
+    }); // End DOMContentLoaded
 
      // Handle recurring appointment cancellation
-     let currentRecurringToCancel = null;
+     document.addEventListener('DOMContentLoaded', function() {
+       let currentRecurringToCancel = null;
 
-     // Add event listeners for cancel recurring appointment buttons
-     document.addEventListener('click', function(e) {
+       // Add event listeners for cancel recurring appointment buttons
+       document.addEventListener('click', function(e) {
        if (e.target.closest('.cancel-recurring-btn')) {
          const btn = e.target.closest('.cancel-recurring-btn');
          const patientName = btn.getAttribute('data-patient-name');
@@ -1883,6 +1905,7 @@ document.addEventListener('DOMContentLoaded', function() {
          });
        });
      }
+    }); // End second DOMContentLoaded
 });
 </script>
 {% endblock %}
