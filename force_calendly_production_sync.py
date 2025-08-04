@@ -7,6 +7,7 @@ from app import create_app
 from app.models import *
 from app.utils import sync_calendly_for_user
 from datetime import datetime, timedelta
+from sqlalchemy import func
 import requests
 
 def main():
