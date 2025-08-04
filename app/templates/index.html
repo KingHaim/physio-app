@@ -900,6 +900,11 @@
   </div>
 </div>
 
+<!-- MODAL DEBUG INFO -->
+<div id="modal-debug" style="position: fixed; top: 10px; right: 10px; background: red; color: white; padding: 10px; z-index: 9999; font-size: 12px;">
+  MODAL DEBUG: Loading...
+</div>
+
 <!-- Cancel Treatment Modal for Dashboard -->
 <div class="modal fade" id="cancelDashboardTreatmentModal" tabindex="-1" aria-labelledby="cancelDashboardTreatmentModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -939,6 +944,36 @@
 </div>
 
 <script>
+// IMMEDIATE MODAL DEBUG - runs right after modal is defined
+(function() {
+  const debugElement = document.getElementById('modal-debug');
+  const modal = document.getElementById('cancelDashboardTreatmentModal');
+  const patientName = document.getElementById('cancel-dashboard-patient-name');
+  const treatmentType = document.getElementById('cancel-dashboard-treatment-type');
+  const reason = document.getElementById('dashboard-cancellation-reason');
+  
+  let debugInfo = `
+    Modal: ${modal ? 'OK' : 'MISSING'} | 
+    Name: ${patientName ? 'OK' : 'MISSING'} | 
+    Type: ${treatmentType ? 'OK' : 'MISSING'} | 
+    Reason: ${reason ? 'OK' : 'MISSING'} | 
+    Bootstrap: ${typeof bootstrap !== 'undefined' ? 'OK' : 'MISSING'}
+  `;
+  
+  if (debugElement) {
+    debugElement.innerHTML = debugInfo;
+    debugElement.style.background = modal && patientName && treatmentType && reason ? 'green' : 'red';
+  }
+  
+  // Additional check after a small delay
+  setTimeout(function() {
+    const modalAfterDelay = document.getElementById('cancelDashboardTreatmentModal');
+    if (debugElement) {
+      debugElement.innerHTML += `<br>After delay: ${modalAfterDelay ? 'STILL OK' : 'DISAPPEARED'}`;
+    }
+  }, 1000);
+})();
+
 // Hardcoded translations to work without database
 const translations = {
     'es': {
