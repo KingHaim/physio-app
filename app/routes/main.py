@@ -2086,49 +2086,73 @@ def edit_treatment(id):
 @main.route('/treatment/<int:id>/view')
 @login_required
 def view_treatment(id):
-    treatment = Treatment.query.get_or_404(id)
-    patient = treatment.patient
-    
-    # --- Access Control --- 
-    # SECURITY FIX: All users (including admins) must follow access control rules
-    if current_user.role == 'physio' or current_user.is_admin:
-        # Physios and admins can access their own patients or clinic patients
-        accessible_patients = current_user.get_accessible_patients()
-        patient_ids = [p.id for p in accessible_patients]
-        if patient.id not in patient_ids:
-            flash('You do not have permission to view this treatment.', 'danger')
+    try:
+        treatment = Treatment.query.get_or_404(id)
+        
+        # Check if patient exists
+        if not treatment.patient:
+            current_app.logger.error(f"Treatment {id} has no associated patient")
+            flash('Error: Treatment has no associated patient.', 'danger')
             return redirect(url_for('main.patients_list'))
-    elif current_user.role == 'patient':
-        if not current_user.patient_record or current_user.patient_record.id != patient.id:
-            flash('You do not have permission to view this treatment.', 'danger')
-            return redirect(url_for('main.patient_dashboard'))
-        # If it IS their record, they are allowed through.
-    else: # Other roles
-        flash('Access Denied.', 'danger')
-        return redirect(url_for('main.index'))
-    # --- End Access Control ---
-    
-    print(f"Viewing treatment {id}: Type={treatment.treatment_type}, Notes={treatment.notes}, Status={treatment.status}")
-    
-    mapped_treatment = {
-        'id': treatment.id,
-        'created_at': treatment.created_at,
-        'description': treatment.treatment_type,
-        'progress_notes': treatment.notes,
-        'treatment_type': treatment.treatment_type,
-        'notes': treatment.notes,
-        'status': treatment.status,
-        'patient_id': treatment.patient_id,
-        'pain_level': treatment.pain_level,
-        'movement_restriction': treatment.movement_restriction,
-        'assessment': treatment.assessment,
-        'provider': treatment.provider,
-        'body_chart_url': treatment.body_chart_url,
-        'trigger_points': treatment.trigger_points,
-        'evaluation_data': treatment.evaluation_data
-    }
-    
-    return render_template('view_treatment.html', treatment=mapped_treatment, patient=patient)
+        
+        patient = treatment.patient
+        
+        # --- Access Control --- 
+        # SECURITY FIX: All users (including admins) must follow access control rules
+        try:
+            if current_user.role == 'physio' or current_user.is_admin:
+                # Physios and admins can access their own patients or clinic patients
+                accessible_patients = current_user.get_accessible_patients()
+                patient_ids = [p.id for p in accessible_patients]
+                if patient.id not in patient_ids:
+                    flash('You do not have permission to view this treatment.', 'danger')
+                    return redirect(url_for('main.patients_list'))
+            elif current_user.role == 'patient':
+                if not current_user.patient_record or current_user.patient_record.id != patient.id:
+                    flash('You do not have permission to view this treatment.', 'danger')
+                    return redirect(url_for('main.patient_dashboard'))
+                # If it IS their record, they are allowed through.
+            else: # Other roles
+                flash('Access Denied.', 'danger')
+                return redirect(url_for('main.index'))
+        except Exception as e:
+            current_app.logger.error(f"Access control error for treatment {id}: {e}")
+            flash('Error checking permissions.', 'danger')
+            return redirect(url_for('main.index'))
+        # --- End Access Control ---
+        
+        current_app.logger.info(f"Viewing treatment {id}: Type={treatment.treatment_type}, Notes={treatment.notes}, Status={treatment.status}")
+        
+        # Safe field extraction with defaults
+        try:
+            mapped_treatment = {
+                'id': treatment.id,
+                'created_at': treatment.created_at,
+                'description': treatment.treatment_type or 'No description',
+                'progress_notes': treatment.notes or '',
+                'treatment_type': treatment.treatment_type or 'Unknown',
+                'notes': treatment.notes or '',
+                'status': treatment.status or 'Unknown',
+                'patient_id': treatment.patient_id,
+                'pain_level': treatment.pain_level,
+                'movement_restriction': treatment.movement_restriction or '',
+                'assessment': treatment.assessment or '',
+                'provider': treatment.provider or 'Unknown',
+                'body_chart_url': treatment.body_chart_url or '',
+                'trigger_points': treatment.trigger_points or [],
+                'evaluation_data': treatment.evaluation_data or {}
+            }
+        except Exception as e:
+            current_app.logger.error(f"Error mapping treatment {id} data: {e}")
+            flash('Error loading treatment data.', 'danger')
+            return redirect(url_for('main.patient_detail', id=patient.id))
+        
+        return render_template('view_treatment.html', treatment=mapped_treatment, patient=patient)
+        
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error viewing treatment {id}: {e}")
+        flash('An error occurred while loading the treatment.', 'danger')
+        return redirect(url_for('main.patients_list'))
 
 @main.route('/test/edit-treatment/<int:id>')
 @login_required
