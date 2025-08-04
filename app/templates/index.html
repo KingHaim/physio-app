@@ -1691,12 +1691,17 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
     
-    // Call setup immediately (don't wait for DOMContentLoaded)
-    setupCancelButtons();
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupCancelButtons);
+    } else {
+      setupCancelButtons();
+    }
 
     // Handle confirm cancellation button for dashboard
-    const confirmCancelDashboardTreatmentBtn = document.getElementById('confirmCancelDashboardTreatment');
-    if (confirmCancelDashboardTreatmentBtn) {
+    function setupConfirmButton() {
+      const confirmCancelDashboardTreatmentBtn = document.getElementById('confirmCancelDashboardTreatment');
+      if (confirmCancelDashboardTreatmentBtn) {
       confirmCancelDashboardTreatmentBtn.onclick = function() {
         if (!currentDashboardTreatmentToCancel) return;
         
@@ -1739,6 +1744,14 @@ document.addEventListener('DOMContentLoaded', function() {
                  });
        };
      }
+    }
+    
+    // Setup confirm button when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupConfirmButton);
+    } else {
+      setupConfirmButton();
+    }
 
      // Handle recurring appointment cancellation
      let currentRecurringToCancel = null;
