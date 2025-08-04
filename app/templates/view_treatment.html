@@ -351,7 +351,7 @@
                 if (data.success) {
                     alert('{{ _("Treatment deleted successfully") }}');
                     // Redirect to patient detail page
-                    window.location.href = '/patient/{{ treatment.patient.id }}';
+                    window.location.href = '/patient/{{ patient.id }}';
                 } else {
                     alert('{{ _("Error deleting treatment:") }} ' + (data.message || data.error || '{{ _("Unknown error") }}'));
                 }

@@ -690,11 +690,11 @@ def index():
 def get_treatment_details(id):
     treatment = Treatment.query.get_or_404(id)
     # Add access check: Only physio or the correct patient
-    if current_user.role == 'patient' and current_user.patient_id != treatment.patient_id:
+    if current_user.role == 'patient' and (not current_user.patient_record or current_user.patient_record.id != treatment.patient_id):
         return jsonify({'error': 'Forbidden'}), 403
     elif current_user.role == 'physio' and not current_user.is_admin:
         # Check if physio can access this patient (own patients or clinic patients)
-        accessible_patients = current_user.get_accessible_patients()
+        accessible_patients = current_user.get_accessible_patients(include_clinic_patients=True)
         patient_ids = [p.id for p in accessible_patients]
         if treatment.patient_id not in patient_ids:
             return jsonify({'error': 'Forbidden'}), 403
@@ -2102,7 +2102,7 @@ def view_treatment(id):
         try:
             if current_user.role == 'physio' or current_user.is_admin:
                 # Physios and admins can access their own patients or clinic patients
-                accessible_patients = current_user.get_accessible_patients()
+                accessible_patients = current_user.get_accessible_patients(include_clinic_patients=True)
                 patient_ids = [p.id for p in accessible_patients]
                 if patient.id not in patient_ids:
                     flash('You do not have permission to view this treatment.', 'danger')
