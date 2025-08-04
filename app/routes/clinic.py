@@ -212,8 +212,6 @@ def join_with_token(token):
         
         # Mark user as no longer new since they're joining a clinic
         current_user.is_new_user = False
-        # Set dashboard mode to clinic since they're joining a clinic
-        current_user.dashboard_mode = 'clinic'
         
         db.session.commit()
         flash(f'Successfully joined {invitation.clinic.name}!', 'success')

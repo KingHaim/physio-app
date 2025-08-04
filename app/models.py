@@ -346,6 +346,7 @@ class Plan(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True) # e.g., "Basic", "Pro - Monthly"
     slug = db.Column(db.String(100), nullable=False, unique=True) # e.g., "basic", "pro_monthly"
+    plan_type = db.Column(db.String(20), nullable=False, default='individual') # 'individual' or 'clinic'
     price_cents = db.Column(db.Integer, nullable=False) # Price in cents
     billing_interval = db.Column(db.String(50), nullable=False) # 'month', 'year'
     currency = db.Column(db.String(3), nullable=False, default='eur') # e.g., 'eur', 'usd'
@@ -465,9 +466,7 @@ class User(db.Model, UserMixin):
     # Welcome flow field
     is_new_user = db.Column(db.Boolean, default=True)
     
-    # Dashboard preference: 'individual' or 'clinic'
-    # Only matters for clinic admins who can switch between modes
-    dashboard_mode = db.Column(db.String(20), default='individual')
+
     
     # Specify the foreign key to resolve ambiguity
     patients = db.relationship('Patient', foreign_keys='[Patient.user_id]', backref='practitioner', lazy='dynamic')
@@ -821,54 +820,14 @@ class User(db.Model, UserMixin):
     
     # --- End clinic-related methods ---
     
-    # --- Dashboard mode methods ---
-    
-    def can_switch_dashboard_mode(self) -> bool:
-        """Check if user can switch between individual and clinic dashboard modes"""
-        return self.is_clinic_admin
-    
     def get_preferred_dashboard_route(self) -> str:
         """Get the route name for the user's preferred dashboard"""
-        # Clinic members (non-admin) always go to clinic dashboard
-        if self.is_in_clinic and not self.is_clinic_admin:
+        # Clinic members always go to clinic dashboard
+        if self.is_in_clinic:
             return 'clinic.dashboard'
-        
-        # Clinic admins can choose their mode
-        if self.is_clinic_admin:
-            if self.dashboard_mode == 'clinic':
-                return 'clinic.dashboard'
-            else:
-                return 'main.index'  # Individual mode
         
         # Individual users always go to main dashboard
         return 'main.index'
-    
-    def set_dashboard_mode(self, mode: str) -> bool:
-        """Set dashboard mode for clinic admins"""
-        if not self.can_switch_dashboard_mode():
-            return False
-        
-        if mode in ['individual', 'clinic']:
-            self.dashboard_mode = mode
-            return True
-        
-        return False
-    
-    @property
-    def current_dashboard_mode(self) -> str:
-        """Get the current effective dashboard mode"""
-        # Clinic members (non-admin) are always in clinic mode
-        if self.is_in_clinic and not self.is_clinic_admin:
-            return 'clinic'
-        
-        # Clinic admins can choose
-        if self.is_clinic_admin:
-            return self.dashboard_mode
-        
-        # Individual users are always in individual mode
-        return 'individual'
-    
-    # --- End dashboard mode methods ---
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

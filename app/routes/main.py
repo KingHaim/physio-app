@@ -282,47 +282,23 @@ def welcome_choice():
         choice = request.form.get('choice')
         
         if choice in ['individual', 'clinic']:
-            # Set dashboard mode based on choice
+            # Mark user as no longer new since they made their choice
+            current_user.is_new_user = False
+            db.session.commit()
+            
             if choice == 'clinic':
-                current_user.dashboard_mode = 'clinic'
-                # Mark user as no longer new since they made their choice
-                current_user.is_new_user = False
-                db.session.commit()
                 # For clinic choice, redirect to clinic creation/joining flow
                 flash(_('Great! You\'ll get a 14-day free trial to explore all clinic features.'), 'info')
                 return redirect(url_for('clinic.choose_option'))
             else:
-                current_user.dashboard_mode = 'individual'
-                # Mark user as no longer new and redirect to onboarding
-                current_user.is_new_user = False
-                db.session.commit()
-                flash(_('Welcome to your personal practice dashboard!'), 'success')
-                return redirect(url_for('main.index'))
+                # For individual choice, redirect to individual pricing
+                flash(_('Choose your individual plan to get started!'), 'success')
+                return redirect(url_for('main.pricing_individual'))
         
         flash(_('Please select an option to continue.'), 'warning')
     
     return render_template('welcome_choice.html')
 
-@main.route('/switch-dashboard-mode')
-@login_required
-def switch_dashboard_mode():
-    """Switch dashboard mode for clinic admins."""
-    if not current_user.can_switch_dashboard_mode():
-        flash(_('You do not have permission to switch dashboard modes.'), 'error')
-        return redirect(url_for('main.index'))
-    
-    # Toggle between individual and clinic mode
-    new_mode = 'clinic' if current_user.dashboard_mode == 'individual' else 'individual'
-    current_user.set_dashboard_mode(new_mode)
-    db.session.commit()
-    
-    # Redirect to the appropriate dashboard
-    if new_mode == 'clinic':
-        flash(_('Switched to clinic management mode.'), 'success')
-        return redirect(url_for('clinic.dashboard'))
-    else:
-        flash(_('Switched to individual practice mode.'), 'success')
-        return redirect(url_for('main.index'))
 
 @main.route('/index', methods=['GET', 'POST'])
 @login_required
@@ -353,7 +329,7 @@ def index():
     
     # Check if user is new and needs onboarding
     # Skip old onboarding for clinic users - they'll do onboarding in clinic flow
-    if current_user.current_dashboard_mode == 'clinic':
+    if current_user.is_in_clinic:
         is_new_user = False
         welcome_form = None
     else:
@@ -4177,6 +4153,16 @@ def pricing_page():
     """Public pricing page."""
     return render_template('public_pricing.html')
 
+@main.route('/pricing/individual')
+def pricing_individual():
+    """Individual practitioner pricing page."""
+    return render_template('pricing_individual.html')
+
+@main.route('/pricing/clinic')
+def pricing_clinic():
+    """Clinic pricing page."""
+    return render_template('pricing_clinic.html')
+
 @main.route('/pricing/manage')
 @login_required
 def manage_subscription_plans():
@@ -4242,7 +4228,10 @@ def manage_subscription():
     # Ensure the user has a Stripe Customer ID
     if not current_user.stripe_customer_id:
         flash('Unable to manage subscription: No Stripe customer ID found.', 'warning')
-        return redirect(url_for('main.pricing_page'))
+        if current_user.is_in_clinic:
+            return redirect(url_for('main.pricing_clinic'))
+        else:
+            return redirect(url_for('main.pricing_individual'))
 
     try:
         # Create a new Stripe Billing Portal session
@@ -4255,11 +4244,17 @@ def manage_subscription():
     except stripe.error.StripeError as e:
         flash(f'Could not open Stripe billing portal: {str(e)}', 'danger')
         current_app.logger.error(f"Stripe Billing Portal error for user {current_user.id}: {str(e)}")
-        return redirect(url_for('main.pricing_page'))
+        if current_user.is_in_clinic:
+            return redirect(url_for('main.pricing_clinic'))
+        else:
+            return redirect(url_for('main.pricing_individual'))
     except Exception as e:
         flash('An unexpected error occurred while trying to access the billing portal.', 'danger')
         current_app.logger.error(f"Unexpected error accessing billing portal for user {current_user.id}: {str(e)}")
-        return redirect(url_for('main.pricing_page'))
+        if current_user.is_in_clinic:
+            return redirect(url_for('main.pricing_clinic'))
+        else:
+            return redirect(url_for('main.pricing_individual'))
 
 @main.route('/cancel-subscription', methods=['POST'])
 @login_required
@@ -4325,14 +4320,19 @@ def my_account():
     
     user_subscription = current_user.current_subscription
     active_plan = None
-    current_plan_name = "Free Plan"  # Default to Free Plan
-    current_subscription_status = "Active"  # Free plan is always active
+    current_plan_name = None
+    current_subscription_status = None
     
     if user_subscription and hasattr(user_subscription, 'plan'):
         active_plan = user_subscription.plan
         if active_plan:
             current_plan_name = active_plan.name
             current_subscription_status = user_subscription.status.replace('_', ' ').title()
+    
+    # If no subscription, they're on free trial (no "Free Plan" in new system)
+    if not current_plan_name:
+        current_plan_name = "Free Trial"
+        current_subscription_status = "Active"
 
     if request.method == 'POST':
         if email_form.submit_email.data and email_form.validate():
@@ -5108,7 +5108,10 @@ def manage_billing():
     # Ensure the user has a Stripe Customer ID
     if not current_user.stripe_customer_id:
         flash('Unable to manage subscription: No Stripe customer ID found.', 'warning')
-        return redirect(url_for('main.pricing_page'))
+        if current_user.is_in_clinic:
+            return redirect(url_for('main.pricing_clinic'))
+        else:
+            return redirect(url_for('main.pricing_individual'))
 
     try:
         # Create a new Stripe Billing Portal session
@@ -5120,11 +5123,17 @@ def manage_billing():
     except stripe.error.StripeError as e:
         flash(f'Could not open Stripe billing portal: {str(e)}', 'danger')
         current_app.logger.error(f"Stripe Billing Portal error for user {current_user.id}: {str(e)}")
-        return redirect(url_for('main.pricing_page'))
+        if current_user.is_in_clinic:
+            return redirect(url_for('main.pricing_clinic'))
+        else:
+            return redirect(url_for('main.pricing_individual'))
     except Exception as e:
         flash('An unexpected error occurred while trying to access the billing portal.', 'danger')
         current_app.logger.error(f"Unexpected error accessing billing portal for user {current_user.id}: {str(e)}")
-        return redirect(url_for('main.pricing_page'))
+        if current_user.is_in_clinic:
+            return redirect(url_for('main.pricing_clinic'))
+        else:
+            return redirect(url_for('main.pricing_individual'))
 
 @main.route('/make-admin')
 @login_required

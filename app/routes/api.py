@@ -1342,28 +1342,97 @@ def costaspine_service_fee():
 @api.route('/create-checkout-session', methods=['POST'])
 @login_required
 def create_checkout_session():
+    """Create Stripe checkout session for individual subscriptions."""
     try:
         data = request.get_json()
         plan_id = data.get('plan_id')
 
-        plan = Plan.query.filter_by(id=plan_id).first_or_404()
+        # Only allow individual plans for this endpoint
+        plan = Plan.query.filter_by(id=plan_id, plan_type='individual').first_or_404()
         
         if not plan.stripe_price_id:
-            return jsonify({'error': f'Plan \'{plan.name}\' does not have a Stripe Price ID configured.'}), 400
+            return jsonify({'error': f'Individual plan \'{plan.name}\' does not have a Stripe Price ID configured.'}), 400
+
+        # Ensure user is not in a clinic (individual plans are for solo practitioners)
+        if current_user.is_in_clinic:
+            return jsonify({'error': 'You are part of a clinic. Please use clinic plans instead.'}), 400
 
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{'price': plan.stripe_price_id, 'quantity': 1}],
             mode='subscription',
             success_url=url_for('main.subscription_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=url_for('main.pricing', _external=True),
+            cancel_url=url_for('main.pricing_individual', _external=True),
             client_reference_id=str(current_user.id),
-            customer_email=current_user.email
+            customer_email=current_user.email,
+            metadata={
+                'plan_type': 'individual'
+            }
         )
         return jsonify({'sessionId': checkout_session.id})
 
     except Exception as e:
         current_app.logger.error(f"Error in create_checkout_session: {str(e)}", exc_info=True)
+        return jsonify({'error': 'An unexpected error occurred.'}), 500
+
+@api.route('/get-plan-by-slug', methods=['POST'])
+@login_required
+def get_plan_by_slug():
+    """Get plan ID by slug."""
+    try:
+        data = request.get_json()
+        slug = data.get('slug')
+        
+        if not slug:
+            return jsonify({'error': 'Plan slug is required'}), 400
+        
+        plan = Plan.query.filter_by(slug=slug, is_active=True).first()
+        if not plan:
+            return jsonify({'error': 'Plan not found'}), 404
+        
+        return jsonify({'plan_id': plan.id, 'name': plan.name})
+    
+    except Exception as e:
+        current_app.logger.error(f"Error in get_plan_by_slug: {str(e)}", exc_info=True)
+        return jsonify({'error': 'An unexpected error occurred.'}), 500
+
+@api.route('/create-clinic-checkout-session', methods=['POST'])
+@login_required
+def create_clinic_checkout_session():
+    """Create Stripe checkout session for clinic subscriptions."""
+    try:
+        data = request.get_json()
+        plan_id = data.get('plan_id')
+
+        plan = Plan.query.filter_by(id=plan_id, plan_type='clinic').first_or_404()
+        
+        if not plan.stripe_price_id:
+            return jsonify({'error': f'Clinic plan \'{plan.name}\' does not have a Stripe Price ID configured.'}), 400
+
+        # Check if user is in a clinic and can manage it
+        if not current_user.is_in_clinic:
+            return jsonify({'error': 'You must be part of a clinic to subscribe to clinic plans.'}), 400
+        
+        if not current_user.is_clinic_admin:
+            return jsonify({'error': 'Only clinic administrators can manage clinic subscriptions.'}), 400
+
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{'price': plan.stripe_price_id, 'quantity': 1}],
+            mode='subscription',
+            success_url=url_for('main.subscription_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=url_for('main.pricing_clinic', _external=True),
+            client_reference_id=f"clinic_{current_user.clinic.id}",
+            customer_email=current_user.email,
+            metadata={
+                'clinic_id': current_user.clinic.id,
+                'plan_type': 'clinic'
+            }
+        )
+        return jsonify({'sessionId': checkout_session.id})
+
+    except Exception as e:
+        current_app.logger.error(f"Error in create_clinic_checkout_session: {str(e)}", exc_info=True)
         return jsonify({'error': 'An unexpected error occurred.'}), 500
 
 @api.route('/stripe-webhooks', methods=['POST'])
@@ -1388,10 +1457,24 @@ def stripe_webhooks():
     return jsonify(received=True), 200
 
 def handle_checkout_session(session):
-    user_id = session.get('client_reference_id')
+    client_reference_id = session.get('client_reference_id')
     stripe_customer_id = session.get('customer')
     stripe_subscription_id = session.get('subscription')
+    metadata = session.get('metadata', {})
+    plan_type = metadata.get('plan_type', 'individual')  # Default to individual for backward compatibility
 
+    # Parse client_reference_id to determine if it's individual or clinic
+    if client_reference_id and client_reference_id.startswith('clinic_'):
+        # Clinic subscription
+        clinic_id = client_reference_id.replace('clinic_', '')
+        handle_clinic_checkout_session(session, clinic_id, stripe_customer_id, stripe_subscription_id)
+    else:
+        # Individual subscription
+        user_id = client_reference_id
+        handle_individual_checkout_session(session, user_id, stripe_customer_id, stripe_subscription_id)
+
+def handle_individual_checkout_session(session, user_id, stripe_customer_id, stripe_subscription_id):
+    """Handle checkout session for individual subscriptions."""
     user = User.query.get(user_id)
     if not user:
         current_app.logger.error(f"Webhook Error: No user found with ID {user_id}")
@@ -1401,13 +1484,13 @@ def handle_checkout_session(session):
     
     line_item = stripe.checkout.Session.list_line_items(session.id, limit=1).data[0]
     stripe_price_id = line_item.price.id
-    plan = Plan.query.filter_by(stripe_price_id=stripe_price_id).first()
+    plan = Plan.query.filter_by(stripe_price_id=stripe_price_id, plan_type='individual').first()
 
     if not plan:
-        current_app.logger.error(f"Webhook Error: No plan found with stripe_price_id {stripe_price_id}")
+        current_app.logger.error(f"Webhook Error: No individual plan found with stripe_price_id {stripe_price_id}")
         return
 
-    # Deactivate old subscriptions
+    # Deactivate old individual subscriptions
     UserSubscription.query.filter_by(user_id=user_id).update({"status": "canceled"})
 
     new_subscription = UserSubscription(
@@ -1418,18 +1501,66 @@ def handle_checkout_session(session):
     )
     db.session.add(new_subscription)
     db.session.commit()
-    current_app.logger.info(f"New subscription created for user {user.id}")
+    current_app.logger.info(f"New individual subscription created for user {user.id}")
+
+def handle_clinic_checkout_session(session, clinic_id, stripe_customer_id, stripe_subscription_id):
+    """Handle checkout session for clinic subscriptions."""
+    from app.models import Clinic, ClinicSubscription
+    
+    clinic = Clinic.query.get(clinic_id)
+    if not clinic:
+        current_app.logger.error(f"Webhook Error: No clinic found with ID {clinic_id}")
+        return
+    
+    line_item = stripe.checkout.Session.list_line_items(session.id, limit=1).data[0]
+    stripe_price_id = line_item.price.id
+    plan = Plan.query.filter_by(stripe_price_id=stripe_price_id, plan_type='clinic').first()
+
+    if not plan:
+        current_app.logger.error(f"Webhook Error: No clinic plan found with stripe_price_id {stripe_price_id}")
+        return
+
+    # Deactivate old clinic subscriptions
+    ClinicSubscription.query.filter_by(clinic_id=clinic_id).update({"status": "canceled"})
+
+    new_subscription = ClinicSubscription(
+        clinic_id=clinic.id,
+        plan_id=plan.id,
+        stripe_subscription_id=stripe_subscription_id,
+        status='active'
+    )
+    db.session.add(new_subscription)
+    db.session.commit()
+    current_app.logger.info(f"New clinic subscription created for clinic {clinic.id}")
 
 def handle_subscription_change(subscription_data):
-    stripe_subscription_id = subscription_data.id
-    subscription = UserSubscription.query.filter_by(stripe_subscription_id=stripe_subscription_id).first()
+    from app.models import ClinicSubscription
     
-    if subscription:
-        subscription.status = subscription_data.status
+    stripe_subscription_id = subscription_data.id
+    
+    # Try to find individual subscription first
+    individual_subscription = UserSubscription.query.filter_by(stripe_subscription_id=stripe_subscription_id).first()
+    
+    if individual_subscription:
+        individual_subscription.status = subscription_data.status
         if subscription_data.get('ended_at'):
-            subscription.ended_at = datetime.fromtimestamp(subscription_data.get('ended_at'))
+            individual_subscription.ended_at = datetime.fromtimestamp(subscription_data.get('ended_at'))
         db.session.commit()
-        current_app.logger.info(f"Subscription {stripe_subscription_id} status updated to {subscription.status}")
+        current_app.logger.info(f"Individual subscription {stripe_subscription_id} status updated to {individual_subscription.status}")
+        return
+    
+    # Try to find clinic subscription
+    clinic_subscription = ClinicSubscription.query.filter_by(stripe_subscription_id=stripe_subscription_id).first()
+    
+    if clinic_subscription:
+        clinic_subscription.status = subscription_data.status
+        if subscription_data.get('ended_at'):
+            clinic_subscription.ended_at = datetime.fromtimestamp(subscription_data.get('ended_at'))
+        db.session.commit()
+        current_app.logger.info(f"Clinic subscription {stripe_subscription_id} status updated to {clinic_subscription.status}")
+        return
+    
+    current_app.logger.warning(f"No subscription found for stripe_subscription_id {stripe_subscription_id}")
 
 @api.route('/invoices')
 @login_required

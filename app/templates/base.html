@@ -412,13 +412,13 @@
                     <h3>TRXCKER</h3>
                     {% if current_user and current_user.is_authenticated %}
                         <div class="current-mode-indicator mt-2">
-                            {% if current_user.current_dashboard_mode == 'clinic' %}
+                            {% if current_user.is_in_clinic %}
                                 <small class="text-light opacity-75">
-                                    <i class="bi bi-building me-1"></i>{{ _('Clinic Mode') }}
+                                    <i class="bi bi-building me-1"></i>{{ _('Clinic') }}
                                 </small>
                             {% else %}
                                 <small class="text-light opacity-75">
-                                    <i class="bi bi-person-circle me-1"></i>{{ _('Individual Mode') }}
+                                    <i class="bi bi-person-circle me-1"></i>{{ _('Individual') }}
                                 </small>
                             {% endif %}
                         </div>
@@ -474,12 +474,8 @@
                             </ul>
                         </li>
                         
-                        <!-- Clinic Section (only for Standard/Premium plans) -->
-                        {% set user_plan = current_user.active_plan if current_user and current_user.is_authenticated else None %}
-                        {% set clinic_plan = current_user.clinic.active_plan if current_user and current_user.is_authenticated and current_user.is_in_clinic else None %}
-                        {% set has_clinic_access = (user_plan and user_plan.slug in ['standard-usd', 'premium-usd']) or (clinic_plan and clinic_plan.slug in ['standard-usd', 'premium-usd']) or current_user.is_admin %}
-                        
-                        {% if current_user and current_user.is_authenticated and has_clinic_access %}
+                        <!-- Clinic Section (only for clinic users) -->
+                        {% if current_user and current_user.is_authenticated and current_user.is_in_clinic %}
                         <li class="nav-section">
                             <div class="nav-section-title">{{ _('Clinic') }}</div>
                             <ul class="nav flex-column">
@@ -550,23 +546,7 @@
                         </li>
                         {% endif %}
                         
-                        <!-- Mode Switching for Clinic Admins -->
-                        {% if current_user and current_user.is_authenticated and current_user.can_switch_dashboard_mode() %}
-                        <li class="nav-section">
-                            <div class="nav-section-title">{{ _('Dashboard Mode') }}</div>
-                            <ul class="nav flex-column">
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ url_for('main.switch_dashboard_mode') }}" style="font-size: 0.9rem;">
-                                        {% if current_user.current_dashboard_mode == 'clinic' %}
-                                            <i class="bi bi-person-circle text-info"></i> {{ _('Switch to Individual') }}
-                                        {% else %}
-                                            <i class="bi bi-building text-info"></i> {{ _('Switch to Clinic') }}
-                                        {% endif %}
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                        {% endif %}
+
                         
                         <li class="nav-section">
                             <div class="nav-section-title">{{ _('Settings') }}</div>
@@ -576,7 +556,7 @@
                                         <i class="bi bi-gear"></i> {{ _('User Settings') }}
                                     </a>
                                 </li>
-                                {% if not current_user.is_in_clinic or current_user.is_admin %}
+                                {% if current_user.is_in_clinic %}
                                 <li class="nav-item">
                                     <a class="nav-link {{ 'active' if request.endpoint == 'locations.manage_locations' else '' }}" href="{{ url_for('locations.manage_locations') }}">
                                         <i class="bi bi-geo-alt"></i> {{ _('Manage Locations') }}

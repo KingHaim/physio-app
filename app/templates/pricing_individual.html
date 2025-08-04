@@ -1,0 +1,224 @@
+{% extends "base_auth.html" %}
+
+{% block title %}{{ _('Individual Pricing') }} - TRXCKER{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .plan-section {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        background-color: #f8f9fa;
+    }
+    .plan-card {
+        background-color: #ffffff;
+        border: 1px solid #dee2e6 !important; 
+        border-top: 4px solid var(--secondary-color, #6c757d) !important; 
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        position: relative;
+    }
+    .plan-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .plan-card.featured {
+        border-top-color: var(--primary-color, #2980b9) !important;
+    }
+    .plan-card .plan-header {
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    .plan-card h3 { 
+        color: #343a40;
+        margin-top: 0;
+        font-weight: 600;
+        font-size: 1.4rem;
+        letter-spacing: -0.5px;
+    }
+    .plan-card .plan-price {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color, #2980b9);
+        margin: 0.5rem 0 0.75rem 0;
+    }
+    .plan-card .plan-price .currency {
+        font-size: 1.1rem;
+        font-weight: 500;
+        vertical-align: super;
+        margin-right: 2px;
+    }
+    .plan-card .plan-price .interval {
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-weight: 400;
+        text-transform: uppercase;
+    }
+    .plan-card .plan-description {
+        color: #5a6268;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        min-height: 40px;
+        line-height: 1.5;
+    }
+    .plan-card .plan-features {
+        padding-left: 0;
+        list-style: none;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+    .plan-card .plan-features li {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.6rem;
+        font-size: 0.85rem;
+        color: #495057;
+    }
+    .plan-card .plan-features li i {
+        color: var(--primary-color, #2980b9);
+        margin-right: 0.7rem;
+        font-size: 1.1rem;
+        width: 18px;
+        text-align: center;
+    }
+    .plan-card .btn {
+        margin-top: auto;
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        border-radius: 0.3rem;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+    .plan-card .btn-primary {
+        background-color: var(--primary-color, #2980b9) !important;
+        border-color: var(--primary-color, #2980b9) !important;
+        color: white !important;
+    }
+    .plan-card .btn-primary:hover {
+        background-color: #2374a8 !important;
+        border-color: #216b9a !important;
+    }
+    .badge-popular {
+        position: absolute;
+        top: -8px;
+        right: 15px;
+        background-color: #28a745;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-primary mb-3">Individual Practice Plans</h1>
+        <p class="lead text-muted">Perfect for solo practitioners. Choose the plan that fits your practice size.</p>
+        <p class="text-muted">All plans include a 14-day free trial. No credit card required to start.</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="plan-card featured">
+                <div class="plan-header">
+                    <h3>Individual Plan</h3>
+                    <div class="plan-price">
+                        <span class="currency">$</span>10<span class="interval">/month</span>
+                    </div>
+                    <p class="plan-description">Perfect for solo practitioners</p>
+                </div>
+                
+                <ul class="plan-features">
+                    <li><i class="bi bi-check-circle-fill text-success"></i>Up to 100 patients</li>
+                    <li><i class="bi bi-check-circle-fill text-success"></i>Advanced scheduling</li>
+                    <li><i class="bi bi-check-circle-fill text-success"></i>Clinical notes & reports</li>
+                    <li><i class="bi bi-check-circle-fill text-success"></i>Full billing features</li>
+                    <li><i class="bi bi-check-circle-fill text-success"></i>Patient portal</li>
+                    <li><i class="bi bi-check-circle-fill text-success"></i>Telehealth</li>
+                    <li><i class="bi bi-check-circle-fill text-success"></i>Analytics</li>
+                    <li><i class="bi bi-check-circle-fill text-success"></i>AI insights</li>
+                    <li><i class="bi bi-check-circle-fill text-success"></i>Calendly integration</li>
+                    <li><i class="bi bi-check-circle-fill text-success"></i>Email support</li>
+                </ul>
+                
+                <button class="btn btn-primary w-100" onclick="selectPlan('individual-usd')">
+                    Start 14-Day Free Trial
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <p class="text-muted">All individual plans include:</p>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="row text-muted small">
+                    <div class="col-6">✓ HIPAA compliant</div>
+                    <div class="col-6">✓ Cloud backup</div>
+                    <div class="col-6">✓ Mobile access</div>
+                    <div class="col-6">✓ Data export</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function selectPlan(planSlug) {
+    // Find the plan by slug and get its ID
+    fetch('{{ url_for("api.get_plan_by_slug") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ slug: planSlug })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.plan_id) {
+            createCheckoutSession(data.plan_id);
+        } else {
+            alert('Plan not found. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+
+function createCheckoutSession(planId) {
+    fetch('{{ url_for("api.create_checkout_session") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ plan_id: planId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.sessionId) {
+            // Redirect to Stripe Checkout
+            window.location.href = `https://checkout.stripe.com/pay/${data.sessionId}`;
+        } else {
+            alert(data.error || 'Failed to create checkout session');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+</script>
+{% endblock %} 
