@@ -208,6 +208,48 @@
 {% endblock %}
 
 {% block content %}
+
+<!-- TEST ELEMENT TO CHECK IF THIS SECTION RENDERS -->
+<div id="modal-test-element" style="display: none;">Modal section is rendering</div>
+
+<!-- Cancel Treatment Modal for Dashboard - MOVED TO TOP FOR DEBUGGING -->
+<div class="modal fade" id="cancelDashboardTreatmentModal" tabindex="-1" aria-labelledby="cancelDashboardTreatmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cancelDashboardTreatmentModalLabel">
+          <i class="bi bi-exclamation-triangle text-warning"></i> {{ _('Cancel Appointment') }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <i class="bi bi-info-circle"></i>
+          <strong>{{ _('Are you sure you want to cancel this appointment?') }}</strong>
+        </div>
+        <p><strong>{{ _('Patient:') }}</strong> <span id="cancel-dashboard-patient-name"></span></p>
+        <p><strong>{{ _('Treatment:') }}</strong> <span id="cancel-dashboard-treatment-type"></span></p>
+        <div class="mb-3">
+          <label for="dashboard-cancellation-reason" class="form-label">{{ _('Cancellation Reason (Optional)') }}</label>
+          <textarea class="form-control" id="dashboard-cancellation-reason" rows="3" placeholder="{{ _('Please provide a reason for cancellation...') }}"></textarea>
+        </div>
+        <p class="text-muted small">
+          <i class="bi bi-info-circle"></i> 
+          {{ _('This action will mark the appointment as cancelled and update your analytics.') }}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i> {{ _('Keep Appointment') }}
+        </button>
+        <button type="button" class="btn btn-danger" id="confirmCancelDashboardTreatment">
+          <i class="bi bi-check-circle"></i> {{ _('Cancel Appointment') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="container-fluid px-4">
     
     <!-- Auto-sync notification -->
@@ -900,79 +942,12 @@
   </div>
 </div>
 
-<!-- MODAL DEBUG INFO -->
-<div id="modal-debug" style="position: fixed; top: 10px; right: 10px; background: red; color: white; padding: 10px; z-index: 9999; font-size: 12px;">
-  MODAL DEBUG: Loading...
-</div>
 
-<!-- Cancel Treatment Modal for Dashboard -->
-<div class="modal fade" id="cancelDashboardTreatmentModal" tabindex="-1" aria-labelledby="cancelDashboardTreatmentModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="cancelDashboardTreatmentModalLabel">
-          <i class="bi bi-exclamation-triangle text-warning"></i> {{ _('Cancel Appointment') }}
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="alert alert-warning">
-          <i class="bi bi-info-circle"></i>
-          <strong>{{ _('Are you sure you want to cancel this appointment?') }}</strong>
-        </div>
-        <p><strong>{{ _('Patient:') }}</strong> <span id="cancel-dashboard-patient-name"></span></p>
-        <p><strong>{{ _('Treatment:') }}</strong> <span id="cancel-dashboard-treatment-type"></span></p>
-        <div class="mb-3">
-          <label for="dashboard-cancellation-reason" class="form-label">{{ _('Cancellation Reason (Optional)') }}</label>
-          <textarea class="form-control" id="dashboard-cancellation-reason" rows="3" placeholder="{{ _('Please provide a reason for cancellation...') }}"></textarea>
-        </div>
-        <p class="text-muted small">
-          <i class="bi bi-info-circle"></i> 
-          {{ _('This action will mark the appointment as cancelled and update your analytics.') }}
-        </p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          <i class="bi bi-x-circle"></i> {{ _('Keep Appointment') }}
-        </button>
-        <button type="button" class="btn btn-danger" id="confirmCancelDashboardTreatment">
-          <i class="bi bi-check-circle"></i> {{ _('Cancel Appointment') }}
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+
+
 
 <script>
-// IMMEDIATE MODAL DEBUG - runs right after modal is defined
-(function() {
-  const debugElement = document.getElementById('modal-debug');
-  const modal = document.getElementById('cancelDashboardTreatmentModal');
-  const patientName = document.getElementById('cancel-dashboard-patient-name');
-  const treatmentType = document.getElementById('cancel-dashboard-treatment-type');
-  const reason = document.getElementById('dashboard-cancellation-reason');
-  
-  let debugInfo = `
-    Modal: ${modal ? 'OK' : 'MISSING'} | 
-    Name: ${patientName ? 'OK' : 'MISSING'} | 
-    Type: ${treatmentType ? 'OK' : 'MISSING'} | 
-    Reason: ${reason ? 'OK' : 'MISSING'} | 
-    Bootstrap: ${typeof bootstrap !== 'undefined' ? 'OK' : 'MISSING'}
-  `;
-  
-  if (debugElement) {
-    debugElement.innerHTML = debugInfo;
-    debugElement.style.background = modal && patientName && treatmentType && reason ? 'green' : 'red';
-  }
-  
-  // Additional check after a small delay
-  setTimeout(function() {
-    const modalAfterDelay = document.getElementById('cancelDashboardTreatmentModal');
-    if (debugElement) {
-      debugElement.innerHTML += `<br>After delay: ${modalAfterDelay ? 'STILL OK' : 'DISAPPEARED'}`;
-    }
-  }, 1000);
-})();
+console.log('=== DASHBOARD JAVASCRIPT LOADED - VERSION 2025-08-04 22:15:00 ===');
 
 // Hardcoded translations to work without database
 const translations = {
@@ -1674,11 +1649,19 @@ document.addEventListener('DOMContentLoaded', function() {
                               '{{ csrf_token() }}';
 
     // Add event listeners to all cancel treatment buttons in dashboard - SIMPLIFIED
+    let cancelButtonsSetup = false;
     function setupCancelButtons() {
+      if (cancelButtonsSetup) return; // Prevent duplicate event listeners
+      cancelButtonsSetup = true;
+      
       // Use event delegation on document
       document.addEventListener('click', function(e) {
         if (e.target.closest('.cancel-dashboard-treatment-btn')) {
-          console.log('Cancel button clicked!'); // Debug
+          console.log('Cancel button clicked! Version: 2025-08-04 21:55:00'); // Debug with timestamp
+          
+          // Check if test element exists
+          const testElement = document.getElementById('modal-test-element');
+          console.log('Test element found:', !!testElement);
           
           const btn = e.target.closest('.cancel-dashboard-treatment-btn');
           const treatmentId = btn.getAttribute('data-treatment-id');
@@ -1690,11 +1673,12 @@ document.addEventListener('DOMContentLoaded', function() {
           // Store the treatment ID for later use
           currentDashboardTreatmentToCancel = treatmentId;
           
-          // Find modal elements
-          const patientNameElement = document.getElementById('cancel-dashboard-patient-name');
-          const treatmentTypeElement = document.getElementById('cancel-dashboard-treatment-type');
-          const reasonElement = document.getElementById('dashboard-cancellation-reason');
-          const modalElement = document.getElementById('cancelDashboardTreatmentModal');
+          // Wait a moment for DOM to be ready, then find modal elements
+          setTimeout(() => {
+            const patientNameElement = document.getElementById('cancel-dashboard-patient-name');
+            const treatmentTypeElement = document.getElementById('cancel-dashboard-treatment-type');
+            const reasonElement = document.getElementById('dashboard-cancellation-reason');
+            const modalElement = document.getElementById('cancelDashboardTreatmentModal');
           
           console.log('Modal elements found:', { // Debug
             patientNameElement: !!patientNameElement,
@@ -1704,7 +1688,15 @@ document.addEventListener('DOMContentLoaded', function() {
           });
           
           if (!patientNameElement || !treatmentTypeElement || !reasonElement || !modalElement) {
-            alert('Error: Modal elements not found. Please refresh the page.');
+            // More detailed debugging
+            let missingElements = [];
+            if (!patientNameElement) missingElements.push('cancel-dashboard-patient-name');
+            if (!treatmentTypeElement) missingElements.push('cancel-dashboard-treatment-type');
+            if (!reasonElement) missingElements.push('dashboard-cancellation-reason');
+            if (!modalElement) missingElements.push('cancelDashboardTreatmentModal');
+            
+            console.error('Missing elements:', missingElements);
+            alert(`Error: Modal elements not found. Missing: ${missingElements.join(', ')}. Please refresh the page.`);
             return;
           }
           
@@ -1722,21 +1714,47 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error showing modal:', error);
             alert('Error opening modal. Please refresh the page.');
           }
+          }, 100); // End setTimeout with 100ms delay
         }
       });
     }
     
     // Wait for DOM to be ready
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', setupCancelButtons);
+      document.addEventListener('DOMContentLoaded', function() {
+        checkModalElementsOnLoad();
+        setupCancelButtons();
+      });
     } else {
+      checkModalElementsOnLoad();
       setupCancelButtons();
     }
 
+    // Check if modal elements exist when page loads
+    function checkModalElementsOnLoad() {
+      console.log('=== MODAL ELEMENTS CHECK ON PAGE LOAD ===');
+      const testElement = document.getElementById('modal-test-element');
+      const modalElement = document.getElementById('cancelDashboardTreatmentModal');
+      const patientNameElement = document.getElementById('cancel-dashboard-patient-name');
+      const treatmentTypeElement = document.getElementById('cancel-dashboard-treatment-type');
+      const reasonElement = document.getElementById('dashboard-cancellation-reason');
+      
+      console.log('Test element exists:', !!testElement);
+      console.log('Modal element exists:', !!modalElement);
+      console.log('Patient name element exists:', !!patientNameElement);
+      console.log('Treatment type element exists:', !!treatmentTypeElement);
+      console.log('Reason element exists:', !!reasonElement);
+      console.log('=============================================');
+    }
+
     // Handle confirm cancellation button for dashboard
+    let confirmButtonSetup = false;
     function setupConfirmButton() {
+      if (confirmButtonSetup) return; // Prevent duplicate setup
+      
       const confirmCancelDashboardTreatmentBtn = document.getElementById('confirmCancelDashboardTreatment');
       if (confirmCancelDashboardTreatmentBtn) {
+        confirmButtonSetup = true;
       confirmCancelDashboardTreatmentBtn.onclick = function() {
         if (!currentDashboardTreatmentToCancel) return;
         
@@ -1794,12 +1812,44 @@ document.addEventListener('DOMContentLoaded', function() {
      // Add event listeners for cancel recurring appointment buttons
      document.addEventListener('click', function(e) {
        if (e.target.closest('.cancel-recurring-btn')) {
+         console.log('Recurring cancel button clicked!');
+         
          const btn = e.target.closest('.cancel-recurring-btn');
          const patientName = btn.getAttribute('data-patient-name');
          const treatmentType = btn.getAttribute('data-treatment-type');
          const date = btn.getAttribute('data-date');
          const time = btn.getAttribute('data-time');
          const recurringRuleId = btn.getAttribute('data-recurring-rule-id');
+         
+         console.log('Recurring button data:', { patientName, treatmentType, date, time, recurringRuleId });
+         
+         // Find modal elements for recurring appointments
+         const patientNameElement = document.getElementById('cancel-recurring-patient-name');
+         const treatmentTypeElement = document.getElementById('cancel-recurring-treatment-type');
+         const dateTimeElement = document.getElementById('cancel-recurring-date-time');
+         const reasonElement = document.getElementById('recurring-cancellation-reason');
+         const modalElement = document.getElementById('cancelRecurringModal');
+         
+         console.log('Recurring modal elements found:', {
+           patientNameElement: !!patientNameElement,
+           treatmentTypeElement: !!treatmentTypeElement,
+           dateTimeElement: !!dateTimeElement,
+           reasonElement: !!reasonElement,
+           modalElement: !!modalElement
+         });
+         
+         if (!patientNameElement || !treatmentTypeElement || !dateTimeElement || !reasonElement || !modalElement) {
+           let missingElements = [];
+           if (!patientNameElement) missingElements.push('cancel-recurring-patient-name');
+           if (!treatmentTypeElement) missingElements.push('cancel-recurring-treatment-type');
+           if (!dateTimeElement) missingElements.push('cancel-recurring-date-time');
+           if (!reasonElement) missingElements.push('recurring-cancellation-reason');
+           if (!modalElement) missingElements.push('cancelRecurringModal');
+           
+           console.error('Missing recurring modal elements:', missingElements);
+           alert(`Error: Recurring modal elements not found. Missing: ${missingElements.join(', ')}. Please refresh the page.`);
+           return;
+         }
          
          // Store the data for later use
          currentRecurringToCancel = {
@@ -1811,14 +1861,20 @@ document.addEventListener('DOMContentLoaded', function() {
          };
          
          // Update modal content
-         document.getElementById('cancel-recurring-patient-name').textContent = patientName;
-         document.getElementById('cancel-recurring-treatment-type').textContent = treatmentType;
-         document.getElementById('cancel-recurring-date-time').textContent = `${date} at ${time}`;
-         document.getElementById('recurring-cancellation-reason').value = '';
+         patientNameElement.textContent = patientName;
+         treatmentTypeElement.textContent = treatmentType;
+         dateTimeElement.textContent = `${date} at ${time}`;
+         reasonElement.value = '';
          
          // Show the modal
-         const cancelModal = new bootstrap.Modal(document.getElementById('cancelRecurringModal'));
-         cancelModal.show();
+         try {
+           const cancelModal = new bootstrap.Modal(modalElement);
+           cancelModal.show();
+           console.log('Recurring modal shown successfully');
+         } catch (error) {
+           console.error('Error showing recurring modal:', error);
+           alert('Error opening recurring modal. Please refresh the page.');
+         }
        }
      });
 
