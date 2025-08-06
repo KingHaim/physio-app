@@ -641,7 +641,7 @@ body {
             <div class="col-lg-6">
                 <div class="hero-content fade-in-up">
                     <h1 class="montserrat">
-                        Automate Your Physio Clinic with <span class="text-accent">AI</span>
+                        Automate Your Physio Practice with <span class="text-accent">AI</span>
                     </h1>
                     <h2 class="subtitle">
                         More time for your patients. Less time on reports.
@@ -707,7 +707,7 @@ body {
         <div class="text-center mb-5">
             <h2 class="section-title montserrat">🧠 What You Get with TRXCKER</h2>
             <p class="section-subtitle">
-                Tools designed for modern physiotherapists who want to optimize their practice.
+                Tools designed for solo physiotherapists who want to optimize their practice.
             </p>
         </div>
         <div class="row g-4">
@@ -789,7 +789,7 @@ body {
                 "This CRM saves me hours every week. I can focus more on my patients and less on paperwork. The automatic reports are incredible."
             </p>
             <p class="testimonial-author">
-                — Madrid Physiotherapy Clinic
+                — Sara L., Physiotherapist, Madrid
             </p>
         </div>
         
@@ -813,7 +813,7 @@ body {
 <!-- CTA Section 1 -->
 <section class="cta-section">
     <div class="container">
-        <h2 class="montserrat">Ready to Automate Your Clinic?</h2>
+        <h2 class="montserrat">Ready to Automate Your Practice?</h2>
         <p>Join hundreds of physiotherapists already using TRXCKER</p>
         <div class="d-flex justify-content-center gap-3 flex-wrap">
             <a href="{{ url_for('auth.register') }}" class="btn btn-hero btn-hero-primary">
@@ -830,22 +830,24 @@ body {
 <section id="pricing" class="pricing-section">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="section-title montserrat">💸 Plans for Clinics of All Sizes</h2>
+            <h2 class="section-title montserrat">💸 Simple Pricing for Solo Practitioners</h2>
             <p class="section-subtitle">
-                Starting from $15/month per clinic. Try any plan free for 14 days, no card required.
+                Starting from €10/month. Try free for 14 days, no card required.
             </p>
         </div>
         <div class="row g-4 justify-content-center">
-            <div class="col-lg-4 col-md-6">
+            <div class="col-lg-5 col-md-6">
                 <div class="pricing-card featured">
                     <div class="pricing-badge">Most Popular</div>
-                    <h3 class="pricing-title">Basic</h3>
-                    <div class="pricing-price">$15</div>
+                    <h3 class="pricing-title">Monthly</h3>
+                    <div class="pricing-price">€10</div>
                     <p class="pricing-period">per month</p>
                     <ul class="pricing-features">
                         <li><i class="bi bi-check"></i> Up to 50 patients</li>
                         <li><i class="bi bi-check"></i> AI-powered reports</li>
                         <li><i class="bi bi-check"></i> Calendly integration</li>
+                        <li><i class="bi bi-check"></i> Patient management</li>
+                        <li><i class="bi bi-check"></i> Clinical notes</li>
                         <li><i class="bi bi-check"></i> Basic billing</li>
                         <li><i class="bi bi-check"></i> Email support</li>
                     </ul>
@@ -854,33 +856,21 @@ body {
                     </a>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-6">
+            <div class="col-lg-5 col-md-6">
                 <div class="pricing-card">
-                    <h3 class="pricing-title">Standard</h3>
-                    <div class="pricing-price">$30</div>
-                    <p class="pricing-period">per month</p>
+                    <div class="pricing-badge">Save €30/year</div>
+                    <h3 class="pricing-title">Yearly</h3>
+                    <div class="pricing-price">€90</div>
+                    <p class="pricing-period">per year</p>
                     <ul class="pricing-features">
-                        <li><i class="bi bi-check"></i> Up to 250 patients</li>
-                        <li><i class="bi bi-check"></i> Patient portal</li>
-                        <li><i class="bi bi-check"></i> Multi-practitioner</li>
-                        <li><i class="bi bi-check"></i> Priority support</li>
-                    </ul>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-hero btn-hero-secondary w-100">
-                        Try 14 Days Free
-                    </a>
-                </div>
-            </div>
-            <div class="col-lg-4 col-md-6">
-                <div class="pricing-card">
-                    <h3 class="pricing-title">Premium</h3>
-                    <div class="pricing-price">$60</div>
-                    <p class="pricing-period">per month</p>
-                    <ul class="pricing-features">
-                        <li><i class="bi bi-check"></i> Unlimited patients</li>
-                        <li><i class="bi bi-check"></i> Advanced AI insights</li>
-                        <li><i class="bi bi-check"></i> API integrations</li>
-                        <li><i class="bi bi-check"></i> Custom branding</li>
-                        <li><i class="bi bi-check"></i> Dedicated support</li>
+                        <li><i class="bi bi-check"></i> Up to 50 patients</li>
+                        <li><i class="bi bi-check"></i> AI-powered reports</li>
+                        <li><i class="bi bi-check"></i> Calendly integration</li>
+                        <li><i class="bi bi-check"></i> Patient management</li>
+                        <li><i class="bi bi-check"></i> Clinical notes</li>
+                        <li><i class="bi bi-check"></i> Basic billing</li>
+                        <li><i class="bi bi-check"></i> Email support</li>
+                        <li><i class="bi bi-check"></i> <strong>2 months FREE!</strong></li>
                     </ul>
                     <a href="{{ url_for('auth.register') }}" class="btn btn-hero btn-hero-secondary w-100">
                         Try 14 Days Free
@@ -890,8 +880,8 @@ body {
         </div>
         <div class="text-center mt-5">
             <p class="text-muted">
-                Have a large clinic? 
-                <a href="mailto:contact@trxcker.com" class="text-accent">Contact us for custom pricing</a>
+                Need help getting started? 
+                <a href="mailto:contact@trxcker.com" class="text-accent">Contact us for support</a>
             </p>
         </div>
     </div>
