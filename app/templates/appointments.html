@@ -1,72 +1,287 @@
-<!-- app/templates/appointments.html -->
 {% extends "base.html" %}
-
 {% block title %}{{ _('Appointments') }}{% endblock %}
-
 {% block styles %}
 {{ super() }}
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
 <style>
     .page-header h1 {
-        font-size: 2.25rem; /* Larger page title */
+        font-size: 2.25rem;
         font-weight: 600;
     }
-
+    
     .controls-card .card-body {
         display: flex;
-        flex-wrap: wrap; /* Allow wrapping on smaller screens */
-        gap: 1.5rem; /* Space between control groups */
-        align-items: flex-end; /* Align items to the bottom for a cleaner look */
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        align-items: flex-end;
     }
-
+    
     .control-group {
-        flex: 1; /* Allow groups to grow */
-        min-width: 250px; /* Minimum width before wrapping */
+        flex: 1;
+        min-width: 250px;
     }
     
     .control-group .form-label {
         font-weight: 500;
         margin-bottom: 0.5rem;
     }
-
+    
     .card {
-        border: none; /* Remove default card borders for a cleaner look with shadows */
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1); /* Softer, more modern shadow */
-        border-radius: 0.5rem; /* Slightly more rounded corners */
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        border-radius: 0.75rem;
+        overflow: hidden;
     }
-
+    
     .card-header {
-        background-color: #f8f9fa; /* Light grey background for headers */
-        border-bottom: 1px solid #e9ecef; /* Subtle border for header */
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
         font-weight: 600;
         padding: 0.75rem 1.25rem;
     }
     
     .btn-group .btn {
-        border-radius: 0.375rem; /* Ensure buttons in group also get rounded */
+        border-radius: 0.375rem;
     }
+    
     .input-group .form-control, .input-group .btn {
-         border-radius: 0.375rem; /* Ensure consistent rounding */
+         border-radius: 0.375rem;
     }
+    
     .input-group .input-group-text {
         border-radius: 0.375rem;
     }
     
-    /* Make calendar events appear clickable */
+    /* Enhanced Calendar Styles */
+    #calendarView .fc-theme-standard .fc-scrollgrid {
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    #calendarView .fc-theme-standard td, 
+    #calendarView .fc-theme-standard th {
+        border-color: #e9ecef;
+    }
+    
+    #calendarView .fc-daygrid-day.fc-day-today {
+        background-color: rgba(59, 130, 246, 0.08);
+        border-radius: 0.5rem;
+    }
+    
+    #calendarView .fc-daygrid-day-number {
+        padding: 10px;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.95rem;
+    }
+    
+    #calendarView .fc-col-header-cell {
+        padding: 12px 8px;
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    
+    #calendarView .fc-col-header-cell-cushion {
+        color: #495057;
+        font-weight: 700;
+        text-decoration: none;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Enhanced Event Styles */
     .fc-event {
         cursor: pointer !important;
         transition: all 0.2s ease;
+        border-radius: 6px;
+        border: none !important;
+        padding: 4px 8px !important;
+        margin-bottom: 3px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .fc-event:hover {
-        transform: scale(1.02);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         z-index: 10;
         opacity: 0.9;
     }
     
     .fc-event-title {
         font-weight: 500;
+        font-size: 0.85em;
+        white-space: normal;
+        line-height: 1.3;
+    }
+    
+    /* Event color variations - all same except cancelled */
+    .fc-event.scheduled,
+    .fc-event.completed,
+    .fc-event.in-progress {
+        background-color: #6366f1 !important;
+        border-color: #6366f1 !important;
+        color: white !important;
+    }
+    
+    .fc-event.cancelled {
+        background-color: #ef4444 !important;
+        border-color: #ef4444 !important;
+        color: white !important;
+        opacity: 0.7;
+    }
+    
+    /* Custom event dot for recurring appointments */
+    .fc-event.recurring::before {
+        content: "↻";
+        margin-right: 4px;
+        font-size: 0.8em;
+    }
+    
+    /* Time grid event improvements */
+    .fc-timegrid-event .fc-event-time {
+        font-weight: 600;
+        display: none; /* Hide time from event title */
+    }
+    
+    .fc-timegrid-event .fc-event-title {
+        margin-top: 2px;
+    }
+    
+    /* Calendar header improvements */
+    .fc-toolbar-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #1f2937;
+        padding: 10px 0;
+    }
+    
+    .fc-button-primary {
+        background-color: #6366f1;
+        border-color: #6366f1;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .fc-button-primary:hover {
+        background-color: #4f46e5;
+        border-color: #4f46e5;
+        transform: translateY(-1px);
+    }
+    
+    .fc-button-primary:not(:disabled):active, 
+    .fc-button-primary:not(:disabled).fc-button-active {
+        background-color: #4338ca;
+        border-color: #4338ca;
+    }
+    
+    /* Today button special styling */
+    .fc-today-button {
+        background-color: #f3f4f6 !important;
+        color: #6366f1 !important;
+        border-color: #d1d5db !important;
+        font-weight: 500;
+        border-radius: 8px;
+    }
+    
+    .fc-today-button:hover {
+        background-color: #e5e7eb !important;
+    }
+    
+    /* List view improvements */
+    .table-hover tbody tr:hover {
+        background-color: rgba(99, 102, 241, 0.05);
+        cursor: pointer;
+    }
+    
+    .table-hover tbody tr:hover td {
+        color: #1f2937;
+    }
+    
+    /* Status badges */
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+        font-weight: 600;
+        border-radius: 0.375rem;
+    }
+    
+    /* Loading spinner */
+    .calendar-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        border-radius: 0.75rem;
+    }
+    
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3em;
+        color: #6366f1;
+    }
+    
+    /* Responsive improvements */
+    @media (max-width: 768px) {
+        .controls-card .card-body {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .control-group {
+            min-width: 100%;
+        }
+        
+        .fc-toolbar {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .fc-toolbar-title {
+            font-size: 1.2rem;
+        }
+        
+        .fc-event {
+            padding: 3px 6px !important;
+        }
+        
+        .fc-event-title {
+            font-size: 0.8em;
+        }
+    }
+    
+    /* Additional design improvements */
+    .fc-daygrid-event {
+        margin: 2px 4px;
+    }
+    
+    .fc-daygrid-block-event .fc-event-time,
+    .fc-daygrid-block-event .fc-event-title {
+        padding: 2px 4px;
+    }
+    
+    .fc-daygrid-day-frame {
+        border-radius: 0.5rem;
+    }
+    
+    .fc-scrollgrid-section-body > td {
+        border-bottom-left-radius: 0.75rem;
+        border-bottom-right-radius: 0.75rem;
+    }
+    
+    .fc-scrollgrid-section-header > td {
+        border-top-left-radius: 0.75rem;
+        border-top-right-radius: 0.75rem;
     }
 </style>
 {% endblock %}
@@ -76,11 +291,16 @@
     <!-- Page Header -->
     <div class="page-header d-flex justify-content-between align-items-center mb-4">
         <h1><i class="bi bi-calendar-week me-2"></i>{{ _('Appointments') }}</h1>
-        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#newAppointmentModal">
-            <i class="bi bi-plus-circle"></i> {{ _('New Appointment') }}
-        </button>
+        <div>
+            <button class="btn btn-outline-secondary me-2" id="refreshCalendarBtn">
+                <i class="bi bi-arrow-clockwise"></i> {{ _('Refresh') }}
+            </button>
+            <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#newAppointmentModal">
+                <i class="bi bi-plus-circle"></i> {{ _('New Appointment') }}
+            </button>
+        </div>
     </div>
-
+    
     <!-- Controls Card: Date Filter and View Toggle -->
     <div class="card controls-card mb-4">
         <div class="card-header">
@@ -121,14 +341,19 @@
             </div>
         </div>
     </div>
-
+    
     <!-- Calendar View (Default View) -->
     <div id="calendarView" class="card mb-4">
-        <div class="card-body">
+        <div class="card-body p-0 position-relative">
             <div id="appointmentCalendar"></div>
+            <div class="calendar-loading d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">{{ _('Loading...') }}</span>
+                </div>
+            </div>
         </div>
     </div>
-
+    
     <!-- Appointments List View (Initially Hidden) -->
     <div id="listView" class="card mb-4" style="display: none;">
         <div class="card-body">
@@ -166,8 +391,13 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-group">
+                                    <!-- View button -->
+                                    <a href="{{ url_for('main.view_treatment', id=appointment.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    
                                     <!-- Edit button -->
-                                    <a href="{{ url_for('main.edit_treatment', id=appointment.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <a href="{{ url_for('main.edit_treatment', id=appointment.id) }}" class="btn btn-sm btn-outline-secondary">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     
@@ -290,12 +520,27 @@
     </div>
 </div>
 
+<!-- Appointment Detail Modal -->
+<div class="modal fade" id="appointmentDetailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('Appointment Details') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="appointmentDetailContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Content Loaded - Appointments page');
@@ -304,26 +549,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const today = new Date();
     const startDateInput = document.getElementById('startDate');
     const endDateInput = document.getElementById('endDate');
-
-    console.log('Calendar elements found:', {
-        calendarView: !!document.getElementById('calendarView'),
-        listView: !!document.getElementById('listView'),
-        appointmentCalendar: !!document.getElementById('appointmentCalendar')
-    });
-
+    
     // Initialize calendar by default
     setTimeout(() => {
         console.log('Initializing calendar after timeout...');
         initializeCalendar();
     }, 100);
-
+    
     // Quick filter buttons
     document.querySelectorAll('[data-period]').forEach(button => {
         button.addEventListener('click', function() {
             const period = this.dataset.period;
             const start = new Date();
             const end = new Date();
-
+            
             switch(period) {
                 case 'today':
                     end.setDate(end.getDate()); // Same day
@@ -335,27 +574,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     end.setDate(end.getDate() + 30);
                     break;
             }
-
+            
             startDateInput.value = start.toISOString().split('T')[0];
             endDateInput.value = end.toISOString().split('T')[0];
             filterAppointments();
         });
     });
-
+    
     // View toggle
     document.querySelectorAll('[data-view]').forEach(button => {
         button.addEventListener('click', function() {
             const view = this.dataset.view;
             console.log('Switching to view:', view);
             
-            // Update button states - remove active class and reset to outline style
+            // Update button states
             document.querySelectorAll('[data-view]').forEach(btn => {
                 btn.classList.remove('active');
                 btn.classList.remove('btn-primary');
                 btn.classList.add('btn-outline-primary');
             });
             
-            // Make clicked button active with solid blue style
             this.classList.add('active');
             this.classList.remove('btn-outline-primary');
             this.classList.add('btn-primary');
@@ -363,6 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (view === 'calendar') {
                 document.getElementById('calendarView').style.display = 'block';
                 document.getElementById('listView').style.display = 'none';
+                
                 // Only initialize calendar if it doesn't exist or if it's not rendered properly
                 if (!window.appointmentCalendar) {
                     initializeCalendar();
@@ -378,7 +617,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-
+    
+    // Refresh calendar button
+    document.getElementById('refreshCalendarBtn').addEventListener('click', function() {
+        if (window.appointmentCalendar) {
+            // Show loading spinner
+            document.querySelector('.calendar-loading').classList.remove('d-none');
+            
+            // Refetch events
+            window.appointmentCalendar.refetchEvents();
+            
+            // Hide loading spinner after a delay
+            setTimeout(() => {
+                document.querySelector('.calendar-loading').classList.add('d-none');
+            }, 500);
+        }
+    });
+    
     // Calendar initialization
     function initializeCalendar() {
         console.log('Initializing calendar...');
@@ -401,7 +656,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
+            // Set height to auto for better responsiveness
+            height: 'auto',
+            // Set aspect ratio for better calendar proportions
+            aspectRatio: 1.6,
+            // Configure event display
+            displayEventTime: false, // Hide time from event title
+            displayEventEnd: false,
+            eventTimeFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                meridiem: 'short'
+            },
+            // Set default duration for events to 1 hour (60 minutes)
+            defaultTimedEventDuration: '01:00:00',
+            // Configure event sources
             events: function(info, successCallback, failureCallback) {
+                // Show loading spinner
+                document.querySelector('.calendar-loading').classList.remove('d-none');
+                
                 fetch('/api/appointments?' + new URLSearchParams({
                     start: info.start.toISOString(),
                     end: info.end.toISOString()
@@ -412,15 +685,50 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .then(response => response.json())
-                .then(events => successCallback(events))
+                .then(events => {
+                    // Hide loading spinner
+                    document.querySelector('.calendar-loading').classList.add('d-none');
+                    
+                    // Process events to add status-based styling and modify titles
+                    const processedEvents = events.map(event => {
+                        // Extract only the part before the '-' from the title
+                        if (event.title && event.title.includes('-')) {
+                            event.title = event.title.split('-')[0].trim();
+                        }
+                        
+                        // Add CSS class based on status
+                        event.className = (event.extendedProps?.status || 'scheduled').toLowerCase().replace(' ', '-');
+                        
+                        // Add recurring class if it's a recurring appointment
+                        if (event.extendedProps?.isRecurring) {
+                            event.className += ' recurring';
+                        }
+                        
+                        // Ensure event duration is 1 hour
+                        if (event.end) {
+                            const start = new Date(event.start);
+                            const end = new Date(event.end);
+                            const durationHours = (end - start) / (1000 * 60 * 60);
+                            
+                            // If duration is not 1 hour, adjust it
+                            if (Math.abs(durationHours - 1) > 0.01) {
+                                event.end = new Date(start.getTime() + 60 * 60 * 1000).toISOString();
+                            }
+                        }
+                        
+                        return event;
+                    });
+                    
+                    successCallback(processedEvents);
+                })
                 .catch(error => {
+                    // Hide loading spinner
+                    document.querySelector('.calendar-loading').classList.add('d-none');
                     console.error('Failed to load calendar events:', error);
                     failureCallback(error);
                 });
             },
-            loading: function(isLoading) {
-                console.log('Calendar loading:', isLoading);
-            },
+            // Configure event click behavior
             eventClick: function(info) {
                 console.log('Appointment event clicked:', info.event);
                 
@@ -430,58 +738,143 @@ document.addEventListener('DOMContentLoaded', function() {
                     info.el.style.transform = 'scale(1)';
                 }, 150);
                 
-                // Handle event click - navigate to treatment details
-                if (info.event.id) {
-                    if (info.event.id.startsWith('recurring_')) {
-                        // Handle recurring appointments
-                        const patientName = info.event.extendedProps?.patient_name || 'Unknown Patient';
-                        const treatmentType = info.event.title.split(' - ')[1] || 'Appointment';
-                        
-                        if (confirm(`This is a recurring appointment for ${patientName}.\n\nClick OK to edit the recurring rule.`)) {
-                            const recurringId = info.event.id.replace('recurring_', '');
-                            window.location.href = `/recurring/${recurringId}/edit`;
-                        }
-                    } else {
-                        // Handle regular treatments
-                        const treatmentId = parseInt(info.event.id, 10);
-                        if (!isNaN(treatmentId)) {
-                            window.location.href = `/treatment/${treatmentId}/view`;
-                        } else {
-                            alert('Could not navigate to appointment: Invalid ID format.');
-                        }
-                    }
+                // Show appointment details in modal
+                showAppointmentDetails(info.event);
+            },
+            // Configure loading state
+            loading: function(isLoading) {
+                console.log('Calendar loading:', isLoading);
+                if (isLoading) {
+                    document.querySelector('.calendar-loading').classList.remove('d-none');
                 } else {
-                    alert('Could not navigate to appointment: Missing ID.');
+                    document.querySelector('.calendar-loading').classList.add('d-none');
                 }
             },
-            height: 'auto'
+            // Configure day cell content
+            dayCellContent: function(arg) {
+                return { html: `<div class="fc-daygrid-day-number">${arg.dayNumberText}</div>` };
+            }
         });
         
         console.log('Rendering calendar...');
         window.appointmentCalendar.render();
         console.log('Calendar initialized successfully');
     }
-
+    
+    // Show appointment details in modal
+    function showAppointmentDetails(event) {
+        const modal = new bootstrap.Modal(document.getElementById('appointmentDetailModal'));
+        const content = document.getElementById('appointmentDetailContent');
+        
+        const isRecurring = event.extendedProps?.isRecurring || false;
+        const status = event.extendedProps?.status || 'Scheduled';
+        const treatmentId = event.extendedProps?.treatmentId || event.id;
+        const patientId = event.extendedProps?.patientId;
+        
+        // Get the patient name from the title (which now only contains the patient name)
+        const patientName = event.title || 'Unknown';
+        
+        // Get treatment type from extendedProps if available
+        const treatmentType = event.extendedProps?.treatmentType || 'Unknown';
+        
+        // Format date and time
+        const startDate = new Date(event.start);
+        const endDate = new Date(event.end);
+        const dateStr = startDate.toLocaleDateString();
+        const startTimeStr = startDate.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+        const endTimeStr = endDate.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+        
+        // Status badge color
+        let statusClass = 'primary';
+        if (status === 'Completed') statusClass = 'success';
+        else if (status === 'Cancelled') statusClass = 'danger';
+        else if (status === 'In Progress') statusClass = 'warning';
+        else if (isRecurring) statusClass = 'info';
+        
+        // Build modal content
+        content.innerHTML = `
+            <div class="row mb-3">
+                <div class="col-6">
+                    <strong>{{ _('Patient') }}:</strong>
+                </div>
+                <div class="col-6">
+                    ${patientId ? `<a href="/patient/${patientId}" class="text-decoration-none">${patientName}</a>` : patientName}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-6">
+                    <strong>{{ _('Date') }}:</strong>
+                </div>
+                <div class="col-6">
+                    ${dateStr}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-6">
+                    <strong>{{ _('Time') }}:</strong>
+                </div>
+                <div class="col-6">
+                    ${startTimeStr} - ${endTimeStr}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-6">
+                    <strong>{{ _('Treatment Type') }}:</strong>
+                </div>
+                <div class="col-6">
+                    ${treatmentType}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-6">
+                    <strong>{{ _('Status') }}:</strong>
+                </div>
+                <div class="col-6">
+                    <span class="badge bg-${statusClass}">${status}</span>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-6">
+                    <strong>{{ _('Location') }}:</strong>
+                </div>
+                <div class="col-6">
+                    ${event.extendedProps?.location || 'N/A'}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-6">
+                    <strong>{{ _('Notes') }}:</strong>
+                </div>
+                <div class="col-6">
+                    ${event.extendedProps?.notes || 'N/A'}
+                </div>
+            </div>
+            ${isRecurring ? '<div class="alert alert-info"><i class="bi bi-info-circle"></i> This is a recurring appointment.</div>' : ''}
+        `;
+        
+        modal.show();
+    }
+    
     // Appointment actions
     window.editAppointment = function(id) {
         // Implement edit logic
     };
-
+    
     window.completeAppointment = function(id) {
         if (confirm('Mark this appointment as completed?')) {
             // Implement completion logic
         }
     };
-
+    
     window.cancelAppointment = function(appointmentId) {
         if (confirm('Are you sure you want to cancel this appointment?')) {
-            var csrfToken = document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content');
+            var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             showLoading(`Cancelling appointment ${appointmentId}...`);
             fetch(`/api/appointment/${appointmentId}/status`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken // Add CSRF token header
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({ status: 'Cancelled' })
             })
@@ -500,7 +893,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     };
-
+    
     // Load appointments for list view
     function loadListViewAppointments() {
         const startDate = startDateInput.value || new Date().toISOString().split('T')[0];
@@ -549,10 +942,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const treatmentId = event.extendedProps?.treatmentId || event.id;
             const patientId = event.extendedProps?.patientId;
             
-            // Extract patient name from title (format: "Patient Name - Treatment Type")
-            const titleParts = event.title.split(' - ');
-            const patientName = titleParts[0] || 'Unknown';
-            const treatmentType = titleParts.slice(1).join(' - ') || 'Unknown';
+            // Get the patient name from the title (which now only contains the patient name)
+            const patientName = event.title || 'Unknown';
+            
+            // Get treatment type from extendedProps if available
+            const treatmentType = event.extendedProps?.treatmentType || 'Unknown';
             
             // Status badge color
             let statusClass = 'primary';
@@ -593,7 +987,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }).join('');
     }
-
+    
     // Filter form submission - now updates both views
     function filterAppointments() {
         if (document.getElementById('listView').style.display !== 'none') {
@@ -608,9 +1002,9 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = `/appointments?${params.toString()}`;
         }
     }
-
+    
     document.getElementById('filterDates').addEventListener('click', filterAppointments);
-
+    
     // Handle patient selection change to show/hide new patient fields
     const patientSelect = document.getElementById('appointmentPatient');
     const newPatientFields = document.getElementById('newPatientFields');
@@ -630,7 +1024,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
+    
     // Handle New Appointment Form Submission
     const appointmentForm = document.getElementById('appointmentForm');
     if (appointmentForm) {
@@ -644,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const timeValue = formData.get('time');
             formData.set('date', `${dateValue}T${timeValue}`); // Format as YYYY-MM-DDTHH:MM
             formData.delete('time'); // Remove original time field as it's combined
-
+            
             if (patientId === 'new') {
                 // Create new patient first, then create appointment
                 const patientData = {
@@ -655,13 +1049,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     address: formData.get('patient_address') || '',
                     anamnesis: '' // Empty anamnesis for new patients
                 };
-
+                
                 // Validate required fields
                 if (!patientData.name || !patientData.phone) {
                     alert('Please fill in all required patient information (Name and Phone).');
                     return;
                 }
-
+                
                 // First create the patient
                 const csrfToken = document.querySelector('input[name="csrf_token"]').value;
                 fetch('/api/patient/create', {
@@ -693,7 +1087,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
+    
     function createAppointment(formData, patientId) {
         fetch(`/patient/${patientId}/treatment`, {
             method: 'POST',
@@ -718,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('An error occurred while creating the appointment.');
         });
     }
-
+    
     // Handle mark as completed buttons
     document.querySelectorAll('.mark-completed-btn').forEach(button => {
         button.addEventListener('click', function() {
@@ -757,6 +1151,12 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error:', error);
             alert('An error occurred while updating the appointment.');
         });
+    }
+    
+    // Function to show loading state
+    function showLoading(message) {
+        // You can implement a loading indicator here
+        console.log(message);
     }
 });
 </script>

@@ -1,4 +1,3 @@
-<!-- app/templates/base.html -->
 <!DOCTYPE html>
 <html lang="{{ get_locale() }}">
 <head>
@@ -10,9 +9,9 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
     <!-- Bootstrap 5 and Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <!-- Add this line for Calendly styling -->
     <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
     <!-- Patient Forms Styling -->
@@ -29,26 +28,28 @@
             --success-color: #10b981;
             --warning-color: #f59e0b;
             --danger-color: #ef4444;
+            --info-color: #0ea5e9;
             --text-dark: #1f2937;
             --text-light: #6b7280;
             --bg-light: #f9fafb;
             --bg-section: #ffffff;
             --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             --gradient-secondary: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-            --sidebar-width: 250px; /* Back to a comfortable width */
+            --gradient-sidebar: linear-gradient(180deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%); /* Adjusted gradient */
+            --sidebar-width: 250px;
             --border-radius: 12px;
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
@@ -56,144 +57,437 @@
             background-color: var(--bg-light);
             overflow-x: hidden;
         }
-
+        
+        /* Sidebar Toggle Button */
+        .sidebar-toggle {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1031;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            display: none;
+        }
+        
+        .sidebar-toggle:hover {
+            background-color: var(--primary-dark);
+            transform: scale(1.05);
+        }
+        
+        /* Sidebar Styles */
         .sidebar {
-            /* Fixed sidebar styles */
             position: fixed;
             top: 0;
             left: 0;
-            height: 100vh; /* Full viewport height */
-            width: var(--sidebar-width); /* Use variable for width */
-            z-index: 1030; /* Ensure sidebar is above most content, below modals */
-            
-            /* Keep existing styles */
-            background: linear-gradient(135deg, var(--primary-color), #2c3e50);
+            height: 100vh;
+            width: var(--sidebar-width);
+            z-index: 1030;
+            background: var(--gradient-sidebar);
             padding-top: 20px;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            overflow-y: auto; /* Allow sidebar itself to scroll if needed */
+            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .sidebar-header {
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+        
+        .sidebar-header h3 {
+            color: white;
+            margin: 0;
+            font-family: 'Montserrat', sans-serif; /* Changed to Montserrat */
+            font-weight: 800;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Added text shadow for better readability */
+        }
+        
+        .current-mode-indicator {
+            margin-top: 8px;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            display: inline-block;
         }
         
         .sidebar .nav-link {
-            color: #ecf0f1;
-            padding: 10px 20px;
-            margin: 5px 0;
-            border-radius: 5px;
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            margin: 3px 15px;
+            border-radius: 8px;
             transition: all 0.3s ease;
             border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
         }
         
         .sidebar .nav-link:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            border-color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
             color: #ffffff;
-            padding-left: 25px;
+            transform: translateX(5px);
         }
         
         .sidebar .nav-link.active {
             background-color: rgba(255, 255, 255, 0.2);
-            border-left: 3px solid #ffffff;
-            font-weight: 500;
+            border-left: 4px solid #ffffff;
+            font-weight: 600;
+            color: #ffffff;
         }
         
         .sidebar .nav-link i {
-            margin-right: 10px;
+            margin-right: 12px;
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
         }
         
+        .nav-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-section-title {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 20px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .user-info {
+            color: white;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .user-role {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .logout-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+            padding: 10px 20px !important;
+            margin: 5px 15px !important;
+            border-radius: 8px !important;
+            transition: all 0.3s ease !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        
+        .logout-link:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+        }
+        
+        /* Content Area */
         .content {
-            /* Content area needs no specific positioning, 
-               but padding-left on body ensures it doesn't start under the sidebar */
-            background-color: #f8f9fa; 
-            /* Optional: Add padding for better spacing */
-             padding: 20px; 
-             /* Ensure it can grow */
-             flex-grow: 1;
-             min-height: 100vh; /* Ensure it takes at least full screen height */
-             margin-left: var(--sidebar-width); /* Push content to the right of sidebar */
-             width: calc(100% - var(--sidebar-width)); /* Constrain width to fit viewport */
-             max-width: calc(100vw - var(--sidebar-width)); /* Prevent overflow */
-             overflow-x: auto; /* Allow horizontal scroll if needed */
+            background-color: var(--bg-light);
+            padding: 25px;
+            flex-grow: 1;
+            min-height: 100vh;
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            max-width: calc(100vw - var(--sidebar-width));
+            overflow-x: auto;
+            transition: margin-left 0.3s ease;
         }
         
+        /* Card Styles */
         .card {
             border: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
         }
         
         .card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
         }
         
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .card-title {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+        
+        /* Stats Card */
         .stats-card {
-            background: linear-gradient(45deg, var(--primary-color), #3498db);
+            background: var(--gradient-primary);
             color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        
+        .stats-card::after {
+            content: '';
+            position: absolute;
+            bottom: -30px;
+            left: -30px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+        }
+        
+        .stats-card .card-body {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stats-card .card-title {
+            color: white;
+            opacity: 0.9;
+        }
+        
+        .stats-card h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0.5rem 0;
+        }
+        
+        .stats-card p {
+            margin: 0;
+            opacity: 0.8;
         }
         
         /* Apply flex layout and icon styling to stats card text universally */
-        div.stats-card div.card-body p.card-text { /* Increased specificity */
+        div.stats-card div.card-body p.card-text {
             display: flex; 
             align-items: center;
         }
-        div.stats-card div.card-body p.card-text i { /* Increased specificity */
-            /* Make icon a small square */
+        
+        div.stats-card div.card-body p.card-text i {
             display: inline-flex; 
-            justify-content: center; /* Center icon horizontally */
-            align-items: center;   /* Center icon vertically */
-            width: 20px;        /* Use fixed px width */
-            height: 20px;       /* Use fixed px height */
-            font-size: 16px;      /* Use fixed px font-size */
-            margin-right: 8px; /* Use fixed px margin */
-            flex-shrink: 0;      /* Prevent shrinking */
+            justify-content: center;
+            align-items: center;
+            width: 20px;
+            height: 20px;
+            font-size: 16px;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+        
+        /* Buttons */
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
         }
         
         .btn-primary {
             background-color: var(--primary-color);
             border: none;
+            color: white;
         }
         
         .btn-primary:hover {
             background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
         }
         
-        .table-hover tbody tr:hover {
-            background-color: rgba(37, 99, 235, 0.1);
+        .btn-outline-primary {
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
         }
-
-        .status-badge {
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 0.8em;
-        }
-
-        .status-active {
+        
+        .btn-outline-primary:hover {
             background-color: var(--primary-color);
             color: white;
         }
-
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border: none;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            border: none;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            border: none;
+        }
+        
+        .btn-info {
+            background-color: var(--info-color);
+            border: none;
+        }
+        
+        /* Tables */
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table thead th {
+            border-bottom: 2px solid rgba(0,0,0,0.1);
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(37, 99, 235, 0.05);
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .status-active {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+        
         .status-inactive {
-            background-color: #95a5a6;
-            color: white;
+            background-color: rgba(107, 114, 128, 0.1);
+            color: var(--text-light);
         }
-
+        
         .status-completed {
-            background-color: #2c3e50;
-            color: white;
+            background-color: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
         }
-
+        
+        .status-pending {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+        
+        /* Page Header */
         .page-header {
-            border-bottom: 2px solid var(--secondary-color);
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
         }
-
-        /* Custom animation for alerts */
+        
+        .page-header h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+        
+        .page-header p {
+            color: var(--text-light);
+            margin-bottom: 0;
+        }
+        
+        /* Alerts */
         .alert {
+            border: none;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 1rem;
             animation: slideIn 0.5s ease-out;
+            box-shadow: var(--shadow-md);
         }
-
+        
+        .alert-primary {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+        
+        .alert-warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+        
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .alert-info {
+            background-color: rgba(14, 165, 233, 0.1);
+            color: var(--info-color);
+        }
+        
         @keyframes slideIn {
             from {
-                transform: translateY(-100%);
+                transform: translateY(-20px);
                 opacity: 0;
             }
             to {
@@ -201,99 +495,44 @@
                 opacity: 1;
             }
         }
-
-        /* Calendly modal styling */
-        .calendly-inline-widget {
-            min-width: 320px;
-            height: 700px;
-        }
-
-        /* Add this for the app title/logo in the sidebar */
-        .sidebar-header {
-            padding: 15px 20px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-header h3 {
-            color: white;
-            margin: 0;
-            font-size: 1.5rem;
-        }
-
-        /* Add this for navigation sections */
-        .nav-section {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .nav-section-title {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 0 20px;
-            margin-bottom: 10px;
-        }
-
-        /* Update any other status-related colors */
-        .status-indicator.status-active {
-            background-color: var(--primary-color);
-        }
-
-        .status-indicator.status-completed {
-            background-color: #2c3e50;
-        }
-
-        .sidebar-footer {
-            margin-top: auto; /* Push footer to the bottom */
-            padding: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .user-info {
-            color: white;
-            margin-bottom: 10px;
-        }
-
-        .user-name {
-            font-weight: 600;
-            display: block;
-        }
-
-        .user-role {
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
-
-        .logout-link {
-            color: rgba(255, 255, 255, 0.8) !important;
-            padding: 8px 20px !important;
-            margin: 2px 0 !important;
-            border-radius: 5px !important;
-            transition: all 0.3s ease !important;
-        }
-
-        .logout-link:hover {
-            background-color: rgba(255, 255, 255, 0.1) !important;
-            color: white !important;
-        }
-
-        /* Trial banner styles */
+        
+        /* Trial Banner Styles */
         .trial-banner-main {
             border-bottom: 1px solid rgba(255,255,255,0.2);
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
         }
         
         .trial-banner-compact {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
         }
-
+        
+        /* Footer */
+        footer {
+            background-color: white;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+        }
+        
+        footer a {
+            color: var(--text-light);
+            transition: color 0.3s ease;
+        }
+        
+        footer a:hover {
+            color: var(--primary-color);
+        }
+        
         /* Responsive design for mobile */
-        @media (max-width: 768px) {
+        @media (max-width: 992px) {
+            .sidebar-toggle {
+                display: block;
+            }
+            
             .sidebar {
                 transform: translateX(-100%);
-                transition: transform 0.3s ease;
             }
             
             .sidebar.show {
@@ -301,10 +540,10 @@
             }
             
             .content {
-                margin-left: 0; /* Remove margin on mobile so content takes full width */
-                width: 100%; /* Full width on mobile */
-                max-width: 100vw; /* Full viewport width */
-                padding: 10px;
+                margin-left: 0;
+                width: 100%;
+                max-width: 100vw;
+                padding: 20px 15px 70px 15px;
             }
             
             .trial-banner-main {
@@ -330,24 +569,66 @@
                 gap: 5px;
             }
         }
+        
+        @media (max-width: 576px) {
+            .stats-card h2 {
+                font-size: 2rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .table {
+                font-size: 0.875rem;
+            }
+        }
+        
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Overlay for sidebar on mobile */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1029;
+            display: none;
+        }
+        
+        .sidebar-overlay.show {
+            display: block;
+        }
     </style>
     {% endblock styles %}
-
     {% block head_extra %}{% endblock %}
 </head>
 <body>
-    {# Re-add the toggle button #}
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <!-- Sidebar Toggle Button -->
     <button class="btn sidebar-toggle" type="button" id="sidebarToggle">
         <i class="bi bi-list"></i>
     </button>
-
+    
     <!-- Standard Flash Message Display Area -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <div style="position: fixed; top: 70px; right: 20px; z-index: 1055; width: auto; max-width: 400px;"> {# Adjusted top and right padding, added max-width #}
+        <div style="position: fixed; top: 70px; right: 20px; z-index: 1055; width: auto; max-width: 400px;">
           {% for category, message in messages %}
-            <div class="alert alert-{{ category if category else 'info' }} alert-dismissible fade show shadow-sm" role="alert"> {# Added shadow for better visibility #}
-              <i class="bi bi-info-circle-fill me-2"></i> {# Example icon #}
+            <div class="alert alert-{{ category if category else 'info' }} alert-dismissible fade show shadow-sm" role="alert">
+              <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-triangle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}-fill me-2"></i>
               {{ message }}
               <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -355,12 +636,11 @@
         </div>
       {% endif %}
     {% endwith %}
-    <!-- End Flash Message Display Area -->
-
+    
     <!-- Global Trial Status Banner -->
     {% if current_user and current_user.is_authenticated and current_user.is_on_trial %}
     <!-- Main trial banner -->
-    <div id="trialBannerMain" class="trial-banner-main" style="background: linear-gradient(135deg, #17a2b8, #20c997); padding: 12px 0; color: white; position: relative; z-index: 1040; margin-left: var(--sidebar-width);">
+    <div id="trialBannerMain" class="trial-banner-main" style="padding: 15px 0; color: white; position: relative; z-index: 1040; margin-left: var(--sidebar-width);">
         <div class="container-fluid" style="padding: 0 20px;">
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
@@ -389,7 +669,7 @@
     </div>
     
     <!-- Compact trial banner (shows when scrolling) -->
-    <div id="trialBannerCompact" class="trial-banner-compact" style="background: linear-gradient(135deg, #17a2b8, #20c997); padding: 6px 0; color: white; position: fixed; top: 0; left: var(--sidebar-width); right: 0; z-index: 1050; transform: translateY(-100%); transition: transform 0.3s ease;">
+    <div id="trialBannerCompact" class="trial-banner-compact" style="padding: 8px 0; color: white; position: fixed; top: 0; left: var(--sidebar-width); right: 0; z-index: 1050; transform: translateY(-100%); transition: transform 0.3s ease;">
         <div class="container-fluid" style="margin-left: 0; padding: 0 20px;">
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
@@ -403,15 +683,16 @@
         </div>
     </div>
     {% endif %}
-    <!-- End Global Trial Status Banner -->
-
-    <div class="container-fluid p-0"> {# Remove default padding for full control #}
-        <div class="row g-0"> {# Remove gutters for seamless edge #}
-            <div class="sidebar" id="sidebar"> {# REMOVED Bootstrap columns col-12 col-lg-2 #}
+    
+    <!-- Main Container -->
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="sidebar" id="sidebar">
                 <div class="sidebar-header">
                     <h3>TRXCKER</h3>
                     {% if current_user and current_user.is_authenticated %}
-                        <div class="current-mode-indicator mt-2">
+                        <div class="current-mode-indicator">
                             {% if current_user.is_in_clinic %}
                                 <small class="text-light opacity-75">
                                     <i class="bi bi-building me-1"></i>{{ _('Clinic') }}
@@ -441,14 +722,6 @@
                             <i class="bi bi-calendar-event"></i> {{ _('Appointments') }}
                         </a>
                     </li>
-                    <!-- Removing Finances from here -->
-                    <!--
-                    <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'main.financials' else '' }}" href="{{ url_for('main.financials') }}">
-                            <i class="bi bi-cash-coin"></i> Finances
-                        </a>
-                    </li>
-                    -->
                     
                     <!-- Physio/Admin Specific Links -->
                     {% if current_user and current_user.is_authenticated and current_user.role != 'patient' %}
@@ -492,7 +765,6 @@
                                     </a>
                                 </li>
                                 {% endif %}
-
                                 {% else %}
                                 <li class="nav-item">
                                     <a class="nav-link {{ 'active' if request.endpoint == 'clinic.choose_option' else '' }}" href="{{ url_for('clinic.choose_option') }}">
@@ -507,7 +779,6 @@
                         {% set show_analytics = not current_user.is_in_clinic or current_user.can_view_clinic_reports() %}
                         {# Temporarily hidden: Financial features #}
                         {% set show_finances = false %}
-                        {# Original: {% set show_finances = (not current_user.is_in_clinic or current_user.can_manage_clinic_billing()) and (current_user.can_use_clinic_feature('reporting_advanced_ai') or current_user.is_admin) %} #}
                         
                         {% if show_analytics or show_finances %}
                         <li class="nav-section">
@@ -531,23 +802,6 @@
                         </li>
                         {% endif %}
                         
-                        {# Temporarily hidden: Premium features promotion for finances since show_finances=false #}
-                        {% if not current_user.can_use_clinic_feature('reporting_advanced_ai') and not current_user.is_admin and show_finances %}
-                        <li class="nav-section">
-                            <div class="nav-section-title">{{ _('Premium Features') }}</div>
-                            <ul class="nav flex-column">
-                                <li class="nav-item">
-                                    <a class="nav-link text-muted" href="{{ url_for('main.pricing_page') }}" style="font-size: 0.875rem;">
-                                        <i class="bi bi-cash-coin text-warning"></i> {{ _('Financial Reports') }}
-                                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.7rem;">{{ _('Premium') }}</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                        {% endif %}
-                        
-
-                        
                         <li class="nav-section">
                             <div class="nav-section-title">{{ _('Settings') }}</div>
                             <ul class="nav flex-column">
@@ -564,7 +818,7 @@
                                 </li>
                                 {% endif %}
                                 <li class="nav-item">
-                                    <div class="btn-group dropup">
+                                    <div class="btn-group dropup w-100">
                                         <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="bi bi-translate"></i> {{ get_locale_display_name(get_locale()) or 'Language' }}
                                         </a>
@@ -575,7 +829,6 @@
                                         </ul>
                                     </div>
                                 </li>
-                                {# Add other general settings links here later #}
                             </ul>
                         </li>
                     {% endif %}
@@ -583,29 +836,27 @@
                     <!-- Patient-Specific Links (Only show if user is patient) -->
                     {% if current_user and current_user.is_authenticated and current_user.role == 'patient' %}
                         <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'main.patient_dashboard' %}active{% endif %}" href="{{ url_for('main.patient_dashboard') }}"><i class="bi bi-person-circle me-2"></i> {{ _('My Dashboard') }}</a>
+                            <a class="nav-link {% if request.endpoint == 'main.patient_dashboard' %}active{% endif %}" href="{{ url_for('main.patient_dashboard') }}">
+                                <i class="bi bi-person-circle me-2"></i> {{ _('My Dashboard') }}
+                            </a>
                         </li>
-                        {# Removed Profile link from here #}
-                        {# Add other patient-specific links here if needed (e.g., Homework history?) #}
-
                         <li class="nav-section">
                             <div class="nav-section-title">{{ _('Account') }}</div>
                             <ul class="nav flex-column">
                                 <li class="nav-item">
-                                    <a class="nav-link {{ 'active' if request.endpoint == 'main.patient_profile' else '' }}" href="{{ url_for('main.patient_profile') }}"><i class="bi bi-person-vcard me-2"></i> {{ _('My Profile') }}</a>
+                                    <a class="nav-link {{ 'active' if request.endpoint == 'main.patient_profile' else '' }}" href="{{ url_for('main.patient_profile') }}">
+                                        <i class="bi bi-person-vcard me-2"></i> {{ _('My Profile') }}
+                                    </a>
                                 </li>
-                                {# Add other account/settings links here later #}
                             </ul>
                         </li>
                     {% endif %}
                 </ul>
-
+                
                 <div class="sidebar-footer">
                     <div class="user-info">
                         {% if current_user and current_user.is_authenticated %}
                             <span class="user-name">{{ current_user.email }}</span>
-                            {# Example: Display user role or email #}
-                            {# <small class="user-role text-muted">{{ current_user.role }}</small> #}
                         {% else %}
                             <span class="user-name">Guest</span>
                         {% endif %}
@@ -632,15 +883,16 @@
                     </ul>
                 </div>
             </div>
-
-            <main class="content" id="mainContent"> {# REMOVED Bootstrap columns col-12 col-lg-10 #}
+            
+            <!-- Main Content -->
+            <main class="content" id="mainContent">
                 <!-- This container is for JavaScript-driven alerts. -->
                 <div class="alert-container position-fixed top-0 end-0 p-3" style="z-index: 1050; margin-top: 70px;"></div>
                 
                 {% block content %}{% endblock %}
                 
                 <!-- Footer -->
-                <footer class="mt-5 py-3 text-center text-muted border-top">
+                <footer class="mt-5 py-3 text-center text-muted">
                     <div class="container">
                         <small>
                             <a href="{{ url_for('legal.privacy') }}" class="text-muted text-decoration-none me-3">Privacy Policy</a>
@@ -653,12 +905,12 @@
             </main>
         </div>
     </div>
-
+    
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Replace the existing Calendly script with this one -->
     <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript"></script>
-
+    
     {# Add JSON data to a script tag attribute #}
     <script id="calendly-prefill-data" type="application/json">
         {% if current_user and current_user.is_authenticated and current_user.role == 'patient' and current_user.patient %}
@@ -674,7 +926,7 @@
             {}
         {% endif %}
     </script>
-
+    
     <!-- Main application script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -688,7 +940,7 @@
                     console.error("Error parsing Calendly prefill data from script tag:", e);
                 }
             }
-
+            
             // Auto-dismiss alerts after 5 seconds (except clinical history warnings)
             setTimeout(function() {
                 var alerts = document.querySelectorAll('.alert');
@@ -701,7 +953,7 @@
                     }
                 });
             }, 5000);
-
+            
             // Modified Calendly inline widget initialization function
             function initCalendlyWidget(url, prefill = {}) { // Added prefill parameter
                 if (typeof Calendly !== 'undefined') {
@@ -715,7 +967,7 @@
                     console.error("Calendly script not loaded properly");
                 }
             }
-
+            
             // Quick search functionality
             const searchButton = document.getElementById('searchButton');
             if (searchButton) {
@@ -723,6 +975,7 @@
                     performSearch();
                 });
             }
+            
             const quickSearchInput = document.getElementById('quickSearch');
             if (quickSearchInput) {
                 quickSearchInput.addEventListener('keyup', function(event) {
@@ -731,6 +984,7 @@
                     }
                 });
             }
+            
             function performSearch() {
                 const searchInput = document.getElementById('quickSearch');
                 if (searchInput) {
@@ -742,7 +996,7 @@
                     console.warn('Quick search input not found when trying to perform search.');
                 }
             }
-
+            
             // Function to open Calendly in a modal - made globally accessible
             window.openCalendly = function() {
                 // Create modal if it doesn't exist
@@ -766,40 +1020,47 @@
                     `;
                     document.body.appendChild(modal);
                 }
-
+                
                 // Show the modal
                 const calendlyModal = new bootstrap.Modal(document.getElementById('calendlyModal'));
                 calendlyModal.show();
-
+                
                 // Initialize Calendly widget using the helper function
                 initCalendlyWidget('https://calendly.com/haimphysio', window.calendlyPrefillData);
-            }
-
-            // Re-add Sidebar Toggle Logic
+            };
+            
+            // Sidebar Toggle Logic
             const sidebar = document.getElementById('sidebar');
             const sidebarToggle = document.getElementById('sidebarToggle');
-            // const mainContent = document.getElementById('mainContent'); // Not needed for this logic
-
-            if (sidebar && sidebarToggle) {
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebar && sidebarToggle && sidebarOverlay) {
                 sidebarToggle.addEventListener('click', function() {
                     sidebar.classList.toggle('show');
-                    document.body.classList.toggle('sidebar-open'); // Toggle class for overlay
+                    sidebarOverlay.classList.toggle('show');
+                    document.body.classList.toggle('sidebar-open');
                 });
-
-                // Click outside to close sidebar
-                document.body.addEventListener('click', function(event) {
-                    // Check if sidebar is open, click is outside sidebar AND outside toggle button
-                    if (document.body.classList.contains('sidebar-open') &&
-                        !sidebar.contains(event.target) && 
-                        event.target !== sidebarToggle && 
-                        !sidebarToggle.contains(event.target)) { // Make sure click isn't on toggle itself
-                        
-                        sidebar.classList.remove('show');
-                        document.body.classList.remove('sidebar-open');
-                    }
-                }, true); // Use capture phase to catch clicks anywhere
+                
+                // Close sidebar when clicking on overlay
+                sidebarOverlay.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                    document.body.classList.remove('sidebar-open');
+                });
+                
+                // Close sidebar when clicking on a nav link (mobile)
+                const navLinks = document.querySelectorAll('.sidebar .nav-link');
+                navLinks.forEach(function(link) {
+                    link.addEventListener('click', function() {
+                        if (window.innerWidth <= 992) {
+                            sidebar.classList.remove('show');
+                            sidebarOverlay.classList.remove('show');
+                            document.body.classList.remove('sidebar-open');
+                        }
+                    });
+                });
             }
-
+            
             // Language selection functionality
             document.querySelectorAll('.lang-option').forEach(function(item) {
                 item.addEventListener('click', function(e) {
@@ -814,7 +1075,7 @@
                         });
                 });
             });
-
+            
             // Trial banner scroll behavior
             const trialBannerMain = document.getElementById('trialBannerMain');
             const trialBannerCompact = document.getElementById('trialBannerCompact');
@@ -838,8 +1099,27 @@
                     lastScrollTop = scrollTop;
                 }, { passive: true });
             }
+            
+            // Add fade-in animation to cards
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('fade-in');
+                    }
+                });
+            }, observerOptions);
+            
+            document.querySelectorAll('.card').forEach(el => {
+                observer.observe(el);
+            });
         });
     </script>
+    
     <script src="{{ url_for('static', filename='js/voice-notes.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
