@@ -21,3 +21,8 @@ run_with_api_key.sh
 # Ignore SQL dumps
 *.sql
 logs/physiotracker.log.*
+
+# Ignore live environment files with sensitive data
+live.env
+*.env.live
+production.env
