@@ -6,12 +6,12 @@
 <!-- Hidden translation elements for JavaScript -->
 <div id="no-revenue-data-text" style="display: none;">{{ _('No patient revenue data available.') }}</div>
 <div id="error-loading-data-text" style="display: none;">{{ _('Error loading data.') }}</div>
-<div id="no-practice-report-text" style="display: none;">{{ _('No practice report generated yet. Click \'Generate New Report\' to create one.') }}</div>
+<div id="no-practice-report-text" style="display: none;">{{ _('No practice report generated yet. Click "Generate New Report" to create one.') }}</div>
 
 <div class="container-fluid py-4">
     <h1 class="h3 mb-4"><i class="bi bi-graph-up"></i> {{ _('Practice Analytics') }}</h1>
     
-    <!-- Summary Cards -->
+    <!-- KEY METRICS CARDS (Always Visible) -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card shadow-sm stats-card">
@@ -41,856 +41,721 @@
             <div class="card shadow-sm stats-card bg-success text-white">
                 <div class="card-body">
                     <h5 class="card-title">{{ _('Avg. Monthly Revenue') }}</h5>
-                    {# Format as currency if possible, adjust locale as needed #}
-                    <h2 class="display-4">£{{ "{:,.2f}".format(avg_monthly_revenue or 0) }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mt-3"> 
-            <div class="card shadow-sm stats-card">
-                <div class="card-body">
-                    <h5 class="card-title">{{ _('Avg. Treatments/Patient') }}</h5>
-                    <h2 class="display-4">{{ avg_treatments }}</h2>
-                </div>
-            </div>
-        </div>
-        {# New Card for CostaSpine Revenue and Fee #}
-        <div class="col-md-3 mt-3"> 
-            <div class="card shadow-sm stats-card bg-info text-white" id="costaspineFeeCard" style="cursor: pointer;">
-                <div class="card-body">
-                    <h5 class="card-title">{{ _('%(clinic_name)s Fee (This Week)', clinic_name=clinic_name) }}</h5>
-                    <h2 class="display-5 mb-1">£{{ "{:,.2f}".format(costaspine_service_fee_weekly or 0) }}</h2>
-                    <small class="text-light">{{ _('Total Weekly %(clinic_name)s Revenue:', clinic_name=clinic_name) }} £{{ "{:,.2f}".format(costaspine_revenue_weekly_data or 0) }}</small>
-                </div>
-            </div>
-        </div>
-        {# New Card for Estimated Tax -> Changed to Autonomo Contribution #}
-        <div class="col-md-3 mt-3"> 
-            <div class="card shadow-sm stats-card bg-secondary text-white"> {# Changed from bg-warning text-dark #}
-                <div class="card-body">
-                    <h5 class="card-title">{{ _('Est. Total Autónomo Contr. (€)') }}</h5>
-                    <h2 class="display-5 mb-1">
-                        {% if total_autonomo_contribution == "N/A" %}
-                            {{ total_autonomo_contribution }}
-                        {% else %}
-                            €{{ "{:,.2f}".format(total_autonomo_contribution or 0) }}
-                        {% endif %}
-                    </h2>
-                    <small class="text-muted-white">{{ _('Sum of estimated monthly contributions (€)') }}</small> {# Adjusted text color #}
-                </div>
-            </div>
-        </div>
-        {# New Card for Recently Inactive Patients #}
-        <div class="col-md-3 mt-3"> 
-            <div class="card shadow-sm stats-card" id="inactive-patients-box" style="cursor: pointer;" title="{{ _('Click to see list') }}">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-person-dash"></i> {{ _('Inactive Patients (>90d)') }}</h5>
-                    <h2 class="display-4"><span id="inactive-patients-count">...</span></h2>
-                </div>
-            </div>
-        </div>
-        {# New Card for Monthly Cancellations #}
-        <div class="col-md-3 mt-3"> 
-            <div class="card shadow-sm stats-card bg-warning text-dark">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-calendar-x"></i> {{ _('Cancellations This Month') }}</h5>
-                    <h2 class="display-4"><span id="monthly-cancellations-count">...</span></h2>
-                </div>
-            </div>
-        </div>
-        {# New Card for Cancellation Rate #}
-        <div class="col-md-3 mt-3"> 
-            <div class="card shadow-sm stats-card bg-danger text-white">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-percent"></i> {{ _('Avg. Cancellation Rate') }}</h5>
-                    <h2 class="display-4"><span id="avg-cancellation-rate">...</span>%</h2>
+                    <h2 class="display-4">€{{ "{:,.2f}".format(avg_monthly_revenue or 0) }}</h2>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- ANALYTICS SECTIONS WITH DROPDOWNS -->
     
-    <!-- Treatment & Patient Charts -->
-    <div class="row mb-4">
-        <div class="col-lg-6 mb-4" id="treatmentsChartCard">
-            <div class="card shadow-sm h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">{{ _('Treatments by Month') }}</h5>
-                </div>
-                <div class="card-body d-flex flex-column">
-                    <canvas id="treatmentsChart"></canvas>
-                    <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
-                </div>
-            </div>
+    <!-- 1. PRACTICE OVERVIEW SECTION -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <button class="btn btn-link text-decoration-none fw-bold d-flex align-items-center justify-content-between w-100" 
+                        type="button" data-bs-toggle="collapse" data-bs-target="#practiceOverview" 
+                        aria-expanded="true" aria-controls="practiceOverview">
+                    <span><i class="bi bi-activity me-2"></i>{{ _('Practice Overview') }}</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+            </h5>
         </div>
-        <div class="col-lg-6 mb-4" id="patientsChartCard">
-            <div class="card shadow-sm h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">{{ _('New Patients by Month') }}</h5>
+        <div id="practiceOverview" class="collapse show">
+            <div class="card-body">
+                <div class="row">
+                    <!-- Key Practice Metrics -->
+                    <div class="col-md-4 mb-3">
+                        <div class="card stats-card">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ _('Avg. Treatments/Patient') }}</h6>
+                                <h3 class="display-6">{{ avg_treatments }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3" id="inactive-patients-box" style="cursor: pointer;" title="{{ _('Click to see list') }}">
+                        <div class="card stats-card bg-warning text-white">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="bi bi-person-dash"></i> {{ _('Inactive Patients') }} (>90d)</h6>
+                                <h3 class="display-6"><span id="inactive-patients-count">...</span></h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card stats-card bg-danger text-white">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="bi bi-percent"></i> {{ _('Avg. Cancellation Rate') }}</h6>
+                                <h3 class="display-6"><span id="avg-cancellation-rate">...</span>%</h3>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body d-flex flex-column">
-                    <canvas id="patientsChart"></canvas>
-                    <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Revenue Charts -->
-    <div class="row mb-4">
-        <div class="col-lg-6 mb-4" id="revenueByVisitTypeChartCard">
-            <div class="card shadow-sm h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">{{ _('Revenue by Visit Type') }}</h5>
-                </div>
-                <div class="card-body d-flex flex-column">
-                    <canvas id="revenueByVisitTypeChart"></canvas>
-                    <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6 mb-4" id="revenueByLocationChartCard">
-            <div class="card shadow-sm h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">{{ _('Revenue by Location (Top 10)') }}</h5>
-                </div>
-                <div class="card-body d-flex flex-column">
-                    <canvas id="revenueByLocationChart"></canvas>
-                    <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Other Analytics Charts -->
-    <div class="row mb-4">
-        <div class="col-lg-4 mb-4" id="diagnosesChartCard"> 
-            <div class="card shadow-sm h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">{{ _('Common Diagnoses') }}</h5>
-                </div>
-                <div class="card-body d-flex flex-column">
-                    <canvas id="diagnosesChart"></canvas>
-                    <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4 mb-4" id="statusChartCard">
-            <div class="card shadow-sm h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">{{ _('Patient Status Distribution') }}</h5>
-                </div>
-                <div class="card-body d-flex flex-column">
-                    <canvas id="statusChart"></canvas>
-                    <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4 mb-4" id="paymentMethodChartCard"> 
-            <div class="card shadow-sm h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">{{ _('Payment Method Distribution') }}</h5>
-                </div>
-                <div class="card-body d-flex flex-column">
-                    <canvas id="paymentMethodChart"></canvas>
-                    <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
+                <!-- Core Charts: Treatments and Patients Trends -->
+                <div class="row">
+                    <div class="col-lg-6 mb-4" id="treatmentsChartCard">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">{{ _('Treatments by Month') }}</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="treatmentsChart" style="max-height: 300px;"></canvas>
+                                <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 mb-4" id="patientsChartCard">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">{{ _('New Patients by Month') }}</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="patientsChart" style="max-height: 300px;"></canvas>
+                                <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Cancellation Analytics Charts -->
-    <div class="row mb-4">
-        <div class="col-lg-6 mb-4" id="cancellationsChartCard">
-            <div class="card shadow-sm h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-calendar-x"></i> {{ _('Cancellations by Month') }}</h5>
-                </div>
-                <div class="card-body d-flex flex-column">
-                    <canvas id="cancellationsChart"></canvas>
-                    <p class="text-center text-muted d-none no-data-message">{{ _('No cancellation data available to display.') }}</p>
-                </div>
-            </div>
+    <!-- 2. REVENUE ANALYSIS SECTION -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <button class="btn btn-link text-decoration-none fw-bold d-flex align-items-center justify-content-between w-100" 
+                        type="button" data-bs-toggle="collapse" data-bs-target="#revenueAnalysis" 
+                        aria-expanded="false" aria-controls="revenueAnalysis">
+                    <span><i class="bi bi-currency-pound me-2"></i>{{ _('Revenue Analysis') }}</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+            </h5>
         </div>
-        <div class="col-lg-6 mb-4" id="cancellationRatesChartCard">
-            <div class="card shadow-sm h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-percent"></i> {{ _('Cancellation Rate by Month') }}</h5>
+        <div id="revenueAnalysis" class="collapse">
+            <div class="card-body">
+                <div class="row mb-4">
+                    <!-- Revenue Cards -->
+                    <div class="col-md-12 mb-3" id="costaspineFeeCard" style="cursor: pointer;">
+                        <div class="card stats-card bg-info text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ clinic_name }} {{ _('Fee (This Week)') }}</h6>
+                                <h3 class="display-6">€{{ "{:,.2f}".format(costaspine_service_fee_weekly or 0) }}</h3>
+                                <small class="text-light">{{ _('Total Weekly') }} {{ clinic_name }} {{ _('Revenue:') }} €{{ "{:,.2f}".format(costaspine_revenue_weekly_data or 0) }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- COMMENTED OUT: Autónomo Contribution Card - Not needed for now
+                    <div class="col-md-6 mb-3">
+                        <div class="card stats-card bg-secondary text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ _('Est. Total Autónomo Contr.') }} (€)</h6>
+                                <h3 class="display-6">
+                                    {% if total_autonomo_contribution == "N/A" %}
+                                        {{ total_autonomo_contribution }}
+                                    {% else %}
+                                        €{{ "{:,.2f}".format(total_autonomo_contribution or 0) }}
+                                    {% endif %}
+                                </h3>
+                                <small class="text-muted-white">{{ _('Sum of estimated monthly contributions') }} (€)</small>
+                            </div>
+                        </div>
+                    </div>
+                    -->
                 </div>
-                <div class="card-body d-flex flex-column">
-                    <canvas id="cancellationRatesChart"></canvas>
-                    <p class="text-center text-muted d-none no-data-message">{{ _('No cancellation rate data available to display.') }}</p>
+                <!-- Revenue Charts -->
+                <div class="row">
+                    <div class="col-lg-6 mb-4" id="revenueByVisitTypeChartCard">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">{{ _('Revenue by Visit Type') }}</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="revenueByVisitTypeChart" style="max-height: 300px;"></canvas>
+                                <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0"><i class="bi bi-trophy"></i> {{ _('Top Patients by Revenue') }}</h6>
+                            </div>
+                            <div class="card-body">
+                                <ol id="topPatientsList" class="list-group list-group-numbered list-group-flush">
+                                    <li class="list-group-item">{{ _('Loading...') }}</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Top Patients by Revenue -->
-    <div class="row mb-4">
-        <div class="col-lg-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-trophy"></i> {{ _('Top Patients by Revenue') }}</h5>
-                </div>
-                <div class="card-body">
-                    <ol id="topPatientsList" class="list-group list-group-numbered list-group-flush">
-                        <li class="list-group-item">{{ _('Loading...') }}</li>
-                    </ol>
+    <!-- 3. PATIENT INSIGHTS SECTION -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <button class="btn btn-link text-decoration-none fw-bold d-flex align-items-center justify-content-between w-100" 
+                        type="button" data-bs-toggle="collapse" data-bs-target="#patientInsights" 
+                        aria-expanded="false" aria-controls="patientInsights">
+                    <span><i class="bi bi-people me-2"></i>{{ _('Patient Insights') }}</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+            </h5>
+        </div>
+        <div id="patientInsights" class="collapse">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-6 mb-4" id="diagnosesChartCard"> 
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">{{ _('Common Diagnoses') }}</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="diagnosesChart" style="max-height: 300px;"></canvas>
+                                <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 mb-4" id="statusChartCard">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">{{ _('Patient Status Distribution') }}</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="statusChart" style="max-height: 300px;"></canvas>
+                                <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- AI Generated Report -->
-    <div class="row mb-4">
-        <div class="col-lg-12">
-            <div class="card shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0"><i class="bi bi-robot"></i> {{ _('AI Practice Insights') }}</h5>
-                    {# Form to trigger new report generation #}
-                    <form action="{{ url_for('main.generate_new_analytics_report') }}" method="POST" class="ms-3">
+    <!-- 4. AI INSIGHTS SECTION -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <button class="btn btn-link text-decoration-none fw-bold d-flex align-items-center justify-content-between w-100" 
+                        type="button" data-bs-toggle="collapse" data-bs-target="#aiInsights" 
+                        aria-expanded="false" aria-controls="aiInsights">
+                    <span><i class="bi bi-robot me-2"></i>{{ _('AI Practice Insights') }}</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+            </h5>
+        </div>
+        <div id="aiInsights" class="collapse">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div></div>
+                    <form action="{{ url_for('main.generate_new_analytics_report') }}" method="POST">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                        <button type="submit" class="btn btn-primary">
                             <i class="bi bi-arrow-clockwise"></i> {{ _('Generate New Report') }}
                         </button>
                     </form>
                 </div>
-                <div class="card-body">
-                    {# Render the HTML report content using the 'safe' filter #}
-                    {% if ai_report_html %}
-                        <div class="ai-report-content"> {# Optional: Add a wrapper div for specific styling #}
-                           {{ ai_report_html | safe }}
+                
+                {% if ai_report_html %}
+                    <div class="ai-report-container">
+                        {% if ai_report_generated_at %}
+                            <div class="text-muted mb-3">
+                                <small>
+                                    <i class="bi bi-clock"></i>
+                                    {{ _('Report generated on:') }} {{ ai_report_generated_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC
+                                </small>
+                                <br>
+                                <small>
+                                    <i class="bi bi-robot"></i>
+                                    {{ _('Using DeepSeek AI based on current practice data.') }}
+                                </small>
+                            </div>
+                        {% endif %}
+                        <div class="ai-report-content">
+                            {{ ai_report_html|safe }}
                         </div>
-                    {% endif %}
-                </div>
-                 <div class="card-footer text-muted small">
-                    {% if ai_report_generated_at %}
-                        {{ _('Report generated on:') }} {{ ai_report_generated_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC
-                    {% else %}
-                         {# Keep this fallback or adjust if needed #}
-                        {{ _('Using DeepSeek AI based on current practice data.') }}
-                    {% endif %}
-                </div>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i class="bi bi-robot"></i>
+                        <p>{{ _('No practice report generated yet. Click "Generate New Report" to create one.') }}</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
 
 </div>
 
-<!-- CostaSpine Fee Details Modal -->
+<!-- REMOVED SECTIONS (commented for reference):
+     - Cancellations by Month chart (redundant with cancellation rate metric)
+     - Cancellation Rate by Month chart (replaced with single metric)
+     - Revenue by Location chart (less useful for single practitioner)
+     - Payment Method Distribution (administrative detail, not strategic)
+     - Monthly Cancellations card (consolidated into overview)
+-->
+
+<!-- Fee Breakdown Modal (preserved) -->
 <div class="modal fade" id="costaspineFeeModal" tabindex="-1" aria-labelledby="costaspineFeeModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="costaspineFeeModalLabel"><i class="bi bi-calculator"></i> {{ _('%(clinic_name)s Fee Breakdown (%(percentage)s%%)', clinic_name=clinic_name, percentage=clinic_percentage) }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
-      </div>
-      <div class="modal-body">
-        <p>{{ _("Total fee calculated based on treatments logged at '%(clinic_name)s' location with a fee.", clinic_name=clinic_name) }}</p>
-        <table class="table">
-          <tbody>
-            <tr>
-              <th>{{ _('Total (All Time):') }}</th>
-              <td><span id="feeTotal">{{ _('Loading...') }}</span></td>
-            </tr>
-            <tr>
-              <th>{{ _('This Year:') }}</th>
-              <td><span id="feeYear">{{ _('Loading...') }}</span></td>
-            </tr>
-            <tr>
-              <th>{{ _('This Month:') }}</th>
-              <td><span id="feeMonth">{{ _('Loading...') }}</span></td>
-            </tr>
-            <tr>
-              <th>{{ _('This Week:') }}</th>
-              <td><span id="feeWeek">{{ _('Loading...') }}</span></td>
-            </tr>
-          </tbody>
-        </table>
-        <small class="text-muted">{{ _('Calculations are based on treatment dates.') }}</small>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
-      </div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="costaspineFeeModalLabel"><i class="bi bi-calculator"></i> {{ clinic_name }} {{ _('Fee Breakdown') }} ({{ clinic_percentage }}%)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ _("Total fee calculated based on treatments logged at") }} '{{ clinic_name }}' {{ _("location with a fee.") }}</p>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th>{{ _('Total (All Time):') }}</th>
+                            <td><span id="feeTotal">{{ _('Loading...') }}</span></td>
+                        </tr>
+                        <tr>
+                            <th>{{ _('This Year:') }}</th>
+                            <td><span id="feeYear">{{ _('Loading...') }}</span></td>
+                        </tr>
+                        <tr>
+                            <th>{{ _('This Month:') }}</th>
+                            <td><span id="feeMonth">{{ _('Loading...') }}</span></td>
+                        </tr>
+                        <tr>
+                            <th>{{ _('This Week:') }}</th>
+                            <td><span id="feeWeek">{{ _('Loading...') }}</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <small class="text-muted">{{ _('Calculations are based on treatment dates.') }}</small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
-<!-- Modal for Inactive Patients -->
+<!-- Inactive Patients Modal (preserved) -->
 <div class="modal fade" id="inactivePatientsModal" tabindex="-1" aria-labelledby="inactivePatientsModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="inactivePatientsModalLabel"><i class="bi bi-person-dash"></i> {{ _('Inactive Patients (>90d)') }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
-      </div>
-      <div class="modal-body">
-        <p>{{ _("The following active patients have not had a treatment logged in the last 90 days.") }}</p>
-        <ul id="inactivePatientsList" class="list-group">
-          <!-- Patient list will be populated by JS -->
-        </ul>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
-      </div>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inactivePatientsModalLabel"><i class="bi bi-person-dash"></i> {{ _('Inactive Patients') }} (>90d)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ _("The following active patients have not had a treatment logged in the last 90 days.") }}</p>
+                <div id="inactivePatientsList">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script>
-    // Helper function for consistent chart colors
-    const chartColors = [
-        'rgba(52, 152, 219, 0.7)', 'rgba(46, 204, 113, 0.7)', 'rgba(155, 89, 182, 0.7)', 
-        'rgba(241, 196, 15, 0.7)', 'rgba(230, 126, 34, 0.7)', 'rgba(231, 76, 60, 0.7)',  
-        'rgba(52, 73, 94, 0.7)',   'rgba(26, 188, 156, 0.7)', 'rgba(149, 165, 166, 0.7)', 
-        'rgba(41, 128, 185, 0.7)' 
-    ];
-    const chartBorderColors = chartColors.map(color => color.replace('0.7', '1'));
-    const chartBackgroundColors = chartColors.map(color => color.replace('0.7', '0.2'));
+// Chart configuration with fixed sizing
+Chart.defaults.responsive = true;
+Chart.defaults.maintainAspectRatio = false;
 
-    // Store chart instances
-    let chartInstances = {};
+// Global color schemes
+const chartColors = [
+    'rgba(52, 152, 219, 0.7)', 'rgba(46, 204, 113, 0.7)', 'rgba(155, 89, 182, 0.7)',
+    'rgba(241, 196, 15, 0.7)', 'rgba(230, 126, 34, 0.7)', 'rgba(231, 76, 60, 0.7)',
+    'rgba(52, 73, 94, 0.7)',   'rgba(26, 188, 156, 0.7)', 'rgba(149, 165, 166, 0.7)',
+    'rgba(41, 128, 185, 0.7)'
+];
+const chartBorderColors = chartColors.map(color => color.replace('0.7', '1'));
+const chartBackgroundColors = chartColors.map(color => color.replace('0.7', '0.2'));
 
-    // Helper function to fetch chart data
-    async function fetchChartData(url) {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                console.error(`Error fetching ${url}: ${response.statusText}`);
-                return null;
-            }
-            return await response.json();
-        } catch (error) {
-            console.error(`Error fetching chart data from ${url}:`, error);
-            return null; // Return null or an empty structure on error
+// Chart storage for cleanup
+const activeCharts = {};
+
+// Utility function to fetch chart data
+async function fetchChartData(url) {
+    try {
+        console.log(`Fetching data from: ${url}`);
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.error(`Error fetching ${url}: ${response.status} ${response.statusText}`);
+            return null;
         }
+        const data = await response.json();
+        console.log(`Data received from ${url}:`, data);
+        return data;
+    } catch (error) {
+        console.error(`Error fetching chart data from ${url}:`, error);
+        return null;
+    }
+}
+
+// Utility function to render or update charts with proper cleanup
+function renderOrUpdateChart(canvasId, cardId, apiData, chartConfigBuilderFn) {
+    const canvas = document.getElementById(canvasId);
+    const card = document.getElementById(cardId);
+    const noDataMessageEl = card ? card.querySelector('.no-data-message') : null;
+
+    if (!canvas || !card || !noDataMessageEl) {
+        console.error(`Elements not found for chart: ${canvasId}, card: ${cardId}`);
+        if (card) card.style.display = 'none';
+        return;
     }
 
-    // New helper function to render chart or show message / hide card
-    function renderOrUpdateChart(canvasId, cardId, apiData, chartConfigBuilderFn) {
-        const canvas = document.getElementById(canvasId);
-        const card = document.getElementById(cardId);
-        const noDataMessageEl = card ? card.querySelector('.no-data-message') : null;
+    // Destroy existing chart to prevent growing issue
+    if (activeCharts[canvasId]) {
+        activeCharts[canvasId].destroy();
+        delete activeCharts[canvasId];
+    }
 
-        if (!canvas || !card || !noDataMessageEl) {
-            console.error(`Elements not found for chart: ${canvasId}, card: ${cardId}`);
-            if (card) card.style.display = 'none'; // Hide card if elements are missing
+    if (apiData === null) {
+        console.error(`No API data for ${canvasId}. Hiding card.`);
+        card.style.display = 'none';
+        return;
+    }
+
+    const chartConfig = chartConfigBuilderFn(apiData);
+
+    // Check if data is empty
+    if (chartConfig && chartConfig.data && chartConfig.data.datasets && chartConfig.data.datasets.length > 0) {
+        const hasData = chartConfig.data.datasets.some(dataset => {
+            if (!dataset.data || dataset.data.length === 0) return false;
+            return dataset.data.some(value => value !== null && value !== undefined && value !== 0);
+        });
+
+        if (!hasData) {
+            canvas.style.display = 'none';
+            noDataMessageEl.classList.remove('d-none');
             return;
         }
+    } else {
+        canvas.style.display = 'none';
+        noDataMessageEl.classList.remove('d-none');
+        return;
+    }
 
-        if (apiData === null) { // Fetch error
-            console.error(`No API data for ${canvasId}. Hiding card.`);
-            card.style.display = 'none';
-            return;
+    // Show chart, hide no-data message
+    canvas.style.display = 'block';
+    noDataMessageEl.classList.add('d-none');
+
+    // Create new chart with responsive config
+    const ctx = canvas.getContext('2d');
+    activeCharts[canvasId] = new Chart(ctx, {
+        ...chartConfig,
+        options: {
+            ...chartConfig.options,
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                ...chartConfig.options?.plugins,
+                legend: {
+                    ...chartConfig.options?.plugins?.legend,
+                    display: true,
+                    position: 'top'
+                }
+            }
         }
+    });
+}
 
-        const chartConfig = chartConfigBuilderFn(apiData);
-
-        let isDataEffectivelyEmpty = true;
-        if (chartConfig && chartConfig.data && chartConfig.data.datasets && chartConfig.data.datasets.length > 0) {
-            isDataEffectivelyEmpty = chartConfig.data.datasets.every(dataset => {
-                if (!dataset.data || dataset.data.length === 0) return true;
-                // Check if all data points are zero, null, or undefined
-                return dataset.data.every(point => {
-                    if (point === null || typeof point === 'undefined') return true;
-                    // Convert to number and check if it's zero
-                    const numValue = Number(point);
-                    return isNaN(numValue) || numValue === 0;
-                });
-            });
+// Chart configuration builders
+function buildTreatmentsChart(data) {
+    return {
+        type: 'line',
+        data: {
+            labels: data.map(item => item.month),
+            datasets: [{
+                label: '{{ _("Treatments") }}',
+                data: data.map(item => item.count),
+                borderColor: chartBorderColors[0],
+                backgroundColor: chartBackgroundColors[0],
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            }
         }
+    };
+}
+
+function buildPatientsChart(data) {
+    return {
+        type: 'line',
+        data: {
+            labels: data.map(item => item.month),
+            datasets: [{
+                label: '{{ _("New Patients") }}',
+                data: data.map(item => item.count),
+                borderColor: chartBorderColors[1],
+                backgroundColor: chartBackgroundColors[1],
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    };
+}
+
+function buildRevenueByVisitTypeChart(data) {
+    return {
+        type: 'doughnut',
+        data: {
+            labels: data.map(item => item.treatment_type || 'Unknown'),
+            datasets: [{
+                data: data.map(item => item.total_fee),
+                backgroundColor: chartColors.slice(0, data.length),
+                borderColor: chartBorderColors.slice(0, data.length),
+                borderWidth: 2
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    };
+}
+
+function buildDiagnosesChart(data) {
+    return {
+        type: 'bar',
+        data: {
+            labels: data.map(item => item.diagnosis),
+            datasets: [{
+                label: '{{ _("Frequency") }}',
+                data: data.map(item => item.count),
+                backgroundColor: chartColors.slice(0, data.length),
+                borderColor: chartBorderColors.slice(0, data.length),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    };
+}
+
+function buildStatusChart(data) {
+    return {
+        type: 'pie',
+        data: {
+            labels: data.map(item => item.status),
+            datasets: [{
+                data: data.map(item => item.count),
+                backgroundColor: chartColors.slice(0, data.length),
+                borderColor: chartBorderColors.slice(0, data.length),
+                borderWidth: 2
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    };
+}
+
+// Load chart data only when sections are expanded
+document.addEventListener('DOMContentLoaded', function() {
+    // Load overview charts immediately (practice overview is expanded by default)
+    loadPracticeOverviewCharts();
+    
+    // Load other data when sections are expanded
+    const revenueCollapse = document.getElementById('revenueAnalysis');
+    const patientCollapse = document.getElementById('patientInsights');
+    
+    revenueCollapse.addEventListener('shown.bs.collapse', loadRevenueAnalysisCharts);
+    patientCollapse.addEventListener('shown.bs.collapse', loadPatientInsightsCharts);
+    
+    // Load other data
+    loadInactivePatientsCount();
+    loadCancellationData();
+    loadTopPatients();
+});
+
+async function loadPracticeOverviewCharts() {
+    // Treatments by month
+    const treatmentsData = await fetchChartData('/api/analytics/treatments-by-month');
+    renderOrUpdateChart('treatmentsChart', 'treatmentsChartCard', treatmentsData, buildTreatmentsChart);
+    
+    // Patients by month
+    const patientsData = await fetchChartData('/api/analytics/patients-by-month');
+    renderOrUpdateChart('patientsChart', 'patientsChartCard', patientsData, buildPatientsChart);
+}
+
+async function loadRevenueAnalysisCharts() {
+    // Revenue by visit type
+    const revenueData = await fetchChartData('/api/analytics/revenue-by-visit-type');
+    console.log('Revenue by visit type data:', revenueData);
+    renderOrUpdateChart('revenueByVisitTypeChart', 'revenueByVisitTypeChartCard', revenueData, buildRevenueByVisitTypeChart);
+}
+
+async function loadPatientInsightsCharts() {
+    // Common diagnoses
+    const diagnosesData = await fetchChartData('/api/analytics/common-diagnoses');
+    renderOrUpdateChart('diagnosesChart', 'diagnosesChartCard', diagnosesData, buildDiagnosesChart);
+    
+    // Patient status
+    const statusData = await fetchChartData('/api/analytics/patient-status');
+    renderOrUpdateChart('statusChart', 'statusChartCard', statusData, buildStatusChart);
+}
+
+// Load inactive patients count
+async function loadInactivePatientsCount() {
+    try {
+        const response = await fetch('/api/analytics/recently-inactive-patients');
+        const data = await response.json();
         
-        // Show chart even with minimal data - be less restrictive
-        if (!chartConfig || !chartConfig.data) {
-            isDataEffectivelyEmpty = true;
-        } else if (chartConfig.data.datasets && chartConfig.data.datasets.length > 0) {
-            // Check if there's any meaningful data
-            const hasAnyData = chartConfig.data.datasets.some(dataset => {
-                return dataset.data && dataset.data.length > 0 && 
-                       dataset.data.some(point => {
-                           const numValue = Number(point);
-                           return !isNaN(numValue) && numValue > 0;
-                       });
-            });
-            isDataEffectivelyEmpty = !hasAnyData;
+        if (response.ok) {
+            document.getElementById('inactive-patients-count').textContent = data.inactive_patients?.length || 0;
+        } else {
+            console.error('Error loading inactive patients:', data.error);
+            document.getElementById('inactive-patients-count').textContent = '?';
         }
+    } catch (error) {
+        console.error('Error fetching inactive patients:', error);
+        document.getElementById('inactive-patients-count').textContent = '?';
+    }
+}
 
+// Load cancellation data
+async function loadCancellationData() {
+    try {
+        const response = await fetch('/api/analytics/cancellation-rates');
+        const data = await response.json();
+        
+        if (response.ok && data.length > 0) {
+            const avgRate = data.reduce((sum, item) => sum + (item.cancellation_rate || 0), 0) / data.length;
+            document.getElementById('avg-cancellation-rate').textContent = avgRate.toFixed(1);
+        } else {
+            document.getElementById('avg-cancellation-rate').textContent = '0.0';
+        }
+    } catch (error) {
+        console.error('Error fetching cancellation data:', error);
+        document.getElementById('avg-cancellation-rate').textContent = '?';
+    }
+}
 
-        if (isDataEffectivelyEmpty) {
-            console.log(`No data for ${canvasId}. Hiding card ${cardId}.`);
-            card.style.display = 'none';
-            if (chartInstances[canvasId]) {
-                chartInstances[canvasId].destroy();
-                delete chartInstances[canvasId];
+// Load top patients
+async function loadTopPatients() {
+    try {
+        const response = await fetch('/api/analytics/top-patients-by-revenue');
+        const data = await response.json();
+        
+        console.log('Top patients response:', { ok: response.ok, status: response.status, data });
+        
+        const listElement = document.getElementById('topPatientsList');
+        if (response.ok) {
+            if (data && Array.isArray(data) && data.length > 0) {
+                listElement.innerHTML = data.map((patient, index) => 
+                    `<li class="list-group-item d-flex justify-content-between align-items-center">
+                        ${patient.name || 'Unknown Patient'}
+                        <span class="badge bg-primary rounded-pill">€${(patient.revenue || 0).toFixed(2)}</span>
+                    </li>`
+                ).join('');
+            } else {
+                listElement.innerHTML = '<li class="list-group-item text-muted">{{ _("No revenue data available") }}</li>';
             }
         } else {
-            card.style.display = ''; // Ensure card is visible
-            canvas.style.display = '';
-            noDataMessageEl.classList.add('d-none');
-            
-            const ctx = canvas.getContext('2d');
-            if (chartInstances[canvasId]) {
-                chartInstances[canvasId].destroy();
-            }
-            chartInstances[canvasId] = new Chart(ctx, chartConfig);
+            listElement.innerHTML = `<li class="list-group-item text-danger">API Error: ${data.error || 'Unknown error'}</li>`;
         }
+    } catch (error) {
+        console.error('Error fetching top patients:', error);
+        document.getElementById('topPatientsList').innerHTML = '<li class="list-group-item text-danger">{{ _("Error loading data") }}</li>';
     }
+}
 
-    // Function to load top patients by revenue
-    async function loadTopPatientsRevenue() {
-        const listElement = document.getElementById('topPatientsList');
-        listElement.innerHTML = `<li class="list-group-item">${"{{ _('Loading...') }}"}</li>`; // Show loading state
+// Modal handlers
+document.getElementById('costaspineFeeCard').addEventListener('click', function() {
+    // Load fee data when modal is opened
+    loadCostaspineFeeData();
+    new bootstrap.Modal(document.getElementById('costaspineFeeModal')).show();
+});
 
-        try {
-            const response = await fetch('/api/analytics/top-patients-by-revenue');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
+document.getElementById('inactive-patients-box').addEventListener('click', function() {
+    // Load inactive patients when modal is opened
+    loadInactivePatientsModal();
+    new bootstrap.Modal(document.getElementById('inactivePatientsModal')).show();
+});
 
-            listElement.innerHTML = ''; // Clear loading state
-
-            if (data.length === 0) {
-                listElement.innerHTML = `<li class="list-group-item text-muted">${document.getElementById('no-revenue-data-text').textContent}</li>`;
-            } else {
-                data.forEach(patient => {
-                    const listItem = document.createElement('li');
-                    listItem.className = 'list-group-item d-flex justify-content-between align-items-start';
-                    listItem.innerHTML = `
-                        <div class="ms-2 me-auto">
-                            <div class="fw-bold">${patient.name}</div>
-                        </div>
-                        <span class="badge bg-primary rounded-pill">£${patient.revenue.toFixed(2)}</span>
-                    `;
-                    listElement.appendChild(listItem);
-                });
-            }
-        } catch (error) {
-            console.error('Error loading top patients by revenue:', error);
-            listElement.innerHTML = `<li class="list-group-item text-danger">${document.getElementById('error-loading-data-text').textContent}</li>`;
+async function loadCostaspineFeeData() {
+    try {
+        const response = await fetch('/api/analytics/costaspine-fee-data');
+        const data = await response.json();
+        
+        if (response.ok) {
+            document.getElementById('feeTotal').textContent = `€${data.total_fee.toFixed(2)}`;
+            // Note: You may need to add more specific endpoints for year/month/week breakdowns
+            document.getElementById('feeYear').textContent = `€${data.total_fee.toFixed(2)}`;
+            document.getElementById('feeMonth').textContent = `€${data.total_fee.toFixed(2)}`;
+            document.getElementById('feeWeek').textContent = `€${data.total_fee.toFixed(2)}`;
         }
+    } catch (error) {
+        console.error('Error loading fee data:', error);
     }
+}
 
-    // Function to fetch and display recently inactive patients
-    async function loadRecentlyInactivePatients() {
-        const inactiveCountEl = document.getElementById('inactive-patients-count');
-        const inactiveListBox = document.getElementById('inactive-patients-box');
-        const inactiveModalListEl = document.getElementById('inactivePatientsList');
-        const inactiveModal = new bootstrap.Modal(document.getElementById('inactivePatientsModal'));
-        let inactivePatientData = []; // Store fetched data
-
-        try {
-            const response = await fetch('/api/analytics/inactive-patients');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            
-            inactivePatientData = data.patients || []; // Store the patient list
-            inactiveCountEl.textContent = data.count !== undefined ? data.count : '{{ _("Error") }}';
-
-            // Add click listener to the box
-            if (inactiveListBox) {
-                inactiveListBox.addEventListener('click', () => {
-                    inactiveModalListEl.innerHTML = ''; // Clear previous list
-                    
-                    if (inactivePatientData.length === 0) {
-                        inactiveModalListEl.innerHTML = `<p class="text-muted">${"{{ _('No patients became inactive in the last 7 days.') }}"}</p>`;
-                    } else {
-                        const list = document.createElement('ul');
-                        list.className = 'list-group list-group-flush'; // Use flush list group
-                        inactivePatientData.forEach(patient => {
-                            const listItem = document.createElement('li');
-                            listItem.className = 'list-group-item';
-                            listItem.textContent = patient.name;
-                            // Optionally add date: ` (${new Date(patient.inactive_since).toLocaleDateString()})`
-                            list.appendChild(listItem);
-                        });
-                        inactiveModalListEl.appendChild(list);
-                    }
-                    inactiveModal.show();
-                });
-            }
-
-        } catch (error) {
-            console.error('Error fetching or processing inactive patients:', error);
-            inactiveCountEl.textContent = '{{ _("Error") }}';
-            inactiveModalListEl.innerHTML = `<p class="text-danger">${"{{ _('Could not load patient list.') }}"}</p>`;
+async function loadInactivePatientsModal() {
+    try {
+        const response = await fetch('/api/analytics/recently-inactive-patients');
+        const data = await response.json();
+        
+        const listElement = document.getElementById('inactivePatientsList');
+        if (response.ok && data.inactive_patients && data.inactive_patients.length > 0) {
+            listElement.innerHTML = `
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>{{ _("Patient Name") }}</th>
+                                <th>{{ _("Last Treatment") }}</th>
+                                <th>{{ _("Days Ago") }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.inactive_patients.map(patient => `
+                                <tr>
+                                    <td>${patient.name}</td>
+                                    <td>${patient.last_treatment_date}</td>
+                                    <td>${patient.days_since_last_treatment}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        } else {
+            listElement.innerHTML = '<p class="text-muted">{{ _("No inactive patients found.") }}</p>';
         }
+    } catch (error) {
+        console.error('Error loading inactive patients:', error);
+        document.getElementById('inactivePatientsList').innerHTML = '<p class="text-danger">{{ _("Error loading data") }}</p>';
     }
+}
 
-    document.addEventListener('DOMContentLoaded', async function() { // Make listener async
-        
-        const defaultChartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { precision: 0 }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
-        };
-        const defaultPieChartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right'
-                }
-            }
-        };
-        const revenueChartOptions = {
-            plugins: {
-                legend: { display: true }
-            },
-            scales: {
-                 y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) { return '£' + value.toLocaleString(); }
-                    }
-                }
-            }
-        };
+// Cleanup charts on page unload
+window.addEventListener('beforeunload', function() {
+    Object.values(activeCharts).forEach(chart => chart.destroy());
+});
 
-        // --- Fetch and Render Charts --- 
-
-        // Treatments by Month Chart (Line)
-        const treatmentsApiData = await fetchChartData('/api/analytics/treatments-by-month');
-        renderOrUpdateChart('treatmentsChart', 'treatmentsChartCard', treatmentsApiData, (data) => ({
-            type: 'line',
-            data: {
-                labels: data.map(item => item.month),
-                datasets: [{
-                    label: "{{ _('Treatments') }}",
-                    data: data.map(item => item.count),
-                    borderColor: chartColors[0],
-                    backgroundColor: chartBackgroundColors[0],
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: { ...defaultChartOptions }
-        }));
-
-        // New Patients by Month Chart (Line)
-        const patientsApiData = await fetchChartData('/api/analytics/patients-by-month');
-        renderOrUpdateChart('patientsChart', 'patientsChartCard', patientsApiData, (data) => ({
-            type: 'line',
-            data: {
-                labels: data.map(item => item.month),
-                datasets: [{
-                    label: "{{ _('New Patients') }}",
-                    data: data.map(item => item.count),
-                    borderColor: chartColors[1],
-                    backgroundColor: chartBackgroundColors[1],
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: { ...defaultChartOptions }
-        }));
-        
-        // Revenue by Visit Type (Doughnut)
-        const revenueByVisitTypeApiData = await fetchChartData('/api/analytics/revenue-by-visit-type');
-        renderOrUpdateChart('revenueByVisitTypeChart', 'revenueByVisitTypeChartCard', revenueByVisitTypeApiData, (data) => ({
-            type: 'doughnut',
-            data: {
-                labels: data.map(item => item.treatment_type),
-                datasets: [{
-                    label: "{{ _('Revenue') }}",
-                    data: data.map(item => item.total_fee),
-                    backgroundColor: chartColors,
-                    borderColor: chartBorderColors,
-                    borderWidth: 1
-                }]
-            },
-            options: { ...defaultPieChartOptions, ...revenueChartOptions }
-        }));
-        
-        // Revenue by Location (Bar)
-        const revenueByLocationApiData = await fetchChartData('/api/analytics/revenue-by-location');
-        renderOrUpdateChart('revenueByLocationChart', 'revenueByLocationChartCard', revenueByLocationApiData, (data) => ({
-            type: 'bar',
-            data: {
-                labels: data.map(item => item.location),
-                datasets: [{
-                    label: "{{ _('Revenue') }}",
-                    data: data.map(item => item.total_fee),
-                    backgroundColor: chartColors,
-                    borderColor: chartBorderColors,
-                    borderWidth: 1
-                }]
-            },
-            options: { ...defaultChartOptions, ...revenueChartOptions, indexAxis: 'y' }
-        }));
-
-        // Common Diagnoses (Doughnut)
-        const diagnosesApiData = await fetchChartData('/api/analytics/common-diagnoses');
-        renderOrUpdateChart('diagnosesChart', 'diagnosesChartCard', diagnosesApiData, (data) => ({
-            type: 'doughnut',
-            data: {
-                labels: data.map(item => item.diagnosis),
-                datasets: [{
-                    label: "{{ _('Count') }}",
-                    data: data.map(item => item.count),
-                    backgroundColor: chartColors,
-                    borderColor: chartBorderColors,
-                    borderWidth: 1
-                }]
-            },
-            options: { ...defaultPieChartOptions }
-        }));
-
-        // Patient Status Distribution (Pie)
-        const statusApiData = await fetchChartData('/api/analytics/patient-status');
-        renderOrUpdateChart('statusChart', 'statusChartCard', statusApiData, (data) => {
-            // Transform the data into active/inactive format
-            let activeCount = 0;
-            let inactiveCount = 0;
-            
-            data.forEach(item => {
-                if (item.status === 'Active') {
-                    activeCount = item.count;
-                } else {
-                    inactiveCount += item.count; // Add all non-active to inactive
-                }
-            });
-            
-            return {
-                type: 'pie',
-                data: {
-                    labels: ['{{ _("Active") }}', '{{ _("Inactive") }}'],
-                    datasets: [{
-                        data: [activeCount, inactiveCount],
-                        backgroundColor: [chartColors[1], chartColors[5]],
-                        borderColor: [chartBorderColors[1], chartBorderColors[5]],
-                        borderWidth: 1
-                    }]
-                },
-                options: { ...defaultPieChartOptions }
-            };
-        });
-
-        // Payment Method Distribution (Pie)
-        const paymentMethodApiData = await fetchChartData('/api/analytics/payment-methods');
-        renderOrUpdateChart('paymentMethodChart', 'paymentMethodChartCard', paymentMethodApiData, (data) => ({
-            type: 'pie',
-            data: {
-                labels: data.map(item => item.payment_method),
-                datasets: [{
-                    label: "{{ _('Count') }}",
-                    data: data.map(item => item.count),
-                    backgroundColor: chartColors,
-                    borderColor: chartBorderColors,
-                    borderWidth: 1
-                }]
-            },
-            options: { ...defaultPieChartOptions }
-        }));
-
-        // Cancellations by Month Chart (Line)
-        const cancellationsApiData = await fetchChartData('/api/analytics/cancellations-by-month');
-        renderOrUpdateChart('cancellationsChart', 'cancellationsChartCard', cancellationsApiData, (data) => ({
-            type: 'line',
-            data: {
-                labels: data.map(item => item.month),
-                datasets: [{
-                    label: "{{ _('Cancellations') }}",
-                    data: data.map(item => item.count),
-                    borderColor: '#dc3545', // Red color for cancellations
-                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: { ...defaultChartOptions }
-        }));
-
-        // Cancellation Rate by Month Chart (Line)
-        const cancellationRatesApiData = await fetchChartData('/api/analytics/cancellation-rates');
-        renderOrUpdateChart('cancellationRatesChart', 'cancellationRatesChartCard', cancellationRatesApiData, (data) => ({
-            type: 'line',
-            data: {
-                labels: data.map(item => item.month),
-                datasets: [{
-                    label: "{{ _('Cancellation Rate (%)') }}",
-                    data: data.map(item => item.cancellation_rate),
-                    borderColor: '#fd7e14', // Orange color for rates
-                    backgroundColor: 'rgba(253, 126, 20, 0.1)',
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                ...defaultChartOptions,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            }
-                        }
-                    }
-                }
-            }
-        }));
-
-        // Load cancellation metrics for summary cards
-        loadCancellationMetrics();
-        
-        // --- Load list-based data ---
-        loadTopPatientsRevenue();
-        loadRecentlyInactivePatients();
-        
-        // --- Load CostaSpine Fee Data ---
-        async function loadCostaSpineFeeData() {
-            try {
-                const response = await fetch('/api/analytics/costaspine-service-fee');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                
-                // Check if data contains error
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                // Update modal elements with proper error handling
-                const feeTotal = document.getElementById('feeTotal');
-                const feeYear = document.getElementById('feeYear');
-                const feeMonth = document.getElementById('feeMonth');
-                const feeWeek = document.getElementById('feeWeek');
-                
-                if (feeTotal) feeTotal.textContent = `£${(data.all_time || 0).toFixed(2)}`;
-                if (feeYear) feeYear.textContent = `£${(data.this_year || 0).toFixed(2)}`;
-                if (feeMonth) feeMonth.textContent = `£${(data.this_month || 0).toFixed(2)}`;
-                if (feeWeek) feeWeek.textContent = `£${(data.this_week || 0).toFixed(2)}`;
-                
-                console.log('CostaSpine fee data loaded successfully:', data);
-                
-            } catch (error) {
-                console.error('Error fetching CostaSpine fee data:', error);
-                const errorMsg = '{{ _("No data") }}';
-                
-                const feeTotal = document.getElementById('feeTotal');
-                const feeYear = document.getElementById('feeYear');
-                const feeMonth = document.getElementById('feeMonth');
-                const feeWeek = document.getElementById('feeWeek');
-                
-                if (feeTotal) feeTotal.textContent = errorMsg;
-                if (feeYear) feeYear.textContent = errorMsg;
-                if (feeMonth) feeMonth.textContent = errorMsg;
-                if (feeWeek) feeWeek.textContent = errorMsg;
-            }
-        }
-        
-        loadCostaSpineFeeData();
-        
-        // --- Load Cancellation Metrics Function ---
-        async function loadCancellationMetrics() {
-            try {
-                // Get current month cancellations
-                const currentMonth = new Date().toISOString().substr(0, 7); // YYYY-MM format
-                const cancellationsResponse = await fetch('/api/analytics/cancellations-by-month');
-                const cancellationsData = await cancellationsResponse.json();
-                
-                const currentMonthCancellations = cancellationsData.find(item => item.month === currentMonth);
-                const monthlyCancellationsCount = currentMonthCancellations ? currentMonthCancellations.count : 0;
-                
-                // Get average cancellation rate
-                const ratesResponse = await fetch('/api/analytics/cancellation-rates');
-                const ratesData = await ratesResponse.json();
-                
-                let totalRate = 0;
-                let monthsWithData = 0;
-                ratesData.forEach(item => {
-                    if (item.cancellation_rate > 0) {
-                        totalRate += item.cancellation_rate;
-                        monthsWithData++;
-                    }
-                });
-                
-                const avgCancellationRate = monthsWithData > 0 ? (totalRate / monthsWithData).toFixed(1) : '0.0';
-                
-                // Update the summary cards
-                const monthlyCancellationsElement = document.getElementById('monthly-cancellations-count');
-                const avgCancellationRateElement = document.getElementById('avg-cancellation-rate');
-                
-                if (monthlyCancellationsElement) {
-                    monthlyCancellationsElement.textContent = monthlyCancellationsCount;
-                }
-                
-                if (avgCancellationRateElement) {
-                    avgCancellationRateElement.textContent = avgCancellationRate;
-                }
-                
-            } catch (error) {
-                console.error('Error loading cancellation metrics:', error);
-                
-                // Set default values on error
-                const monthlyCancellationsElement = document.getElementById('monthly-cancellations-count');
-                const avgCancellationRateElement = document.getElementById('avg-cancellation-rate');
-                
-                if (monthlyCancellationsElement) {
-                    monthlyCancellationsElement.textContent = '0';
-                }
-                
-                if (avgCancellationRateElement) {
-                    avgCancellationRateElement.textContent = '0.0';
-                }
-            }
-        }
-        
-        // --- Event Listener for the CostaSpine Fee Card ---
-        document.getElementById('costaspineFeeCard').addEventListener('click', function() {
-            // Show the modal
-            var feeModal = new bootstrap.Modal(document.getElementById('costaspineFeeModal'));
-            
-            // Fetch the detailed fee data from the new API endpoint
-            fetch('/api/analytics/costaspine-fee-data')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        // Handle error
-                        console.error('Error fetching CostaSpine fee data:', data.error);
-                        // Update modal elements with error message
-                        const feeTotal = document.getElementById('feeTotal');
-                        const feeYear = document.getElementById('feeYear');
-                        const feeMonth = document.getElementById('feeMonth');
-                        const feeWeek = document.getElementById('feeWeek');
-                        
-                        if (feeTotal) feeTotal.textContent = data.error;
-                        if (feeYear) feeYear.textContent = data.error;
-                        if (feeMonth) feeMonth.textContent = data.error;
-                        if (feeWeek) feeWeek.textContent = data.error;
-                    } else {
-                        // Update modal elements with fetched data
-                        const feeTotal = document.getElementById('feeTotal');
-                        const feeYear = document.getElementById('feeYear');
-                        const feeMonth = document.getElementById('feeMonth');
-                        const feeWeek = document.getElementById('feeWeek');
-                        
-                        if (feeTotal) feeTotal.textContent = `£${(data.all_time || 0).toFixed(2)}`;
-                        if (feeYear) feeYear.textContent = `£${(data.this_year || 0).toFixed(2)}`;
-                        if (feeMonth) feeMonth.textContent = `£${(data.this_month || 0).toFixed(2)}`;
-                        if (feeWeek) feeWeek.textContent = `£${(data.this_week || 0).toFixed(2)}`;
-                    }
-                });
-        });
-    });
 </script>
 {% endblock %} 

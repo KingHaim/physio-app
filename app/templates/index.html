@@ -316,13 +316,13 @@
     <!-- Dashboard Header Banner -->
     <div class="dashboard-header-banner">
         {% if current_user.first_name %}
-            <h4>{{ _('Welcome back, %(username)s!', username=current_user.first_name) }}</h4>
+            <h4>{{ _('Welcome back,') }} {{ current_user.first_name }}!</h4>
         {% endif %}
         
         {% if current_user.is_in_clinic %}
-            <p>{{ _('Here\'s an overview of your patients and treatments.') }}</p>
+            <p>{{ _('Here is an overview of your patients and treatments.') }}</p>
         {% else %}
-            <p>{{ _('Here\'s an overview of your clinic\'s activity.') }}</p>
+            <p>{{ _('Here is an overview of your clinic activity.') }}</p>
         {% endif %}
         
         {# Subscription Status Display - Hide only for clinic members (not admins) #}

@@ -171,6 +171,144 @@ msgstr "Cambiar contraseña"
 msgid "Enable Calendly Integration"
 msgstr "Habilitar integración de Calendly"
 
+msgid "Enable Google Calendar Integration"
+msgstr "Habilitar integración de Google Calendar"
+
+msgid "Google Calendar Status"
+msgstr "Estado de Google Calendar"
+
+msgid "Not connected"
+msgstr "No conectado"
+
+msgid "Connect Google Calendar"
+msgstr "Conectar Google Calendar"
+
+msgid "Disconnect"
+msgstr "Desconectar"
+
+msgid "Sync Events"
+msgstr "Sincronizar Eventos"
+
+msgid "Last sync:"
+msgstr "Última sincronización:"
+
+msgid "OAuth2 authentication status with Google Calendar"
+msgstr "Estado de autenticación OAuth2 con Google Calendar"
+
+msgid "Click to authorize access to your Google Calendar"
+msgstr "Haz clic para autorizar el acceso a tu Google Calendar"
+
+msgid "Sync events with Google Calendar using your own Google app"
+msgstr "Sincronizar eventos con Google Calendar usando tu propia app de Google"
+
+msgid "Each user configures their own Google Cloud Console app for maximum security and independence"
+msgstr "Cada usuario configura su propia app de Google Cloud Console para máxima seguridad e independencia"
+
+msgid "Your Google Client ID"
+msgstr "Tu Client ID de Google"
+
+msgid "Client ID from your Google Cloud Console"
+msgstr "Client ID de tu Google Cloud Console"
+
+msgid "Your Google Client Secret"
+msgstr "Tu Client Secret de Google"
+
+msgid "Client Secret from your Google Cloud Console"
+msgstr "Client Secret de tu Google Cloud Console"
+
+msgid "Step 1: Configure Your Google App"
+msgstr "Paso 1: Configura tu App de Google"
+
+msgid "Create your own Google Cloud Console project for maximum security and control. Each subscriber manages their own Google integration."
+msgstr "Crea tu propio proyecto en Google Cloud Console para máxima seguridad y control. Cada suscriptor gestiona su propia integración de Google."
+
+msgid "Go to Google Cloud Console"
+msgstr "Ir a Google Cloud Console"
+
+msgid "Add this URI in Google Console:"
+msgstr "Agregar esta URI en Google Console:"
+
+msgid "Google Calendar is fully configured and ready!"
+msgstr "¡Google Calendar está completamente configurado y listo!"
+
+msgid "Step 2: Authorize Access"
+msgstr "Paso 2: Autorizar Acceso"
+
+msgid "Your app is configured. Now authorize access to your Google Calendar."
+msgstr "Tu app está configurada. Ahora autoriza el acceso a tu Google Calendar."
+
+msgid "Authorize Google Calendar Access"
+msgstr "Autorizar Acceso a Google Calendar"
+
+msgid "Disconnect OAuth"
+msgstr "Desconectar OAuth"
+
+msgid "Your Google Calendar Configuration"
+msgstr "Tu Configuración de Google Calendar"
+
+msgid "Google Calendar Configuration"
+msgstr "Configuración de Google Calendar"
+
+msgid "Calendar Sync"
+msgstr "Sincronización de Calendario"
+
+msgid "Manage Integrations"
+msgstr "Gestionar Integraciones"
+
+msgid "Sync Google Calendar"
+msgstr "Sincronizar Google Calendar"
+
+msgid "Enable Google Calendar for all users"
+msgstr "Habilitar Google Calendar para todos los usuarios"
+
+msgid "Google Client ID"
+msgstr "Google Client ID"
+
+msgid "Google Client Secret"
+msgstr "Google Client Secret"
+
+msgid "Redirect URI"
+msgstr "URI de redirección"
+
+msgid "Client ID from Google Cloud Console"
+msgstr "Client ID de Google Cloud Console"
+
+msgid "Client Secret from Google Cloud Console"
+msgstr "Client Secret de Google Cloud Console"
+
+msgid "https://yourdomain.com/google-calendar/callback"
+msgstr "https://tudominio.com/google-calendar/callback"
+
+msgid "Save Google Calendar Configuration"
+msgstr "Guardar Configuración de Google Calendar"
+
+msgid "Admin: Google Calendar Application Configuration"
+msgstr "Admin: Configuración de Aplicación Google Calendar"
+
+msgid "Administrator Configuration"
+msgstr "Configuración de Administrador"
+
+msgid "Configure these settings once to enable Google Calendar for all users. Users will then be able to connect their individual accounts."
+msgstr "Configura estos ajustes una vez para habilitar Google Calendar para todos los usuarios. Los usuarios podrán entonces conectar sus cuentas individuales."
+
+msgid "Get this from Google Cloud Console > APIs & Services > Credentials"
+msgstr "Obtén esto de Google Cloud Console > APIs & Services > Credentials"
+
+msgid "Client Secret from Google Cloud Console (stored encrypted)"
+msgstr "Client Secret de Google Cloud Console (almacenado encriptado)"
+
+msgid "Leave blank to auto-generate. Must match the URI in Google Cloud Console."
+msgstr "Deja en blanco para generar automáticamente. Debe coincidir con la URI en Google Cloud Console."
+
+msgid "Current domain would generate:"
+msgstr "El dominio actual generaría:"
+
+msgid "Configure Google Calendar below first"
+msgstr "Configura Google Calendar abajo primero"
+
+msgid "Google Calendar not configured by administrator"
+msgstr "Google Calendar no configurado por el administrador"
+
 msgid "Calendly API Key"
 msgstr "Clave API de Calendly"
 
@@ -345,8 +483,8 @@ msgstr "No hay datos de ingresos de pacientes disponibles."
 msgid "Error loading data."
 msgstr "Error al cargar datos."
 
-msgid "No practice report generated yet. Click 'Generate New Report' to create one."
-msgstr "Aún no se ha generado ningún informe de práctica. Haz clic en 'Generar nuevo informe' para crear uno."
+msgid "No practice report generated yet. Click \"Generate New Report\" to create one."
+msgstr "Aún no se ha generado ningún informe de práctica. Haz clic en \"Generar nuevo informe\" para crear uno."
 
 msgid "Practice Analytics"
 msgstr "Analíticas de la práctica"
@@ -371,6 +509,138 @@ msgstr "Tarifa de %(clinic_name)s (esta semana)"
 
 msgid "Total Weekly %(clinic_name)s Revenue:"
 msgstr "Ingresos semanales totales de %(clinic_name)s:"
+
+msgid "Total Weekly"
+msgstr "Total Semanal"
+
+msgid "Revenue:"
+msgstr "Ingresos:"
+
+msgid "Fee (This Week)"
+msgstr "Tarifa (esta semana)"
+
+msgid "Fee Breakdown"
+msgstr "Desglose de Tarifas"
+
+msgid "Total fee calculated based on treatments logged at"
+msgstr "Tarifa total calculada basada en tratamientos registrados en"
+
+msgid "location with a fee."
+msgstr "ubicación con tarifa."
+
+msgid "Welcome back,"
+msgstr "Bienvenido de vuelta,"
+
+msgid "has been added successfully!"
+msgstr "ha sido agregado exitosamente!"
+
+msgid "has been updated successfully!"
+msgstr "ha sido actualizado exitosamente!"
+
+msgid "has been deactivated (it has"
+msgstr "ha sido desactivado (tiene"
+
+msgid "treatments and"
+msgstr "tratamientos y"
+
+msgid "appointments)."
+msgstr "citas)."
+
+msgid "has been deleted successfully!"
+msgstr "ha sido eliminado exitosamente!"
+
+msgid "You have"
+msgstr "Tienes"
+
+msgid "days remaining to explore all clinic features"
+msgstr "días restantes para explorar todas las características de la clínica"
+
+msgid "Paid -"
+msgstr "Pagado -"
+
+msgid "Cancellation Rate"
+msgstr "Tasa de Cancelación"
+
+msgid "Inactive Patients"
+msgstr "Pacientes Inactivos"
+
+msgid "Est. Total Autónomo Contr."
+msgstr "Est. Total Autónomo Contr."
+
+msgid "Sum of estimated monthly contributions"
+msgstr "Suma de contribuciones mensuales estimadas"
+
+msgid "Revenue by Location"
+msgstr "Ingresos por Ubicación"
+
+msgid "Top 10"
+msgstr "Top 10"
+
+msgid "Practice Overview"
+msgstr "Resumen de la Práctica"
+
+msgid "Revenue Analysis"
+msgstr "Análisis de Ingresos"
+
+msgid "Patient Insights"
+msgstr "Insights de Pacientes"
+
+msgid "Treatments"
+msgstr "Tratamientos"
+
+msgid "New Patients"
+msgstr "Nuevos Pacientes"
+
+msgid "Frequency"
+msgstr "Frecuencia"
+
+msgid "No revenue data available"
+msgstr "No hay datos de ingresos disponibles"
+
+msgid "Error loading data"
+msgstr "Error cargando datos"
+
+msgid "Patient Name"
+msgstr "Nombre del Paciente"
+
+msgid "Last Treatment"
+msgstr "Último Tratamiento"
+
+msgid "Days Ago"
+msgstr "Días Atrás"
+
+msgid "No inactive patients found."
+msgstr "No se encontraron pacientes inactivos."
+
+msgid "Tax Rate"
+msgstr "Tasa Impositiva"
+
+msgid "Client Secret from Google Cloud Console"
+msgstr "Client Secret de Google Cloud Console"
+
+msgid "stored encrypted"
+msgstr "almacenado encriptado"
+
+msgid "Autónomo Contribution Rate"
+msgstr "Tasa de Contribución Autónomo"
+
+msgid "Clinic Fee Rate"
+msgstr "Tasa de Tarifa Clínica"
+
+msgid "Monthly Amount"
+msgstr "Cantidad Mensual"
+
+msgid "Default:"
+msgstr "Por defecto:"
+
+msgid "for card payments"
+msgstr "para pagos con tarjeta"
+
+msgid "standard autónomo rate"
+msgstr "tasa estándar de autónomo"
+
+msgid "clinic share of revenue"
+msgstr "participación de la clínica en ingresos"
 
 msgid "Est. Total Autónomo Contr. (€)"
 msgstr "Est. cotización autónomo total (€)"
@@ -405,8 +675,8 @@ msgstr "Distribución por estado del paciente"
 msgid "Error loading data."
 msgstr "Error al cargar datos."
 
-msgid "No practice report generated yet. Click 'Generate New Report' to create one."
-msgstr "Aún no se ha generado ningún informe de práctica. Haz clic en 'Generar nuevo informe' para crear uno."
+msgid "No practice report generated yet. Click \"Generate New Report\" to create one."
+msgstr "Aún no se ha generado ningún informe de práctica. Haz clic en \"Generar nuevo informe\" para crear uno."
 
 msgid "Practice Analytics"
 msgstr "Analíticas de la práctica"
@@ -1704,7 +1974,7 @@ msgid "Welcome back, %(username)s!"
 msgstr "¡Bienvenido de vuelta, %(username)s!"
 
 #: app/templates/index.html:250
-msgid "Here's an overview of your clinic's activity."
+msgid "Here is an overview of your clinic activity."
 msgstr "Aquí tienes una vista general de la actividad de tu clínica."
 
 #: app/templates/index.html:259 app/templates/pricing.html:309

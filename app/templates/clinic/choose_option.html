@@ -11,7 +11,7 @@
             <div class="alert alert-info text-center mb-4" role="alert">
                 <i class="bi bi-clock-history me-2"></i>
                 <strong>{{ _('Free Trial Active') }}</strong> - 
-                {{ _('You have %(days)d days remaining to explore all clinic features', days=current_user.trial_days_remaining) }}
+                {{ _('You have') }} {{ current_user.trial_days_remaining }} {{ _('days remaining to explore all clinic features') }}
             </div>
             {% endif %}
             

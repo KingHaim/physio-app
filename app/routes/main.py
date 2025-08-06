@@ -1247,7 +1247,7 @@ def appointments():
     if current_user.is_admin:
         calendly_configured_for_user = True # Admins are implicitly configured to see all
     elif current_user.role == 'physio':
-        if current_user.calendly_api_token and current_user.calendly_user_uri:
+        if current_user.calendly_configured_and_enabled:
             calendly_configured_for_user = True
 
     return render_template('appointments.html',
@@ -1711,7 +1711,7 @@ def review_calendly_bookings():
         unmatched_bookings_list = UnmatchedCalendlyBooking.query.filter_by(status='Pending').all()
         calendly_configured_for_user = True # Admins are implicitly configured to see all
     elif current_user.role == 'physio':
-        if current_user.calendly_api_token and current_user.calendly_user_uri:
+        if current_user.calendly_configured_and_enabled:
             calendly_configured_for_user = True
             unmatched_bookings_list = UnmatchedCalendlyBooking.query.filter_by(
                 status='Pending',
@@ -2396,7 +2396,7 @@ def analytics():
     treatments_query = Treatment.query.join(Patient).filter(Patient.user_id == current_user.id)
     total_treatments = treatments_query.count()
     
-    avg_treatments = total_treatments / total_patients if total_patients > 0 else 0
+    avg_treatments = round(total_treatments / total_patients) if total_patients > 0 else 0
     
     # Base query for revenue calculations
     costaspine_revenue_base_query = db.session.query(
@@ -4805,6 +4805,8 @@ def user_settings():
     api_form = ApiIntegrationsForm()
     financial_form = FinancialSettingsForm()
     
+
+    
     # Get existing fixed costs
     fixed_costs = FixedCost.query.filter_by(user_id=current_user.id).all()
     
@@ -4838,14 +4840,33 @@ def user_settings():
         elif 'submit_api' in request.form:
             if api_form.validate_on_submit():
                 # Handle Calendly integration
-                if api_form.enable_calendly.data:
-                    # User wants Calendly enabled - save the data
+                # Always save the credentials if provided (regardless of enabled state)
+                if api_form.calendly_api_key.data:
                     current_user.calendly_api_token = api_form.calendly_api_key.data
+                if api_form.calendly_user_uri.data:
                     current_user.calendly_user_uri = api_form.calendly_user_uri.data
+                
+                # Set enabled state based on checkbox
+                current_user.calendly_enabled = api_form.enable_calendly.data
+                
+                # Handle Google Calendar integration
+                if api_form.enable_google_calendar.data:
+                    # Save user's own app credentials
+                    current_user.google_calendar_client_id = api_form.google_calendar_client_id.data
+                    current_user.google_calendar_client_secret = api_form.google_calendar_client_secret.data
+                    current_user.google_calendar_redirect_uri = api_form.google_calendar_redirect_uri.data
+                    
+                    # If they have app credentials but no OAuth tokens, redirect to OAuth
+                    if current_user.google_calendar_app_configured and not current_user.google_calendar_configured:
+                        current_user.google_calendar_enabled = True
+                        db.session.commit()  # Save other changes first
+                        flash('App credentials saved! Now complete Google Calendar authorization.', 'info')
+                        return redirect(url_for('google_calendar.connect'))
+                    else:
+                        current_user.google_calendar_enabled = True
                 else:
-                    # User wants Calendly disabled - clear all Calendly data
-                    current_user.calendly_api_token = None
-                    current_user.calendly_user_uri = None
+                    # User wants Google Calendar disabled
+                    current_user.google_calendar_enabled = False
                 
                 db.session.commit()
                 flash('Your API settings have been updated.', 'success')
@@ -4881,6 +4902,7 @@ def user_settings():
                 db.session.commit()
                 flash('Fixed cost has been added.', 'success')
                 return redirect(url_for('main.user_settings'))
+
     
     # Pre-populate forms with existing data (only for GET requests)
     user_form.email.data = current_user.email
@@ -4904,8 +4926,21 @@ def user_settings():
     
     api_form.calendly_api_key.data = current_user.calendly_api_token
     api_form.calendly_user_uri.data = current_user.calendly_user_uri
-    # Only check the box if user has BOTH token and URI configured (indicating they've set it up before)
-    api_form.enable_calendly.data = bool(current_user.calendly_api_token and current_user.calendly_user_uri)
+    # Use the calendly_enabled field to determine checkbox state
+    api_form.enable_calendly.data = current_user.calendly_enabled
+    
+    # Google Calendar form data
+    api_form.enable_google_calendar.data = current_user.google_calendar_enabled
+    api_form.google_calendar_client_id.data = current_user.google_calendar_client_id
+    api_form.google_calendar_client_secret.data = current_user.google_calendar_client_secret
+    api_form.google_calendar_redirect_uri.data = current_user.google_calendar_redirect_uri
+    
+    if current_user.google_calendar_configured:
+        api_form.google_calendar_status.data = "Connected & Ready"
+    elif current_user.google_calendar_app_configured:
+        api_form.google_calendar_status.data = "App configured - needs OAuth"
+    else:
+        api_form.google_calendar_status.data = "Not configured"
     
     financial_form.contribution_base.data = current_user.contribution_base
     

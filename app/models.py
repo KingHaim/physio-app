@@ -165,6 +165,7 @@ class Patient(db.Model):
         else:
             self._anamnesis = None
 
+
 class Location(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -220,6 +221,10 @@ class Treatment(db.Model):
     
     # Field for Calendly integration
     calendly_invitee_uri = db.Column(db.String(255), nullable=True, index=True)
+    
+    # Fields for Google Calendar integration
+    google_calendar_event_id = db.Column(db.String(255), nullable=True, index=True)
+    google_calendar_event_summary = db.Column(db.String(255), nullable=True)
     
     trigger_points = db.relationship('TriggerPoint', backref='treatment', lazy=True)
 
@@ -444,6 +449,19 @@ class User(db.Model, UserMixin):
     calendly_api_key = db.Column(db.String(255), nullable=True)  # Legacy field - will be deprecated
     calendly_api_token_encrypted = db.Column(db.Text, nullable=True)  # New encrypted field
     calendly_user_uri = db.Column(db.String(255), nullable=True)
+    calendly_enabled = db.Column(db.Boolean, default=False)  # Whether Calendly integration is enabled
+    
+    # Google Calendar specific fields
+    google_calendar_token_encrypted = db.Column(db.Text, nullable=True)  # OAuth2 access token
+    google_calendar_refresh_token_encrypted = db.Column(db.Text, nullable=True)  # OAuth2 refresh token
+    google_calendar_enabled = db.Column(db.Boolean, default=False)
+    google_calendar_primary_calendar_id = db.Column(db.String(255), nullable=True)  # Usually 'primary'
+    google_calendar_last_sync = db.Column(db.DateTime, nullable=True)
+    
+    # User's own Google Calendar app credentials (for SaaS multi-tenant)
+    google_calendar_client_id = db.Column(db.Text, nullable=True)  # User's own Client ID
+    google_calendar_client_secret_encrypted = db.Column(db.Text, nullable=True)  # User's own Client Secret (encrypted)
+    google_calendar_redirect_uri = db.Column(db.String(500), nullable=True)  # User's own redirect URI
     
     role = db.Column(db.String(20), default='physio')  # e.g., 'admin', 'physio'
     language = db.Column(db.String(5), default='en') # Add language preference field
@@ -518,6 +536,96 @@ class User(db.Model, UserMixin):
             # Clear both fields
             self.calendly_api_token_encrypted = None
             self.calendly_api_key = None
+
+    @property
+    def calendly_configured_and_enabled(self):
+        """Check if Calendly is both configured (has credentials) and enabled by user."""
+        return (self.calendly_enabled and 
+                self.calendly_api_token is not None and 
+                self.calendly_user_uri is not None)
+    
+    @property
+    def calendly_configured(self):
+        """Check if Calendly has valid credentials (regardless of enabled status)."""
+        return (self.calendly_api_token is not None and 
+                self.calendly_user_uri is not None)
+
+    @property
+    def google_calendar_token(self):
+        """Get the decrypted Google Calendar access token."""
+        if self.google_calendar_token_encrypted:
+            decrypted = decrypt_token(self.google_calendar_token_encrypted)
+            if decrypted:
+                return decrypted
+        return None
+    
+    @google_calendar_token.setter
+    def google_calendar_token(self, value):
+        """Set the Google Calendar access token by encrypting it."""
+        if value:
+            encrypted = encrypt_token(value)
+            if encrypted:
+                self.google_calendar_token_encrypted = encrypted
+            else:
+                self.google_calendar_token_encrypted = None
+        else:
+            self.google_calendar_token_encrypted = None
+
+    @property
+    def google_calendar_refresh_token(self):
+        """Get the decrypted Google Calendar refresh token."""
+        if self.google_calendar_refresh_token_encrypted:
+            decrypted = decrypt_token(self.google_calendar_refresh_token_encrypted)
+            if decrypted:
+                return decrypted
+        return None
+    
+    @google_calendar_refresh_token.setter
+    def google_calendar_refresh_token(self, value):
+        """Set the Google Calendar refresh token by encrypting it."""
+        if value:
+            encrypted = encrypt_token(value)
+            if encrypted:
+                self.google_calendar_refresh_token_encrypted = encrypted
+            else:
+                self.google_calendar_refresh_token_encrypted = None
+        else:
+            self.google_calendar_refresh_token_encrypted = None
+
+    @property
+    def google_calendar_client_secret(self):
+        """Get decrypted Google Calendar client secret."""
+        if self.google_calendar_client_secret_encrypted:
+            decrypted = decrypt_token(self.google_calendar_client_secret_encrypted)
+            if decrypted:
+                return decrypted
+        return None
+    
+    @google_calendar_client_secret.setter
+    def google_calendar_client_secret(self, value):
+        """Set encrypted Google Calendar client secret."""
+        if value:
+            encrypted = encrypt_token(value)
+            if encrypted:
+                self.google_calendar_client_secret_encrypted = encrypted
+            else:
+                self.google_calendar_client_secret_encrypted = None
+        else:
+            self.google_calendar_client_secret_encrypted = None
+
+    @property
+    def google_calendar_app_configured(self):
+        """Check if user has configured their own Google Calendar app credentials."""
+        return (self.google_calendar_client_id is not None and 
+                self.google_calendar_client_secret is not None)
+
+    @property
+    def google_calendar_configured(self):
+        """Check if Google Calendar is properly configured (app + OAuth tokens)."""
+        return (self.google_calendar_enabled and 
+                self.google_calendar_app_configured and
+                self.google_calendar_token is not None and 
+                self.google_calendar_refresh_token is not None)
 
     @property
     def patient_usage_details(self) -> Tuple[int, Optional[int]]:

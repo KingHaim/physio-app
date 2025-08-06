@@ -1,93 +1,128 @@
 {% extends "base.html" %}
 {% block title %}{{ _('User Settings') }}{% endblock %}
 
+{% block head %}
+{{ super() }}
+<style>
+    .settings-section {
+        transition: all 0.3s ease;
+    }
+    .integration-card {
+        transition: all 0.2s ease;
+    }
+    .integration-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .form-feedback {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.875em;
+    }
+    .form-feedback.invalid {
+        color: #dc3545;
+    }
+    .nav-tabs .nav-link {
+        transition: all 0.2s ease;
+    }
+    .nav-tabs .nav-link:hover {
+        background-color: rgba(0,123,255,0.05);
+    }
+    .settings-icon {
+        margin-right: 8px;
+    }
+    .tab-content {
+        padding-top: 1rem;
+    }
+    .fade-in {
+        animation: fadeIn 0.5s;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .success-toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #28a745;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 4px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        z-index: 1000;
+        display: none;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-    <div class="page-header">
-        <h2>{{ _('User Settings') }}</h2>
+    <div class="page-header mb-4">
+        <h2><i class="bi bi-gear settings-icon"></i>{{ _('User Settings') }}</h2>
     </div>
-
-    <!-- Nav tabs -->
+    
     {# Determine active tab #}
     {% set active_tab = request.args.get('tab', 'profile') %}
+    
+    <!-- Nav tabs -->
     <ul class="nav nav-tabs mb-3" id="userSettingsTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link {{ 'active' if active_tab == 'profile' else '' }}" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-tab-pane" type="button" role="tab" aria-controls="profile-tab-pane" aria-selected="{{ 'true' if active_tab == 'profile' else 'false' }}">{{ _('Personal Information') }}</button>
+            <button class="nav-link {{ 'active' if active_tab == 'profile' else '' }}" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-tab-pane" type="button" role="tab" aria-controls="profile-tab-pane" aria-selected="{{ 'true' if active_tab == 'profile' else 'false' }}">
+                <i class="bi bi-person"></i> {{ _('Personal Information') }}
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link {{ 'active' if active_tab == 'clinic' else '' }}" id="clinic-tab" data-bs-toggle="tab" data-bs-target="#clinic-tab-pane" type="button" role="tab" aria-controls="clinic-tab-pane" aria-selected="{{ 'true' if active_tab == 'clinic' else 'false' }}">{{ _('Clinic Information') }}</button>
+            <button class="nav-link {{ 'active' if active_tab == 'clinic' else '' }}" id="clinic-tab" data-bs-toggle="tab" data-bs-target="#clinic-tab-pane" type="button" role="tab" aria-controls="clinic-tab-pane" aria-selected="{{ 'true' if active_tab == 'clinic' else 'false' }}">
+                <i class="bi bi-building"></i> {{ _('Clinic Information') }}
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link {{ 'active' if active_tab == 'api' else '' }}" id="api-tab" data-bs-toggle="tab" data-bs-target="#api-tab-pane" type="button" role="tab" aria-controls="api-tab-pane" aria-selected="{{ 'true' if active_tab == 'api' else 'false' }}">{{ _('API Integrations') }}</button>
+            <button class="nav-link {{ 'active' if active_tab == 'api' else '' }}" id="api-tab" data-bs-toggle="tab" data-bs-target="#api-tab-pane" type="button" role="tab" aria-controls="api-tab-pane" aria-selected="{{ 'true' if active_tab == 'api' else 'false' }}">
+                <i class="bi bi-plug"></i> {{ _('API Integrations') }}
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link {{ 'active' if active_tab == 'financial' else '' }}" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial-tab-pane" type="button" role="tab" aria-controls="financial-tab-pane" aria-selected="{{ 'true' if active_tab == 'financial' else 'false' }}">{{ _('Financial Settings') }}</button>
+            <button class="nav-link {{ 'active' if active_tab == 'financial' else '' }}" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial-tab-pane" type="button" role="tab" aria-controls="financial-tab-pane" aria-selected="{{ 'true' if active_tab == 'financial' else 'false' }}">
+                <i class="bi bi-currency-euro"></i> {{ _('Financial Settings') }}
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link {{ 'active' if active_tab == 'account_deletion' else '' }}" id="account-deletion-tab" data-bs-toggle="tab" data-bs-target="#account-deletion-tab-pane" type="button" role="tab" aria-controls="account-deletion-tab-pane" aria-selected="{{ 'true' if active_tab == 'account_deletion' else 'false' }}">{{ _('Account Deletion') }}</button>
+            <button class="nav-link {{ 'active' if active_tab == 'account_deletion' else '' }}" id="account-deletion-tab" data-bs-toggle="tab" data-bs-target="#account-deletion-tab-pane" type="button" role="tab" aria-controls="account-deletion-tab-pane" aria-selected="{{ 'true' if active_tab == 'account_deletion' else 'false' }}">
+                <i class="bi bi-exclamation-triangle"></i> {{ _('Account Deletion') }}
+            </button>
         </li>
     </ul>
-
+    
     <!-- Tab panes -->
     <div class="tab-content" id="userSettingsTabContent">
         {# --- Profile Tab --- #}
         <div class="tab-pane fade {{ 'show active' if active_tab == 'profile' else '' }}" id="profile-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">
-            <div class="card mb-4">
+            <div class="card mb-4 settings-section">
                 <div class="card-body">
-                    <h4 class="card-title mb-3">{{ _('Personal Information') }}</h4>
-                    <form method="POST" action="{{ url_for('main.user_settings') }}">
+                    <h4 class="card-title mb-3"><i class="bi bi-person-circle"></i> {{ _('Personal Information') }}</h4>
+                    <form method="POST" action="{{ url_for('main.user_settings') }}" id="profile-form">
                         {{ user_form.hidden_tag() }}
                         
+                        {% for field in [user_form.first_name, user_form.last_name, user_form.date_of_birth, user_form.sex, user_form.license_number] %}
                         <div class="mb-3">
-                            {{ user_form.first_name.label(class="form-label") }}
-                            {{ user_form.first_name(class="form-control" + (" is-invalid" if user_form.first_name.errors else "")) }}
-                            {% if user_form.first_name.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in user_form.first_name.errors %}<span>{{ error }}</span>{% endfor %}
+                            {{ field.label(class="form-label") }}
+                            {% if field.type == "SelectField" %}
+                                {{ field(class="form-select" + (" is-invalid" if field.errors else "")) }}
+                            {% else %}
+                                {{ field(class="form-control" + (" is-invalid" if field.errors else "")) }}
+                            {% endif %}
+                            
+                            {% if field.errors %}
+                                <div class="form-feedback invalid">
+                                    {% for error in field.errors %}<span>{{ error }}</span>{% endfor %}
                                 </div>
+                            {% elif field.description %}
+                                <div class="form-text">{{ field.description }}</div>
                             {% endif %}
                         </div>
-
-                        <div class="mb-3">
-                            {{ user_form.last_name.label(class="form-label") }}
-                            {{ user_form.last_name(class="form-control" + (" is-invalid" if user_form.last_name.errors else "")) }}
-                            {% if user_form.last_name.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in user_form.last_name.errors %}<span>{{ error }}</span>{% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="mb-3">
-                            {{ user_form.date_of_birth.label(class="form-label") }}
-                            {{ user_form.date_of_birth(class="form-control" + (" is-invalid" if user_form.date_of_birth.errors else "")) }}
-                            {% if user_form.date_of_birth.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in user_form.date_of_birth.errors %}<span>{{ error }}</span>{% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="mb-3">
-                            {{ user_form.sex.label(class="form-label") }}
-                            {{ user_form.sex(class="form-select" + (" is-invalid" if user_form.sex.errors else "")) }}
-                            {% if user_form.sex.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in user_form.sex.errors %}<span>{{ error }}</span>{% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="mb-3">
-                            {{ user_form.license_number.label(class="form-label") }}
-                            {{ user_form.license_number(class="form-control" + (" is-invalid" if user_form.license_number.errors else "")) }}
-                            {% if user_form.license_number.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in user_form.license_number.errors %}<span>{{ error }}</span>{% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
+                        {% endfor %}
+                        
                         <div class="mb-3">
                             <label for="college_acronym" class="form-label">{{ _('College Acronym') }}</label>
                             <input type="text" class="form-control" id="college_acronym" name="college_acronym" 
@@ -95,163 +130,156 @@
                                    placeholder="e.g. COFIB, ICOFCV, COFM">
                             <div class="form-text">{{ _('Acronym of your professional college') }}</div>
                         </div>
-
-                        <button type="submit" name="submit" class="btn btn-primary">{{ _('Save Changes') }}</button>
+                        
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" name="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> {{ _('Save Changes') }}
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
-
+        
         {# --- Clinic Tab --- #}
         <div class="tab-pane fade {{ 'show active' if active_tab == 'clinic' else '' }}" id="clinic-tab-pane" role="tabpanel" aria-labelledby="clinic-tab" tabindex="0">
-            <div class="card mb-4">
+            <div class="card mb-4 settings-section">
                 <div class="card-body">
-                    <h4 class="card-title mb-3">{{ _('Clinic Information') }}</h4>
-                    <form method="POST" action="{{ url_for('main.user_settings') }}">
+                    <h4 class="card-title mb-3"><i class="bi bi-building"></i> {{ _('Clinic Information') }}</h4>
+                    <form method="POST" action="{{ url_for('main.user_settings') }}" id="clinic-form">
                         {{ clinic_form.hidden_tag() }}
                         
+                        {% for field in [clinic_form.clinic_name, clinic_form.clinic_address, clinic_form.clinic_phone, clinic_form.clinic_email, clinic_form.clinic_website] %}
                         <div class="mb-3">
-                            {{ clinic_form.clinic_name.label(class="form-label") }}
-                            {{ clinic_form.clinic_name(class="form-control" + (" is-invalid" if clinic_form.clinic_name.errors else "")) }}
-                            {% if clinic_form.clinic_name.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in clinic_form.clinic_name.errors %}<span>{{ error }}</span>{% endfor %}
+                            {{ field.label(class="form-label") }}
+                            {{ field(class="form-control" + (" is-invalid" if field.errors else "")) }}
+                            
+                            {% if field.errors %}
+                                <div class="form-feedback invalid">
+                                    {% for error in field.errors %}<span>{{ error }}</span>{% endfor %}
                                 </div>
+                            {% elif field.description %}
+                                <div class="form-text">{{ field.description }}</div>
                             {% endif %}
                         </div>
-
-                        <div class="mb-3">
-                            {{ clinic_form.clinic_address.label(class="form-label") }}
-                            {{ clinic_form.clinic_address(class="form-control" + (" is-invalid" if clinic_form.clinic_address.errors else "")) }}
-                            {% if clinic_form.clinic_address.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in clinic_form.clinic_address.errors %}<span>{{ error }}</span>{% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="mb-3">
-                            {{ clinic_form.clinic_phone.label(class="form-label") }}
-                            {{ clinic_form.clinic_phone(class="form-control" + (" is-invalid" if clinic_form.clinic_phone.errors else "")) }}
-                            {% if clinic_form.clinic_phone.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in clinic_form.clinic_phone.errors %}<span>{{ error }}</span>{% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="mb-3">
-                            {{ clinic_form.clinic_email.label(class="form-label") }}
-                            {{ clinic_form.clinic_email(class="form-control" + (" is-invalid" if clinic_form.clinic_email.errors else "")) }}
-                            {% if clinic_form.clinic_email.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in clinic_form.clinic_email.errors %}<span>{{ error }}</span>{% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="mb-3">
-                            {{ clinic_form.clinic_website.label(class="form-label") }}
-                            {{ clinic_form.clinic_website(class="form-control" + (" is-invalid" if clinic_form.clinic_website.errors else "")) }}
-                            {% if clinic_form.clinic_website.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in clinic_form.clinic_website.errors %}<span>{{ error }}</span>{% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
+                        {% endfor %}
+                        
                         <div class="mb-3">
                             {{ clinic_form.clinic_description.label(class="form-label") }}
                             {{ clinic_form.clinic_description(class="form-control" + (" is-invalid" if clinic_form.clinic_description.errors else ""), rows="3") }}
+                            
                             {% if clinic_form.clinic_description.errors %}
-                                <div class="invalid-feedback">
+                                <div class="form-feedback invalid">
                                     {% for error in clinic_form.clinic_description.errors %}<span>{{ error }}</span>{% endfor %}
                                 </div>
                             {% endif %}
                         </div>
-
+                        
                         <hr class="my-4">
-                        <h5 class="mb-3">{{ _('Fee Configuration') }}</h5>
-
+                        <h5 class="mb-3"><i class="bi bi-cash"></i> {{ _('Fee Configuration') }}</h5>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 {{ clinic_form.clinic_first_session_fee.label(class="form-label") }}
                                 <div class="input-group">
                                     <span class="input-group-text">€</span>
                                     {{ clinic_form.clinic_first_session_fee(class="form-control" + (" is-invalid" if clinic_form.clinic_first_session_fee.errors else "")) }}
-                                    {% if clinic_form.clinic_first_session_fee.errors %}
-                                        <div class="invalid-feedback">
-                                            {% for error in clinic_form.clinic_first_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
-                                        </div>
-                                    {% endif %}
                                 </div>
+                                {% if clinic_form.clinic_first_session_fee.errors %}
+                                    <div class="form-feedback invalid">
+                                        {% for error in clinic_form.clinic_first_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
-
                             <div class="col-md-6 mb-3">
                                 {{ clinic_form.clinic_subsequent_session_fee.label(class="form-label") }}
                                 <div class="input-group">
                                     <span class="input-group-text">€</span>
                                     {{ clinic_form.clinic_subsequent_session_fee(class="form-control" + (" is-invalid" if clinic_form.clinic_subsequent_session_fee.errors else "")) }}
-                                    {% if clinic_form.clinic_subsequent_session_fee.errors %}
-                                        <div class="invalid-feedback">
-                                            {% for error in clinic_form.clinic_subsequent_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
-                                        </div>
-                                    {% endif %}
                                 </div>
+                                {% if clinic_form.clinic_subsequent_session_fee.errors %}
+                                    <div class="form-feedback invalid">
+                                        {% for error in clinic_form.clinic_subsequent_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
-
+                        
                         <div class="mb-3">
                             <div class="form-check">
                                 {{ clinic_form.clinic_percentage_agreement(class="form-check-input" + (" is-invalid" if clinic_form.clinic_percentage_agreement.errors else "")) }}
                                 {{ clinic_form.clinic_percentage_agreement.label(class="form-check-label") }}
                                 {% if clinic_form.clinic_percentage_agreement.errors %}
-                                    <div class="invalid-feedback">
+                                    <div class="form-feedback invalid">
                                         {% for error in clinic_form.clinic_percentage_agreement.errors %}<span>{{ error }}</span>{% endfor %}
                                     </div>
                                 {% endif %}
                             </div>
                         </div>
-
+                        
                         <div class="mb-3">
                             {{ clinic_form.clinic_percentage_amount.label(class="form-label") }}
                             {{ clinic_form.clinic_percentage_amount(class="form-control" + (" is-invalid" if clinic_form.clinic_percentage_amount.errors else "")) }}
                             {% if clinic_form.clinic_percentage_amount.errors %}
-                                <div class="invalid-feedback">
+                                <div class="form-feedback invalid">
                                     {% for error in clinic_form.clinic_percentage_amount.errors %}<span>{{ error }}</span>{% endfor %}
                                 </div>
                             {% endif %}
                         </div>
-
-                        <button type="submit" name="submit_clinic" class="btn btn-primary">{{ _('Save Changes') }}</button>
+                        
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" name="submit_clinic" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> {{ _('Save Changes') }}
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
-
+        
         {# --- API Tab --- #}
         <div class="tab-pane fade {{ 'show active' if active_tab == 'api' else '' }}" id="api-tab-pane" role="tabpanel" aria-labelledby="api-tab" tabindex="0">
-            <div class="card mb-4">
+            <div class="card mb-4 settings-section">
                 <div class="card-body">
-                    <h4 class="card-title mb-3">{{ _('API Integrations') }}</h4>
-                    <form method="POST" action="{{ url_for('main.user_settings') }}">
+                    <h4 class="card-title mb-3"><i class="bi bi-plug"></i> {{ _('API Integrations') }}</h4>
+                    <form method="POST" action="{{ url_for('main.user_settings') }}" id="api-form">
                         {{ api_form.hidden_tag() }}
                         
                         <!-- Integration Checkboxes -->
                         <div class="mb-4">
                             <h5 class="mb-3">{{ _('Available Integrations') }}</h5>
                             <p class="text-muted mb-3">{{ _('Select which integrations you would like to enable. All integrations are disabled by default for security.') }}</p>
-                            <div class="form-check mb-3">
-                                {{ api_form.enable_calendly(class="form-check-input", id="enable_calendly", onclick="toggleCalendlyConfig()") }}
-                                {{ api_form.enable_calendly.label(class="form-check-label", for="enable_calendly") }}
-                                <div class="form-text">
-                                    <i class="bi bi-calendar-event"></i> {{ _('Sync appointments and bookings from Calendly') }}
+                            
+                            <div class="integration-card card mb-3">
+                                <div class="card-body">
+                                    <div class="form-check form-switch">
+                                        {{ api_form.enable_calendly(class="form-check-input", id="enable_calendly", role="switch") }}
+                                        {{ api_form.enable_calendly.label(class="form-check-label", for="enable_calendly") }}
+                                    </div>
+                                    <div class="form-text mt-2">
+                                        <i class="bi bi-calendar-event"></i> {{ _('Sync appointments and bookings from Calendly') }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="integration-card card mb-3">
+                                <div class="card-body">
+                                    <div class="form-check form-switch">
+                                        {{ api_form.enable_google_calendar(class="form-check-input", id="enable_google_calendar", role="switch") }}
+                                        {{ api_form.enable_google_calendar.label(class="form-check-label", for="enable_google_calendar") }}
+                                    </div>
+                                    <div class="form-text mt-2">
+                                        <i class="bi bi-google"></i> {{ _('Sync events with Google Calendar using your own Google app') }}
+                                        <br><small class="text-info">
+                                            <i class="bi bi-info-circle"></i> 
+                                            {{ _('Each user configures their own Google Cloud Console app for maximum security and independence') }}
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-
+                        
                         <!-- Calendly Configuration (shown/hidden based on checkbox) -->
-                        <div id="calendly-config" class="mb-4" style="display: none;">
+                        <div id="calendly-config" class="mb-4 integration-config" style="display: none;">
                             <div class="card border-primary">
                                 <div class="card-header bg-primary text-white">
                                     <h6 class="mb-0"><i class="bi bi-calendar-event"></i> {{ _('Calendly Configuration') }}</h6>
@@ -261,7 +289,7 @@
                                         {{ api_form.calendly_api_key.label(class="form-label") }}
                                         {{ api_form.calendly_api_key(class="form-control" + (" is-invalid" if api_form.calendly_api_key.errors else "")) }}
                                         {% if api_form.calendly_api_key.errors %}
-                                            <div class="invalid-feedback">
+                                            <div class="form-feedback invalid">
                                                 {% for error in api_form.calendly_api_key.errors %}<span>{{ error }}</span>{% endfor %}
                                             </div>
                                         {% endif %}
@@ -269,12 +297,12 @@
                                             {{ _('Find your Personal Access Token in your') }} <a href="https://calendly.com/integrations/api_webhooks" target="_blank">{{ _('Calendly API & Webhooks page') }}</a>.
                                         </div>
                                     </div>
-
+                                    
                                     <div class="mb-3">
                                         {{ api_form.calendly_user_uri.label(class="form-label") }}
                                         {{ api_form.calendly_user_uri(class="form-control" + (" is-invalid" if api_form.calendly_user_uri.errors else "")) }}
                                         {% if api_form.calendly_user_uri.errors %}
-                                            <div class="invalid-feedback">
+                                            <div class="form-feedback invalid">
                                                 {% for error in api_form.calendly_user_uri.errors %}<span>{{ error }}</span>{% endfor %}
                                             </div>
                                         {% endif %}
@@ -285,120 +313,214 @@
                                 </div>
                             </div>
                         </div>
-
-                        <button type="submit" name="submit_api" class="btn btn-primary">{{ _('Save API Keys') }}</button>
+                        
+                        <!-- Google Calendar Configuration (shown/hidden based on checkbox) -->
+                        <div id="google-calendar-config" class="mb-4 integration-config" style="display: none;">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="bi bi-google"></i> {{ _('Your Google Calendar Configuration') }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle"></i>
+                                        <strong>{{ _('Step 1: Configure Your Google App') }}</strong><br>
+                                        {{ _('Create your own Google Cloud Console project for maximum security and control. Each subscriber manages their own Google integration.') }}
+                                        <br><a href="https://console.cloud.google.com/" target="_blank" class="alert-link">{{ _('Go to Google Cloud Console') }}</a>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {{ api_form.google_calendar_client_id.label(class="form-label") }}
+                                        {{ api_form.google_calendar_client_id(class="form-control") }}
+                                        <div class="form-text">
+                                            {{ _('From Google Cloud Console > APIs & Services > Credentials') }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {{ api_form.google_calendar_client_secret.label(class="form-label") }}
+                                        {{ api_form.google_calendar_client_secret(class="form-control", type="password") }}
+                                        <div class="form-text">
+                                            {{ _('Client Secret from Google Cloud Console') }} ({{ _('stored encrypted') }})
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {{ api_form.google_calendar_redirect_uri.label(class="form-label") }}
+                                        {{ api_form.google_calendar_redirect_uri(class="form-control") }}
+                                        <div class="form-text">
+                                            {{ _('Add this URI in Google Console:') }} <code>{{ request.host_url.rstrip('/') }}/google-calendar/callback</code>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {{ api_form.google_calendar_status.label(class="form-label") }}
+                                        {{ api_form.google_calendar_status(class="form-control", readonly=True) }}
+                                    </div>
+                                    
+                                    {% if current_user.google_calendar_configured %}
+                                        <div class="alert alert-success">
+                                            <i class="bi bi-check-circle"></i> {{ _('Google Calendar is fully configured and ready!') }}
+                                        </div>
+                                        
+                                        <div class="d-flex gap-2 mb-3">
+                                            <button type="button" class="btn btn-outline-primary" id="sync-google-calendar-btn">
+                                                <i class="bi bi-arrow-clockwise"></i> {{ _('Sync Events') }}
+                                            </button>
+                                            <a href="{{ url_for('google_calendar.disconnect') }}" class="btn btn-outline-danger">
+                                                <i class="bi bi-x-circle"></i> {{ _('Disconnect OAuth') }}
+                                            </a>
+                                        </div>
+                                        
+                                        {% if current_user.google_calendar_last_sync %}
+                                            <div class="form-text">
+                                                {{ _('Last sync:') }} {{ current_user.google_calendar_last_sync.strftime('%Y-%m-%d %H:%M:%S') }}
+                                            </div>
+                                        {% endif %}
+                                    {% elif current_user.google_calendar_app_configured %}
+                                        <div class="alert alert-warning">
+                                            <i class="bi bi-exclamation-triangle"></i> 
+                                            <strong>{{ _('Step 2: Authorize Access') }}</strong><br>
+                                            {{ _('Your app is configured. Now authorize access to your Google Calendar.') }}
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <a href="{{ url_for('google_calendar.connect') }}" class="btn btn-primary">
+                                                <i class="bi bi-google"></i> {{ _('Authorize Google Calendar Access') }}
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" name="submit_api" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> {{ _('Save API Keys') }}
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
-
+        
         {# --- Financial Tab --- #}
         <div class="tab-pane fade {{ 'show active' if active_tab == 'financial' else '' }}" id="financial-tab-pane" role="tabpanel" aria-labelledby="financial-tab" tabindex="0">
-            <div class="card mb-4">
+            <div class="card mb-4 settings-section">
                 <div class="card-body">
-                    <h4 class="card-title mb-3">{{ _('Autónomo Contribution Base') }}</h4>
-                    <form method="POST" action="{{ url_for('main.user_settings') }}">
+                    <h4 class="card-title mb-3"><i class="bi bi-currency-euro"></i> {{ _('Autónomo Contribution Base') }}</h4>
+                    <form method="POST" action="{{ url_for('main.user_settings') }}" id="financial-form">
                         {{ financial_form.hidden_tag() }}
                         
                         <div class="mb-3">
                             {{ financial_form.contribution_base.label(class="form-label") }}
                             {{ financial_form.contribution_base(class="form-control" + (" is-invalid" if financial_form.contribution_base.errors else "")) }}
                             {% if financial_form.contribution_base.errors %}
-                                <div class="invalid-feedback">
+                                <div class="form-feedback invalid">
                                     {% for error in financial_form.contribution_base.errors %}<span>{{ error }}</span>{% endfor %}
                                 </div>
                             {% endif %}
                         </div>
-
+                        
                         <hr class="my-4">
-                        <h5 class="mb-3">{{ _('Tax Configuration') }}</h5>
+                        <h5 class="mb-3"><i class="bi bi-percent"></i> {{ _('Tax Configuration') }}</h5>
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i> {{ _('Configure your tax rates for financial calculations. Leave empty to use default values.') }}
                         </div>
-
+                        
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="tax_rate" class="form-label">Tax Rate (%)</label>
+                                <label for="tax_rate" class="form-label">{{ _('Tax Rate') }} (%)</label>
                                 <div class="input-group">
                                     <input type="number" step="0.01" min="0" max="100" class="form-control" id="tax_rate" name="tax_rate" 
                                            value="{{ (current_user.tax_rate * 100) if current_user.tax_rate else '' }}" 
                                            placeholder="19.0">
                                     <span class="input-group-text">%</span>
                                 </div>
-                                <div class="form-text">Default: 19% for card payments</div>
+                                <div class="form-text">{{ _('Default:') }} 19% {{ _('for card payments') }}</div>
                             </div>
-
+                            
                             <div class="col-md-6 mb-3">
-                                <label for="autonomo_contribution_rate" class="form-label">Autónomo Contribution Rate (%)</label>
+                                <label for="autonomo_contribution_rate" class="form-label">{{ _('Autónomo Contribution Rate') }} (%)</label>
                                 <div class="input-group">
                                     <input type="number" step="0.01" min="0" max="100" class="form-control" id="autonomo_contribution_rate" name="autonomo_contribution_rate" 
                                            value="{{ (current_user.autonomo_contribution_rate * 100) if current_user.autonomo_contribution_rate else '' }}" 
                                            placeholder="31.4">
                                     <span class="input-group-text">%</span>
                                 </div>
-                                <div class="form-text">Default: 31.4% standard autónomo rate</div>
+                                <div class="form-text">{{ _('Default:') }} 31.4% {{ _('standard autónomo rate') }}</div>
                             </div>
                         </div>
-
+                        
                         <div class="mb-3">
-                            <label for="clinic_fee_rate" class="form-label">Clinic Fee Rate (%)</label>
+                                                            <label for="clinic_fee_rate" class="form-label">{{ _('Clinic Fee Rate') }} (%)</label>
                             <div class="input-group">
                                 <input type="number" step="0.01" min="0" max="100" class="form-control" id="clinic_fee_rate" name="clinic_fee_rate" 
                                        value="{{ (current_user.clinic_fee_rate * 100) if current_user.clinic_fee_rate else '' }}" 
                                        placeholder="30.0">
                                 <span class="input-group-text">%</span>
                             </div>
-                            <div class="form-text">Default: 30% clinic share of revenue</div>
+                                                            <div class="form-text">{{ _('Default:') }} 30% {{ _('clinic share of revenue') }}</div>
                         </div>
-
-                        <button type="submit" name="submit_financial" class="btn btn-primary">{{ _('Save Changes') }}</button>
+                        
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" name="submit_financial" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> {{ _('Save Changes') }}
+                            </button>
+                        </div>
                     </form>
-
+                    
                     <hr class="my-4">
                     
-                    <h4 class="card-title mb-3">{{ _('Manage Fixed Costs') }}</h4>
+                    <h4 class="card-title mb-3"><i class="bi bi-wallet2"></i> {{ _('Manage Fixed Costs') }}</h4>
+                    
                     {# List existing fixed costs #}
                     <h5>{{ _('Existing Costs') }}</h5>
                     {% if fixed_costs %}
-                        <table class="table table-sm table-hover">
-                            <thead>
-                                <tr>
-                                    <th>{{ _('Description') }}</th>
-                                    <th class="text-end">{{ _('Monthly Amount (€)') }}</th>
-                                    <th class="text-end">{{ _('Actions') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for cost in fixed_costs %}
-                                <tr>
-                                    <td>{{ cost.description }}</td>
-                                    <td class="text-end">{{ "%.2f"|format(cost.monthly_amount) }}</td>
-                                    <td class="text-end">
-                                        <form action="{{ url_for('main.delete_fixed_cost', cost_id=cost.id) }}" method="POST" class="d-inline" onsubmit="return confirmDeleteCost();">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            <button type="submit" class="btn btn-danger btn-sm" title="{{ _('Delete Cost') }}">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{{ _('Description') }}</th>
+                                        <th class="text-end">{{ _('Monthly Amount') }} (€)</th>
+                                        <th class="text-end">{{ _('Actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cost in fixed_costs %}
+                                    <tr>
+                                        <td>{{ cost.description }}</td>
+                                        <td class="text-end">{{ "%.2f"|format(cost.monthly_amount) }}</td>
+                                        <td class="text-end">
+                                            <form action="{{ url_for('main.delete_fixed_cost', cost_id=cost.id) }}" method="POST" class="d-inline" onsubmit="return confirmDeleteCost();">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <button type="submit" class="btn btn-danger btn-sm" title="{{ _('Delete Cost') }}">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     {% else %}
-                        <p class="text-center">{{ _('No fixed costs added yet.') }}</p>
+                        <div class="alert alert-light">
+                            <p class="text-center mb-0">{{ _('No fixed costs added yet.') }}</p>
+                        </div>
                     {% endif %}
+                    
                     <hr class="my-4">
+                    
                     {# Form to add new fixed cost #}
                     <h5>{{ _('Add New Fixed Cost') }}</h5>
-                    <form method="POST" action="{{ url_for('main.user_settings') }}">
+                    <form method="POST" action="{{ url_for('main.user_settings') }}" id="add-cost-form">
                         {{ financial_form.hidden_tag() }}
                         <div class="row align-items-end">
                             <div class="col-md-6 mb-3">
                                 {{ financial_form.description.label(class="form-label") }}
                                 {{ financial_form.description(class="form-control" + (" is-invalid" if financial_form.description.errors else "")) }}
                                 {% if financial_form.description.errors %}
-                                    <div class="invalid-feedback">
+                                    <div class="form-feedback invalid">
                                         {% for error in financial_form.description.errors %}<span>{{ error }}</span>{% endfor %}
                                     </div>
                                 {% endif %}
@@ -408,22 +530,24 @@
                                 <div class="input-group">
                                     <span class="input-group-text">€</span>
                                     {{ financial_form.monthly_amount(class="form-control" + (" is-invalid" if financial_form.monthly_amount.errors else "")) }}
-                                    {% if financial_form.monthly_amount.errors %}
-                                        <div class="invalid-feedback">
-                                            {% for error in financial_form.monthly_amount.errors %}<span>{{ error }}</span>{% endfor %}
-                                        </div>
-                                    {% endif %}
                                 </div>
+                                {% if financial_form.monthly_amount.errors %}
+                                    <div class="form-feedback invalid">
+                                        {% for error in financial_form.monthly_amount.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
                             <div class="col-md-2 mb-3">
-                                <button type="submit" name="submit_add_cost" class="btn btn-primary w-100">{{ _('Add') }}</button>
+                                <button type="submit" name="submit_add_cost" class="btn btn-primary w-100">
+                                    <i class="bi bi-plus-circle"></i> {{ _('Add') }}
+                                </button>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-
+        
         {# --- Account Deletion Tab --- #}
         <div class="tab-pane fade {{ 'show active' if active_tab == 'account_deletion' else '' }}" id="account-deletion-tab-pane" role="tabpanel" aria-labelledby="account-deletion-tab" tabindex="0">
             <div class="card mb-4 border-warning">
@@ -435,14 +559,14 @@
                         <h5 class="alert-heading"><i class="bi bi-info-circle"></i> {{ _('Understanding Your Options') }}</h5>
                         <p class="mb-0">{{ _('We provide two types of account deletion to give you control over your data. Please read carefully before making a decision.') }}</p>
                     </div>
-
+                    
                     <div class="row">
                         <div class="col-md-6 mb-4">
-                            <div class="card border-secondary">
+                            <div class="card border-secondary h-100">
                                 <div class="card-header bg-light">
                                     <h5 class="mb-0"><i class="bi bi-pause-circle"></i> {{ _('Temporary Deactivation') }}</h5>
                                 </div>
-                                <div class="card-body">
+                                <div class="card-body d-flex flex-column">
                                     <p class="card-text">{{ _('Your account will be deactivated but all your data remains safely stored. You can contact support to reactivate your account at any time.') }}</p>
                                     <ul class="mb-3">
                                         <li>{{ _('Account becomes inaccessible') }}</li>
@@ -450,22 +574,24 @@
                                         <li>{{ _('Can be reversed by contacting support') }}</li>
                                         <li>{{ _('Ideal if you might return') }}</li>
                                     </ul>
-                                    <form method="POST" action="{{ url_for('user_data.delete_account') }}" onsubmit="return confirmTempDeactivation();">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                        <button type="submit" class="btn btn-warning">
-                                            <i class="bi bi-pause-circle"></i> {{ _('Temporarily Deactivate Account') }}
-                                        </button>
-                                    </form>
+                                    <div class="mt-auto">
+                                        <form method="POST" action="{{ url_for('user_data.delete_account') }}" onsubmit="return confirmTempDeactivation();">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="bi bi-pause-circle"></i> {{ _('Temporarily Deactivate Account') }}
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-
+                        
                         <div class="col-md-6 mb-4">
-                            <div class="card border-danger">
+                            <div class="card border-danger h-100">
                                 <div class="card-header bg-danger text-white">
                                     <h5 class="mb-0"><i class="bi bi-trash"></i> {{ _('Permanent Deletion') }}</h5>
                                 </div>
-                                <div class="card-body">
+                                <div class="card-body d-flex flex-column">
                                     <p class="card-text">{{ _('Your account and ALL associated data will be permanently deleted. This action cannot be undone.') }}</p>
                                     <ul class="mb-3">
                                         <li>{{ _('Account permanently deleted') }}</li>
@@ -473,7 +599,7 @@
                                         <li>{{ _('All reports and documents deleted') }}</li>
                                         <li>{{ _('Cannot be reversed') }}</li>
                                     </ul>
-                                    <div class="alert alert-danger">
+                                    <div class="alert alert-danger mb-3">
                                         <strong>{{ _('Warning:') }}</strong> {{ _('This will permanently delete all patients, treatments, reports, and other data associated with your account. This action cannot be undone.') }}
                                     </div>
                                     
@@ -485,17 +611,19 @@
                                         </label>
                                     </div>
                                     
-                                    <form method="POST" action="{{ url_for('user_data.delete_account_permanent') }}" id="permanentDeleteForm" onsubmit="return confirmPermanentDeletion();">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                        <button type="submit" class="btn btn-danger" id="permanentDeleteBtn" disabled>
-                                            <i class="bi bi-trash"></i> {{ _('Permanently Delete Account') }}
-                                        </button>
-                                    </form>
+                                    <div class="mt-auto">
+                                        <form method="POST" action="{{ url_for('user_data.delete_account_permanent') }}" id="permanentDeleteForm" onsubmit="return confirmPermanentDeletion();">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="btn btn-danger" id="permanentDeleteBtn" disabled>
+                                                <i class="bi bi-trash"></i> {{ _('Permanently Delete Account') }}
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
+                    
                     <div class="alert alert-info mt-4">
                         <h6 class="alert-heading">{{ _('Need Help?') }}</h6>
                         <p class="mb-0">{{ _('If you have questions about account deletion or need assistance with your data, please') }} <a href="mailto:support@physioapp.com">{{ _('contact our support team') }}</a> {{ _('before proceeding.') }}</p>
@@ -504,6 +632,12 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Success Toast Notification -->
+<div id="success-toast" class="success-toast">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    <span id="success-message">{{ _('Settings saved successfully!') }}</span>
 </div>
 
 <!-- Hidden div with translated messages for JavaScript -->
@@ -521,69 +655,94 @@
 </div>
 
 <script>
-// Global functions for onclick handlers
-function toggleCalendlyConfig() {
-    const checkbox = document.getElementById('enable_calendly');
-    const config = document.getElementById('calendly-config');
-    
-    if (checkbox && config) {
-        if (checkbox.checked) {
-            config.style.display = 'block';
-        } else {
-            config.style.display = 'none';
-        }
-    }
-}
-
-function confirmDeleteCost() {
-    const messages = document.getElementById('js-messages');
-    return confirm(messages.dataset.deleteCost);
-}
-
-function confirmTempDeactivation() {
-    const messages = document.getElementById('js-messages');
-    return confirm(messages.dataset.tempDeactivate);
-}
-
-function confirmPermanentDeletion() {
-    const messages = document.getElementById('js-messages');
-    const deleteText = "DELETE";
-    
-    // First confirm the action
-    const warningMessage = messages.dataset.permQuestion + 
-                   "\n\n" + messages.dataset.permWillDelete +
-                   "\n- " + messages.dataset.permPatients +
-                   "\n- " + messages.dataset.permTreatments +
-                   "\n- " + messages.dataset.permClinic +
-                   "\n- " + messages.dataset.permFinancial +
-                          "\n\nThis action cannot be undone and cannot be reversed.";
-    
-    const confirmed = confirm(warningMessage);
-    if (!confirmed) {
-        return false;
-    }
-    
-    // Ask user to type DELETE to confirm
-    const userInput = prompt("To confirm permanent deletion, please type exactly: DELETE");
-    if (userInput === deleteText) {
-        return confirm(messages.dataset.permFinal);
-    } else {
-        alert("Deletion cancelled. You must type exactly 'DELETE' to confirm.");
-        return false;
-    }
-}
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Set initial state for Calendly toggle
-    toggleCalendlyConfig();
+    // Initialize integration configs on page load
+    initializeIntegrationConfigs();
     
-    // Add event listener for checkbox changes
-    const checkbox = document.getElementById('enable_calendly');
-    if (checkbox) {
-        checkbox.addEventListener('change', toggleCalendlyConfig);
-    }
+    // Set up event listeners for integration toggles
+    setupIntegrationToggleListeners();
+    
+    // Set up form submission handlers
+    setupFormHandlers();
+    
+    // Set up account deletion confirmation
+    setupAccountDeletionConfirmation();
+    
+    // Set up Google Calendar sync button
+    setupGoogleCalendarSync();
+});
 
-    // Account deletion confirmation logic
+// Initialize integration configs based on checkbox state
+function initializeIntegrationConfigs() {
+    // Calendly config
+    const calendlyCheckbox = document.getElementById('enable_calendly');
+    const calendlyConfig = document.getElementById('calendly-config');
+    if (calendlyCheckbox && calendlyConfig) {
+        calendlyConfig.style.display = calendlyCheckbox.checked ? 'block' : 'none';
+    }
+    
+    // Google Calendar config
+    const googleCheckbox = document.getElementById('enable_google_calendar');
+    const googleConfig = document.getElementById('google-calendar-config');
+    if (googleCheckbox && googleConfig) {
+        googleConfig.style.display = googleCheckbox.checked ? 'block' : 'none';
+    }
+}
+
+// Set up event listeners for integration toggles
+function setupIntegrationToggleListeners() {
+    // Calendly toggle
+    const calendlyCheckbox = document.getElementById('enable_calendly');
+    if (calendlyCheckbox) {
+        calendlyCheckbox.addEventListener('change', function() {
+            const config = document.getElementById('calendly-config');
+            if (config) {
+                config.style.display = this.checked ? 'block' : 'none';
+                if (this.checked) {
+                    config.classList.add('fade-in');
+                }
+            }
+        });
+    }
+    
+    // Google Calendar toggle
+    const googleCheckbox = document.getElementById('enable_google_calendar');
+    if (googleCheckbox) {
+        googleCheckbox.addEventListener('change', function() {
+            const config = document.getElementById('google-calendar-config');
+            if (config) {
+                config.style.display = this.checked ? 'block' : 'none';
+                if (this.checked) {
+                    config.classList.add('fade-in');
+                }
+            }
+        });
+    }
+}
+
+// Set up form submission handlers with success notifications
+function setupFormHandlers() {
+    const forms = ['profile-form', 'clinic-form', 'api-form', 'financial-form', 'add-cost-form'];
+    
+    forms.forEach(formId => {
+        const form = document.getElementById(formId);
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Form will submit normally, but we'll show a success message after redirect
+                localStorage.setItem('settingsSaved', 'true');
+            });
+        }
+    });
+    
+    // Check if we should show a success message (after page reload)
+    if (localStorage.getItem('settingsSaved') === 'true') {
+        showSuccessToast();
+        localStorage.removeItem('settingsSaved');
+    }
+}
+
+// Set up account deletion confirmation
+function setupAccountDeletionConfirmation() {
     const confirmCheckbox = document.getElementById('confirmPermanentDeletion');
     const deleteBtn = document.getElementById('permanentDeleteBtn');
     
@@ -592,7 +751,108 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteBtn.disabled = !this.checked;
         });
     }
-});
-</script>
+}
 
-{% endblock %} 
+// Set up Google Calendar sync button
+function setupGoogleCalendarSync() {
+    const syncBtn = document.getElementById('sync-google-calendar-btn');
+    if (syncBtn) {
+        syncBtn.addEventListener('click', syncGoogleCalendar);
+    }
+}
+
+// Global functions for onclick handlers
+function syncGoogleCalendar() {
+    const button = event.currentTarget;
+    const originalText = button.innerHTML;
+    
+    // Show loading state
+    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> {{ _("Syncing...") }}';
+    button.disabled = true;
+    
+    fetch('/google-calendar/sync', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || 
+                          document.querySelector('input[name="csrf_token"]')?.value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessToast('{{ _("Sync completed successfully!") }} ' + data.message);
+            setTimeout(() => location.reload(), 1500); // Refresh to show updated last sync time
+        } else {
+            alert('{{ _("Sync failed:") }} ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('{{ _("An error occurred during sync.") }}');
+    })
+    .finally(() => {
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function confirmDeleteCost() {
+    const messages = document.getElementById('js-messages');
+    return confirm(messages?.dataset.deleteCost || '{{ _("Are you sure you want to delete this cost?") }}');
+}
+
+function confirmTempDeactivation() {
+    const messages = document.getElementById('js-messages');
+    return confirm(messages?.dataset.tempDeactivate || '{{ _("Are you sure you want to temporarily deactivate your account?") }}');
+}
+
+function confirmPermanentDeletion() {
+    const messages = document.getElementById('js-messages');
+    const deleteText = "DELETE";
+    
+    if (!messages) return false;
+    
+    // First confirm the action
+    const warningMessage = messages.dataset.permQuestion + 
+                   "\n\n" + messages.dataset.permWillDelete +
+                   "\n- " + messages.dataset.permPatients +
+                   "\n- " + messages.dataset.permTreatments +
+                   "\n- " + messages.dataset.permClinic +
+                   "\n- " + messages.dataset.permFinancial +
+                   "\n\n" + messages.dataset.permTypeDelete;
+    
+    const confirmed = confirm(warningMessage);
+    if (!confirmed) {
+        return false;
+    }
+    
+    // Ask user to type DELETE to confirm
+    const userInput = prompt("{{ _('To confirm permanent deletion, please type exactly: DELETE') }}");
+    if (userInput === deleteText) {
+        return confirm(messages.dataset.permFinal);
+    } else {
+        alert("{{ _('Deletion cancelled. You must type exactly \'DELETE\' to confirm.') }}");
+        return false;
+    }
+}
+
+// Show success toast notification
+function showSuccessToast(message) {
+    const toast = document.getElementById('success-toast');
+    const messageElement = document.getElementById('success-message');
+    
+    if (message && messageElement) {
+        messageElement.textContent = message;
+    }
+    
+    if (toast) {
+        toast.style.display = 'block';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+}
+</script>
+{% endblock %}

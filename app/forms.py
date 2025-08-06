@@ -84,9 +84,9 @@ class ChangePasswordForm(FlaskForm):
 class ApiIntegrationsForm(FlaskForm):
     # Integration checkboxes
     enable_calendly = BooleanField(_l('Enable Calendly Integration'))
+    enable_google_calendar = BooleanField(_l('Enable Google Calendar Integration'))
     # Future integrations can be added here:
     # enable_stripe = BooleanField('Enable Stripe Integration')
-    # enable_google_calendar = BooleanField('Enable Google Calendar Integration')
     # enable_zoom = BooleanField('Enable Zoom Integration')
     
     # Calendly fields (will be shown/hidden based on checkbox)
@@ -97,11 +97,25 @@ class ApiIntegrationsForm(FlaskForm):
                                    validators=[Optional(), URL()],
                                    render_kw={"placeholder": "https://api.calendly.com/users/your-user-id"})
     
+    # Google Calendar fields - user configures their own app
+    google_calendar_client_id = StringField(_l('Your Google Client ID'), 
+                                           validators=[Optional()],
+                                           render_kw={"placeholder": _l("Client ID from your Google Cloud Console")})
+    google_calendar_client_secret = StringField(_l('Your Google Client Secret'), 
+                                               validators=[Optional()],
+                                               render_kw={"placeholder": _l("Client Secret from your Google Cloud Console")})
+    google_calendar_redirect_uri = StringField(_l('Redirect URI (optional)'), 
+                                             validators=[Optional(), URL()],
+                                             render_kw={"placeholder": _l("Leave blank to auto-generate")})
+    google_calendar_status = StringField(_l('Google Calendar Status'), 
+                                        render_kw={"readonly": True, "placeholder": _l("Not connected")})
+    
     # Future API fields can be added here:
     # stripe_secret_key = StringField('Stripe Secret Key', validators=[Optional()])
-    # google_calendar_credentials = TextAreaField('Google Calendar Credentials', validators=[Optional()])
     
     submit = SubmitField(_l('Save API Keys'))
+
+
 
 # Renamed from FixedCostForm
 class FinancialSettingsForm(FlaskForm):

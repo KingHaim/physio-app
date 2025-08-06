@@ -36,7 +36,7 @@ def add_location():
         db.session.add(location)
         db.session.commit()
         
-        flash(_('Location "%(name)s" has been added successfully!', name=location.name), 'success')
+        flash(_('Location') + f' "{location.name}" ' + _('has been added successfully!'), 'success')
         return redirect(url_for('locations.manage_locations'))
     
     return render_template('locations/form.html', form=form, title=_('Add Location'))
@@ -60,7 +60,7 @@ def edit_location(location_id):
         
         db.session.commit()
         
-        flash(_('Location "%(name)s" has been updated successfully!', name=location.name), 'success')
+        flash(_('Location') + f' "{location.name}" ' + _('has been updated successfully!'), 'success')
         return redirect(url_for('locations.manage_locations'))
     
     return render_template('locations/form.html', form=form, location=location, title=_('Edit Location'))
@@ -79,13 +79,12 @@ def delete_location(location_id):
         # Don't actually delete, just deactivate
         location.is_active = False
         db.session.commit()
-        flash(_('Location "%(name)s" has been deactivated (it has %(treatments)d treatments and %(appointments)d appointments).', 
-                name=location.name, treatments=treatment_count, appointments=appointment_count), 'warning')
+        flash(_('Location') + f' "{location.name}" ' + _('has been deactivated (it has') + f' {treatment_count} ' + _('treatments and') + f' {appointment_count} ' + _('appointments).'), 'warning')
     else:
         # Safe to delete
         db.session.delete(location)
         db.session.commit()
-        flash(_('Location "%(name)s" has been deleted successfully!', name=location.name), 'success')
+        flash(_('Location') + f' "{location.name}" ' + _('has been deleted successfully!'), 'success')
     
     return redirect(url_for('locations.manage_locations'))
 

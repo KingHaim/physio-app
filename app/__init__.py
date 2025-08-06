@@ -248,6 +248,10 @@ def create_app(config_class=None):
     from app.routes.clinic import clinic as clinic_blueprint
     app.register_blueprint(clinic_blueprint, url_prefix='/clinic')
 
+    # Register Google Calendar blueprint
+    from app.routes.google_calendar import google_calendar_bp
+    app.register_blueprint(google_calendar_bp)
+
     # Create all tables
     # with app.app_context():
     #     db.create_all()

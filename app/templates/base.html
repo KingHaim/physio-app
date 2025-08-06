@@ -728,7 +728,7 @@
                         <li class="nav-section">
                             <div class="nav-section-title">{{ _('Management') }}</div>
                             <ul class="nav flex-column">
-                                {% if current_user and current_user.calendly_api_token and current_user.calendly_user_uri %}
+                                {% if current_user and current_user.calendly_configured_and_enabled %}
                                 <li class="nav-item">
                                     <a class="nav-link {{ 'active' if request.endpoint == 'main.review_calendly_bookings' else '' }}"
                                        href="{{ url_for('main.review_calendly_bookings') }}">
@@ -746,6 +746,27 @@
                                 </li>
                             </ul>
                         </li>
+                        
+                        <!-- Calendar Integrations Section -->
+                                                    {% if (current_user and current_user.calendly_configured_and_enabled) or (current_user and current_user.google_calendar_app_configured) %}
+                        <li class="nav-section">
+                            <div class="nav-section-title">{{ _('Calendar Sync') }}</div>
+                            <ul class="nav flex-column">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ url_for('main.user_settings', tab='api') }}">
+                                        <i class="bi bi-gear"></i> {{ _('Manage Integrations') }}
+                                    </a>
+                                </li>
+                                {% if current_user and current_user.google_calendar_app_configured %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="javascript:void(0)" onclick="quickSyncGoogleCalendar()">
+                                        <i class="bi bi-google"></i> {{ _('Sync Google Calendar') }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        {% endif %}
                         
                         <!-- Clinic Section (only for clinic users) -->
                         {% if current_user and current_user.is_authenticated and current_user.is_in_clinic %}
@@ -1025,9 +1046,54 @@
                 const calendlyModal = new bootstrap.Modal(document.getElementById('calendlyModal'));
                 calendlyModal.show();
                 
-                // Initialize Calendly widget using the helper function
-                initCalendlyWidget('https://calendly.com/haimphysio', window.calendlyPrefillData);
-            };
+                            // Initialize Calendly widget using the helper function
+            initCalendlyWidget('https://calendly.com/haimphysio', window.calendlyPrefillData);
+        };
+        
+        // Quick sync function for Google Calendar from navigation menu
+        window.quickSyncGoogleCalendar = function() {
+            // Show loading notification
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-info position-fixed';
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Syncing Google Calendar...';
+            document.body.appendChild(notification);
+            
+            fetch('/google-calendar/sync', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                notification.remove();
+                
+                const result = document.createElement('div');
+                result.className = data.success ? 'alert alert-success position-fixed' : 'alert alert-danger position-fixed';
+                result.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+                result.innerHTML = data.success 
+                    ? '<i class="bi bi-check-circle me-2"></i>' + data.message
+                    : '<i class="bi bi-exclamation-triangle me-2"></i>Error: ' + data.error;
+                document.body.appendChild(result);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => result.remove(), 5000);
+            })
+            .catch(error => {
+                notification.remove();
+                console.error('Error:', error);
+                
+                const errorAlert = document.createElement('div');
+                errorAlert.className = 'alert alert-danger position-fixed';
+                errorAlert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+                errorAlert.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>Sync failed. Please try again.';
+                document.body.appendChild(errorAlert);
+                
+                setTimeout(() => errorAlert.remove(), 5000);
+            });
+        };
             
             // Sidebar Toggle Logic
             const sidebar = document.getElementById('sidebar');

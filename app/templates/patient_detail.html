@@ -540,7 +540,7 @@
                                                     <td class="payment-column">
                                                         <span id="payment-status-{{ treatment.id }}" class="d-block mb-1">
                                                             {% if treatment.payment_method %}
-                                                                {{ _('Paid - %(method)s', method=_(treatment.payment_method)) }}
+                                                                {{ _('Paid -') }} {{ _(treatment.payment_method) }}
                                                             {% else %}
                                                                 {{ _('Unpaid') }}
                                                             {% endif %}

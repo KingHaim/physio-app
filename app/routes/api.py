@@ -895,14 +895,39 @@ def patients_by_month():
 @login_required
 def revenue_by_visit_type():
     try:
+        # First check if we have any treatments with fees for this user
+        treatment_count = db.session.query(Treatment).join(Patient).filter(
+            Patient.user_id == current_user.id,
+            Treatment.fee_charged.isnot(None),
+            Treatment.fee_charged > 0
+        ).count()
+        
+        if treatment_count == 0:
+            current_app.logger.info(f"No treatments with fees found for user {current_user.id}")
+            return jsonify([])
+        
         data = db.session.query(
             Treatment.treatment_type,
             func.sum(Treatment.fee_charged).label('total_fee')
         ).join(Patient, Patient.id == Treatment.patient_id) \
-         .filter(Patient.user_id == current_user.id, Treatment.fee_charged.isnot(None)) \
+         .filter(
+            Patient.user_id == current_user.id, 
+            Treatment.fee_charged.isnot(None),
+            Treatment.fee_charged > 0
+         ) \
          .group_by(Treatment.treatment_type).all()
         
-        result = [{'treatment_type': item.treatment_type or 'Uncategorized', 'total_fee': float(item.total_fee or 0)} for item in data]
+        result = []
+        for item in data:
+            treatment_type = item.treatment_type or 'Uncategorized'
+            total_fee = float(item.total_fee or 0)
+            if total_fee > 0:  # Only include types with actual revenue
+                result.append({
+                    'treatment_type': treatment_type, 
+                    'total_fee': total_fee
+                })
+        
+        current_app.logger.info(f"Successfully fetched {len(result)} revenue types for user {current_user.id}")
         return jsonify(result)
     except Exception as e:
         current_app.logger.error(f"Error fetching revenue-by-visit-type for user {current_user.id}: {e}\n{traceback.format_exc()}")
@@ -1269,16 +1294,46 @@ def recently_inactive_patients():
 @login_required
 def top_patients_by_revenue():
     try:
+        # First check if we have any treatments with fees for this user
+        treatment_count = db.session.query(Treatment).join(Patient).filter(
+            Patient.user_id == current_user.id,
+            Treatment.fee_charged.isnot(None),
+            Treatment.fee_charged > 0
+        ).count()
+        
+        if treatment_count == 0:
+            current_app.logger.info(f"No treatments with fees found for user {current_user.id}")
+            return jsonify([])
+        
         data = db.session.query(
             Patient._name,
             func.sum(Treatment.fee_charged).label('total_revenue')
         ).join(Treatment, Patient.id == Treatment.patient_id) \
-         .filter(Patient.user_id == current_user.id, Treatment.fee_charged.isnot(None)) \
+         .filter(
+            Patient.user_id == current_user.id, 
+            Treatment.fee_charged.isnot(None),
+            Treatment.fee_charged > 0
+         ) \
          .group_by(Patient._name) \
          .order_by(func.sum(Treatment.fee_charged).desc()) \
          .limit(10).all()
         
-        results = [{'name': decrypt_text(name) if name else 'Unknown', 'revenue': float(total_revenue or 0)} for name, total_revenue in data]
+        results = []
+        for name, total_revenue in data:
+            try:
+                decrypted_name = decrypt_text(name) if name else 'Unknown Patient'
+                results.append({
+                    'name': decrypted_name, 
+                    'revenue': float(total_revenue or 0)
+                })
+            except Exception as decrypt_error:
+                current_app.logger.warning(f"Failed to decrypt patient name: {decrypt_error}")
+                results.append({
+                    'name': 'Patient (Name Error)', 
+                    'revenue': float(total_revenue or 0)
+                })
+        
+        current_app.logger.info(f"Successfully fetched {len(results)} top patients for user {current_user.id}")
         return jsonify(results)
     except Exception as e:
         current_app.logger.error(f"Error fetching top-patients-by-revenue for user {current_user.id}: {e}\n{traceback.format_exc()}")
