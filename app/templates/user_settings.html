@@ -61,7 +61,7 @@
     <div class="page-header mb-4">
         <h2><i class="bi bi-gear settings-icon"></i>{{ _('User Settings') }}</h2>
     </div>
-    
+
     {# Determine active tab #}
     {% set active_tab = request.args.get('tab', 'profile') %}
     
@@ -93,7 +93,7 @@
             </button>
         </li>
     </ul>
-    
+
     <!-- Tab panes -->
     <div class="tab-content" id="userSettingsTabContent">
         {# --- Profile Tab --- #}
@@ -122,7 +122,7 @@
                             {% endif %}
                         </div>
                         {% endfor %}
-                        
+
                         <div class="mb-3">
                             <label for="college_acronym" class="form-label">{{ _('College Acronym') }}</label>
                             <input type="text" class="form-control" id="college_acronym" name="college_acronym" 
@@ -130,7 +130,7 @@
                                    placeholder="e.g. COFIB, ICOFCV, COFM">
                             <div class="form-text">{{ _('Acronym of your professional college') }}</div>
                         </div>
-                        
+
                         <div class="d-flex justify-content-end">
                             <button type="submit" name="submit" class="btn btn-primary">
                                 <i class="bi bi-check-circle"></i> {{ _('Save Changes') }}
@@ -140,7 +140,7 @@
                 </div>
             </div>
         </div>
-        
+
         {# --- Clinic Tab --- #}
         <div class="tab-pane fade {{ 'show active' if active_tab == 'clinic' else '' }}" id="clinic-tab-pane" role="tabpanel" aria-labelledby="clinic-tab" tabindex="0">
             <div class="card mb-4 settings-section">
@@ -163,7 +163,7 @@
                             {% endif %}
                         </div>
                         {% endfor %}
-                        
+
                         <div class="mb-3">
                             {{ clinic_form.clinic_description.label(class="form-label") }}
                             {{ clinic_form.clinic_description(class="form-control" + (" is-invalid" if clinic_form.clinic_description.errors else ""), rows="3") }}
@@ -174,7 +174,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <hr class="my-4">
                         <h5 class="mb-3"><i class="bi bi-cash"></i> {{ _('Fee Configuration') }}</h5>
                         <div class="row">
@@ -184,11 +184,11 @@
                                     <span class="input-group-text">€</span>
                                     {{ clinic_form.clinic_first_session_fee(class="form-control" + (" is-invalid" if clinic_form.clinic_first_session_fee.errors else "")) }}
                                 </div>
-                                {% if clinic_form.clinic_first_session_fee.errors %}
+                                    {% if clinic_form.clinic_first_session_fee.errors %}
                                     <div class="form-feedback invalid">
-                                        {% for error in clinic_form.clinic_first_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
-                                    </div>
-                                {% endif %}
+                                            {% for error in clinic_form.clinic_first_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
+                                        </div>
+                                    {% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
                                 {{ clinic_form.clinic_subsequent_session_fee.label(class="form-label") }}
@@ -196,14 +196,14 @@
                                     <span class="input-group-text">€</span>
                                     {{ clinic_form.clinic_subsequent_session_fee(class="form-control" + (" is-invalid" if clinic_form.clinic_subsequent_session_fee.errors else "")) }}
                                 </div>
-                                {% if clinic_form.clinic_subsequent_session_fee.errors %}
+                                    {% if clinic_form.clinic_subsequent_session_fee.errors %}
                                     <div class="form-feedback invalid">
-                                        {% for error in clinic_form.clinic_subsequent_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
-                                    </div>
-                                {% endif %}
+                                            {% for error in clinic_form.clinic_subsequent_session_fee.errors %}<span>{{ error }}</span>{% endfor %}
+                                        </div>
+                                    {% endif %}
                             </div>
                         </div>
-                        
+
                         <div class="mb-3">
                             <div class="form-check">
                                 {{ clinic_form.clinic_percentage_agreement(class="form-check-input" + (" is-invalid" if clinic_form.clinic_percentage_agreement.errors else "")) }}
@@ -215,7 +215,7 @@
                                 {% endif %}
                             </div>
                         </div>
-                        
+
                         <div class="mb-3">
                             {{ clinic_form.clinic_percentage_amount.label(class="form-label") }}
                             {{ clinic_form.clinic_percentage_amount(class="form-control" + (" is-invalid" if clinic_form.clinic_percentage_amount.errors else "")) }}
@@ -225,7 +225,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <div class="d-flex justify-content-end">
                             <button type="submit" name="submit_clinic" class="btn btn-primary">
                                 <i class="bi bi-check-circle"></i> {{ _('Save Changes') }}
@@ -235,7 +235,7 @@
                 </div>
             </div>
         </div>
-        
+
         {# --- API Tab --- #}
         <div class="tab-pane fade {{ 'show active' if active_tab == 'api' else '' }}" id="api-tab-pane" role="tabpanel" aria-labelledby="api-tab" tabindex="0">
             <div class="card mb-4 settings-section">
@@ -253,10 +253,10 @@
                                 <div class="card-body">
                                     <div class="form-check form-switch">
                                         {{ api_form.enable_calendly(class="form-check-input", id="enable_calendly", role="switch") }}
-                                        {{ api_form.enable_calendly.label(class="form-check-label", for="enable_calendly") }}
+                                {{ api_form.enable_calendly.label(class="form-check-label", for="enable_calendly") }}
                                     </div>
                                     <div class="form-text mt-2">
-                                        <i class="bi bi-calendar-event"></i> {{ _('Sync appointments and bookings from Calendly') }}
+                                    <i class="bi bi-calendar-event"></i> {{ _('Sync appointments and bookings from Calendly') }}
                                     </div>
                                 </div>
                             </div>
@@ -277,7 +277,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Calendly Configuration (shown/hidden based on checkbox) -->
                         <div id="calendly-config" class="mb-4 integration-config" style="display: none;">
                             <div class="card border-primary">
@@ -297,7 +297,7 @@
                                             {{ _('Find your Personal Access Token in your') }} <a href="https://calendly.com/integrations/api_webhooks" target="_blank">{{ _('Calendly API & Webhooks page') }}</a>.
                                         </div>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         {{ api_form.calendly_user_uri.label(class="form-label") }}
                                         {{ api_form.calendly_user_uri(class="form-control" + (" is-invalid" if api_form.calendly_user_uri.errors else "")) }}
@@ -313,7 +313,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Google Calendar Configuration (shown/hidden based on checkbox) -->
                         <div id="google-calendar-config" class="mb-4 integration-config" style="display: none;">
                             <div class="card border-success">
@@ -402,7 +402,7 @@
                 </div>
             </div>
         </div>
-        
+
         {# --- Financial Tab --- #}
         <div class="tab-pane fade {{ 'show active' if active_tab == 'financial' else '' }}" id="financial-tab-pane" role="tabpanel" aria-labelledby="financial-tab" tabindex="0">
             <div class="card mb-4 settings-section">
@@ -420,13 +420,13 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <hr class="my-4">
                         <h5 class="mb-3"><i class="bi bi-percent"></i> {{ _('Tax Configuration') }}</h5>
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i> {{ _('Configure your tax rates for financial calculations. Leave empty to use default values.') }}
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="tax_rate" class="form-label">{{ _('Tax Rate') }} (%)</label>
@@ -438,7 +438,7 @@
                                 </div>
                                 <div class="form-text">{{ _('Default:') }} 19% {{ _('for card payments') }}</div>
                             </div>
-                            
+
                             <div class="col-md-6 mb-3">
                                 <label for="autonomo_contribution_rate" class="form-label">{{ _('Autónomo Contribution Rate') }} (%)</label>
                                 <div class="input-group">
@@ -450,7 +450,7 @@
                                 <div class="form-text">{{ _('Default:') }} 31.4% {{ _('standard autónomo rate') }}</div>
                             </div>
                         </div>
-                        
+
                         <div class="mb-3">
                                                             <label for="clinic_fee_rate" class="form-label">{{ _('Clinic Fee Rate') }} (%)</label>
                             <div class="input-group">
@@ -461,14 +461,14 @@
                             </div>
                                                             <div class="form-text">{{ _('Default:') }} 30% {{ _('clinic share of revenue') }}</div>
                         </div>
-                        
+
                         <div class="d-flex justify-content-end">
                             <button type="submit" name="submit_financial" class="btn btn-primary">
                                 <i class="bi bi-check-circle"></i> {{ _('Save Changes') }}
                             </button>
                         </div>
                     </form>
-                    
+
                     <hr class="my-4">
                     
                     <h4 class="card-title mb-3"><i class="bi bi-wallet2"></i> {{ _('Manage Fixed Costs') }}</h4>
@@ -477,31 +477,31 @@
                     <h5>{{ _('Existing Costs') }}</h5>
                     {% if fixed_costs %}
                         <div class="table-responsive">
-                            <table class="table table-sm table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>{{ _('Description') }}</th>
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Description') }}</th>
                                         <th class="text-end">{{ _('Monthly Amount') }} (€)</th>
-                                        <th class="text-end">{{ _('Actions') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for cost in fixed_costs %}
-                                    <tr>
-                                        <td>{{ cost.description }}</td>
-                                        <td class="text-end">{{ "%.2f"|format(cost.monthly_amount) }}</td>
-                                        <td class="text-end">
-                                            <form action="{{ url_for('main.delete_fixed_cost', cost_id=cost.id) }}" method="POST" class="d-inline" onsubmit="return confirmDeleteCost();">
-                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                                <button type="submit" class="btn btn-danger btn-sm" title="{{ _('Delete Cost') }}">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                                    <th class="text-end">{{ _('Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cost in fixed_costs %}
+                                <tr>
+                                    <td>{{ cost.description }}</td>
+                                    <td class="text-end">{{ "%.2f"|format(cost.monthly_amount) }}</td>
+                                    <td class="text-end">
+                                        <form action="{{ url_for('main.delete_fixed_cost', cost_id=cost.id) }}" method="POST" class="d-inline" onsubmit="return confirmDeleteCost();">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="btn btn-danger btn-sm" title="{{ _('Delete Cost') }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                         </div>
                     {% else %}
                         <div class="alert alert-light">
@@ -531,11 +531,11 @@
                                     <span class="input-group-text">€</span>
                                     {{ financial_form.monthly_amount(class="form-control" + (" is-invalid" if financial_form.monthly_amount.errors else "")) }}
                                 </div>
-                                {% if financial_form.monthly_amount.errors %}
+                                    {% if financial_form.monthly_amount.errors %}
                                     <div class="form-feedback invalid">
-                                        {% for error in financial_form.monthly_amount.errors %}<span>{{ error }}</span>{% endfor %}
-                                    </div>
-                                {% endif %}
+                                            {% for error in financial_form.monthly_amount.errors %}<span>{{ error }}</span>{% endfor %}
+                                        </div>
+                                    {% endif %}
                             </div>
                             <div class="col-md-2 mb-3">
                                 <button type="submit" name="submit_add_cost" class="btn btn-primary w-100">
@@ -547,7 +547,7 @@
                 </div>
             </div>
         </div>
-        
+
         {# --- Account Deletion Tab --- #}
         <div class="tab-pane fade {{ 'show active' if active_tab == 'account_deletion' else '' }}" id="account-deletion-tab-pane" role="tabpanel" aria-labelledby="account-deletion-tab" tabindex="0">
             <div class="card mb-4 border-warning">
@@ -559,7 +559,7 @@
                         <h5 class="alert-heading"><i class="bi bi-info-circle"></i> {{ _('Understanding Your Options') }}</h5>
                         <p class="mb-0">{{ _('We provide two types of account deletion to give you control over your data. Please read carefully before making a decision.') }}</p>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <div class="card border-secondary h-100">
@@ -575,17 +575,17 @@
                                         <li>{{ _('Ideal if you might return') }}</li>
                                     </ul>
                                     <div class="mt-auto">
-                                        <form method="POST" action="{{ url_for('user_data.delete_account') }}" onsubmit="return confirmTempDeactivation();">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            <button type="submit" class="btn btn-warning">
-                                                <i class="bi bi-pause-circle"></i> {{ _('Temporarily Deactivate Account') }}
-                                            </button>
-                                        </form>
+                                    <form method="POST" action="{{ url_for('user_data.delete_account') }}" onsubmit="return confirmTempDeactivation();">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="bi bi-pause-circle"></i> {{ _('Temporarily Deactivate Account') }}
+                                        </button>
+                                    </form>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6 mb-4">
                             <div class="card border-danger h-100">
                                 <div class="card-header bg-danger text-white">
@@ -612,18 +612,18 @@
                                     </div>
                                     
                                     <div class="mt-auto">
-                                        <form method="POST" action="{{ url_for('user_data.delete_account_permanent') }}" id="permanentDeleteForm" onsubmit="return confirmPermanentDeletion();">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            <button type="submit" class="btn btn-danger" id="permanentDeleteBtn" disabled>
-                                                <i class="bi bi-trash"></i> {{ _('Permanently Delete Account') }}
-                                            </button>
-                                        </form>
+                                    <form method="POST" action="{{ url_for('user_data.delete_account_permanent') }}" id="permanentDeleteForm" onsubmit="return confirmPermanentDeletion();">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-danger" id="permanentDeleteBtn" disabled>
+                                            <i class="bi bi-trash"></i> {{ _('Permanently Delete Account') }}
+                                        </button>
+                                    </form>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="alert alert-info mt-4">
                         <h6 class="alert-heading">{{ _('Need Help?') }}</h6>
                         <p class="mb-0">{{ _('If you have questions about account deletion or need assistance with your data, please') }} <a href="mailto:support@physioapp.com">{{ _('contact our support team') }}</a> {{ _('before proceeding.') }}</p>
@@ -855,4 +855,4 @@ function showSuccessToast(message) {
     }
 }
 </script>
-{% endblock %}
+{% endblock %} 

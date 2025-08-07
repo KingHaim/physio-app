@@ -15,6 +15,10 @@ webhook_bp = Blueprint('webhooks', __name__, url_prefix='/webhooks')
 @webhook_bp.route('/stripe', methods=['POST'])
 @csrf.exempt # Exempt this route from CSRF protection
 def stripe_webhook():
+    # PAYMENT PROCESSING TEMPORARILY DISABLED
+    logger.info("Stripe webhook called but payment processing is disabled")
+    return jsonify({'message': 'Payment processing temporarily disabled'}), 503
+    
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get('Stripe-Signature')
     webhook_secret = current_app.config.get('STRIPE_WEBHOOK_SECRET')

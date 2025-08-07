@@ -367,7 +367,7 @@ The TRXCKER Team
                     <li>🤖 AI-powered treatment reports</li>
                     <li>📅 Appointment scheduling</li>
                     <li>💰 Financial reporting</li>
-                    <li>🔒 GDPR-compliant data protection</li>
+                    <li>⚠️ Beta version - GDPR compliance pending</li>
                     <li>📊 Advanced analytics</li>
                     <li>🔧 API access and integrations</li>
                 </ul>

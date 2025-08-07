@@ -46,14 +46,18 @@ class Config:
     # Calendly API configuration
     CALENDLY_API_TOKEN = os.environ.get('CALENDLY_API_TOKEN', '')
 
+    # STRIPE PAYMENTS TEMPORARILY DISABLED FOR SYSTEM UPGRADES
     # Stripe Webhook Signing Secret
-    STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+    STRIPE_WEBHOOK_SECRET = None  # DISABLED: os.environ.get('STRIPE_WEBHOOK_SECRET')
 
     # Stripe Publishable Key
-    STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
+    STRIPE_PUBLISHABLE_KEY = None  # DISABLED: os.environ.get('STRIPE_PUBLISHABLE_KEY')
 
     # Stripe Secret Key
-    STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+    STRIPE_SECRET_KEY = None  # DISABLED: os.environ.get('STRIPE_SECRET_KEY')
+    
+    # Payment processing status flag
+    PAYMENTS_ENABLED = False
     
     # DeepSeek AI API Key for clinical suggestions
     DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY')

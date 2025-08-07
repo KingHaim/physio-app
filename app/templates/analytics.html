@@ -45,7 +45,7 @@
                 </div>
             </div>
         </div>
-    </div>
+                </div>
 
     <!-- ANALYTICS SECTIONS WITH DROPDOWNS -->
     
@@ -62,55 +62,55 @@
             </h5>
         </div>
         <div id="practiceOverview" class="collapse show">
-            <div class="card-body">
+                <div class="card-body">
                 <div class="row">
                     <!-- Key Practice Metrics -->
                     <div class="col-md-4 mb-3">
                         <div class="card stats-card">
-                            <div class="card-body">
+                <div class="card-body">
                                 <h6 class="card-title">{{ _('Avg. Treatments/Patient') }}</h6>
                                 <h3 class="display-6">{{ avg_treatments }}</h3>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+            </div>
+        </div>
                     <div class="col-md-4 mb-3" id="inactive-patients-box" style="cursor: pointer;" title="{{ _('Click to see list') }}">
                         <div class="card stats-card bg-warning text-white">
-                            <div class="card-body">
+                <div class="card-body">
                                 <h6 class="card-title"><i class="bi bi-person-dash"></i> {{ _('Inactive Patients') }} (>90d)</h6>
                                 <h3 class="display-6"><span id="inactive-patients-count">...</span></h3>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+            </div>
+        </div>
                     <div class="col-md-4 mb-3">
                         <div class="card stats-card bg-danger text-white">
-                            <div class="card-body">
+                <div class="card-body">
                                 <h6 class="card-title"><i class="bi bi-percent"></i> {{ _('Avg. Cancellation Rate') }}</h6>
                                 <h3 class="display-6"><span id="avg-cancellation-rate">...</span>%</h3>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+            </div>
+        </div>
                 </div>
                 <!-- Core Charts: Treatments and Patients Trends -->
                 <div class="row">
-                    <div class="col-lg-6 mb-4" id="treatmentsChartCard">
+        <div class="col-lg-6 mb-4" id="treatmentsChartCard">
                         <div class="card h-100">
-                            <div class="card-header">
+                <div class="card-header">
                                 <h6 class="card-title mb-0">{{ _('Treatments by Month') }}</h6>
-                            </div>
+                </div>
                             <div class="card-body">
                                 <canvas id="treatmentsChart" style="max-height: 300px;"></canvas>
-                                <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-6 mb-4" id="patientsChartCard">
+                    <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4" id="patientsChartCard">
                         <div class="card h-100">
-                            <div class="card-header">
+                <div class="card-header">
                                 <h6 class="card-title mb-0">{{ _('New Patients by Month') }}</h6>
-                            </div>
+                </div>
                             <div class="card-body">
                                 <canvas id="patientsChart" style="max-height: 300px;"></canvas>
-                                <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
+                    <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
                             </div>
                         </div>
                     </div>
@@ -121,7 +121,7 @@
 
     <!-- 2. REVENUE ANALYSIS SECTION -->
     <div class="card shadow-sm mb-4">
-        <div class="card-header">
+                <div class="card-header">
             <h5 class="mb-0">
                 <button class="btn btn-link text-decoration-none fw-bold d-flex align-items-center justify-content-between w-100" 
                         type="button" data-bs-toggle="collapse" data-bs-target="#revenueAnalysis" 
@@ -130,7 +130,7 @@
                     <i class="bi bi-chevron-down"></i>
                 </button>
             </h5>
-        </div>
+                </div>
         <div id="revenueAnalysis" class="collapse">
             <div class="card-body">
                 <div class="row mb-4">
@@ -141,9 +141,9 @@
                                 <h6 class="card-title">{{ clinic_name }} {{ _('Fee (This Week)') }}</h6>
                                 <h3 class="display-6">€{{ "{:,.2f}".format(costaspine_service_fee_weekly or 0) }}</h3>
                                 <small class="text-light">{{ _('Total Weekly') }} {{ clinic_name }} {{ _('Revenue:') }} €{{ "{:,.2f}".format(costaspine_revenue_weekly_data or 0) }}</small>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+            </div>
+        </div>
                     <!-- COMMENTED OUT: Autónomo Contribution Card - Not needed for now
                     <div class="col-md-6 mb-3">
                         <div class="card stats-card bg-secondary text-white">
@@ -157,9 +157,9 @@
                                     {% endif %}
                                 </h3>
                                 <small class="text-muted-white">{{ _('Sum of estimated monthly contributions') }} (€)</small>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+            </div>
+        </div>
                     -->
                 </div>
                 <!-- Revenue Charts -->
@@ -171,22 +171,22 @@
                             </div>
                             <div class="card-body">
                                 <canvas id="revenueByVisitTypeChart" style="max-height: 300px;"></canvas>
-                                <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
-                            </div>
-                        </div>
-                    </div>
+                    <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
+                </div>
+            </div>
+        </div>
                     <div class="col-lg-6 mb-4">
                         <div class="card h-100">
-                            <div class="card-header">
+                <div class="card-header">
                                 <h6 class="card-title mb-0"><i class="bi bi-trophy"></i> {{ _('Top Patients by Revenue') }}</h6>
-                            </div>
+                </div>
                             <div class="card-body">
                                 <ol id="topPatientsList" class="list-group list-group-numbered list-group-flush">
                                     <li class="list-group-item">{{ _('Loading...') }}</li>
                                 </ol>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+            </div>
+        </div>
                 </div>
             </div>
         </div>
@@ -194,7 +194,7 @@
 
     <!-- 3. PATIENT INSIGHTS SECTION -->
     <div class="card shadow-sm mb-4">
-        <div class="card-header">
+                <div class="card-header">
             <h5 class="mb-0">
                 <button class="btn btn-link text-decoration-none fw-bold d-flex align-items-center justify-content-between w-100" 
                         type="button" data-bs-toggle="collapse" data-bs-target="#patientInsights" 
@@ -209,21 +209,21 @@
                 <div class="row">
                     <div class="col-lg-6 mb-4" id="diagnosesChartCard"> 
                         <div class="card h-100">
-                            <div class="card-header">
+                <div class="card-header">
                                 <h6 class="card-title mb-0">{{ _('Common Diagnoses') }}</h6>
-                            </div>
+                </div>
                             <div class="card-body">
                                 <canvas id="diagnosesChart" style="max-height: 300px;"></canvas>
                                 <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+            </div>
+        </div>
                     <div class="col-lg-6 mb-4" id="statusChartCard">
                         <div class="card h-100">
-                            <div class="card-header">
+                <div class="card-header">
                                 <h6 class="card-title mb-0">{{ _('Patient Status Distribution') }}</h6>
-                            </div>
-                            <div class="card-body">
+                </div>
+                <div class="card-body">
                                 <canvas id="statusChart" style="max-height: 300px;"></canvas>
                                 <p class="text-center text-muted d-none no-data-message">{{ _('No data available to display.') }}</p>
                             </div>
@@ -258,7 +258,7 @@
                     </form>
                 </div>
                 
-                {% if ai_report_html %}
+                    {% if ai_report_html %}
                     <div class="ai-report-container">
                         {% if ai_report_generated_at %}
                             <div class="text-muted mb-3">
@@ -276,13 +276,13 @@
                         <div class="ai-report-content">
                             {{ ai_report_html|safe }}
                         </div>
-                    </div>
-                {% else %}
+                </div>
+                    {% else %}
                     <div class="text-center text-muted">
                         <i class="bi bi-robot"></i>
                         <p>{{ _('No practice report generated yet. Click "Generate New Report" to create one.') }}</p>
                     </div>
-                {% endif %}
+                    {% endif %}
             </div>
         </div>
     </div>
@@ -299,62 +299,62 @@
 
 <!-- Fee Breakdown Modal (preserved) -->
 <div class="modal fade" id="costaspineFeeModal" tabindex="-1" aria-labelledby="costaspineFeeModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
                 <h5 class="modal-title" id="costaspineFeeModalLabel"><i class="bi bi-calculator"></i> {{ clinic_name }} {{ _('Fee Breakdown') }} ({{ clinic_percentage }}%)</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
-            </div>
-            <div class="modal-body">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+      </div>
+      <div class="modal-body">
                 <p>{{ _("Total fee calculated based on treatments logged at") }} '{{ clinic_name }}' {{ _("location with a fee.") }}</p>
                 <table class="table table-sm">
-                    <tbody>
-                        <tr>
-                            <th>{{ _('Total (All Time):') }}</th>
-                            <td><span id="feeTotal">{{ _('Loading...') }}</span></td>
-                        </tr>
-                        <tr>
-                            <th>{{ _('This Year:') }}</th>
-                            <td><span id="feeYear">{{ _('Loading...') }}</span></td>
-                        </tr>
-                        <tr>
-                            <th>{{ _('This Month:') }}</th>
-                            <td><span id="feeMonth">{{ _('Loading...') }}</span></td>
-                        </tr>
-                        <tr>
-                            <th>{{ _('This Week:') }}</th>
-                            <td><span id="feeWeek">{{ _('Loading...') }}</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <small class="text-muted">{{ _('Calculations are based on treatment dates.') }}</small>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
-            </div>
-        </div>
+          <tbody>
+            <tr>
+              <th>{{ _('Total (All Time):') }}</th>
+              <td><span id="feeTotal">{{ _('Loading...') }}</span></td>
+            </tr>
+            <tr>
+              <th>{{ _('This Year:') }}</th>
+              <td><span id="feeYear">{{ _('Loading...') }}</span></td>
+            </tr>
+            <tr>
+              <th>{{ _('This Month:') }}</th>
+              <td><span id="feeMonth">{{ _('Loading...') }}</span></td>
+            </tr>
+            <tr>
+              <th>{{ _('This Week:') }}</th>
+              <td><span id="feeWeek">{{ _('Loading...') }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <small class="text-muted">{{ _('Calculations are based on treatment dates.') }}</small>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- Inactive Patients Modal (preserved) -->
 <div class="modal fade" id="inactivePatientsModal" tabindex="-1" aria-labelledby="inactivePatientsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
+    <div class="modal-content">
+      <div class="modal-header">
                 <h5 class="modal-title" id="inactivePatientsModalLabel"><i class="bi bi-person-dash"></i> {{ _('Inactive Patients') }} (>90d)</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
-            </div>
-            <div class="modal-body">
-                <p>{{ _("The following active patients have not had a treatment logged in the last 90 days.") }}</p>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ _("The following active patients have not had a treatment logged in the last 90 days.") }}</p>
                 <div id="inactivePatientsList">
                     <!-- Content will be populated by JavaScript -->
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
-            </div>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+      </div>
     </div>
+  </div>
 </div>
 
 {% endblock %}
@@ -367,47 +367,47 @@ Chart.defaults.responsive = true;
 Chart.defaults.maintainAspectRatio = false;
 
 // Global color schemes
-const chartColors = [
-    'rgba(52, 152, 219, 0.7)', 'rgba(46, 204, 113, 0.7)', 'rgba(155, 89, 182, 0.7)',
-    'rgba(241, 196, 15, 0.7)', 'rgba(230, 126, 34, 0.7)', 'rgba(231, 76, 60, 0.7)',
-    'rgba(52, 73, 94, 0.7)',   'rgba(26, 188, 156, 0.7)', 'rgba(149, 165, 166, 0.7)',
-    'rgba(41, 128, 185, 0.7)'
-];
-const chartBorderColors = chartColors.map(color => color.replace('0.7', '1'));
-const chartBackgroundColors = chartColors.map(color => color.replace('0.7', '0.2'));
+    const chartColors = [
+        'rgba(52, 152, 219, 0.7)', 'rgba(46, 204, 113, 0.7)', 'rgba(155, 89, 182, 0.7)', 
+        'rgba(241, 196, 15, 0.7)', 'rgba(230, 126, 34, 0.7)', 'rgba(231, 76, 60, 0.7)',  
+        'rgba(52, 73, 94, 0.7)',   'rgba(26, 188, 156, 0.7)', 'rgba(149, 165, 166, 0.7)', 
+        'rgba(41, 128, 185, 0.7)' 
+    ];
+    const chartBorderColors = chartColors.map(color => color.replace('0.7', '1'));
+    const chartBackgroundColors = chartColors.map(color => color.replace('0.7', '0.2'));
 
 // Chart storage for cleanup
 const activeCharts = {};
 
 // Utility function to fetch chart data
-async function fetchChartData(url) {
-    try {
+    async function fetchChartData(url) {
+        try {
         console.log(`Fetching data from: ${url}`);
-        const response = await fetch(url);
-        if (!response.ok) {
+            const response = await fetch(url);
+            if (!response.ok) {
             console.error(`Error fetching ${url}: ${response.status} ${response.statusText}`);
-            return null;
-        }
+                return null;
+            }
         const data = await response.json();
         console.log(`Data received from ${url}:`, data);
         return data;
-    } catch (error) {
-        console.error(`Error fetching chart data from ${url}:`, error);
+        } catch (error) {
+            console.error(`Error fetching chart data from ${url}:`, error);
         return null;
+        }
     }
-}
 
 // Utility function to render or update charts with proper cleanup
-function renderOrUpdateChart(canvasId, cardId, apiData, chartConfigBuilderFn) {
-    const canvas = document.getElementById(canvasId);
-    const card = document.getElementById(cardId);
-    const noDataMessageEl = card ? card.querySelector('.no-data-message') : null;
+    function renderOrUpdateChart(canvasId, cardId, apiData, chartConfigBuilderFn) {
+        const canvas = document.getElementById(canvasId);
+        const card = document.getElementById(cardId);
+        const noDataMessageEl = card ? card.querySelector('.no-data-message') : null;
 
-    if (!canvas || !card || !noDataMessageEl) {
-        console.error(`Elements not found for chart: ${canvasId}, card: ${cardId}`);
+        if (!canvas || !card || !noDataMessageEl) {
+            console.error(`Elements not found for chart: ${canvasId}, card: ${cardId}`);
         if (card) card.style.display = 'none';
-        return;
-    }
+            return;
+        }
 
     // Destroy existing chart to prevent growing issue
     if (activeCharts[canvasId]) {
@@ -416,15 +416,15 @@ function renderOrUpdateChart(canvasId, cardId, apiData, chartConfigBuilderFn) {
     }
 
     if (apiData === null) {
-        console.error(`No API data for ${canvasId}. Hiding card.`);
-        card.style.display = 'none';
-        return;
-    }
+            console.error(`No API data for ${canvasId}. Hiding card.`);
+            card.style.display = 'none';
+            return;
+        }
 
-    const chartConfig = chartConfigBuilderFn(apiData);
+        const chartConfig = chartConfigBuilderFn(apiData);
 
     // Check if data is empty
-    if (chartConfig && chartConfig.data && chartConfig.data.datasets && chartConfig.data.datasets.length > 0) {
+        if (chartConfig && chartConfig.data && chartConfig.data.datasets && chartConfig.data.datasets.length > 0) {
         const hasData = chartConfig.data.datasets.some(dataset => {
             if (!dataset.data || dataset.data.length === 0) return false;
             return dataset.data.some(value => value !== null && value !== undefined && value !== 0);
@@ -434,8 +434,8 @@ function renderOrUpdateChart(canvasId, cardId, apiData, chartConfigBuilderFn) {
             canvas.style.display = 'none';
             noDataMessageEl.classList.remove('d-none');
             return;
-        }
-    } else {
+            }
+        } else {
         canvas.style.display = 'none';
         noDataMessageEl.classList.remove('d-none');
         return;
@@ -468,15 +468,15 @@ function renderOrUpdateChart(canvasId, cardId, apiData, chartConfigBuilderFn) {
 // Chart configuration builders
 function buildTreatmentsChart(data) {
     return {
-        type: 'line',
-        data: {
-            labels: data.map(item => item.month),
-            datasets: [{
+            type: 'line',
+            data: {
+                labels: data.map(item => item.month),
+                datasets: [{
                 label: '{{ _("Treatments") }}',
-                data: data.map(item => item.count),
+                    data: data.map(item => item.count),
                 borderColor: chartBorderColors[0],
-                backgroundColor: chartBackgroundColors[0],
-                fill: true,
+                    backgroundColor: chartBackgroundColors[0],
+                    fill: true,
                 tension: 0.4
             }]
         },
@@ -490,15 +490,15 @@ function buildTreatmentsChart(data) {
 
 function buildPatientsChart(data) {
     return {
-        type: 'line',
-        data: {
-            labels: data.map(item => item.month),
-            datasets: [{
+            type: 'line',
+            data: {
+                labels: data.map(item => item.month),
+                datasets: [{
                 label: '{{ _("New Patients") }}',
-                data: data.map(item => item.count),
+                    data: data.map(item => item.count),
                 borderColor: chartBorderColors[1],
-                backgroundColor: chartBackgroundColors[1],
-                fill: true,
+                    backgroundColor: chartBackgroundColors[1],
+                    fill: true,
                 tension: 0.4
             }]
         },
@@ -512,11 +512,11 @@ function buildPatientsChart(data) {
 
 function buildRevenueByVisitTypeChart(data) {
     return {
-        type: 'doughnut',
-        data: {
+            type: 'doughnut',
+            data: {
             labels: data.map(item => item.treatment_type || 'Unknown'),
-            datasets: [{
-                data: data.map(item => item.total_fee),
+                datasets: [{
+                    data: data.map(item => item.total_fee),
                 backgroundColor: chartColors.slice(0, data.length),
                 borderColor: chartBorderColors.slice(0, data.length),
                 borderWidth: 2
@@ -532,17 +532,17 @@ function buildRevenueByVisitTypeChart(data) {
 
 function buildDiagnosesChart(data) {
     return {
-        type: 'bar',
-        data: {
+            type: 'bar',
+            data: {
             labels: data.map(item => item.diagnosis),
-            datasets: [{
+                datasets: [{
                 label: '{{ _("Frequency") }}',
                 data: data.map(item => item.count),
                 backgroundColor: chartColors.slice(0, data.length),
                 borderColor: chartBorderColors.slice(0, data.length),
-                borderWidth: 1
-            }]
-        },
+                    borderWidth: 1
+                }]
+            },
         options: {
             scales: {
                 y: { beginAtZero: true }
@@ -555,18 +555,18 @@ function buildDiagnosesChart(data) {
 }
 
 function buildStatusChart(data) {
-    return {
-        type: 'pie',
-        data: {
+            return {
+                type: 'pie',
+                data: {
             labels: data.map(item => item.status),
-            datasets: [{
-                data: data.map(item => item.count),
+                datasets: [{
+                    data: data.map(item => item.count),
                 backgroundColor: chartColors.slice(0, data.length),
                 borderColor: chartBorderColors.slice(0, data.length),
                 borderWidth: 2
-            }]
-        },
-        options: {
+                }]
+            },
+            options: {
             plugins: {
                 legend: { position: 'bottom' }
             }
@@ -631,7 +631,7 @@ async function loadInactivePatientsCount() {
             console.error('Error loading inactive patients:', data.error);
             document.getElementById('inactive-patients-count').textContent = '?';
         }
-    } catch (error) {
+            } catch (error) {
         console.error('Error fetching inactive patients:', error);
         document.getElementById('inactive-patients-count').textContent = '?';
     }
@@ -743,7 +743,7 @@ async function loadInactivePatientsModal() {
                     </table>
                 </div>
             `;
-        } else {
+                    } else {
             listElement.innerHTML = '<p class="text-muted">{{ _("No inactive patients found.") }}</p>';
         }
     } catch (error) {

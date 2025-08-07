@@ -395,27 +395,15 @@
                                 {% if plan.id == active_plan_id %}
                                     <span class="btn btn-secondary disabled w-100">{{ _('Current Plan') }}</span>
                                 {% else %}
-                                    {% if is_authenticated %}
-                                        {# User is logged in #}
-                                        {% if active_plan_id %}
-                                            {# User has an active subscription, this is a change button #}
-                                            <form action="{{ url_for('main.create_checkout_session') }}" method="POST">
-                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                <input type="hidden" name="price_id" value="{{ plan.stripe_price_id }}">
-                                                <button type="submit" class="btn btn-primary w-100">{{ _('Change to') }} {{ plan.name }}</button>
-                                            </form>
-                                        {% else %}
-                                            {# User is logged in but has no subscription #}
-                                            <form action="{{ url_for('main.create_checkout_session') }}" method="POST">
-                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                <input type="hidden" name="price_id" value="{{ plan.stripe_price_id }}">
-                                                <button type="submit" class="btn btn-primary w-100">{{ _('Choose Plan') }}</button>
-                                            </form>
-                                        {% endif %}
-                                    {% else %}
-                                        {# User is not logged in, redirect to sign up with plan #}
-                                        <a href="{{ url_for('auth.register', plan=plan.slug) }}" class="btn btn-primary w-100">{{ _('Sign Up & Choose') }} {{ plan.name }}</a>
-                                    {% endif %}
+                                    <!-- PAYMENT PROCESSING TEMPORARILY DISABLED -->
+                                    <div class="alert alert-warning mb-3" role="alert">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        <strong>{{ _('Payment Processing Paused') }}</strong><br>
+                                        <small>{{ _('System upgrades in progress. Contact support for assistance.') }}</small>
+                                    </div>
+                                    <button class="btn btn-secondary w-100" disabled>
+                                        <i class="bi bi-pause-circle me-2"></i>{{ _('Temporarily Unavailable') }}
+                                    </button>
                                 {% endif %}
                             </div>
                         </div>

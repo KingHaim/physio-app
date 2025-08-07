@@ -642,6 +642,30 @@ msgstr "tasa estándar de autónomo"
 msgid "clinic share of revenue"
 msgstr "participación de la clínica en ingresos"
 
+msgid "Payment Processing Temporarily Paused"
+msgstr "Procesamiento de Pagos Temporalmente Pausado"
+
+msgid "System upgrades in progress - Service remains fully functional"
+msgstr "Actualizaciones del sistema en progreso - El servicio permanece completamente funcional"
+
+msgid "Payment Processing Paused"
+msgstr "Procesamiento de Pagos Pausado"
+
+msgid "System upgrades in progress. Contact support for assistance."
+msgstr "Actualizaciones del sistema en progreso. Contacte al soporte para asistencia."
+
+msgid "Temporarily Unavailable"
+msgstr "Temporalmente No Disponible"
+
+msgid "BETA TESTING PHASE"
+msgstr "FASE DE PRUEBAS BETA"
+
+msgid "Not intended for production use with sensitive patient data"
+msgstr "No está destinado para uso en producción con datos sensibles de pacientes"
+
+msgid "GDPR compliance pending"
+msgstr "Cumplimiento GDPR pendiente"
+
 msgid "Est. Total Autónomo Contr. (€)"
 msgstr "Est. cotización autónomo total (€)"
 

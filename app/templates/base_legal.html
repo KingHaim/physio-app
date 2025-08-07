@@ -124,6 +124,20 @@
         </div>
     </header>
 
+    <!-- BETA TESTING DISCLAIMER -->
+    <div class="alert alert-warning alert-dismissible fade show mx-3 mt-3" role="alert" style="border-left: 5px solid #f59e0b;">
+        <div class="d-flex align-items-start">
+            <i class="bi bi-exclamation-triangle-fill fs-4 me-3 mt-1" style="color: #f59e0b;"></i>
+            <div>
+                <h6 class="alert-heading mb-2"><strong>IMPORTANT: BETA TESTING PHASE</strong></h6>
+                <p class="mb-1"><strong>TRXCKER is currently in beta testing phase. Not intended for production use with sensitive patient data.</strong></p>
+                <p class="mb-1">By using this service, you agree to our terms and acknowledge that full GDPR compliance is pending final implementation.</p>
+                <small class="text-muted">For production use, please wait for our official release or contact support for enterprise options.</small>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
     <!-- Main Content -->
     <main class="legal-content">
         {% block content %}{% endblock %}

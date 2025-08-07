@@ -1398,6 +1398,11 @@ def costaspine_service_fee():
 @login_required
 def create_checkout_session():
     """Create Stripe checkout session for individual subscriptions."""
+    # PAYMENT PROCESSING TEMPORARILY DISABLED
+    return jsonify({
+        'error': 'Payment processing is temporarily paused for system upgrades. Please contact support for assistance.'
+    }), 503
+    
     try:
         data = request.get_json()
         plan_id = data.get('plan_id')
@@ -1455,6 +1460,11 @@ def get_plan_by_slug():
 @login_required
 def create_clinic_checkout_session():
     """Create Stripe checkout session for clinic subscriptions."""
+    # PAYMENT PROCESSING TEMPORARILY DISABLED
+    return jsonify({
+        'error': 'Payment processing is temporarily paused for system upgrades. Please contact support for assistance.'
+    }), 503
+    
     try:
         data = request.get_json()
         plan_id = data.get('plan_id')
