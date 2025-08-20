@@ -300,7 +300,7 @@ def import_data():
                     setattr(patient, key, datetime.fromisoformat(value))
                 elif key in ['name', 'email', 'phone', 'notes', 'anamnesis']:
                     # Store as plaintext in _name, _email, etc.
-                    setattr(patient, f'_{key}', value)
+                    setattr(patient, f'_{{key}}', value)
                 else:
                     setattr(patient, key, value)
             db.session.add(patient)
