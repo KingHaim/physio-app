@@ -13,10 +13,11 @@ class Config:
     if not SECRET_KEY:
         raise RuntimeError("SECRET_KEY environment variable is required")
     
-    # Encryption key for sensitive data
+    # Encryption control: disabled by default
+    DISABLE_ENCRYPTION = os.getenv("DISABLE_ENCRYPTION", "true").lower() in ["true", "1", "yes", "on"]
+    
+    # Encryption key for sensitive data (optional when DISABLE_ENCRYPTION is true)
     FERNET_SECRET_KEY = os.getenv("FERNET_SECRET_KEY")
-    if not FERNET_SECRET_KEY:
-        raise RuntimeError("FERNET_SECRET_KEY environment variable is required for data encryption")
     
     # Use absolute path for database
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///" + os.path.join(basedir, 'instance', 'physio-2.db'))
