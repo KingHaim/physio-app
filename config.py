@@ -19,17 +19,17 @@ class Config:
     # Encryption key for sensitive data (optional when DISABLE_ENCRYPTION is true)
     FERNET_SECRET_KEY = os.getenv("FERNET_SECRET_KEY")
     
-    # Use absolute path for database
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///" + os.path.join(basedir, 'instance', 'physio-2.db'))
+    # Use absolute path for database - optimized SQLite
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///" + os.path.join(basedir, 'instance', 'physio_sqlite_fast.db'))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # Database connection pool settings - optimized for performance
+    # Database connection pool settings - optimized for SQLite
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 20,           # Increased from 10
-        'pool_recycle': 300,       # Recycle connections every 5 minutes
-        'pool_pre_ping': True,     # Verify connections before use
-        'max_overflow': 30,        # Increased from 20
-        'pool_timeout': 30,        # Connection timeout
+        'pool_size': 1,            # SQLite is single-threaded
+        'pool_recycle': -1,        # No connection recycling needed for SQLite
+        'pool_pre_ping': False,    # Not needed for SQLite file access
+        'max_overflow': 0,         # No overflow for SQLite
+        'pool_timeout': 30,        # Keep timeout
         'echo': False,             # Disable SQL logging in production
     }
     
