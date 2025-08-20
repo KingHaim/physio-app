@@ -23,12 +23,14 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///" + os.path.join(basedir, 'instance', 'physio-2.db'))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # Database connection pool settings
+    # Database connection pool settings - optimized for performance
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 10,
-        'pool_recycle': 300,
-        'pool_pre_ping': True,
-        'max_overflow': 20
+        'pool_size': 20,           # Increased from 10
+        'pool_recycle': 300,       # Recycle connections every 5 minutes
+        'pool_pre_ping': True,     # Verify connections before use
+        'max_overflow': 30,        # Increased from 20
+        'pool_timeout': 30,        # Connection timeout
+        'echo': False,             # Disable SQL logging in production
     }
     
     # Server configuration for email URL generation (overridden in subclasses)
