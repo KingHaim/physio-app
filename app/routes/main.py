@@ -2699,13 +2699,13 @@ def download_report_pdf(report_id):
         if patient.id not in patient_ids:
             flash('You do not have permission to download this report.', 'danger')
             return redirect(url_for('main.patients_list'))
-        elif current_user.role == 'patient':
-            if not current_user.patient_record or current_user.patient_record.id != patient.id:
-                flash('You do not have permission to download this report.', 'danger')
-                return redirect(url_for('main.patient_dashboard'))
-        else: # Other roles
-            flash('Access Denied.', 'danger')
-            return redirect(url_for('main.index'))
+    elif current_user.role == 'patient':
+        if not current_user.patient_record or current_user.patient_record.id != patient.id:
+            flash('You do not have permission to download this report.', 'danger')
+            return redirect(url_for('main.patient_dashboard'))
+    else: # Other roles
+        flash('Access Denied.', 'danger')
+        return redirect(url_for('main.index'))
     # --- End Access Control ---
 
     report_html_content = ""
