@@ -1121,8 +1121,9 @@ def new_recurring_appointment(patient_id):
             flash(f'Error creating recurring rule: {e}', 'danger')
             print(f"Error creating recurring rule: {e}")
             
-    # GET request
-    return render_template('new_recurring_appointment.html', patient=patient)
+    # GET request - generate CSRF token explicitly
+    csrf_token_value = generate_csrf()
+    return render_template('new_recurring_appointment.html', patient=patient, csrf_token_value=csrf_token_value)
 
 @main.route('/recurring/<int:id>/edit', methods=['GET', 'POST'])
 @login_required

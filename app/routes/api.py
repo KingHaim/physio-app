@@ -437,7 +437,10 @@ def generate_patient_report(id):
         import os, requests
         api_key = os.environ.get('DEEPSEEK_API_KEY')
         if not api_key:
-            return jsonify({'success': False, 'message': 'DeepSeek API key not configured.'}), 500
+            return jsonify({
+                'success': False, 
+                'message': 'AI report generation requires a DeepSeek API key. Please contact your administrator to set up DEEPSEEK_API_KEY environment variable. For more info, visit: https://platform.deepseek.com/'
+            }), 500
 
         # Modify system message to include language instruction
         system_message = f"You are a professional physiotherapist with expertise in creating detailed, evidence-based treatment progress reports. You use precise physiotherapy terminology while ensuring your reports remain clear and accessible. You must write all reports in {language_names[requested_language]} using professional medical terminology appropriate for that language."
@@ -736,7 +739,10 @@ def generate_exercise_prescription(id):
         import os, requests
         api_key = os.environ.get('DEEPSEEK_API_KEY')
         if not api_key:
-            return jsonify({'success': False, 'message': 'DeepSeek API key not configured.'}), 500
+            return jsonify({
+                'success': False, 
+                'message': 'AI exercise prescription requires a DeepSeek API key. Please contact your administrator to set up DEEPSEEK_API_KEY environment variable. For more info, visit: https://platform.deepseek.com/'
+            }), 500
 
         # Modify system message to include language instruction
         system_message = f"You are a professional physiotherapist with expertise in creating home exercise programs. You must write all exercise prescriptions in {language_names[requested_language]} using professional physiotherapy terminology appropriate for that language. Use patient-friendly language while maintaining clinical accuracy."

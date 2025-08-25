@@ -20,7 +20,7 @@ class Config:
     FERNET_SECRET_KEY = os.getenv("FERNET_SECRET_KEY")
     
     # Use absolute path for database - optimized SQLite
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///" + os.path.join(basedir, 'instance', 'physio_sqlite_fast.db'))
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///" + os.path.join(basedir, 'instance', 'physio-2.db'))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Database connection pool settings - optimized for SQLite
