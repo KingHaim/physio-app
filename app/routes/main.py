@@ -1399,9 +1399,9 @@ def get_appointments():
                                 # Make recurring appointments slightly more transparent
                                 color = color + 'CC'  # Add 80% opacity
                             else:
-                                color = '#f39c12CC' # Default orange with transparency
+                                color = '#3b82f6CC' # Default blue with transparency (matches sidebar)
                         else:
-                            color = '#f39c12CC' # Default orange with transparency
+                            color = '#3b82f6CC' # Default blue with transparency (matches sidebar)
                         
                         # Create event object for this potential/recurring occurrence
                         events.append({
@@ -4600,9 +4600,9 @@ def get_calendar_appointments():
                         # Make recurring appointments slightly more transparent
                         color = color + 'CC'  # Add 80% opacity
                     else:
-                        color = '#fd7e14CC' # Default orange with transparency
+                        color = '#3b82f6CC' # Default blue with transparency (matches sidebar)
                 else:
-                    color = '#fd7e14CC' # Default orange with transparency
+                    color = '#3b82f6CC' # Default blue with transparency (matches sidebar)
 
                 events.append({
                     'id': f"recurring_{ra.id}_{current_iter_date.strftime('%Y%m%d')}",
