@@ -1340,5 +1340,34 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+// Ensure Bootstrap tabs work properly
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap tabs manually if needed
+    const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-bs-target');
+            const targetPane = document.querySelector(targetId);
+            
+            if (targetPane) {
+                // Remove active from all tabs and panes
+                document.querySelectorAll('.nav-link').forEach(tab => {
+                    tab.classList.remove('active');
+                    tab.setAttribute('aria-selected', 'false');
+                });
+                document.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                });
+                
+                // Add active to current tab and pane
+                this.classList.add('active');
+                this.setAttribute('aria-selected', 'true');
+                targetPane.classList.add('show', 'active');
+            }
+        });
+    });
+});
+
 </script>
 {% endblock %} 
