@@ -104,6 +104,7 @@
                             <th>{{ _('Diagnosis') }}</th>
                             <th>{{ _('Last Visit') }}</th>
                             <th>{{ _('Status') }}</th>
+                            <th>{{ _('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -134,6 +135,20 @@
                                     {% else %}status-completed{% endif %}">
                                     {{ _(patient.status) }}
                                 </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-info btn-sm" 
+                                            onclick="openPatientAIChat({{ patient.id }}, '{{ patient.name }}')"
+                                            title="{{ _('AI Assistant') }}">
+                                        <i class="bi bi-robot"></i>
+                                    </button>
+                                    <a href="{{ url_for('main.patient_detail', id=patient.id) }}" 
+                                       class="btn btn-outline-primary btn-sm"
+                                       title="{{ _('View Details') }}">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -431,4 +446,441 @@
         });
     }
 </script>
+
+<!-- Patient AI Chat Modal (reused from patient.html) -->
+<div class="modal fade" id="patientAIChatModal" tabindex="-1" aria-labelledby="patientAIChatModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="patientAIChatModalLabel">
+                    <i class="bi bi-robot me-2"></i>AI Assistant for <span id="patientNameHeader"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div id="patient-chat-container" style="height: 400px; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 1rem; background-color: #f8f9fa; overflow-y: auto; margin-bottom: 1rem;">
+                            <div id="patient-chat-messages">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i>
+                                    <strong>Patient-Specific AI Assistant</strong><br>
+                                    Ask me about this patient's condition, contraindications, treatment progress, or any clinical considerations. I have access to their complete medical history and previous conversations.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <input type="text" id="patient-chat-input" class="form-control" 
+                                   placeholder="Ask about this patient's condition, contraindications, treatment progress..." 
+                                   onkeypress="if(event.key==='Enter') sendPatientMessage()">
+                            <button class="btn btn-primary" type="button" onclick="sendPatientMessage()">
+                                <i class="bi bi-send"></i> Send
+                            </button>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-lightbulb"></i> 
+                                Try: "Does this patient have any contraindications?", "What's their treatment progress?", "Any red flags I should be aware of?"
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-gear"></i> Chat Settings</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="patient-language-selector" class="form-label">Language</label>
+                                    <select id="patient-language-selector" class="form-select">
+                                        <option value="en">English</option>
+                                        <option value="es" selected>Español</option>
+                                        <option value="fr">Français</option>
+                                        <option value="it">Italiano</option>
+                                        <option value="de">Deutsch</option>
+                                        <option value="pt">Português</option>
+                                    </select>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="clearPatientChat()">
+                                        <i class="bi bi-trash"></i> Clear Chat History
+                                    </button>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="exportPatientChat()">
+                                        <i class="bi bi-download"></i> Export Chat
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-person-circle"></i> Patient Context</h6>
+                            </div>
+                            <div class="card-body">
+                                <small class="text-muted">
+                                    This AI assistant has access to:
+                                    <ul class="mt-2 mb-0">
+                                        <li>Complete patient history</li>
+                                        <li>All treatment sessions</li>
+                                        <li>Clinical notes and assessments</li>
+                                        <li>Previous AI conversations</li>
+                                        <li>Diagnosis and treatment plans</li>
+                                    </ul>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Patient AI Chat functionality (reused from patient.html)
+let currentPatientId = null;
+let currentPatientName = null;
+let patientChatHistory = [];
+
+function openPatientAIChat(patientId, patientName) {
+    currentPatientId = patientId;
+    currentPatientName = patientName;
+    
+    document.getElementById('patientNameHeader').textContent = patientName;
+    
+    // Load conversation history
+    loadPatientChatHistory(patientId);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('patientAIChatModal'));
+    modal.show();
+}
+
+function loadPatientChatHistory(patientId) {
+    fetch(`/api/patient/${patientId}/ai-chat/history`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.history) {
+            const chatMessages = document.getElementById('patient-chat-messages');
+            chatMessages.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Patient-Specific AI Assistant for ${data.patient_name}</strong><br>
+                    Ask me about this patient's condition, contraindications, treatment progress, or any clinical considerations.
+                </div>
+            `;
+            
+            patientChatHistory = data.history;
+            
+            data.history.forEach(msg => {
+                addPatientMessageToChat(msg.type, msg.message, false, new Date(msg.timestamp));
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error loading chat history:', error);
+    });
+}
+
+function sendPatientMessage() {
+    const input = document.getElementById('patient-chat-input');
+    const message = input.value.trim();
+    
+    if (!message || !currentPatientId) return;
+    
+    // Add user message to chat
+    addPatientMessageToChat('user', message, false);
+    input.value = '';
+    
+    const language = document.getElementById('patient-language-selector').value;
+    
+    // Show typing indicator
+    addPatientTypingIndicator();
+    
+    // Send to API
+    fetch(`/api/patient/${currentPatientId}/ai-chat`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || 
+                          document.querySelector('input[name="csrf_token"]')?.value
+        },
+        body: JSON.stringify({
+            message: message,
+            language: language
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        removePatientTypingIndicator();
+        if (data.response) {
+            addPatientMessageToChat('ai', data.response, true);
+        } else {
+            addPatientMessageToChat('error', data.error || 'Error: Unable to get response');
+        }
+    })
+    .catch(error => {
+        removePatientTypingIndicator();
+        console.error('Error:', error);
+        addPatientMessageToChat('error', 'Error: Failed to send message');
+    });
+}
+
+function addPatientMessageToChat(type, message, canSave = false, timestamp = null) {
+    const chatMessages = document.getElementById('patient-chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `mb-3 patient-chat-message-${type}`;
+    
+    let icon, bgClass, textClass;
+    switch(type) {
+        case 'user':
+            icon = 'bi-person';
+            bgClass = 'bg-primary';
+            textClass = 'text-white';
+            break;
+        case 'ai':
+            icon = 'bi-robot';
+            bgClass = 'bg-light';
+            textClass = 'text-dark';
+            break;
+        case 'error':
+            icon = 'bi-exclamation-triangle';
+            bgClass = 'bg-danger';
+            textClass = 'text-white';
+            break;
+    }
+    
+    const saveButton = canSave ? `
+        <div class="mt-2">
+            <button class="btn btn-sm btn-outline-primary" onclick="savePatientNote('${encodeURIComponent(message)}')">
+                <i class="bi bi-save"></i> Save to Patient Notes
+            </button>
+        </div>
+    ` : '';
+    
+    const timeStr = timestamp ? timestamp.toLocaleTimeString() : new Date().toLocaleTimeString();
+    
+    messageDiv.innerHTML = `
+        <div class="d-flex ${type === 'user' ? 'justify-content-end' : 'justify-content-start'}">
+            <div class="card" style="max-width: 85%;">
+                <div class="card-header ${bgClass} ${textClass} py-2">
+                    <i class="bi ${icon} me-2"></i>
+                    ${type === 'user' ? 'You' : type === 'ai' ? `AI Assistant (${currentPatientName})` : 'System'}
+                    <small class="float-end">${timeStr}</small>
+                </div>
+                <div class="card-body">
+                    <div class="chat-message-content">${formatPatientMessage(message)}</div>
+                    ${saveButton}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+    
+    if (timestamp === null) {
+        patientChatHistory.push({type, message, timestamp: new Date().toISOString()});
+    }
+    
+    // Scroll to bottom
+    const chatContainer = document.getElementById('patient-chat-container');
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function formatPatientMessage(message) {
+    // Convert markdown-like formatting to HTML
+    return message
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n- /g, '<br>• ')
+        .replace(/\n/g, '<br>')
+        .replace(/^(.*)$/, '<p>$1</p>')
+        .replace(/<p><\/p>/g, '');
+}
+
+function addPatientTypingIndicator() {
+    const chatMessages = document.getElementById('patient-chat-messages');
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'patient-typing-indicator';
+    typingDiv.className = 'mb-3';
+    typingDiv.innerHTML = `
+        <div class="d-flex justify-content-start">
+            <div class="card" style="max-width: 80%;">
+                <div class="card-body">
+                    <div class="typing-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                    AI Assistant is analyzing patient data...
+                </div>
+            </div>
+        </div>
+    `;
+    chatMessages.appendChild(typingDiv);
+    
+    const chatContainer = document.getElementById('patient-chat-container');
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function removePatientTypingIndicator() {
+    const typingIndicator = document.getElementById('patient-typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+}
+
+function clearPatientChat() {
+    if (!currentPatientId) return;
+    
+    if (confirm(`Clear all AI conversation history for ${currentPatientName}?`)) {
+        fetch(`/api/patient/${currentPatientId}/ai-chat/clear`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || 
+                              document.querySelector('input[name="csrf_token"]')?.value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('patient-chat-messages').innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Patient-Specific AI Assistant for ${currentPatientName}</strong><br>
+                        Ask me about this patient's condition, contraindications, treatment progress, or any clinical considerations.
+                    </div>
+                `;
+                patientChatHistory = [];
+                alert('Chat history cleared successfully!');
+            } else {
+                alert('Error: ' + (data.error || 'Failed to clear chat history'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to clear chat history');
+        });
+    }
+}
+
+function exportPatientChat() {
+    if (patientChatHistory.length === 0) {
+        alert('No chat history to export');
+        return;
+    }
+    
+    let exportText = `AI Assistant Chat for ${currentPatientName} - ${new Date().toLocaleDateString()}\n`;
+    exportText += '=' .repeat(80) + '\n\n';
+    
+    patientChatHistory.forEach(msg => {
+        const timestamp = new Date(msg.timestamp).toLocaleString();
+        const sender = msg.type === 'user' ? 'You' : 'AI Assistant';
+        exportText += `[${timestamp}] ${sender}:\n${msg.message}\n\n`;
+    });
+    
+    const blob = new Blob([exportText], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ai-chat-${currentPatientName.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function savePatientNote(message) {
+    if (!currentPatientId) {
+        alert('No patient selected');
+        return;
+    }
+    
+    const noteContent = decodeURIComponent(message);
+    
+    fetch('/api/save-clinical-note', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || 
+                          document.querySelector('input[name="csrf_token"]')?.value
+        },
+        body: JSON.stringify({
+            note_content: noteContent,
+            patient_id: currentPatientId,
+            note_type: 'patient_specific'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Note saved to patient record successfully!');
+        } else {
+            alert('Error saving note: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to save note');
+    });
+}
+
+// Add CSS for typing indicator
+if (!document.getElementById('typing-dots-css')) {
+    const style = document.createElement('style');
+    style.id = 'typing-dots-css';
+    style.textContent = `
+    .typing-dots {
+        display: inline-block;
+        position: relative;
+        width: 50px;
+        height: 10px;
+        margin-right: 10px;
+    }
+
+    .typing-dots span {
+        position: absolute;
+        top: 0;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #007bff;
+        animation: typing 1.4s infinite ease-in-out both;
+    }
+
+    .typing-dots span:nth-child(1) {
+        left: 0;
+        animation-delay: -0.32s;
+    }
+
+    .typing-dots span:nth-child(2) {
+        left: 12px;
+        animation-delay: -0.16s;
+    }
+
+    .typing-dots span:nth-child(3) {
+        left: 24px;
+    }
+
+    @keyframes typing {
+        0%, 80%, 100% {
+            transform: scale(0);
+        }
+        40% {
+            transform: scale(1);
+        }
+    }
+
+    .chat-message-content p:last-child {
+        margin-bottom: 0;
+    }
+    `;
+    document.head.appendChild(style);
+}
+</script>
+
 {% endblock %}

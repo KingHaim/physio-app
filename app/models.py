@@ -330,6 +330,23 @@ class RecurringAppointment(db.Model):
         return f'<RecurringAppointment {self.id} for Patient {self.patient_id} ({self.recurrence_type})>'
 
 # --- NEW: Model for storing practice-wide AI reports ---
+class PatientAIConversation(db.Model):
+    __tablename__ = 'patient_ai_conversations'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message_type = db.Column(db.String(10), nullable=False)  # 'user' or 'ai'
+    message_content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    patient = db.relationship('Patient', backref=db.backref('ai_conversations', lazy=True))
+    user = db.relationship('User', backref=db.backref('ai_conversations', lazy=True))
+    
+    def __repr__(self):
+        return f'<PatientAIConversation {self.id} for Patient {self.patient_id}>'
+
 class PracticeReport(db.Model):
     __tablename__ = 'practice_reports'
     

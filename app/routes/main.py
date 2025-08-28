@@ -4945,12 +4945,16 @@ def user_settings():
     
     financial_form.contribution_base.data = current_user.contribution_base
     
+    # Determine active tab from request args
+    active_tab = request.args.get('tab', 'profile')
+    
     return render_template('user_settings.html', 
                          user_form=user_form,
                          clinic_form=clinic_form,
                          api_form=api_form,
                          financial_form=financial_form,
-                         fixed_costs=fixed_costs)
+                         fixed_costs=fixed_costs,
+                         active_tab=active_tab)
 
 @main.route('/user/settings/fixed-cost/<int:cost_id>/delete', methods=['POST'])
 @login_required

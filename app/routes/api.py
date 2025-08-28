@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, current_app, request
 import requests
 from datetime import datetime, timedelta, date
-from app.models import Treatment, Treatment as Appointment, Patient, UnmatchedCalendlyBooking, PatientReport, Plan, User, UserSubscription
+from app.models import Treatment, Treatment as Appointment, Patient, UnmatchedCalendlyBooking, PatientReport, Plan, User, UserSubscription, PatientAIConversation
 from app import db, csrf
 from sqlalchemy.sql import func, or_, case
 import os
@@ -12,6 +12,7 @@ import stripe
 from flask import url_for
 from generate_patient_report import format_treatment_history
 from app.crypto_utils import decrypt_text
+import os
 
 api = Blueprint('api', __name__)
 
@@ -2304,3 +2305,691 @@ def generate_fallback_suggestions(clinical_context, language='es'):
     suggestions["clinical_notes"].extend(lang_data['clinical_notes'])
     
     return suggestions
+
+
+@api.route('/chat-to-clinical-notes', methods=['POST'])
+@login_required
+def chat_to_clinical_notes():
+    """
+    Chat interface for generating clinical notes using DeepSeek AI
+    """
+    try:
+        data = request.json
+        user_message = data.get('message', '').strip()
+        patient_id = data.get('patient_id')
+        context_type = data.get('context_type', 'general')  # 'general', 'patient_specific', 'treatment_specific'
+        treatment_id = data.get('treatment_id')
+        language = data.get('language', current_user.language or 'en')
+        
+        if not user_message:
+            return jsonify({'error': 'Message is required'}), 400
+        
+        # Get DeepSeek API key
+        deepseek_api_key = current_app.config.get('DEEPSEEK_API_KEY')
+        if not deepseek_api_key:
+            return jsonify({'error': 'DeepSeek API not configured'}), 500
+        
+        # Build context based on type
+        context_info = ""
+        
+        if context_type == 'patient_specific' and patient_id:
+            # Get patient information
+            patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
+            if patient:
+                context_info = f"""
+PATIENT CONTEXT:
+- Age: {(datetime.now().date() - patient.date_of_birth).days // 365 if patient.date_of_birth else 'Unknown'}
+- Diagnosis: {patient.diagnosis or 'Not specified'}
+- Status: {patient.status}
+- Treatment Plan: {patient.treatment_plan or 'Not specified'}
+"""
+                # Get recent treatments
+                recent_treatments = Treatment.query.filter_by(
+                    patient_id=patient_id
+                ).order_by(Treatment.created_at.desc()).limit(5).all()
+                
+                if recent_treatments:
+                    context_info += "\nRECENT TREATMENTS:\n"
+                    for treatment in recent_treatments:
+                        context_info += f"- {treatment.created_at.strftime('%Y-%m-%d')}: {treatment.treatment_type}\n"
+                        if treatment.notes:
+                            context_info += f"  Notes: {treatment.notes[:100]}...\n"
+        
+        elif context_type == 'treatment_specific' and treatment_id:
+            # Get specific treatment information
+            treatment = Treatment.query.filter_by(id=treatment_id).join(Patient).filter(
+                Patient.user_id == current_user.id
+            ).first()
+            
+            if treatment:
+                context_info = f"""
+TREATMENT CONTEXT:
+- Date: {treatment.created_at.strftime('%Y-%m-%d')}
+- Type: {treatment.treatment_type}
+- Patient: {treatment.patient.name}
+- Assessment: {treatment.assessment or 'Not specified'}
+- Pain Level: {treatment.pain_level or 'Not recorded'}
+- Movement Restriction: {treatment.movement_restriction or 'Not specified'}
+- Current Notes: {treatment.notes or 'No notes yet'}
+"""
+        
+        # Language-specific instructions
+        language_instructions = {
+            'en': "Please respond in English.",
+            'es': "Por favor responde en español.",
+            'it': "Per favore rispondi in italiano.",
+            'fr': "Veuillez répondre en français.",
+            'de': "Bitte antworten Sie auf Deutsch.",
+            'pt': "Por favor responda em português."
+        }
+        
+        language_instruction = language_instructions.get(language, language_instructions['en'])
+        
+        # Create the system prompt
+        system_prompt = f"""You are an AI assistant specialized in physiotherapy and clinical documentation. You help physiotherapists create professional clinical notes, treatment plans, and documentation. {language_instruction}
+
+Guidelines:
+- Provide clear, professional, and evidence-based responses
+- Use appropriate medical terminology
+- Follow physiotherapy best practices
+- Maintain patient confidentiality and professionalism
+- Structure your responses clearly
+- When suggesting treatments, always recommend evidence-based approaches
+- Include relevant assessment techniques when appropriate"""
+        
+        # Create the user prompt with context
+        user_prompt = f"{context_info}\n\nUSER QUESTION: {user_message}"
+        
+        # Make API call to DeepSeek
+        try:
+            headers = {
+                "Authorization": f"Bearer {deepseek_api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "model": "deepseek-chat",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                "max_tokens": 2000,
+                "temperature": 0.7
+            }
+            
+            # Try the working endpoint first
+            working_endpoint = None
+            try:
+                with open('working_endpoint.txt', 'r') as f:
+                    working_endpoint = f.read().strip()
+            except FileNotFoundError:
+                pass
+            
+            api_endpoints = [working_endpoint] if working_endpoint else []
+            api_endpoints.extend([
+                "https://api.deepseek.com/v1/chat/completions",
+                "https://api.deepseek.ai/v1/chat/completions"
+            ])
+            
+            response = None
+            for endpoint in api_endpoints:
+                if not endpoint:
+                    continue
+                try:
+                    response = requests.post(endpoint, headers=headers, json=payload, timeout=30)
+                    if response.status_code == 200:
+                        break
+                except requests.exceptions.RequestException:
+                    continue
+            
+            if not response or response.status_code != 200:
+                current_app.logger.error(f"DeepSeek API error: {response.text if response else 'No response'}")
+                return jsonify({'error': 'Failed to get AI response'}), 500
+            
+            result = response.json()
+            ai_response = result['choices'][0]['message']['content'].strip()
+            
+            # Log the interaction (without sensitive data)
+            current_app.logger.info(f"Chat to clinical notes: User {current_user.id}, context: {context_type}")
+            
+            return jsonify({
+                'response': ai_response,
+                'context_type': context_type,
+                'timestamp': datetime.utcnow().isoformat()
+            })
+            
+        except requests.exceptions.RequestException as e:
+            current_app.logger.error(f"DeepSeek API request error: {str(e)}")
+            return jsonify({'error': 'AI service temporarily unavailable'}), 503
+            
+    except Exception as e:
+        current_app.logger.error(f"Chat to clinical notes error: {str(e)}")
+        return jsonify({'error': 'An error occurred processing your request'}), 500
+
+
+@api.route('/save-clinical-note', methods=['POST'])
+@login_required
+def save_clinical_note():
+    """
+    Save AI-generated clinical note to a patient's treatment or general notes
+    """
+    try:
+        data = request.json
+        note_content = data.get('note_content', '').strip()
+        patient_id = data.get('patient_id')
+        treatment_id = data.get('treatment_id')
+        note_type = data.get('note_type', 'general')  # 'general', 'treatment', 'assessment'
+        
+        if not note_content:
+            return jsonify({'error': 'Note content is required'}), 400
+        
+        # Add timestamp and AI attribution
+        attributed_note = f"[AI-Generated {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}]\n{note_content}"
+        
+        if treatment_id:
+            # Save to specific treatment
+            treatment = Treatment.query.filter_by(id=treatment_id).join(Patient).filter(
+                Patient.user_id == current_user.id
+            ).first()
+            
+            if not treatment:
+                return jsonify({'error': 'Treatment not found'}), 404
+            
+            # Append to existing notes or create new
+            if treatment.notes:
+                treatment.notes = f"{treatment.notes}\n\n{attributed_note}"
+            else:
+                treatment.notes = attributed_note
+            
+            treatment.updated_at = datetime.utcnow()
+            
+        elif patient_id:
+            # Save to patient general notes
+            patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
+            
+            if not patient:
+                return jsonify({'error': 'Patient not found'}), 404
+            
+            # Append to existing notes or create new
+            if patient.notes:
+                patient.notes = f"{patient.notes}\n\n{attributed_note}"
+            else:
+                patient.notes = attributed_note
+            
+            patient.updated_at = datetime.utcnow()
+        
+        else:
+            return jsonify({'error': 'Either patient_id or treatment_id is required'}), 400
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Clinical note saved successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Save clinical note error: {str(e)}")
+        return jsonify({'error': 'Failed to save clinical note'}), 500
+
+
+def detect_language(text):
+    """Simple language detection based on common words"""
+    text_lower = text.lower()
+    
+    # Spanish indicators
+    spanish_words = ['el', 'la', 'los', 'las', 'es', 'está', 'tiene', 'con', 'que', 'qué', 'como', 'cómo', 'para', 'por', 'dolor', 'paciente', 'tratamiento', 'puede', 'puedes', 'diabético', 'diabetes']
+    # English indicators  
+    english_words = ['the', 'is', 'are', 'was', 'were', 'has', 'have', 'had', 'with', 'what', 'how', 'for', 'patient', 'treatment', 'pain', 'can', 'could', 'diabetic', 'diabetes']
+    # French indicators
+    french_words = ['le', 'la', 'les', 'est', 'sont', 'a', 'avec', 'que', 'comment', 'pour', 'patient', 'traitement', 'douleur', 'peut', 'diabétique', 'diabète']
+    
+    spanish_count = sum(1 for word in spanish_words if word in text_lower)
+    english_count = sum(1 for word in english_words if word in text_lower)
+    french_count = sum(1 for word in french_words if word in text_lower)
+    
+    if spanish_count > english_count and spanish_count > french_count:
+        return 'es'
+    elif french_count > english_count and french_count > spanish_count:
+        return 'fr'
+    else:
+        return 'en'
+
+def extract_medical_info(conversation_text):
+    """Extract potential medical information from conversation"""
+    text_lower = conversation_text.lower()
+    
+    extracted_info = {
+        'conditions': [],
+        'medications': [],
+        'allergies': [],
+        'symptoms': [],
+        'lifestyle': []
+    }
+    
+    # Medical conditions patterns
+    condition_patterns = [
+        # Spanish
+        (r'(es|tiene|padece|sufre de)\s+(diabetes|diabético|diabética)', 'diabetes'),
+        (r'(es|tiene|padece|sufre de)\s+(hipertensión|hipertenso|hipertensa)', 'hipertensión'),
+        (r'(es|tiene|padece|sufre de)\s+(artritis|artrítico|artrítica)', 'artritis'),
+        (r'(es|tiene|padece|sufre de)\s+(asma|asmático|asmática)', 'asma'),
+        (r'(es|tiene|padece|sufre de)\s+(depresión|depresivo|depresiva)', 'depresión'),
+        (r'(es|tiene|padece|sufre de)\s+(ansiedad|ansioso|ansiosa)', 'ansiedad'),
+        # English
+        (r'(is|has|suffers from|diagnosed with)\s+(diabetic|diabetes)', 'diabetes'),
+        (r'(is|has|suffers from|diagnosed with)\s+(hypertension|high blood pressure)', 'hypertension'),
+        (r'(is|has|suffers from|diagnosed with)\s+(arthritis|arthritic)', 'arthritis'),
+        (r'(is|has|suffers from|diagnosed with)\s+(asthma|asthmatic)', 'asthma'),
+        (r'(is|has|suffers from|diagnosed with)\s+(depression|depressive)', 'depression'),
+        (r'(is|has|suffers from|diagnosed with)\s+(anxiety|anxious)', 'anxiety'),
+    ]
+    
+    # Medication patterns
+    medication_patterns = [
+        # Spanish
+        (r'(toma|tomar|medicación|medicina|medicamento)\s+([a-zA-Z]+)', 'medication'),
+        (r'(insulina|metformina|ibuprofeno|paracetamol|aspirina)', 'medication'),
+        # English  
+        (r'(takes|taking|medication|medicine|drug)\s+([a-zA-Z]+)', 'medication'),
+        (r'(insulin|metformin|ibuprofen|paracetamol|aspirin)', 'medication'),
+    ]
+    
+    # Allergy patterns
+    allergy_patterns = [
+        # Spanish
+        (r'(alérgico|alérgica|alergia)\s+(a|al)\s+([a-zA-Z\s]+)', 'allergy'),
+        # English
+        (r'(allergic to|allergy to)\s+([a-zA-Z\s]+)', 'allergy'),
+    ]
+    
+    # Extract conditions
+    import re
+    for pattern, condition in condition_patterns:
+        if re.search(pattern, text_lower):
+            extracted_info['conditions'].append(condition)
+    
+    # Extract medications
+    for pattern, med_type in medication_patterns:
+        matches = re.findall(pattern, text_lower)
+        if matches:
+            if isinstance(matches[0], tuple):
+                extracted_info['medications'].extend([match[1] for match in matches])
+            else:
+                extracted_info['medications'].extend(matches)
+    
+    # Extract allergies
+    for pattern, allergy_type in allergy_patterns:
+        matches = re.findall(pattern, text_lower)
+        if matches:
+            if isinstance(matches[0], tuple):
+                extracted_info['allergies'].extend([match[-1] for match in matches])
+            else:
+                extracted_info['allergies'].extend(matches)
+    
+    # Clean up and remove duplicates
+    for key in extracted_info:
+        extracted_info[key] = list(set([item.strip() for item in extracted_info[key] if item.strip()]))
+    
+    return extracted_info
+
+@api.route('/patient/<int:patient_id>/ai-chat', methods=['POST'])
+@login_required
+def patient_ai_chat(patient_id):
+    """
+    Patient-specific AI chat with conversation memory and full context
+    """
+    try:
+        # Verify patient access
+        patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
+        if not patient:
+            return jsonify({'error': 'Patient not found'}), 404
+        
+        data = request.json
+        user_message = data.get('message', '').strip()
+        
+        # Auto-detect language from user message
+        detected_language = detect_language(user_message)
+        language = data.get('language', detected_language)  # Use detected or provided language
+        
+        if not user_message:
+            return jsonify({'error': 'Message is required'}), 400
+        
+        # Get DeepSeek API key
+        deepseek_api_key = current_app.config.get('DEEPSEEK_API_KEY')
+        if not deepseek_api_key:
+            return jsonify({'error': 'DeepSeek API not configured'}), 500
+        
+        # Get conversation history for this patient
+        conversation_history = PatientAIConversation.query.filter_by(
+            patient_id=patient_id,
+            user_id=current_user.id
+        ).order_by(PatientAIConversation.created_at.asc()).limit(20).all()
+        
+        # Build comprehensive patient context
+        patient_context = build_patient_context(patient)
+        
+        # Build conversation history for AI
+        messages = [
+            {"role": "system", "content": f"""You are an AI clinical assistant specifically for this patient. You have access to their complete medical history and can answer questions about their condition, contraindications, treatment progress, and clinical considerations.
+
+PATIENT CONTEXT:
+{patient_context}
+
+Guidelines:
+- You are speaking to the treating physiotherapist
+- Provide professional, evidence-based clinical insights
+- Reference specific patient data when relevant
+- Identify potential contraindications or red flags
+- Suggest assessment techniques and treatment modifications
+- Maintain professional medical terminology
+- Remember previous conversations about this patient
+- Always prioritize patient safety
+
+Language: {get_language_instruction(language)}"""}
+        ]
+        
+        # Add conversation history
+        for conv in conversation_history:
+            role = "user" if conv.message_type == "user" else "assistant"
+            messages.append({"role": role, "content": conv.message_content})
+        
+        # Add current user message
+        messages.append({"role": "user", "content": user_message})
+        
+        # Make API call to DeepSeek
+        try:
+            headers = {
+                "Authorization": f"Bearer {deepseek_api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "model": "deepseek-chat",
+                "messages": messages,
+                "max_tokens": 2000,
+                "temperature": 0.6
+            }
+            
+            # Try the working endpoint first
+            working_endpoint = None
+            try:
+                with open('working_endpoint.txt', 'r') as f:
+                    working_endpoint = f.read().strip()
+            except FileNotFoundError:
+                pass
+            
+            api_endpoints = [working_endpoint] if working_endpoint else []
+            api_endpoints.extend([
+                "https://api.deepseek.com/v1/chat/completions",
+                "https://api.deepseek.ai/v1/chat/completions"
+            ])
+            
+            response = None
+            for endpoint in api_endpoints:
+                if not endpoint:
+                    continue
+                try:
+                    response = requests.post(endpoint, headers=headers, json=payload, timeout=30)
+                    if response.status_code == 200:
+                        break
+                except requests.exceptions.RequestException:
+                    continue
+            
+            if not response or response.status_code != 200:
+                current_app.logger.error(f"DeepSeek API error: {response.text if response else 'No response'}")
+                return jsonify({'error': 'Failed to get AI response'}), 500
+            
+            result = response.json()
+            ai_response = result['choices'][0]['message']['content'].strip()
+            
+            # Save conversation to database
+            user_conv = PatientAIConversation(
+                patient_id=patient_id,
+                user_id=current_user.id,
+                message_type='user',
+                message_content=user_message
+            )
+            
+            ai_conv = PatientAIConversation(
+                patient_id=patient_id,
+                user_id=current_user.id,
+                message_type='ai',
+                message_content=ai_response
+            )
+            
+            db.session.add(user_conv)
+            db.session.add(ai_conv)
+            db.session.commit()
+            
+            # Analyze conversation for medical information extraction
+            full_conversation = user_message + " " + ai_response
+            extracted_info = extract_medical_info(full_conversation)
+            
+            medical_updates = []
+            if any(extracted_info.values()):
+                # Check if any meaningful medical information was found
+                for category, items in extracted_info.items():
+                    if items:
+                        medical_updates.append(f"{category.title()}: {', '.join(items)}")
+            
+            # Log the interaction
+            current_app.logger.info(f"Patient AI chat: User {current_user.id}, Patient {patient_id}")
+            if medical_updates:
+                current_app.logger.info(f"Medical info extracted: {medical_updates}")
+            
+            response_data = {
+                'response': ai_response,
+                'patient_name': patient.name,
+                'timestamp': datetime.utcnow().isoformat(),
+                'language_detected': detected_language,
+                'medical_info_extracted': extracted_info if any(extracted_info.values()) else None
+            }
+            
+            return jsonify(response_data)
+            
+        except requests.exceptions.RequestException as e:
+            current_app.logger.error(f"DeepSeek API request error: {str(e)}")
+            return jsonify({'error': 'AI service temporarily unavailable'}), 503
+            
+    except Exception as e:
+        current_app.logger.error(f"Patient AI chat error: {str(e)}")
+        return jsonify({'error': 'An error occurred processing your request'}), 500
+
+
+@api.route('/patient/<int:patient_id>/ai-chat/history', methods=['GET'])
+@login_required
+def get_patient_ai_chat_history(patient_id):
+    """
+    Get conversation history for a specific patient
+    """
+    try:
+        # Verify patient access
+        patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
+        if not patient:
+            return jsonify({'error': 'Patient not found'}), 404
+        
+        # Get conversation history
+        conversations = PatientAIConversation.query.filter_by(
+            patient_id=patient_id,
+            user_id=current_user.id
+        ).order_by(PatientAIConversation.created_at.asc()).all()
+        
+        history = []
+        for conv in conversations:
+            history.append({
+                'type': conv.message_type,
+                'message': conv.message_content,
+                'timestamp': conv.created_at.isoformat()
+            })
+        
+        return jsonify({
+            'history': history,
+            'patient_name': patient.name,
+            'patient_id': patient_id
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Get patient AI chat history error: {str(e)}")
+        return jsonify({'error': 'Failed to retrieve chat history'}), 500
+
+
+@api.route('/patient/<int:patient_id>/ai-chat/clear', methods=['POST'])
+@login_required
+def clear_patient_ai_chat(patient_id):
+    """
+    Clear conversation history for a specific patient
+    """
+    try:
+        # Verify patient access
+        patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
+        if not patient:
+            return jsonify({'error': 'Patient not found'}), 404
+        
+        # Delete conversation history
+        PatientAIConversation.query.filter_by(
+            patient_id=patient_id,
+            user_id=current_user.id
+        ).delete()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Chat history cleared for {patient.name}'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Clear patient AI chat error: {str(e)}")
+        return jsonify({'error': 'Failed to clear chat history'}), 500
+
+
+@api.route('/patient/<int:patient_id>/ai-chat/update-medical-info', methods=['POST'])
+@login_required
+def update_patient_medical_info(patient_id):
+    """
+    Update patient medical information based on AI chat analysis
+    """
+    try:
+        # Verify patient access
+        patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
+        if not patient:
+            return jsonify({'error': 'Patient not found'}), 404
+        
+        data = request.json
+        medical_info = data.get('medical_info', {})
+        confirmation = data.get('confirmed', False)
+        
+        if not confirmation:
+            return jsonify({'error': 'Medical information update must be confirmed'}), 400
+        
+        # Prepare the medical information summary for anamnesis
+        updates = []
+        current_anamnesis = patient.anamnesis or ""
+        
+        # Add extracted conditions
+        if medical_info.get('conditions'):
+            conditions_text = "CONDICIONES IDENTIFICADAS: " + ", ".join(medical_info['conditions'])
+            updates.append(conditions_text)
+        
+        # Add extracted medications
+        if medical_info.get('medications'):
+            medications_text = "MEDICAMENTOS MENCIONADOS: " + ", ".join(medical_info['medications'])
+            updates.append(medications_text)
+        
+        # Add extracted allergies
+        if medical_info.get('allergies'):
+            allergies_text = "ALERGIAS IDENTIFICADAS: " + ", ".join(medical_info['allergies'])
+            updates.append(allergies_text)
+        
+        if updates:
+            # Add timestamp and source information
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+            update_header = f"\n\n--- INFORMACIÓN EXTRAÍDA DEL CHAT AI ({timestamp}) ---\n"
+            update_content = update_header + "\n".join(updates) + "\n"
+            
+            # Update patient anamnesis (clinical history)
+            patient.anamnesis = current_anamnesis + update_content
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Medical information added to patient anamnesis (clinical history)',
+                'updates_added': len(updates)
+            })
+        else:
+            return jsonify({'success': False, 'message': 'No medical information to update'})
+            
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Update medical info error: {str(e)}")
+        return jsonify({'error': 'Failed to update medical information'}), 500
+
+
+def build_patient_context(patient):
+    """
+    Build comprehensive context for the patient
+    """
+    # Calculate age
+    age = "Unknown"
+    if patient.date_of_birth:
+        today = datetime.now().date()
+        age = (today - patient.date_of_birth).days // 365
+    
+    # Get recent treatments (last 10)
+    treatments = Treatment.query.filter_by(
+        patient_id=patient.id
+    ).order_by(Treatment.created_at.desc()).limit(10).all()
+    
+    # Build context
+    context = f"""
+PATIENT INFORMATION:
+- Name: {patient.name}
+- Age: {age}
+- Diagnosis: {patient.diagnosis or 'Not specified'}
+- Status: {patient.status}
+- Treatment Plan: {patient.treatment_plan or 'Not specified'}
+
+CLINICAL NOTES:
+{patient.notes or 'No general notes available'}
+
+ANAMNESIS (Initial Assessment):
+{patient.anamnesis or 'No anamnesis available'}
+
+TREATMENT HISTORY:
+"""
+    
+    if treatments:
+        for treatment in treatments:
+            context += f"""
+Date: {treatment.created_at.strftime('%Y-%m-%d')}
+Type: {treatment.treatment_type}
+Pain Level: {treatment.pain_level or 'Not recorded'}
+Movement Restriction: {treatment.movement_restriction or 'None specified'}
+Assessment: {treatment.assessment or 'No assessment'}
+Notes: {treatment.notes or 'No notes'}
+Status: {treatment.status}
+---"""
+    else:
+        context += "No treatment history available"
+    
+    return context
+
+
+def get_language_instruction(language):
+    """
+    Get language instruction for AI
+    """
+    language_instructions = {
+        'en': "Please respond in English.",
+        'es': "Por favor responde en español.",
+        'it': "Per favore rispondi in italiano.",
+        'fr': "Veuillez répondre en français.",
+        'de': "Bitte antworten Sie auf Deutsch.",
+        'pt': "Por favor responda em português."
+    }
+    
+    return language_instructions.get(language, language_instructions['en'])
