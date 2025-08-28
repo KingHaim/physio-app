@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, current_app, request
 import requests
+import re
 from datetime import datetime, timedelta, date
 from app.models import Treatment, Treatment as Appointment, Patient, UnmatchedCalendlyBooking, PatientReport, Plan, User, UserSubscription, PatientAIConversation
 from app import db, csrf
@@ -2605,7 +2606,6 @@ def extract_medical_info(conversation_text):
     ]
     
     # Extract conditions
-    import re
     for pattern, condition in condition_patterns:
         if re.search(pattern, text_lower):
             extracted_info['conditions'].append(condition)
@@ -2906,7 +2906,6 @@ def update_patient_medical_info(patient_id):
         
         if updates:
             # Add timestamp and source information
-            from datetime import datetime
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
             update_header = f"\n\n--- INFORMACIÓN EXTRAÍDA DEL CHAT AI ({timestamp}) ---\n"
             update_content = update_header + "\n".join(updates) + "\n"
