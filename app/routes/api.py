@@ -2437,7 +2437,8 @@ Guidelines:
                 if not endpoint:
                     continue
                 try:
-                    response = requests.post(endpoint, headers=headers, json=payload, timeout=30)
+                    current_app.logger.info(f"Patient AI Chat - Attempting {endpoint}")
+                    response = requests.post(endpoint, headers=headers, json=payload, timeout=90)
                     if response.status_code == 200:
                         break
                 except requests.exceptions.RequestException:
@@ -2784,18 +2785,30 @@ Guidelines:
                 if not endpoint:
                     continue
                 try:
-                    response = requests.post(endpoint, headers=headers, json=payload, timeout=30)
+                    current_app.logger.info(f"Patient AI Chat - Attempting {endpoint}")
+                    response = requests.post(endpoint, headers=headers, json=payload, timeout=90)
                     if response.status_code == 200:
                         break
                 except requests.exceptions.RequestException:
                     continue
             
             if not response or response.status_code != 200:
-                current_app.logger.error(f"DeepSeek API error: {response.text if response else 'No response'}")
-                return jsonify({'error': 'Failed to get AI response'}), 500
+                error_details = response.text[:200] if response and response.text else 'No response from API'
+                current_app.logger.error(f"Patient AI Chat - All DeepSeek endpoints failed. Error: {error_details}")
+                return jsonify({
+                    'error': 'El servicio de IA no está disponible temporalmente. Por favor, inténtalo de nuevo en unos momentos.',
+                    'error_code': 'API_UNAVAILABLE'
+                }), 503
             
-            result = response.json()
-            ai_response = result['choices'][0]['message']['content'].strip()
+            try:
+                result = response.json()
+                ai_response = result['choices'][0]['message']['content'].strip()
+            except (KeyError, IndexError, ValueError) as e:
+                current_app.logger.error(f"Patient AI Chat - Invalid API response format: {str(e)}")
+                return jsonify({
+                    'error': 'Respuesta inválida del servicio de IA. Por favor, inténtalo de nuevo.',
+                    'error_code': 'INVALID_RESPONSE'
+                }), 500
             
             # Save conversation to database
             user_conv = PatientAIConversation(
