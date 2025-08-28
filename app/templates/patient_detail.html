@@ -258,8 +258,8 @@
         <div class="col-md-4 text-md-end">
             <!-- Primary Actions - Most Used -->
             <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end mb-2">
-                <button class="btn btn-info btn-sm" onclick="openPatientAIChat({{ patient.id }}, '{{ patient.name }}')">
-                    <i class="bi bi-robot"></i> {{ _('AI Assistant') }}
+                <button class="btn btn-info btn-sm" data-patient-id="{{ patient.id }}" data-patient-name="{{ patient.name }}" onclick="openPatientAIChat(this.dataset.patientId, this.dataset.patientName)">
+                    <i class="bi bi-brain"></i> {{ _('The Brain') }}
                 </button>
                 <a href="{{ url_for('main.edit_patient', id=patient.id) }}" class="btn btn-outline-primary btn-sm">
                     <i class="bi bi-pencil"></i> {{ _('Edit Patient') }}
@@ -279,7 +279,7 @@
                 <!-- AI & Reports Dropdown -->
                 <div class="dropdown">
                     <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-robot"></i> {{ _('AI Tools') }}
+                        <i class="bi bi-brain"></i> {{ _('AI Tools') }}
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
@@ -1979,9 +1979,9 @@ function resetChatInterface() {
         <div class="text-center py-5">
             <div class="welcome-message" style="background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 600px; margin: 0 auto;">
                 <div class="mb-3">
-                    <i class="bi bi-robot" style="font-size: 48px; color: #667eea;"></i>
+                    <img src="{{ url_for('static', filename='images/brain.png') }}" alt="The Brain" style="width: 48px; height: 48px; object-fit: contain;">
                 </div>
-                <h6 style="color: #2c3e50; font-weight: 600;">Asistente Clínico AI</h6>
+                <h6 style="color: #2c3e50; font-weight: 600;">The Brain</h6>
                 <p class="text-muted mb-0">Pregúntame sobre condiciones, contraindicaciones, progreso del tratamiento o cualquier consideración clínica.</p>
             </div>
         </div>
@@ -2124,8 +2124,8 @@ function addPatientMessageToChat(type, message, canSave = false, timestamp = nul
         
         messageDiv.innerHTML = `
             <div class="d-flex justify-content-start">
-                <div class="me-3" style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <i class="bi bi-robot text-white" style="font-size: 18px;"></i>
+                <div class="me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <img src="{{ url_for('static', filename='images/brain.png') }}" alt="The Brain" style="width: 100%; height: 100%; object-fit: contain;">
                 </div>
                 <div style="max-width: 80%; background: white; border-radius: 20px 20px 20px 5px; padding: 1.5rem; box-shadow: 0 2px 15px rgba(0,0,0,0.1);">
                     <div class="chat-message-content">${formatPatientMessage(message)}</div>
@@ -2180,8 +2180,8 @@ function addPatientTypingIndicator() {
     typingDiv.className = 'mb-4';
     typingDiv.innerHTML = `
         <div class="d-flex justify-content-start">
-            <div class="me-3" style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <i class="bi bi-robot text-white" style="font-size: 18px;"></i>
+            <div class="me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <img src="{{ url_for('static', filename='images/brain.png') }}" alt="The Brain" style="width: 100%; height: 100%; object-fit: contain;">
             </div>
             <div style="background: white; border-radius: 20px 20px 20px 5px; padding: 1.5rem; box-shadow: 0 2px 15px rgba(0,0,0,0.1); max-width: 200px;">
                 <div class="d-flex align-items-center">
@@ -2227,7 +2227,7 @@ function clearPatientChat() {
                 document.getElementById('patient-chat-messages').innerHTML = `
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle"></i>
-                        <strong>Patient-Specific AI Assistant for ${currentPatientName}</strong><br>
+                        <strong>The Brain for ${currentPatientName}</strong><br>
                         Ask me about this patient's condition, contraindications, treatment progress, or any clinical considerations.
                     </div>
                 `;
@@ -2250,12 +2250,12 @@ function exportPatientChat() {
         return;
     }
     
-    let exportText = `AI Assistant Chat for ${currentPatientName} - ${new Date().toLocaleDateString()}\n`;
+    let exportText = `The Brain Chat for ${currentPatientName} - ${new Date().toLocaleDateString()}\n`;
     exportText += '=' .repeat(80) + '\n\n';
     
     patientChatHistory.forEach(msg => {
         const timestamp = new Date(msg.timestamp).toLocaleString();
-        const sender = msg.type === 'user' ? 'You' : 'AI Assistant';
+        const sender = msg.type === 'user' ? 'You' : 'The Brain';
         exportText += `[${timestamp}] ${sender}:\n${msg.message}\n\n`;
     });
     
@@ -2263,7 +2263,7 @@ function exportPatientChat() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `ai-chat-${currentPatientName.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.txt`;
+    a.download = `the-brain-chat-${currentPatientName.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.txt`;
     a.click();
     URL.revokeObjectURL(url);
 }
@@ -2433,7 +2433,7 @@ if (!document.getElementById('typing-dots-css')) {
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background-color: #007bff;
+        background-color: #1e3a8a;
         animation: typing 1.4s infinite ease-in-out both;
     }
 
@@ -2470,16 +2470,16 @@ if (!document.getElementById('typing-dots-css')) {
 
 <!-- Patient AI Chat Modal - Redesigned Minimal Interface -->
 <div class="modal fade" id="patientAIChatModal" tabindex="-1" aria-labelledby="patientAIChatModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-fullscreen-lg-down modal-xl">
+    <div class="modal-dialog modal-fullscreen">
         <div class="modal-content" style="border: none; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);">
             <!-- Minimal Header -->
             <div class="modal-header border-0" style="padding: 1.5rem 2rem 0.5rem 2rem;">
                 <div class="d-flex align-items-center">
-                    <div class="ai-avatar me-3" style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <i class="bi bi-robot text-white" style="font-size: 24px;"></i>
+                    <div class="ai-avatar me-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+                        <img src="{{ url_for('static', filename='images/brain.png') }}" alt="The Brain" style="width: 100%; height: 100%; object-fit: contain;">
                     </div>
                     <div>
-                        <h5 class="mb-0" style="font-weight: 600; color: #2c3e50;">AI Assistant</h5>
+                        <h5 class="mb-0" style="font-weight: 600; color: #2c3e50;">The Brain</h5>
                         <small class="text-muted" id="patientNameHeader"></small>
                     </div>
                 </div>
@@ -2530,15 +2530,15 @@ if (!document.getElementById('typing-dots-css')) {
             <!-- Full Screen Chat Area -->
             <div class="modal-body p-0" style="height: 70vh;">
                 <!-- Chat Messages Container -->
-                <div id="patient-chat-container" style="height: calc(100% - 100px); padding: 0 2rem; overflow-y: auto; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+                <div id="patient-chat-container" style="height: calc(100% - 100px); padding: 0 2rem; overflow-y: auto; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
                     <div id="patient-chat-messages" style="padding: 1rem 0;">
                         <!-- Welcome Message -->
                         <div class="text-center py-5">
                             <div class="welcome-message" style="background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 600px; margin: 0 auto;">
                                 <div class="mb-3">
-                                    <i class="bi bi-robot" style="font-size: 48px; color: #667eea;"></i>
+                                    <img src="{{ url_for('static', filename='images/brain.png') }}" alt="The Brain" style="width: 48px; height: 48px; object-fit: contain;">
                                 </div>
-                                <h6 style="color: #2c3e50; font-weight: 600;">Asistente Clínico AI</h6>
+                                <h6 style="color: #2c3e50; font-weight: 600;">The Brain</h6>
                                 <p class="text-muted mb-0">Pregúntame sobre condiciones, contraindicaciones, progreso del tratamiento o cualquier consideración clínica.</p>
                             </div>
                         </div>
@@ -2553,7 +2553,7 @@ if (!document.getElementById('typing-dots-css')) {
                                onkeypress="if(event.key==='Enter') sendPatientMessage()"
                                style="border: none; border-radius: 25px 0 0 25px; padding: 1rem 1.5rem; font-size: 16px; box-shadow: none;">
                         <button class="btn" type="button" onclick="sendPatientMessage()" 
-                                style="border: none; border-radius: 0 25px 25px 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 1.5rem;">
+                                style="border: none; border-radius: 0 25px 25px 0; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 1rem 1.5rem;">
                             <i class="bi bi-send-fill" style="font-size: 16px;"></i>
                         </button>
                     </div>

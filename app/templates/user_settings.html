@@ -82,11 +82,7 @@
                 <i class="bi bi-plug"></i> {{ _('API Integrations') }}
             </button>
         </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {{ 'active' if active_tab == 'ai_chat' else '' }}" id="ai-chat-tab" data-bs-toggle="tab" data-bs-target="#ai-chat-tab-pane" type="button" role="tab" aria-controls="ai-chat-tab-pane" aria-selected="{{ 'true' if active_tab == 'ai_chat' else 'false' }}">
-                <i class="bi bi-chat-dots"></i> {{ _('AI Clinical Assistant') }}
-            </button>
-        </li>
+        
         <li class="nav-item" role="presentation">
             <button class="nav-link {{ 'active' if active_tab == 'financial' else '' }}" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial-tab-pane" type="button" role="tab" aria-controls="financial-tab-pane" aria-selected="{{ 'true' if active_tab == 'financial' else 'false' }}">
                 <i class="bi bi-currency-euro"></i> {{ _('Financial Settings') }}
@@ -409,121 +405,7 @@
         </div>
 
         {# --- AI Clinical Assistant Tab --- #}
-        <div class="tab-pane fade {{ 'show active' if active_tab == 'ai_chat' else '' }}" id="ai-chat-tab-pane" role="tabpanel" aria-labelledby="ai-chat-tab" tabindex="0">
-            <div class="card mb-4 settings-section">
-                <div class="card-body">
-                    <h4 class="card-title mb-3"><i class="bi bi-chat-dots"></i> {{ _('AI Clinical Assistant') }}</h4>
-                    <p class="text-muted mb-4">{{ _('Get AI-powered assistance for clinical documentation, treatment planning, and professional guidance.') }}</p>
-                    
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div id="chat-container" style="height: 500px; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 1rem; background-color: #f8f9fa; overflow-y: auto; margin-bottom: 1rem;">
-                                <div id="chat-messages">
-                                    <div class="alert alert-info">
-                                        <i class="bi bi-info-circle"></i>
-                                        <strong>{{ _('Welcome to your AI Clinical Assistant!') }}</strong><br>
-                                        {{ _('Ask me anything about clinical documentation, treatment planning, assessment techniques, or general physiotherapy questions. I can help you create professional notes and provide evidence-based guidance.') }}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="input-group">
-                                <input type="text" id="chat-input" class="form-control" 
-                                       placeholder="{{ _('Type your question about clinical documentation or physiotherapy...') }}" 
-                                       onkeypress="if(event.key==='Enter') sendMessage()">
-                                <button class="btn btn-primary" type="button" onclick="sendMessage()">
-                                    <i class="bi bi-send"></i> {{ _('Send') }}
-                                </button>
-                            </div>
-                            
-                            <div class="mt-2">
-                                <small class="text-muted">
-                                    <i class="bi bi-lightbulb"></i> 
-                                    {{ _('Try asking: "Help me write a SOAP note", "What tests for shoulder impingement?", or "Create assessment for lower back pain"') }}
-                                </small>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h6 class="mb-0"><i class="bi bi-gear"></i> {{ _('Chat Settings') }}</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        <label for="context-type" class="form-label">{{ _('Context Type') }}</label>
-                                        <select id="context-type" class="form-select">
-                                            <option value="general">{{ _('General Clinical Questions') }}</option>
-                                            <option value="patient_specific">{{ _('Patient-Specific Context') }}</option>
-                                            <option value="treatment_specific">{{ _('Treatment-Specific Context') }}</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="mb-3" id="patient-selector" style="display: none;">
-                                        <label for="patient-id" class="form-label">{{ _('Select Patient') }}</label>
-                                        <select id="patient-id" class="form-select">
-                                            <option value="">{{ _('Loading patients...') }}</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="mb-3" id="treatment-selector" style="display: none;">
-                                        <label for="treatment-id" class="form-label">{{ _('Select Treatment') }}</label>
-                                        <select id="treatment-id" class="form-select">
-                                            <option value="">{{ _('Select a patient first') }}</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="language-selector" class="form-label">{{ _('Response Language') }}</label>
-                                        <select id="language-selector" class="form-select">
-                                            <option value="en">English</option>
-                                            <option value="es" selected>Español</option>
-                                            <option value="fr">Français</option>
-                                            <option value="it">Italiano</option>
-                                            <option value="de">Deutsch</option>
-                                            <option value="pt">Português</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <hr>
-                                    
-                                    <div class="d-grid gap-2">
-                                        <button class="btn btn-outline-secondary btn-sm" onclick="clearChat()">
-                                            <i class="bi bi-trash"></i> {{ _('Clear Chat') }}
-                                        </button>
-                                        <button class="btn btn-outline-primary btn-sm" onclick="exportChat()">
-                                            <i class="bi bi-download"></i> {{ _('Export Chat') }}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="card mt-3">
-                                <div class="card-header">
-                                    <h6 class="mb-0"><i class="bi bi-question-circle"></i> {{ _('Quick Templates') }}</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="d-grid gap-2">
-                                        <button class="btn btn-outline-info btn-sm" onclick="useTemplate('soap')">
-                                            {{ _('SOAP Note Template') }}
-                                        </button>
-                                        <button class="btn btn-outline-info btn-sm" onclick="useTemplate('assessment')">
-                                            {{ _('Assessment Guidelines') }}
-                                        </button>
-                                        <button class="btn btn-outline-info btn-sm" onclick="useTemplate('exercises')">
-                                            {{ _('Exercise Prescription') }}
-                                        </button>
-                                        <button class="btn btn-outline-info btn-sm" onclick="useTemplate('discharge')">
-                                            {{ _('Discharge Planning') }}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- AI Chat tab removed - only patient-specific chat remains -->
 
         {# --- Financial Tab --- #}
         <div class="tab-pane fade {{ 'show active' if active_tab == 'financial' else '' }}" id="financial-tab-pane" role="tabpanel" aria-labelledby="financial-tab" tabindex="0">
@@ -797,15 +679,15 @@ document.addEventListener('DOMContentLoaded', function() {
 // Initialize integration configs based on checkbox state
 function initializeIntegrationConfigs() {
     // Calendly config
-    const calendlyCheckbox = document.getElementById('enable_calendly');
-    const calendlyConfig = document.getElementById('calendly-config');
+    var calendlyCheckbox = document.getElementById('enable_calendly');
+    var calendlyConfig = document.getElementById('calendly-config');
     if (calendlyCheckbox && calendlyConfig) {
         calendlyConfig.style.display = calendlyCheckbox.checked ? 'block' : 'none';
     }
     
     // Google Calendar config
-    const googleCheckbox = document.getElementById('enable_google_calendar');
-    const googleConfig = document.getElementById('google-calendar-config');
+    var googleCheckbox = document.getElementById('enable_google_calendar');
+    var googleConfig = document.getElementById('google-calendar-config');
     if (googleCheckbox && googleConfig) {
         googleConfig.style.display = googleCheckbox.checked ? 'block' : 'none';
     }
@@ -814,10 +696,10 @@ function initializeIntegrationConfigs() {
 // Set up event listeners for integration toggles
 function setupIntegrationToggleListeners() {
     // Calendly toggle
-    const calendlyCheckbox = document.getElementById('enable_calendly');
+    var calendlyCheckbox = document.getElementById('enable_calendly');
     if (calendlyCheckbox) {
         calendlyCheckbox.addEventListener('change', function() {
-            const config = document.getElementById('calendly-config');
+            var config = document.getElementById('calendly-config');
             if (config) {
                 config.style.display = this.checked ? 'block' : 'none';
                 if (this.checked) {
@@ -828,10 +710,10 @@ function setupIntegrationToggleListeners() {
     }
     
     // Google Calendar toggle
-    const googleCheckbox = document.getElementById('enable_google_calendar');
+    var googleCheckbox = document.getElementById('enable_google_calendar');
     if (googleCheckbox) {
         googleCheckbox.addEventListener('change', function() {
-            const config = document.getElementById('google-calendar-config');
+            var config = document.getElementById('google-calendar-config');
             if (config) {
                 config.style.display = this.checked ? 'block' : 'none';
                 if (this.checked) {
@@ -844,10 +726,10 @@ function setupIntegrationToggleListeners() {
 
 // Set up form submission handlers with success notifications
 function setupFormHandlers() {
-    const forms = ['profile-form', 'clinic-form', 'api-form', 'financial-form', 'add-cost-form'];
+    var forms = ['profile-form', 'clinic-form', 'api-form', 'financial-form', 'add-cost-form'];
     
     forms.forEach(formId => {
-        const form = document.getElementById(formId);
+        var form = document.getElementById(formId);
         if (form) {
             form.addEventListener('submit', function(e) {
                 // Form will submit normally, but we'll show a success message after redirect
@@ -865,8 +747,8 @@ function setupFormHandlers() {
 
 // Set up account deletion confirmation
 function setupAccountDeletionConfirmation() {
-    const confirmCheckbox = document.getElementById('confirmPermanentDeletion');
-    const deleteBtn = document.getElementById('permanentDeleteBtn');
+    var confirmCheckbox = document.getElementById('confirmPermanentDeletion');
+    var deleteBtn = document.getElementById('permanentDeleteBtn');
     
     if (confirmCheckbox && deleteBtn) {
         confirmCheckbox.addEventListener('change', function() {
@@ -877,7 +759,7 @@ function setupAccountDeletionConfirmation() {
 
 // Set up Google Calendar sync button
 function setupGoogleCalendarSync() {
-    const syncBtn = document.getElementById('sync-google-calendar-btn');
+    var syncBtn = document.getElementById('sync-google-calendar-btn');
     if (syncBtn) {
         syncBtn.addEventListener('click', syncGoogleCalendar);
     }
@@ -885,8 +767,8 @@ function setupGoogleCalendarSync() {
 
 // Global functions for onclick handlers
 function syncGoogleCalendar() {
-    const button = event.currentTarget;
-    const originalText = button.innerHTML;
+    var button = event.currentTarget;
+    var originalText = button.innerHTML;
     
     // Show loading state
     button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> {{ _("Syncing...") }}';
@@ -921,23 +803,23 @@ function syncGoogleCalendar() {
 }
 
 function confirmDeleteCost() {
-    const messages = document.getElementById('js-messages');
+    var messages = document.getElementById('js-messages');
     return confirm(messages?.dataset.deleteCost || '{{ _("Are you sure you want to delete this cost?") }}');
 }
 
 function confirmTempDeactivation() {
-    const messages = document.getElementById('js-messages');
+    var messages = document.getElementById('js-messages');
     return confirm(messages?.dataset.tempDeactivate || '{{ _("Are you sure you want to temporarily deactivate your account?") }}');
 }
 
 function confirmPermanentDeletion() {
-    const messages = document.getElementById('js-messages');
-    const deleteText = "DELETE";
+    var messages = document.getElementById('js-messages');
+    var deleteText = "DELETE";
     
     if (!messages) return false;
     
     // First confirm the action
-    const warningMessage = messages.dataset.permQuestion + 
+    var warningMessage = messages.dataset.permQuestion + 
                    "\n\n" + messages.dataset.permWillDelete +
                    "\n- " + messages.dataset.permPatients +
                    "\n- " + messages.dataset.permTreatments +
@@ -945,13 +827,13 @@ function confirmPermanentDeletion() {
                    "\n- " + messages.dataset.permFinancial +
                    "\n\n" + messages.dataset.permTypeDelete;
     
-    const confirmed = confirm(warningMessage);
+    var confirmed = confirm(warningMessage);
     if (!confirmed) {
         return false;
     }
     
     // Ask user to type DELETE to confirm
-    const userInput = prompt("{{ _('To confirm permanent deletion, please type exactly: DELETE') }}");
+    var userInput = prompt("{{ _('To confirm permanent deletion, please type exactly: DELETE') }}");
     if (userInput === deleteText) {
         return confirm(messages.dataset.permFinal);
     } else {
@@ -962,8 +844,8 @@ function confirmPermanentDeletion() {
 
 // Show success toast notification
 function showSuccessToast(message) {
-    const toast = document.getElementById('success-toast');
-    const messageElement = document.getElementById('success-message');
+    var toast = document.getElementById('success-toast');
+    var messageElement = document.getElementById('success-message');
     
     if (message && messageElement) {
         messageElement.textContent = message;
@@ -977,396 +859,82 @@ function showSuccessToast(message) {
     }
 }
 
-// AI Chat functionality
-let chatHistory = [];
-
-function sendMessage() {
-    const input = document.getElementById('chat-input');
-    const message = input.value.trim();
-    
-    if (!message) return;
-    
-    // Add user message to chat
-    addMessageToChat('user', message);
-    input.value = '';
-    
-    // Get context settings
-    const contextType = document.getElementById('context-type').value;
-    const patientId = document.getElementById('patient-id').value;
-    const treatmentId = document.getElementById('treatment-id').value;
-    const language = document.getElementById('language-selector').value;
-    
-    // Show typing indicator
-    addTypingIndicator();
-    
-    // Send to API
-    fetch('/api/chat-to-clinical-notes', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || 
-                          document.querySelector('input[name="csrf_token"]')?.value
-        },
-        body: JSON.stringify({
-            message: message,
-            context_type: contextType,
-            patient_id: patientId || null,
-            treatment_id: treatmentId || null,
-            language: language
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        removeTypingIndicator();
-        if (data.response) {
-            addMessageToChat('ai', data.response, true);
-        } else {
-            addMessageToChat('error', data.error || 'Error: Unable to get response');
-        }
-    })
-    .catch(error => {
-        removeTypingIndicator();
-        console.error('Error:', error);
-        addMessageToChat('error', 'Error: Failed to send message');
-    });
-}
-
-function addMessageToChat(type, message, canSave = false) {
-    const chatMessages = document.getElementById('chat-messages');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `mb-3 chat-message-${type}`;
-    
-    let icon, bgClass, textClass;
-    switch(type) {
-        case 'user':
-            icon = 'bi-person';
-            bgClass = 'bg-primary';
-            textClass = 'text-white';
-            break;
-        case 'ai':
-            icon = 'bi-robot';
-            bgClass = 'bg-light';
-            textClass = 'text-dark';
-            break;
-        case 'error':
-            icon = 'bi-exclamation-triangle';
-            bgClass = 'bg-danger';
-            textClass = 'text-white';
-            break;
-    }
-    
-    const saveButton = canSave ? `
-        <div class="mt-2">
-            <button class="btn btn-sm btn-outline-primary" onclick="saveNote('${encodeURIComponent(message)}')">
-                <i class="bi bi-save"></i> Save as Clinical Note
-            </button>
-        </div>
-    ` : '';
-    
-    messageDiv.innerHTML = `
-        <div class="d-flex ${type === 'user' ? 'justify-content-end' : 'justify-content-start'}">
-            <div class="card" style="max-width: 80%;">
-                <div class="card-header ${bgClass} ${textClass} py-2">
-                    <i class="bi ${icon} me-2"></i>
-                    ${type === 'user' ? 'You' : type === 'ai' ? 'AI Assistant' : 'System'}
-                    <small class="float-end">${new Date().toLocaleTimeString()}</small>
-                </div>
-                <div class="card-body">
-                    <div class="chat-message-content">${formatMessage(message)}</div>
-                    ${saveButton}
-                </div>
-            </div>
-        </div>
-    `;
-    
-    chatMessages.appendChild(messageDiv);
-    chatHistory.push({type, message, timestamp: new Date().toISOString()});
-    
-    // Scroll to bottom
-    const chatContainer = document.getElementById('chat-container');
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-}
-
-function formatMessage(message) {
-    // Convert markdown-like formatting to HTML
-    return message
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/\n\n/g, '</p><p>')
-        .replace(/\n- /g, '<br>• ')
-        .replace(/\n/g, '<br>')
-        .replace(/^(.*)$/, '<p>$1</p>')
-        .replace(/<p><\/p>/g, '');
-}
-
-function addTypingIndicator() {
-    const chatMessages = document.getElementById('chat-messages');
-    const typingDiv = document.createElement('div');
-    typingDiv.id = 'typing-indicator';
-    typingDiv.className = 'mb-3';
-    typingDiv.innerHTML = `
-        <div class="d-flex justify-content-start">
-            <div class="card" style="max-width: 80%;">
-                <div class="card-body">
-                    <div class="typing-dots">
-                        <span></span><span></span><span></span>
-                    </div>
-                    AI Assistant is typing...
-                </div>
-            </div>
-        </div>
-    `;
-    chatMessages.appendChild(typingDiv);
-    
-    const chatContainer = document.getElementById('chat-container');
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-}
-
-function removeTypingIndicator() {
-    const typingIndicator = document.getElementById('typing-indicator');
-    if (typingIndicator) {
-        typingIndicator.remove();
-    }
-}
-
-function clearChat() {
-    if (confirm('Are you sure you want to clear the chat history?')) {
-        document.getElementById('chat-messages').innerHTML = `
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle"></i>
-                <strong>Welcome to your AI Clinical Assistant!</strong><br>
-                Ask me anything about clinical documentation, treatment planning, assessment techniques, or general physiotherapy questions.
-            </div>
-        `;
-        chatHistory = [];
-    }
-}
-
-function exportChat() {
-    if (chatHistory.length === 0) {
-        alert('No chat history to export');
-        return;
-    }
-    
-    let exportText = `AI Clinical Assistant Chat Export - ${new Date().toLocaleDateString()}\n`;
-    exportText += '=' .repeat(60) + '\n\n';
-    
-    chatHistory.forEach(msg => {
-        const timestamp = new Date(msg.timestamp).toLocaleString();
-        const sender = msg.type === 'user' ? 'You' : 'AI Assistant';
-        exportText += `[${timestamp}] ${sender}:\n${msg.message}\n\n`;
-    });
-    
-    const blob = new Blob([exportText], {type: 'text/plain'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ai-chat-export-${new Date().toISOString().split('T')[0]}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function useTemplate(templateType) {
-    const input = document.getElementById('chat-input');
-    const templates = {
-        soap: "Help me create a SOAP note template for a physiotherapy session. Include all necessary sections with examples.",
-        assessment: "What are the key assessment techniques and tests I should perform for a comprehensive physiotherapy evaluation?",
-        exercises: "Guide me through creating an evidence-based exercise prescription for rehabilitation. What factors should I consider?",
-        discharge: "What should I include in a comprehensive discharge planning process for physiotherapy patients?"
-    };
-    
-    input.value = templates[templateType] || '';
-    input.focus();
-}
-
-function saveNote(message) {
-    const contextType = document.getElementById('context-type').value;
-    const patientId = document.getElementById('patient-id').value;
-    const treatmentId = document.getElementById('treatment-id').value;
-    
-    if (contextType === 'patient_specific' && !patientId) {
-        alert('Please select a patient to save the note to.');
-        return;
-    }
-    
-    if (contextType === 'treatment_specific' && !treatmentId) {
-        alert('Please select a treatment to save the note to.');
-        return;
-    }
-    
-    // Decode the message
-    const noteContent = decodeURIComponent(message);
-    
-    fetch('/api/save-clinical-note', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || 
-                          document.querySelector('input[name="csrf_token"]')?.value
-        },
-        body: JSON.stringify({
-            note_content: noteContent,
-            patient_id: patientId || null,
-            treatment_id: treatmentId || null,
-            note_type: contextType
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showSuccessToast('Clinical note saved successfully!');
-        } else {
-            alert('Error saving note: ' + (data.error || 'Unknown error'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to save note');
-    });
-}
-
-// Context type change handler
-document.addEventListener('DOMContentLoaded', function() {
-    const contextSelect = document.getElementById('context-type');
-    if (contextSelect) {
-        contextSelect.addEventListener('change', function() {
-            const patientSelector = document.getElementById('patient-selector');
-            const treatmentSelector = document.getElementById('treatment-selector');
-            
-            if (this.value === 'patient_specific' || this.value === 'treatment_specific') {
-                patientSelector.style.display = 'block';
-                loadPatients();
-            } else {
-                patientSelector.style.display = 'none';
-                treatmentSelector.style.display = 'none';
-            }
-            
-            if (this.value === 'treatment_specific') {
-                treatmentSelector.style.display = 'block';
-            } else {
-                treatmentSelector.style.display = 'none';
-            }
-        });
-    }
-    
-    const patientSelect = document.getElementById('patient-id');
-    if (patientSelect) {
-        patientSelect.addEventListener('change', function() {
-            if (this.value) {
-                loadTreatments(this.value);
-            }
-        });
-    }
-});
-
-function loadPatients() {
-    const patientSelect = document.getElementById('patient-id');
-    patientSelect.innerHTML = '<option value="">Loading patients...</option>';
-    
-    fetch('/api/search-patients?q=')
-    .then(response => response.json())
-    .then(data => {
-        patientSelect.innerHTML = '<option value="">Select a patient</option>';
-        data.forEach(patient => {
-            const option = document.createElement('option');
-            option.value = patient.id;
-            option.textContent = patient.name;
-            patientSelect.appendChild(option);
-        });
-    })
-    .catch(error => {
-        console.error('Error loading patients:', error);
-        patientSelect.innerHTML = '<option value="">Error loading patients</option>';
-    });
-}
-
-function loadTreatments(patientId) {
-    const treatmentSelect = document.getElementById('treatment-id');
-    treatmentSelect.innerHTML = '<option value="">Loading treatments...</option>';
-    
-    // Note: This would need a new API endpoint to get treatments for a patient
-    // For now, we'll use a placeholder
-    treatmentSelect.innerHTML = '<option value="">Select a treatment (feature coming soon)</option>';
-}
-}
-
-// Add CSS for typing indicator
-const style = document.createElement('style');
-style.textContent = `
-.typing-dots {
-    display: inline-block;
-    position: relative;
-    width: 50px;
-    height: 10px;
-    margin-right: 10px;
-}
-
-.typing-dots span {
-    position: absolute;
-    top: 0;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: #007bff;
-    animation: typing 1.4s infinite ease-in-out both;
-}
-
-.typing-dots span:nth-child(1) {
-    left: 0;
-    animation-delay: -0.32s;
-}
-
-.typing-dots span:nth-child(2) {
-    left: 12px;
-    animation-delay: -0.16s;
-}
-
-.typing-dots span:nth-child(3) {
-    left: 24px;
-}
-
-@keyframes typing {
-    0%, 80%, 100% {
-        transform: scale(0);
-    }
-    40% {
-        transform: scale(1);
-    }
-}
-
-.chat-message-content p:last-child {
-    margin-bottom: 0;
-}
-`;
-document.head.appendChild(style);
+// AI Chat functionality removed - only patient-specific chat remains
 
 // Ensure Bootstrap tabs work properly
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing tab functionality...');
+    
     // Initialize Bootstrap tabs manually if needed
-    const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
-    tabButtons.forEach(button => {
+    var tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+    console.log('Found tab buttons:', tabButtons.length);
+    
+    tabButtons.forEach(function(button, index) {
+        console.log('Tab ' + index + ':', button.id, button.getAttribute('data-bs-target'));
+        
         button.addEventListener('click', function(e) {
+            console.log('Tab clicked:', this.id, this.getAttribute('data-bs-target'));
             e.preventDefault();
-            const targetId = this.getAttribute('data-bs-target');
-            const targetPane = document.querySelector(targetId);
+            
+            var targetId = this.getAttribute('data-bs-target');
+            var targetPane = document.querySelector(targetId);
+            
+            console.log('Target pane found:', !!targetPane, targetId);
+            if (targetPane) {
+                console.log('Target pane classes before:', targetPane.className);
+            }
             
             if (targetPane) {
                 // Remove active from all tabs and panes
-                document.querySelectorAll('.nav-link').forEach(tab => {
+                console.log('Clearing all active states...');
+                document.querySelectorAll('.nav-link').forEach(function(tab) {
+                    console.log('  Clearing tab:', tab.id);
                     tab.classList.remove('active');
                     tab.setAttribute('aria-selected', 'false');
                 });
-                document.querySelectorAll('.tab-pane').forEach(pane => {
+                document.querySelectorAll('.tab-pane').forEach(function(pane) {
+                    console.log('  Clearing pane:', pane.id);
                     pane.classList.remove('show', 'active');
                 });
                 
                 // Add active to current tab and pane
+                console.log('Activating new tab and pane...');
                 this.classList.add('active');
                 this.setAttribute('aria-selected', 'true');
                 targetPane.classList.add('show', 'active');
+                
+                console.log('Target pane classes after:', targetPane.className);
+                console.log('Tab switched successfully to:', targetId);
+                
+                // Force visibility check
+                setTimeout(function() {
+                    var isVisible = targetPane.offsetHeight > 0;
+                    console.log('Is pane visible after switch?', isVisible);
+                    if (!isVisible) {
+                        console.log('Pane not visible! Computed style:', window.getComputedStyle(targetPane).display);
+                    }
+                }, 100);
+            } else {
+                console.error('Target pane not found:', targetId);
             }
         });
     });
+    
+    // Also try to initialize Bootstrap tabs if available
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+        console.log('Bootstrap Tab available, initializing...');
+        tabButtons.forEach(function(button) {
+            try {
+                new bootstrap.Tab(button);
+            } catch (e) {
+                console.warn('Failed to initialize Bootstrap tab for:', button.id, e);
+            }
+        });
+    } else {
+        console.log('Bootstrap Tab not available, using manual implementation');
+    }
+    
+
 });
 
 </script>
