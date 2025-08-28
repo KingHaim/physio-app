@@ -2536,23 +2536,64 @@ def save_clinical_note():
 
 
 def detect_language(text):
-    """Simple language detection based on common words"""
-    text_lower = text.lower()
+    """Enhanced language detection with better accuracy"""
+    text_lower = text.lower().strip()
     
-    # Spanish indicators
-    spanish_words = ['el', 'la', 'los', 'las', 'es', 'está', 'tiene', 'con', 'que', 'qué', 'como', 'cómo', 'para', 'por', 'dolor', 'paciente', 'tratamiento', 'puede', 'puedes', 'diabético', 'diabetes']
-    # English indicators  
-    english_words = ['the', 'is', 'are', 'was', 'were', 'has', 'have', 'had', 'with', 'what', 'how', 'for', 'patient', 'treatment', 'pain', 'can', 'could', 'diabetic', 'diabetes']
-    # French indicators
-    french_words = ['le', 'la', 'les', 'est', 'sont', 'a', 'avec', 'que', 'comment', 'pour', 'patient', 'traitement', 'douleur', 'peut', 'diabétique', 'diabète']
+    # Enhanced Spanish indicators with weights
+    spanish_indicators = {
+        # High confidence indicators
+        'es': 5, 'está': 5, 'cómo': 5, 'qué': 5, 'más': 5, 'también': 5, 'sí': 5, 'después': 5,
+        'diabético': 4, 'diabética': 4, 'médico': 4, 'clínico': 4, 'fisioterapeuta': 4,
+        # Medium confidence indicators  
+        'el': 3, 'la': 3, 'los': 3, 'las': 3, 'del': 3, 'al': 3, 'con': 3, 'por': 3, 'para': 3,
+        'tiene': 3, 'puede': 3, 'debe': 3, 'paciente': 3, 'tratamiento': 3, 'dolor': 3,
+        # Lower confidence but common
+        'de': 2, 'y': 2, 'o': 2, 'que': 2, 'como': 2, 'muy': 2, 'todo': 2, 'desde': 2
+    }
     
-    spanish_count = sum(1 for word in spanish_words if word in text_lower)
-    english_count = sum(1 for word in english_words if word in text_lower)
-    french_count = sum(1 for word in french_words if word in text_lower)
+    # Enhanced English indicators with weights
+    english_indicators = {
+        # High confidence indicators
+        'the': 4, 'this': 4, 'that': 4, 'these': 4, 'those': 4, 'what': 4, 'how': 4, 'when': 4,
+        'patient': 4, 'treatment': 4, 'therapist': 4, 'physiotherapist': 4, 'medical': 4,
+        # Medium confidence indicators
+        'is': 3, 'are': 3, 'was': 3, 'were': 3, 'has': 3, 'have': 3, 'had': 3, 'can': 3, 'could': 3,
+        'with': 3, 'for': 3, 'from': 3, 'pain': 3, 'diabetic': 3, 'diabetes': 3,
+        # Lower confidence but common
+        'a': 2, 'an': 2, 'and': 2, 'or': 2, 'but': 2, 'to': 2, 'of': 2, 'in': 2, 'on': 2, 'at': 2
+    }
     
-    if spanish_count > english_count and spanish_count > french_count:
+    # Enhanced French indicators with weights
+    french_indicators = {
+        # High confidence indicators
+        'le': 4, 'la': 4, 'les': 4, 'du': 4, 'au': 4, 'comment': 4, 'qu\'est-ce': 5, 'c\'est': 4,
+        'patient': 3, 'traitement': 4, 'kinésithérapeute': 5, 'médical': 4, 'douleur': 4,
+        # Medium confidence indicators
+        'est': 3, 'sont': 3, 'a': 2, 'avec': 3, 'pour': 3, 'peut': 3, 'diabétique': 4,
+        # Lower confidence but common
+        'de': 2, 'et': 3, 'ou': 2, 'que': 2, 'dans': 2, 'sur': 2, 'par': 2
+    }
+    
+    # Calculate weighted scores
+    spanish_score = sum(weight for word, weight in spanish_indicators.items() if word in text_lower)
+    english_score = sum(weight for word, weight in english_indicators.items() if word in text_lower)
+    french_score = sum(weight for word, weight in french_indicators.items() if word in text_lower)
+    
+    # Normalize by text length (longer texts get higher scores)
+    text_length = len(text_lower.split())
+    if text_length > 0:
+        spanish_score = spanish_score / text_length * 10
+        english_score = english_score / text_length * 10
+        french_score = french_score / text_length * 10
+    
+    # Determine language with minimum threshold
+    max_score = max(spanish_score, english_score, french_score)
+    
+    if max_score < 1:  # Very low confidence, default to Spanish
         return 'es'
-    elif french_count > english_count and french_count > spanish_count:
+    elif spanish_score == max_score:
+        return 'es'
+    elif french_score == max_score:
         return 'fr'
     else:
         return 'en'
@@ -2671,8 +2712,21 @@ def patient_ai_chat(patient_id):
         patient_context = build_patient_context(patient)
         
         # Build conversation history for AI
+        # Language-specific instructions
+        language_instruction = {
+            'es': 'RESPONDE EXCLUSIVAMENTE EN ESPAÑOL. Usa terminología médica en español.',
+            'en': 'RESPOND EXCLUSIVELY IN ENGLISH. Use medical terminology in English.',
+            'fr': 'RÉPONDEZ EXCLUSIVEMENT EN FRANÇAIS. Utilisez la terminologie médicale en français.',
+            'it': 'RISPONDI ESCLUSIVAMENTE IN ITALIANO. Usa terminologia medica in italiano.',
+            'de': 'ANTWORTEN SIE AUSSCHLIESSLICH AUF DEUTSCH. Verwenden Sie medizinische Terminologie auf Deutsch.',
+            'pt': 'RESPONDA EXCLUSIVAMENTE EM PORTUGUÊS. Use terminologia médica em português.'
+        }.get(language, 'RESPOND EXCLUSIVELY IN SPANISH. Use medical terminology in Spanish.')
+        
         messages = [
             {"role": "system", "content": f"""You are an AI clinical assistant specifically for this patient. You have access to their complete medical history and can answer questions about their condition, contraindications, treatment progress, and clinical considerations.
+
+CRITICAL LANGUAGE REQUIREMENT:
+{language_instruction}
 
 PATIENT CONTEXT:
 {patient_context}
@@ -2686,8 +2740,7 @@ Guidelines:
 - Maintain professional medical terminology
 - Remember previous conversations about this patient
 - Always prioritize patient safety
-
-Language: {get_language_instruction(language)}"""}
+- ALWAYS respond in the exact same language as the user's question"""}
         ]
         
         # Add conversation history

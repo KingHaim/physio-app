@@ -1954,11 +1954,16 @@ let currentPatientId = null;
 let currentPatientName = null;
 let patientChatHistory = [];
 
+let currentLanguage = 'es'; // Default language
+
 function openPatientAIChat(patientId, patientName) {
     currentPatientId = patientId;
     currentPatientName = patientName;
     
     document.getElementById('patientNameHeader').textContent = patientName;
+    
+    // Clear previous messages and show welcome
+    resetChatInterface();
     
     // Load conversation history
     loadPatientChatHistory(patientId);
@@ -1968,19 +1973,42 @@ function openPatientAIChat(patientId, patientName) {
     modal.show();
 }
 
+function resetChatInterface() {
+    const chatMessages = document.getElementById('patient-chat-messages');
+    chatMessages.innerHTML = `
+        <div class="text-center py-5">
+            <div class="welcome-message" style="background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 600px; margin: 0 auto;">
+                <div class="mb-3">
+                    <i class="bi bi-robot" style="font-size: 48px; color: #667eea;"></i>
+                </div>
+                <h6 style="color: #2c3e50; font-weight: 600;">Asistente Clínico AI</h6>
+                <p class="text-muted mb-0">Pregúntame sobre condiciones, contraindicaciones, progreso del tratamiento o cualquier consideración clínica.</p>
+            </div>
+        </div>
+    `;
+}
+
+function setLanguage(lang) {
+    currentLanguage = lang;
+    const indicators = {
+        'es': '🇪🇸 Español (detectado automáticamente)',
+        'en': '🇺🇸 English (auto-detected)',
+        'fr': '🇫🇷 Français (détecté automatiquement)',
+        'it': '🇮🇹 Italiano (rilevato automaticamente)',
+        'de': '🇩🇪 Deutsch (automatisch erkannt)',
+        'pt': '🇵🇹 Português (detectado automaticamente)'
+    };
+    document.getElementById('language-indicator').textContent = indicators[lang] || indicators['es'];
+}
+
 function loadPatientChatHistory(patientId) {
     fetch(`/api/patient/${patientId}/ai-chat/history`)
     .then(response => response.json())
     .then(data => {
-        if (data.history) {
+        if (data.history && data.history.length > 0) {
+            // Remove welcome message
             const chatMessages = document.getElementById('patient-chat-messages');
-            chatMessages.innerHTML = `
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i>
-                    <strong>Patient-Specific AI Assistant for ${data.patient_name}</strong><br>
-                    Ask me about this patient's condition, contraindications, treatment progress, or any clinical considerations.
-                </div>
-            `;
+            chatMessages.innerHTML = `<div style="padding: 1rem 0;"></div>`;
             
             patientChatHistory = data.history;
             
@@ -2000,11 +2028,19 @@ function sendPatientMessage() {
     
     if (!message || !currentPatientId) return;
     
+    // Clear welcome message if it's the first message
+    const welcomeMessage = document.querySelector('.welcome-message');
+    if (welcomeMessage) {
+        const chatMessages = document.getElementById('patient-chat-messages');
+        chatMessages.innerHTML = `<div style="padding: 1rem 0;"></div>`;
+    }
+    
     // Add user message to chat
     addPatientMessageToChat('user', message, false);
     input.value = '';
     
-    const language = document.getElementById('patient-language-selector').value;
+    // Use current language or let AI detect
+    const language = currentLanguage;
     
     // Show typing indicator
     addPatientTypingIndicator();
@@ -2028,10 +2064,10 @@ function sendPatientMessage() {
         if (data.response) {
             addPatientMessageToChat('ai', data.response, true);
             
-            // Update language selector if auto-detected
+            // Update language indicator if auto-detected
             if (data.language_detected) {
-                const languageSelector = document.getElementById('patient-language-selector');
-                languageSelector.value = data.language_detected;
+                currentLanguage = data.language_detected;
+                setLanguage(data.language_detected);
             }
             
             // Show medical information extraction if found
@@ -2039,65 +2075,78 @@ function sendPatientMessage() {
                 showMedicalInfoExtracted(data.medical_info_extracted);
             }
         } else {
-            addPatientMessageToChat('error', data.error || 'Error: Unable to get response');
+            let errorMessage = 'Error: No se pudo obtener respuesta del AI';
+            if (data.error) {
+                if (data.error.includes('temporarily unavailable') || data.error.includes('temporalmente')) {
+                    errorMessage = '⚠️ El servicio de IA está temporalmente no disponible. Por favor, inténtalo de nuevo en unos momentos.';
+                } else {
+                    errorMessage = `❌ ${data.error}`;
+                }
+            }
+            addPatientMessageToChat('error', errorMessage);
         }
     })
     .catch(error => {
         removePatientTypingIndicator();
         console.error('Error:', error);
-        addPatientMessageToChat('error', 'Error: Failed to send message');
+        addPatientMessageToChat('error', '🔌 Error de conexión. Verifica tu conexión a internet e inténtalo de nuevo.');
     });
 }
 
 function addPatientMessageToChat(type, message, canSave = false, timestamp = null) {
     const chatMessages = document.getElementById('patient-chat-messages');
     const messageDiv = document.createElement('div');
-    messageDiv.className = `mb-3 patient-chat-message-${type}`;
-    
-    let icon, bgClass, textClass;
-    switch(type) {
-        case 'user':
-            icon = 'bi-person';
-            bgClass = 'bg-primary';
-            textClass = 'text-white';
-            break;
-        case 'ai':
-            icon = 'bi-robot';
-            bgClass = 'bg-light';
-            textClass = 'text-dark';
-            break;
-        case 'error':
-            icon = 'bi-exclamation-triangle';
-            bgClass = 'bg-danger';
-            textClass = 'text-white';
-            break;
-    }
-    
-    const saveButton = canSave ? `
-        <div class="mt-2">
-            <button class="btn btn-sm btn-outline-primary" onclick="savePatientNote('${encodeURIComponent(message)}')">
-                <i class="bi bi-save"></i> Save to Patient Notes
-            </button>
-        </div>
-    ` : '';
+    messageDiv.className = `mb-4 patient-chat-message-${type}`;
     
     const timeStr = timestamp ? timestamp.toLocaleTimeString() : new Date().toLocaleTimeString();
     
-    messageDiv.innerHTML = `
-        <div class="d-flex ${type === 'user' ? 'justify-content-end' : 'justify-content-start'}">
-            <div class="card" style="max-width: 85%;">
-                <div class="card-header ${bgClass} ${textClass} py-2">
-                    <i class="bi ${icon} me-2"></i>
-                    ${type === 'user' ? 'You' : type === 'ai' ? `AI Assistant (${currentPatientName})` : 'System'}
-                    <small class="float-end">${timeStr}</small>
-                </div>
-                <div class="card-body">
+    if (type === 'user') {
+        // User message - right aligned, blue bubble
+        messageDiv.innerHTML = `
+            <div class="d-flex justify-content-end">
+                <div style="max-width: 80%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px 20px 5px 20px; padding: 1rem 1.5rem; box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);">
                     <div class="chat-message-content">${formatPatientMessage(message)}</div>
+                    <div class="mt-2 text-end">
+                        <small style="opacity: 0.8; font-size: 0.75rem;">${timeStr}</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (type === 'ai') {
+        // AI message - left aligned, white bubble with avatar
+        const saveButton = canSave ? `
+            <div class="mt-3 pt-2" style="border-top: 1px solid #eee;">
+                <button class="btn btn-sm btn-outline-primary" onclick="savePatientNote('${encodeURIComponent(message)}')" style="border-radius: 15px;">
+                    <i class="bi bi-save me-1"></i> Añadir a Anamnesis
+                </button>
+            </div>
+        ` : '';
+        
+        messageDiv.innerHTML = `
+            <div class="d-flex justify-content-start">
+                <div class="me-3" style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i class="bi bi-robot text-white" style="font-size: 18px;"></i>
+                </div>
+                <div style="max-width: 80%; background: white; border-radius: 20px 20px 20px 5px; padding: 1.5rem; box-shadow: 0 2px 15px rgba(0,0,0,0.1);">
+                    <div class="chat-message-content">${formatPatientMessage(message)}</div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <small class="text-muted" style="font-size: 0.75rem;">${timeStr}</small>
+                    </div>
                     ${saveButton}
                 </div>
             </div>
-        </div>
-    `;
+        `;
+    } else {
+        // Error message
+        messageDiv.innerHTML = `
+            <div class="d-flex justify-content-center">
+                <div style="background: #ff6b6b; color: white; border-radius: 15px; padding: 1rem; max-width: 80%;">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    ${message}
+                </div>
+            </div>
+        `;
+    }
     
     chatMessages.appendChild(messageDiv);
     
@@ -2105,9 +2154,12 @@ function addPatientMessageToChat(type, message, canSave = false, timestamp = nul
         patientChatHistory.push({type, message, timestamp: new Date().toISOString()});
     }
     
-    // Scroll to bottom
+    // Scroll to bottom with smooth animation
     const chatContainer = document.getElementById('patient-chat-container');
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    chatContainer.scrollTo({
+        top: chatContainer.scrollHeight,
+        behavior: 'smooth'
+    });
 }
 
 function formatPatientMessage(message) {
@@ -2125,15 +2177,18 @@ function addPatientTypingIndicator() {
     const chatMessages = document.getElementById('patient-chat-messages');
     const typingDiv = document.createElement('div');
     typingDiv.id = 'patient-typing-indicator';
-    typingDiv.className = 'mb-3';
+    typingDiv.className = 'mb-4';
     typingDiv.innerHTML = `
         <div class="d-flex justify-content-start">
-            <div class="card" style="max-width: 80%;">
-                <div class="card-body">
-                    <div class="typing-dots">
+            <div class="me-3" style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="bi bi-robot text-white" style="font-size: 18px;"></i>
+            </div>
+            <div style="background: white; border-radius: 20px 20px 20px 5px; padding: 1.5rem; box-shadow: 0 2px 15px rgba(0,0,0,0.1); max-width: 200px;">
+                <div class="d-flex align-items-center">
+                    <div class="typing-dots me-3">
                         <span></span><span></span><span></span>
                     </div>
-                    AI Assistant is analyzing patient data...
+                    <small class="text-muted">Analizando...</small>
                 </div>
             </div>
         </div>
@@ -2141,7 +2196,10 @@ function addPatientTypingIndicator() {
     chatMessages.appendChild(typingDiv);
     
     const chatContainer = document.getElementById('patient-chat-container');
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    chatContainer.scrollTo({
+        top: chatContainer.scrollHeight,
+        behavior: 'smooth'
+    });
 }
 
 function removePatientTypingIndicator() {
@@ -2248,50 +2306,56 @@ function savePatientNote(message) {
 function showMedicalInfoExtracted(medicalInfo) {
     const chatMessages = document.getElementById('patient-chat-messages');
     const infoDiv = document.createElement('div');
-    infoDiv.className = 'mb-3 medical-info-alert';
+    infoDiv.className = 'mb-4 medical-info-alert';
     
-    let infoContent = '<div class="alert alert-warning border-warning">';
-    infoContent += '<div class="d-flex align-items-center mb-2">';
-    infoContent += '<i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>';
-    infoContent += '<strong>Información Médica Detectada</strong>';
-    infoContent += '</div>';
-    
-    let hasInfo = false;
+    let infoItems = [];
     
     if (medicalInfo.conditions && medicalInfo.conditions.length > 0) {
-        infoContent += `<p><strong>Condiciones:</strong> ${medicalInfo.conditions.join(', ')}</p>`;
-        hasInfo = true;
+        infoItems.push(`<strong>Condiciones:</strong> ${medicalInfo.conditions.join(', ')}`);
     }
     
     if (medicalInfo.medications && medicalInfo.medications.length > 0) {
-        infoContent += `<p><strong>Medicamentos:</strong> ${medicalInfo.medications.join(', ')}</p>`;
-        hasInfo = true;
+        infoItems.push(`<strong>Medicamentos:</strong> ${medicalInfo.medications.join(', ')}`);
     }
     
     if (medicalInfo.allergies && medicalInfo.allergies.length > 0) {
-        infoContent += `<p><strong>Alergias:</strong> ${medicalInfo.allergies.join(', ')}</p>`;
-        hasInfo = true;
+        infoItems.push(`<strong>Alergias:</strong> ${medicalInfo.allergies.join(', ')}`);
     }
     
-    if (hasInfo) {
-        infoContent += '<div class="mt-3">';
-        infoContent += '<button class="btn btn-warning btn-sm me-2" onclick="updatePatientMedicalInfo(' + JSON.stringify(medicalInfo).replace(/"/g, '&quot;') + ')">';
-        infoContent += '<i class="bi bi-plus-circle"></i> Añadir a la Anamnesis';
-        infoContent += '</button>';
-        infoContent += '<button class="btn btn-outline-secondary btn-sm" onclick="dismissMedicalInfo(this)">';
-        infoContent += '<i class="bi bi-x"></i> Ignorar';
-        infoContent += '</button>';
-        infoContent += '</div>';
+    if (infoItems.length > 0) {
+        infoDiv.innerHTML = `
+            <div class="d-flex justify-content-center">
+                <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #f39c12; border-radius: 20px; padding: 1.5rem; max-width: 90%; box-shadow: 0 4px 15px rgba(243, 156, 18, 0.2);">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-exclamation-triangle-fill" style="color: #856404; font-size: 24px;"></i>
+                        <h6 style="color: #856404; font-weight: 600; margin-top: 0.5rem;">Información Médica Detectada</h6>
+                    </div>
+                    
+                    <div style="color: #856404; margin-bottom: 1.5rem;">
+                        ${infoItems.map(item => `<p class="mb-2">${item}</p>`).join('')}
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="btn btn-warning btn-sm me-2" onclick="updatePatientMedicalInfo(${JSON.stringify(medicalInfo).replace(/"/g, '&quot;')})" style="border-radius: 15px;">
+                            <i class="bi bi-plus-circle me-1"></i> Añadir a la Anamnesis
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="dismissMedicalInfo(this)" style="border-radius: 15px;">
+                            <i class="bi bi-x me-1"></i> Ignorar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        chatMessages.appendChild(infoDiv);
+        
+        // Scroll to bottom
+        const chatContainer = document.getElementById('patient-chat-container');
+        chatContainer.scrollTo({
+            top: chatContainer.scrollHeight,
+            behavior: 'smooth'
+        });
     }
-    
-    infoContent += '</div>';
-    infoDiv.innerHTML = infoContent;
-    
-    chatMessages.appendChild(infoDiv);
-    
-    // Scroll to bottom
-    const chatContainer = document.getElementById('patient-chat-container');
-    chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
 function updatePatientMedicalInfo(medicalInfo) {
@@ -2404,94 +2468,101 @@ if (!document.getElementById('typing-dots-css')) {
 }
 </script>
 
-<!-- Patient AI Chat Modal -->
+<!-- Patient AI Chat Modal - Redesigned Minimal Interface -->
 <div class="modal fade" id="patientAIChatModal" tabindex="-1" aria-labelledby="patientAIChatModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="patientAIChatModalLabel">
-                    <i class="bi bi-robot me-2"></i>AI Assistant for <span id="patientNameHeader"></span>
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-8">
-                        <div id="patient-chat-container" style="height: 400px; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 1rem; background-color: #f8f9fa; overflow-y: auto; margin-bottom: 1rem;">
-                            <div id="patient-chat-messages">
-                                <div class="alert alert-info">
-                                    <i class="bi bi-info-circle"></i>
-                                    <strong>Patient-Specific AI Assistant</strong><br>
-                                    Ask me about this patient's condition, contraindications, treatment progress, or any clinical considerations.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="input-group">
-                            <input type="text" id="patient-chat-input" class="form-control" 
-                                   placeholder="Ask about this patient's condition, contraindications, treatment progress..." 
-                                   onkeypress="if(event.key==='Enter') sendPatientMessage()">
-                            <button class="btn btn-primary" type="button" onclick="sendPatientMessage()">
-                                <i class="bi bi-send"></i> Send
-                            </button>
-                        </div>
-                        
-                        <div class="mt-2">
-                            <small class="text-muted">
-                                <i class="bi bi-lightbulb"></i> 
-                                Try: "Does this patient have any contraindications?", "What's their treatment progress?", "Any red flags I should be aware of?"
-                            </small>
-                        </div>
+    <div class="modal-dialog modal-fullscreen-lg-down modal-xl">
+        <div class="modal-content" style="border: none; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);">
+            <!-- Minimal Header -->
+            <div class="modal-header border-0" style="padding: 1.5rem 2rem 0.5rem 2rem;">
+                <div class="d-flex align-items-center">
+                    <div class="ai-avatar me-3" style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-robot text-white" style="font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0" style="font-weight: 600; color: #2c3e50;">AI Assistant</h5>
+                        <small class="text-muted" id="patientNameHeader"></small>
+                    </div>
+                </div>
+                
+                <!-- Minimal Control Buttons -->
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Language Button -->
+                    <div class="dropdown">
+                        <button class="btn btn-link p-2 text-muted" type="button" data-bs-toggle="dropdown" title="Language">
+                            <i class="bi bi-translate" style="font-size: 18px;"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="setLanguage('es')">🇪🇸 Español</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="setLanguage('en')">🇺🇸 English</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="setLanguage('fr')">🇫🇷 Français</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="setLanguage('it')">🇮🇹 Italiano</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="setLanguage('de')">🇩🇪 Deutsch</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="setLanguage('pt')">🇵🇹 Português</a></li>
+                        </ul>
                     </div>
                     
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h6 class="mb-0"><i class="bi bi-gear"></i> Chat Settings</h6>
-                            </div>
-                            <div class="card-body">
+                    <!-- Settings Button -->
+                    <div class="dropdown">
+                        <button class="btn btn-link p-2 text-muted" type="button" data-bs-toggle="dropdown" title="Settings">
+                            <i class="bi bi-three-dots" style="font-size: 18px;"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="clearPatientChat()">
+                                <i class="bi bi-trash me-2"></i>Clear History
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportPatientChat()">
+                                <i class="bi bi-download me-2"></i>Export Chat
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-muted" href="#">
+                                <i class="bi bi-info-circle me-2"></i>AI has full patient context
+                            </a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Close Button -->
+                    <button type="button" class="btn btn-link p-2 text-muted" data-bs-dismiss="modal" title="Close">
+                        <i class="bi bi-x-lg" style="font-size: 18px;"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Full Screen Chat Area -->
+            <div class="modal-body p-0" style="height: 70vh;">
+                <!-- Chat Messages Container -->
+                <div id="patient-chat-container" style="height: calc(100% - 100px); padding: 0 2rem; overflow-y: auto; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+                    <div id="patient-chat-messages" style="padding: 1rem 0;">
+                        <!-- Welcome Message -->
+                        <div class="text-center py-5">
+                            <div class="welcome-message" style="background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 600px; margin: 0 auto;">
                                 <div class="mb-3">
-                                    <label for="patient-language-selector" class="form-label">Idioma <small class="text-muted">(auto-detectado)</small></label>
-                                    <select id="patient-language-selector" class="form-select">
-                                        <option value="en">English</option>
-                                        <option value="es" selected>Español</option>
-                                        <option value="fr">Français</option>
-                                        <option value="it">Italiano</option>
-                                        <option value="de">Deutsch</option>
-                                        <option value="pt">Português</option>
-                                    </select>
+                                    <i class="bi bi-robot" style="font-size: 48px; color: #667eea;"></i>
                                 </div>
-                                
-                                <hr>
-                                
-                                <div class="d-grid gap-2">
-                                    <button class="btn btn-outline-secondary btn-sm" onclick="clearPatientChat()">
-                                        <i class="bi bi-trash"></i> Clear Chat History
-                                    </button>
-                                    <button class="btn btn-outline-primary btn-sm" onclick="exportPatientChat()">
-                                        <i class="bi bi-download"></i> Export Chat
-                                    </button>
-                                </div>
+                                <h6 style="color: #2c3e50; font-weight: 600;">Asistente Clínico AI</h6>
+                                <p class="text-muted mb-0">Pregúntame sobre condiciones, contraindicaciones, progreso del tratamiento o cualquier consideración clínica.</p>
                             </div>
                         </div>
-                        
-                        <div class="card mt-3">
-                            <div class="card-header">
-                                <h6 class="mb-0"><i class="bi bi-person-circle"></i> Patient Context</h6>
-                            </div>
-                            <div class="card-body">
-                                <small class="text-muted">
-                                    This AI assistant has access to:
-                                    <ul class="mt-2 mb-0">
-                                        <li>Complete patient history</li>
-                                        <li>All treatment sessions</li>
-                                        <li>Clinical notes and assessments</li>
-                                        <li>Previous AI conversations</li>
-                                        <li>Diagnosis and treatment plans</li>
-                                    </ul>
-                                </small>
-                            </div>
-                        </div>
+                    </div>
+                </div>
+                
+                <!-- Input Area -->
+                <div style="padding: 1rem 2rem 2rem 2rem; background: white; border-top: 1px solid #eee;">
+                    <div class="input-group" style="border-radius: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: none;">
+                        <input type="text" id="patient-chat-input" class="form-control" 
+                               placeholder="Escribe tu pregunta aquí..." 
+                               onkeypress="if(event.key==='Enter') sendPatientMessage()"
+                               style="border: none; border-radius: 25px 0 0 25px; padding: 1rem 1.5rem; font-size: 16px; box-shadow: none;">
+                        <button class="btn" type="button" onclick="sendPatientMessage()" 
+                                style="border: none; border-radius: 0 25px 25px 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 1.5rem;">
+                            <i class="bi bi-send-fill" style="font-size: 16px;"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Language Indicator -->
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            <span id="language-indicator">🇪🇸 Detectando idioma automáticamente</span>
+                        </small>
                     </div>
                 </div>
             </div>
