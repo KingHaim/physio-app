@@ -257,11 +257,11 @@
         </div>
         <div class="col-md-4 text-md-end">
             <!-- Primary Actions - Most Used -->
-            <div class="d-flex flex-column flex-md-row gap-2 mb-2">
-                <img src="{{ url_for('static', filename='images/bubblebrain.png') }}" alt="The Brain" style="width: 96px; height: 96px; object-fit: contain; cursor: pointer;" data-patient-id="{{ patient.id }}" data-patient-name="{{ patient.name }}" onclick="openPatientAIChat(this.dataset.patientId, this.dataset.patientName)">
-                <img src="{{ url_for('static', filename='images/editpatient.png') }}" alt="Edit Patient" style="width: 96px; height: 96px; object-fit: contain; cursor: pointer;" data-edit-url="{{ url_for('main.edit_patient', id=patient.id) }}" onclick="window.location.href=this.dataset.editUrl">
-                <img src="{{ url_for('static', filename='images/newappointment.png') }}" alt="New Appointment" style="width: 96px; height: 96px; object-fit: contain; cursor: pointer;" data-appointment-url="{{ url_for('main.new_treatment_page', patient_id=patient.id) }}" onclick="window.location.href=this.dataset.appointmentUrl">
-                <img src="{{ url_for('static', filename='images/recurring.png') }}" alt="Recurring" style="width: 96px; height: 96px; object-fit: contain; cursor: pointer;" data-recurring-url="{{ url_for('main.new_recurring_appointment', patient_id=patient.id) }}" onclick="window.location.href=this.dataset.recurringUrl">
+            <div class="d-flex flex-row gap-2 mb-2" style="flex-wrap: nowrap; overflow-x: auto; min-width: 0;">
+                <img src="{{ url_for('static', filename='images/bubblebrain.png') }}" alt="The Brain" style="width: 96px; height: 96px; object-fit: contain; cursor: pointer; flex-shrink: 0;" data-patient-id="{{ patient.id }}" data-patient-name="{{ patient.name }}" onclick="openPatientAIChat(this.dataset.patientId, this.dataset.patientName)">
+                <img src="{{ url_for('static', filename='images/editpatient.png') }}" alt="Edit Patient" style="width: 96px; height: 96px; object-fit: contain; cursor: pointer; flex-shrink: 0;" data-edit-url="{{ url_for('main.edit_patient', id=patient.id) }}" onclick="window.location.href=this.dataset.editUrl">
+                <img src="{{ url_for('static', filename='images/newappointment.png') }}" alt="New Appointment" style="width: 96px; height: 96px; object-fit: contain; cursor: pointer; flex-shrink: 0;" data-appointment-url="{{ url_for('main.new_treatment_page', patient_id=patient.id) }}" onclick="window.location.href=this.dataset.appointmentUrl">
+                <img src="{{ url_for('static', filename='images/recurring.png') }}" alt="Recurring" style="width: 96px; height: 96px; object-fit: contain; cursor: pointer; flex-shrink: 0;" data-recurring-url="{{ url_for('main.new_recurring_appointment', patient_id=patient.id) }}" onclick="window.location.href=this.dataset.recurringUrl">
             </div>
             
             <!-- Secondary Actions Dropdown -->
