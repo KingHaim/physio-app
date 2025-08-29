@@ -16,7 +16,7 @@
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="reportsDropdown">
                     {% for r in all_reports %}
                     <li>
-                        <a class="dropdown-item {% if r.id == report.id %}active{% endif %}" 
+                        <a class="dropdown-item {% if report and r.id == report.id %}active{% endif %}" 
                            href="{{ url_for('main.patient_reports_list', patient_id=patient.id) }}?report_id={{ r.id }}">
                             {{ r.report_type }} - {{ r.generated_date.strftime('%Y-%m-%d %H:%M') }}
                         </a>
@@ -28,6 +28,7 @@
             <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-outline-primary">
                 <i class="bi bi-arrow-left"></i> Back to Patient
             </a>
+            {% if report %}
             <button class="btn btn-outline-secondary" onclick="window.print()">
                 <i class="bi bi-printer"></i> Print Report
             </button>
@@ -40,9 +41,11 @@
             <button class="btn btn-outline-danger" onclick="deleteReport({{ report.id }})">
                 <i class="bi bi-trash"></i> Delete Report
             </button>
+            {% endif %}
         </div>
     </div>
     
+    {% if report %}
     <div class="card mb-4 report-card">
         <div class="card-header bg-light">
             <div class="d-flex justify-content-between">
@@ -78,6 +81,18 @@
             <small>This report was automatically generated based on treatment history. Please review for accuracy.</small>
         </div>
     </div>
+    {% else %}
+    <div class="card mb-4">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-file-earmark-text display-1 text-muted"></i>
+            <h3 class="mt-3 text-muted">No Reports Available</h3>
+            <p class="text-muted">This patient doesn't have any reports yet.</p>
+            <a href="{{ url_for('main.patient_detail', id=patient.id) }}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Back to Patient
+            </a>
+        </div>
+    </div>
+    {% endif %}
 
     {# Past Exercise Homework Section #}
     {% if exercise_homework_reports %}
@@ -88,7 +103,7 @@
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">Exercise Homework - {{ homework.generated_date.strftime('%Y-%m-%d') }}</h6>
                 <div>
-                    <a href="{{ url_for('main.patient_report', id=patient.id) }}?report_id={{ homework.id }}" 
+                    <a href="{{ url_for('main.patient_reports_list', patient_id=patient.id) }}?report_id={{ homework.id }}" 
                        class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-eye"></i> View Full
                     </a>

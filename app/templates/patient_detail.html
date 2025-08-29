@@ -739,9 +739,9 @@
                             </a>
                         </div>
                         <div class="card-body">
-                            {% if patient.reports %}
+                            {% if patient_reports %}
                                 <div class="list-group">
-                                    {% for report in patient.reports|sort(attribute='generated_date', reverse=true) %}
+                                    {% for report in patient_reports %}
                                         <a href="{{ url_for('main.patient_reports_list', patient_id=patient.id) }}?report_id={{ report.id }}" 
                                            class="list-group-item list-group-item-action">
                                             <div class="d-flex w-100 justify-content-between">

@@ -839,6 +839,10 @@ def patient_detail(id):
             else:
                 practitioners[treatment.provider] = treatment.provider
 
+    # Load patient reports explicitly
+    patient_reports = PatientReport.query.filter_by(patient_id=patient.id).order_by(PatientReport.generated_date.desc()).all()
+    print(f"DEBUG patient_detail: Loaded {len(patient_reports)} reports for patient {patient.id}")
+
     return render_template('patient_detail.html', 
                          patient=patient, 
                          treatments=treatments,
@@ -846,7 +850,8 @@ def patient_detail(id):
                          today=today,
                          form=form,
                          is_first_visit=is_first_visit,
-                         practitioners=practitioners)
+                         practitioners=practitioners,
+                         patient_reports=patient_reports)
 
 @main.route('/patient/<int:patient_id>/treatment', methods=['POST'])
 @login_required
@@ -1687,6 +1692,12 @@ def patient_reports_list(patient_id):
     all_patient_reports = PatientReport.query.filter_by(patient_id=patient_id)\
                                        .order_by(PatientReport.generated_date.desc()).all()
 
+    # Debug logging
+    print(f"DEBUG: patient_id={patient_id}, report_id={report_id}")
+    print(f"DEBUG: all_patient_reports count={len(all_patient_reports)}")
+    if all_patient_reports:
+        print(f"DEBUG: First report: ID={all_patient_reports[0].id}, Type={all_patient_reports[0].report_type}")
+
     if report_id:
         selected_report = PatientReport.query.filter_by(id=report_id, patient_id=patient_id).first()
         if not selected_report:
@@ -1695,6 +1706,12 @@ def patient_reports_list(patient_id):
             selected_report = all_patient_reports[0] if all_patient_reports else None 
     elif all_patient_reports:
         selected_report = all_patient_reports[0] # Default to the latest report
+    
+    print(f"DEBUG: selected_report={selected_report.id if selected_report else 'None'}")
+    
+    # If no reports exist, show a clear message
+    if not all_patient_reports:
+        flash('No reports have been generated for this patient yet.', 'info')
     
     return render_template('patient_report.html',
                            patient=patient,
