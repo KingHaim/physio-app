@@ -257,24 +257,15 @@
         </div>
         <div class="col-md-4 text-md-end">
             <!-- Primary Actions - Most Used -->
-            <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end mb-2">
-                <button class="btn btn-info btn-sm" data-patient-id="{{ patient.id }}" data-patient-name="{{ patient.name }}" onclick="openPatientAIChat(this.dataset.patientId, this.dataset.patientName)">
-                    <i class="bi bi-brain"></i> {{ _('The Brain') }}
-                </button>
-                <a href="{{ url_for('main.edit_patient', id=patient.id) }}" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-pencil"></i> {{ _('Edit Patient') }}
-                </a>
-                <a href="{{ url_for('main.new_treatment_page', patient_id=patient.id) }}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> {{ _('New Appointment') }}
-                </a>
+            <div class="d-flex flex-column flex-md-row gap-2 mb-2">
+                <img src="{{ url_for('static', filename='images/bubblebrain.png') }}" alt="The Brain" style="width: 96px; height: 96px; object-fit: contain; cursor: pointer;" data-patient-id="{{ patient.id }}" data-patient-name="{{ patient.name }}" onclick="openPatientAIChat(this.dataset.patientId, this.dataset.patientName)">
+                <img src="{{ url_for('static', filename='images/editpatient.png') }}" alt="Edit Patient" style="width: 96px; height: 96px; object-fit: contain; cursor: pointer;" data-edit-url="{{ url_for('main.edit_patient', id=patient.id) }}" onclick="window.location.href=this.dataset.editUrl">
+                <img src="{{ url_for('static', filename='images/newappointment.png') }}" alt="New Appointment" style="width: 96px; height: 96px; object-fit: contain; cursor: pointer;" data-appointment-url="{{ url_for('main.new_treatment_page', patient_id=patient.id) }}" onclick="window.location.href=this.dataset.appointmentUrl">
+                <img src="{{ url_for('static', filename='images/recurring.png') }}" alt="Recurring" style="width: 96px; height: 96px; object-fit: contain; cursor: pointer;" data-recurring-url="{{ url_for('main.new_recurring_appointment', patient_id=patient.id) }}" onclick="window.location.href=this.dataset.recurringUrl">
             </div>
             
             <!-- Secondary Actions Dropdown -->
             <div class="d-flex justify-content-md-end gap-2">
-                <!-- Quick Actions -->
-                <a href="{{ url_for('main.new_recurring_appointment', patient_id=patient.id) }}" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-calendar-plus"></i> {{ _('Recurring') }}
-                </a>
                 
                 <!-- AI & Reports Dropdown -->
                 <div class="dropdown">
