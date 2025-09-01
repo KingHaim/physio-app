@@ -2611,40 +2611,63 @@ def extract_medical_info(conversation_text):
         'lifestyle': []
     }
     
-    # Medical conditions patterns
+    # Medical conditions patterns (enhanced)
     condition_patterns = [
-        # Spanish
-        (r'(es|tiene|padece|sufre de)\s+(diabetes|diabético|diabética)', 'diabetes'),
-        (r'(es|tiene|padece|sufre de)\s+(hipertensión|hipertenso|hipertensa)', 'hipertensión'),
-        (r'(es|tiene|padece|sufre de)\s+(artritis|artrítico|artrítica)', 'artritis'),
-        (r'(es|tiene|padece|sufre de)\s+(asma|asmático|asmática)', 'asma'),
-        (r'(es|tiene|padece|sufre de)\s+(depresión|depresivo|depresiva)', 'depresión'),
-        (r'(es|tiene|padece|sufre de)\s+(ansiedad|ansioso|ansiosa)', 'ansiedad'),
-        # English
-        (r'(is|has|suffers from|diagnosed with)\s+(diabetic|diabetes)', 'diabetes'),
-        (r'(is|has|suffers from|diagnosed with)\s+(hypertension|high blood pressure)', 'hypertension'),
-        (r'(is|has|suffers from|diagnosed with)\s+(arthritis|arthritic)', 'arthritis'),
-        (r'(is|has|suffers from|diagnosed with)\s+(asthma|asthmatic)', 'asthma'),
-        (r'(is|has|suffers from|diagnosed with)\s+(depression|depressive)', 'depression'),
-        (r'(is|has|suffers from|diagnosed with)\s+(anxiety|anxious)', 'anxiety'),
+        # Spanish - more variations
+        (r'(es|tiene|padece|sufre de|fue diagnosticado con|le diagnosticaron)\s+(diabetes|diabético|diabética)', 'diabetes'),
+        (r'(es|tiene|padece|sufre de|fue diagnosticado con|le diagnosticaron)\s+(hipertensión|hipertenso|hipertensa|tensión alta|presión alta)', 'hipertensión'),
+        (r'(es|tiene|padece|sufre de|fue diagnosticado con|le diagnosticaron)\s+(artritis|artrítico|artrítica)', 'artritis'),
+        (r'(es|tiene|padece|sufre de|fue diagnosticado con|le diagnosticaron)\s+(asma|asmático|asmática)', 'asma'),
+        (r'(es|tiene|padece|sufre de|fue diagnosticado con|le diagnosticaron)\s+(depresión|depresivo|depresiva)', 'depresión'),
+        (r'(es|tiene|padece|sufre de|fue diagnosticado con|le diagnosticaron)\s+(ansiedad|ansioso|ansiosa)', 'ansiedad'),
+        (r'(es|tiene|padece|sufre de|fue diagnosticado con|le diagnosticaron)\s+(fibromialgia)', 'fibromialgia'),
+        (r'(es|tiene|padece|sufre de|fue diagnosticado con|le diagnosticaron)\s+(migraña|migrañas|jaqueca)', 'migraña'),
+        (r'(es|tiene|padece|sufre de|fue diagnosticado con|le diagnosticaron)\s+(hipotiroidismo|hipertiroidismo)', 'trastorno tiroideo'),
+        # Simple mentions without verbs
+        (r'\b(diabético|diabética|diabetes)\b', 'diabetes'),
+        (r'\b(hipertenso|hipertensa|hipertensión)\b', 'hipertensión'),
+        (r'\b(artritis|artrítico|artrítica)\b', 'artritis'),
+        (r'\b(asmático|asmática|asma)\b', 'asma'),
+        (r'\b(fibromialgia)\b', 'fibromialgia'),
+        # English - enhanced
+        (r'(is|has|suffers from|diagnosed with|was diagnosed with)\s+(diabetic|diabetes)', 'diabetes'),
+        (r'(is|has|suffers from|diagnosed with|was diagnosed with)\s+(hypertension|high blood pressure)', 'hypertension'),
+        (r'(is|has|suffers from|diagnosed with|was diagnosed with)\s+(arthritis|arthritic)', 'arthritis'),
+        (r'(is|has|suffers from|diagnosed with|was diagnosed with)\s+(asthma|asthmatic)', 'asthma'),
+        (r'(is|has|suffers from|diagnosed with|was diagnosed with)\s+(depression|depressive)', 'depression'),
+        (r'(is|has|suffers from|diagnosed with|was diagnosed with)\s+(anxiety|anxious)', 'anxiety'),
+        (r'(is|has|suffers from|diagnosed with|was diagnosed with)\s+(fibromyalgia)', 'fibromyalgia'),
+        (r'(is|has|suffers from|diagnosed with|was diagnosed with)\s+(migraine|migraines)', 'migraine'),
     ]
     
-    # Medication patterns
+    # Medication patterns (enhanced)
     medication_patterns = [
-        # Spanish
-        (r'(toma|tomar|medicación|medicina|medicamento)\s+([a-zA-Z]+)', 'medication'),
-        (r'(insulina|metformina|ibuprofeno|paracetamol|aspirina)', 'medication'),
-        # English  
-        (r'(takes|taking|medication|medicine|drug)\s+([a-zA-Z]+)', 'medication'),
-        (r'(insulin|metformin|ibuprofen|paracetamol|aspirin)', 'medication'),
+        # Spanish - enhanced
+        (r'(toma|tomar|está tomando|se administra|medicación|medicina|medicamento|fármaco)\s+([a-zA-Z][a-zA-Z\s]+)', 'medication'),
+        (r'\b(insulina|metformina|ibuprofeno|paracetamol|aspirina|omeprazol|losartán|atorvastatina|levotiroxina|prednisona)\b', 'medication'),
+        # English - enhanced  
+        (r'(takes|taking|is taking|on|medication|medicine|drug|prescribed)\s+([a-zA-Z][a-zA-Z\s]+)', 'medication'),
+        (r'\b(insulin|metformin|ibuprofen|paracetamol|aspirin|omeprazole|losartan|atorvastatin|levothyroxine|prednisone)\b', 'medication'),
     ]
     
-    # Allergy patterns
+    # Allergy patterns (enhanced)
     allergy_patterns = [
+        # Spanish - enhanced
+        (r'(alérgico|alérgica|alergia|intolerancia)\s+(a|al|a la|a los|a las)\s+([a-zA-Z\s]+)', 'allergy'),
+        (r'(no puede tomar|no tolera|le da alergia)\s+([a-zA-Z\s]+)', 'allergy'),
+        # English - enhanced
+        (r'(allergic to|allergy to|intolerant to|cannot take)\s+([a-zA-Z\s]+)', 'allergy'),
+        (r'(penicillin|shellfish|nuts|dairy|gluten) (allergy|allergic)', 'allergy'),
+    ]
+    
+    # Symptoms patterns (new)
+    symptom_patterns = [
         # Spanish
-        (r'(alérgico|alérgica|alergia)\s+(a|al)\s+([a-zA-Z\s]+)', 'allergy'),
+        (r'(siente|tiene|padece|sufre)\s+(dolor|molestia|malestar)\s+(en|de)\s+([a-zA-Z\s]+)', 'symptom'),
+        (r'\b(dolor de cabeza|mareo|náusea|fatiga|cansancio|insomnio|fiebre)\b', 'symptom'),
         # English
-        (r'(allergic to|allergy to)\s+([a-zA-Z\s]+)', 'allergy'),
+        (r'(feels|has|experiences|suffers from)\s+(pain|discomfort|ache)\s+(in|at)\s+([a-zA-Z\s]+)', 'symptom'),
+        (r'\b(headache|dizziness|nausea|fatigue|tiredness|insomnia|fever|back pain|joint pain)\b', 'symptom'),
     ]
     
     # Extract conditions
@@ -2657,7 +2680,7 @@ def extract_medical_info(conversation_text):
         matches = re.findall(pattern, text_lower)
         if matches:
             if isinstance(matches[0], tuple):
-                extracted_info['medications'].extend([match[1] for match in matches])
+                extracted_info['medications'].extend([match[-1] for match in matches if len(match) > 1])
             else:
                 extracted_info['medications'].extend(matches)
     
@@ -2669,6 +2692,16 @@ def extract_medical_info(conversation_text):
                 extracted_info['allergies'].extend([match[-1] for match in matches])
             else:
                 extracted_info['allergies'].extend(matches)
+    
+    # Extract symptoms
+    for pattern, symptom_type in symptom_patterns:
+        matches = re.findall(pattern, text_lower)
+        if matches:
+            if isinstance(matches[0], tuple):
+                # For complex patterns, use the last capture group
+                extracted_info['symptoms'].extend([match[-1] for match in matches if len(match) > 1])
+            else:
+                extracted_info['symptoms'].extend(matches)
     
     # Clean up and remove duplicates
     for key in extracted_info:
@@ -2829,8 +2862,22 @@ Guidelines:
             db.session.add(ai_conv)
             db.session.commit()
             
-            # Analyze conversation for medical information extraction
-            full_conversation = user_message + " " + ai_response
+            # Get recent conversation history for better medical info extraction
+            recent_conversations = PatientAIConversation.query.filter_by(
+                patient_id=patient_id,
+                user_id=current_user.id
+            ).order_by(PatientAIConversation.created_at.desc()).limit(10).all()
+            
+            # Build conversation text including recent history for analysis
+            conversation_parts = []
+            for conv in reversed(recent_conversations):  # Reverse to get chronological order
+                if conv.message_type == 'user':
+                    conversation_parts.append(f"Usuario: {conv.message_content}")
+                else:
+                    conversation_parts.append(f"AI: {conv.message_content}")
+            
+            # Analyze the entire recent conversation for medical information extraction
+            full_conversation = "\n".join(conversation_parts)
             extracted_info = extract_medical_info(full_conversation)
             
             medical_updates = []
@@ -2969,6 +3016,11 @@ def update_patient_medical_info(patient_id):
         if medical_info.get('allergies'):
             allergies_text = "ALERGIAS IDENTIFICADAS: " + ", ".join(medical_info['allergies'])
             updates.append(allergies_text)
+        
+        # Add extracted symptoms
+        if medical_info.get('symptoms'):
+            symptoms_text = "SÍNTOMAS MENCIONADOS: " + ", ".join(medical_info['symptoms'])
+            updates.append(symptoms_text)
         
         if updates:
             # Add timestamp and source information

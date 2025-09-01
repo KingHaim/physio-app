@@ -2313,6 +2313,10 @@ function showMedicalInfoExtracted(medicalInfo) {
         infoItems.push(`<strong>Alergias:</strong> ${medicalInfo.allergies.join(', ')}`);
     }
     
+    if (medicalInfo.symptoms && medicalInfo.symptoms.length > 0) {
+        infoItems.push(`<strong>Síntomas:</strong> ${medicalInfo.symptoms.join(', ')}`);
+    }
+    
     if (infoItems.length > 0) {
         infoDiv.innerHTML = `
             <div class="d-flex justify-content-center">
