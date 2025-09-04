@@ -2603,6 +2603,18 @@ def extract_medical_info(conversation_text):
     """Extract potential medical information from conversation"""
     text_lower = conversation_text.lower()
     
+    # Words that are NOT medications (common false positives)
+    medication_blacklist = {
+        'bulgarian', 'split', 'squat', 'medicinas', 'previas', 'brazo', 'abducci', 'each', 'side', 
+        'este', 'protocolo', 'modificado', 'prefiere', 'suspender', 'sesi', 'supervisi', 'the', 
+        'last', 'one', 'heart', 'rate', 'went', 'carga', 'moderada', 'elliptical', 'cross', 
+        'trainer', 'seguras', 'retroversi', 'significativa', 'movilidad', 'especific', 'evaluaci', 
+        'him', 'today', 'control', 'escapular', 'each', 'foot', 'puede', 'transmitir', 'tensiones',
+        'fuertes', 'cintura', 'escapular', 'menor', 'urgencia', 'leg', 'hombros', 'peso', 'ligero',
+        'hombro', 'movimientos', 'inapropiados', 'mayor', 'bando', 'pelota', 'precio', 'ejercicio',
+        'resultado', 'cargas', 'reales', 'contra', 'banda', 'ejercicios', 'fatiga'
+    }
+    
     extracted_info = {
         'conditions': [],
         'medications': [],
@@ -2640,14 +2652,15 @@ def extract_medical_info(conversation_text):
         (r'(is|has|suffers from|diagnosed with|was diagnosed with)\s+(migraine|migraines)', 'migraine'),
     ]
     
-    # Medication patterns (enhanced)
+    # Medication patterns (enhanced and more specific)
     medication_patterns = [
-        # Spanish - enhanced
-        (r'(toma|tomar|está tomando|se administra|medicación|medicina|medicamento|fármaco)\s+([a-zA-Z][a-zA-Z\s]+)', 'medication'),
-        (r'\b(insulina|metformina|ibuprofeno|paracetamol|aspirina|omeprazol|losartán|atorvastatina|levotiroxina|prednisona)\b', 'medication'),
-        # English - enhanced  
-        (r'(takes|taking|is taking|on|medication|medicine|drug|prescribed)\s+([a-zA-Z][a-zA-Z\s]+)', 'medication'),
-        (r'\b(insulin|metformin|ibuprofen|paracetamol|aspirin|omeprazole|losartan|atorvastatin|levothyroxine|prednisone)\b', 'medication'),
+        # Specific known medications (most reliable)
+        (r'\b(insulina|metformina|ibuprofeno|paracetamol|aspirina|omeprazol|losartán|atorvastatina|levotiroxina|prednisona|simvastatina|amlodipino|lisinopril|furosemida|warfarina|digoxina|captopril|enalapril|propranolol|atenolol|carvedilol|hydrochlorothiazide|spironolactone)\b', 'medication'),
+        (r'\b(insulin|metformin|ibuprofen|paracetamol|aspirin|omeprazole|losartan|atorvastatin|levothyroxine|prednisone|simvastatin|amlodipine|lisinopril|furosemide|warfarin|digoxin|captopril|enalapril|propranolol|atenolol|carvedilol)\b', 'medication'),
+        # Spanish - more specific patterns with medication-like endings
+        (r'(toma|está tomando|se administra)\s+([a-zA-Z]+(?:ina|olo|ano|pril|ide|cin|ron|tan|statin|pine)(?:\s+\d+(?:mg|mcg|g))?)\b', 'medication'),
+        # English - more specific patterns
+        (r'(takes|is taking|prescribed)\s+([a-zA-Z]+(?:ine|oll|ane|pril|ide|cin|ron|tan|statin|pine)(?:\s+\d+(?:mg|mcg|g))?)\b', 'medication'),
     ]
     
     # Allergy patterns (enhanced)
@@ -2660,14 +2673,14 @@ def extract_medical_info(conversation_text):
         (r'(penicillin|shellfish|nuts|dairy|gluten) (allergy|allergic)', 'allergy'),
     ]
     
-    # Symptoms patterns (new)
+    # Symptoms patterns (specific medical symptoms only)
     symptom_patterns = [
-        # Spanish
-        (r'(siente|tiene|padece|sufre)\s+(dolor|molestia|malestar)\s+(en|de)\s+([a-zA-Z\s]+)', 'symptom'),
-        (r'\b(dolor de cabeza|mareo|náusea|fatiga|cansancio|insomnio|fiebre)\b', 'symptom'),
-        # English
-        (r'(feels|has|experiences|suffers from)\s+(pain|discomfort|ache)\s+(in|at)\s+([a-zA-Z\s]+)', 'symptom'),
-        (r'\b(headache|dizziness|nausea|fatigue|tiredness|insomnia|fever|back pain|joint pain)\b', 'symptom'),
+        # Spanish - specific medical symptoms
+        (r'\b(dolor de cabeza|dolor de espalda|dolor de cuello|dolor abdominal|dolor de pecho|mareo|náusea|vómito|fatiga crónica|cansancio extremo|insomnio|fiebre|escalofríos|dificultad para respirar|falta de aire|palpitaciones)\b', 'symptom'),
+        (r'(siente|tiene|padece|sufre)\s+(dolor intenso|dolor crónico|molestias)\s+(en|de)\s+(cabeza|espalda|cuello|abdomen|pecho|articulaciones)', 'symptom'),
+        # English - specific medical symptoms
+        (r'\b(headache|migraine|back pain|neck pain|abdominal pain|chest pain|dizziness|nausea|vomiting|chronic fatigue|extreme tiredness|insomnia|fever|chills|shortness of breath|palpitations|joint pain)\b', 'symptom'),
+        (r'(feels|has|experiences|suffers from)\s+(severe pain|chronic pain|intense pain)\s+(in|at)\s+(head|back|neck|abdomen|chest|joints)', 'symptom'),
     ]
     
     # Extract conditions
@@ -2680,9 +2693,17 @@ def extract_medical_info(conversation_text):
         matches = re.findall(pattern, text_lower)
         if matches:
             if isinstance(matches[0], tuple):
-                extracted_info['medications'].extend([match[-1] for match in matches if len(match) > 1])
+                # Filter out blacklisted words and extract meaningful medication names
+                potential_meds = [match[-1].strip() for match in matches if len(match) > 1]
+                filtered_meds = [med for med in potential_meds 
+                               if med.lower() not in medication_blacklist 
+                               and len(med) > 3  # Minimum length for medication names
+                               and not any(word in med.lower() for word in ['ejercicio', 'protocolo', 'carga', 'movimiento'])]
+                extracted_info['medications'].extend(filtered_meds)
             else:
-                extracted_info['medications'].extend(matches)
+                # For direct matches (known medications), add them
+                filtered_meds = [med for med in matches if med.lower() not in medication_blacklist]
+                extracted_info['medications'].extend(filtered_meds)
     
     # Extract allergies
     for pattern, allergy_type in allergy_patterns:
@@ -2694,14 +2715,23 @@ def extract_medical_info(conversation_text):
                 extracted_info['allergies'].extend(matches)
     
     # Extract symptoms
+    symptom_blacklist = {'fatiga'} # General fatigue from exercise is not a medical symptom
+    
     for pattern, symptom_type in symptom_patterns:
         matches = re.findall(pattern, text_lower)
         if matches:
             if isinstance(matches[0], tuple):
-                # For complex patterns, use the last capture group
-                extracted_info['symptoms'].extend([match[-1] for match in matches if len(match) > 1])
+                # For complex patterns, use the last capture group and filter
+                potential_symptoms = [match[-1].strip() for match in matches if len(match) > 1]
+                filtered_symptoms = [symptom for symptom in potential_symptoms 
+                                   if symptom.lower() not in symptom_blacklist]
+                extracted_info['symptoms'].extend(filtered_symptoms)
             else:
-                extracted_info['symptoms'].extend(matches)
+                # For direct matches, keep specific medical symptoms but filter general ones
+                filtered_symptoms = [symptom for symptom in matches 
+                                   if symptom.lower() not in symptom_blacklist or 
+                                   'crónica' in symptom.lower() or 'extremo' in symptom.lower()]
+                extracted_info['symptoms'].extend(filtered_symptoms)
     
     # Clean up and remove duplicates
     for key in extracted_info:
