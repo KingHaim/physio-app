@@ -1402,6 +1402,119 @@ def costaspine_service_fee():
         current_app.logger.error(f"Error fetching costaspine-service-fee for user {current_user.id}: {e}\n{traceback.format_exc()}")
         return jsonify({"error": "Failed to fetch data"}), 500
 
+@api.route('/analytics/referral-tree')
+@login_required
+def referral_tree():
+    """Get referral tree data for visualization"""
+    try:
+        # Get all patients accessible to the current user
+        patients = current_user.get_accessible_patients()
+        
+        # Build referral tree data
+        nodes = []
+        edges = []
+        
+        # Create nodes for all patients
+        for patient in patients:
+            node = {
+                'id': f'patient_{patient.id}',
+                'name': patient.name,
+                'type': 'patient',
+                'referral_source': patient.referral_source,
+                'total_treatments': len(patient.treatments),
+                'status': patient.status,
+                'created_at': patient.created_at.strftime('%Y-%m-%d') if patient.created_at else None
+            }
+            nodes.append(node)
+            
+            # Create edge if patient was referred by another patient
+            if patient.referred_by_patient_id:
+                edge = {
+                    'from': f'patient_{patient.referred_by_patient_id}',
+                    'to': f'patient_{patient.id}',
+                    'type': 'patient_referral',
+                    'referral_notes': patient.referral_notes
+                }
+                edges.append(edge)
+            elif patient.referred_by_name:
+                # Create a non-patient referrer node if it doesn't exist
+                referrer_id = f'external_{patient.referred_by_name.replace(" ", "_").lower()}'
+                
+                # Check if we already created this external referrer node
+                if not any(node['id'] == referrer_id for node in nodes):
+                    external_node = {
+                        'id': referrer_id,
+                        'name': patient.referred_by_name,
+                        'type': 'external',
+                        'referral_source': None,
+                        'total_treatments': 0,
+                        'status': 'External Referrer',
+                        'created_at': None
+                    }
+                    nodes.append(external_node)
+                
+                # Create edge from external referrer to patient
+                edge = {
+                    'from': referrer_id,
+                    'to': f'patient_{patient.id}',
+                    'type': 'external_referral',
+                    'referral_notes': patient.referral_notes
+                }
+                edges.append(edge)
+        
+        # Calculate referral statistics
+        total_patients = len(patients)
+        referred_patients = len([p for p in patients if p.referred_by_patient_id or p.referred_by_name])
+        patient_referrals = len([p for p in patients if p.referred_by_patient_id])
+        external_referrals = len([p for p in patients if p.referred_by_name and not p.referred_by_patient_id])
+        
+        # Find top referrers (patients who have referred the most)
+        referrer_counts = {}
+        for patient in patients:
+            if patient.referred_by_patient_id:
+                referrer_counts[patient.referred_by_patient_id] = referrer_counts.get(patient.referred_by_patient_id, 0) + 1
+        
+        top_patient_referrers = []
+        for patient in patients:
+            if patient.id in referrer_counts:
+                top_patient_referrers.append({
+                    'name': patient.name,
+                    'referrals_count': referrer_counts[patient.id]
+                })
+        
+        top_patient_referrers.sort(key=lambda x: x['referrals_count'], reverse=True)
+        top_patient_referrers = top_patient_referrers[:5]  # Top 5
+        
+        # Find top external referrers
+        external_referrer_counts = {}
+        for patient in patients:
+            if patient.referred_by_name and not patient.referred_by_patient_id:
+                external_referrer_counts[patient.referred_by_name] = external_referrer_counts.get(patient.referred_by_name, 0) + 1
+        
+        top_external_referrers = [{'name': name, 'referrals_count': count} 
+                                 for name, count in external_referrer_counts.items()]
+        top_external_referrers.sort(key=lambda x: x['referrals_count'], reverse=True)
+        top_external_referrers = top_external_referrers[:5]  # Top 5
+        
+        result = {
+            'nodes': nodes,
+            'edges': edges,
+            'statistics': {
+                'total_patients': total_patients,
+                'referred_patients': referred_patients,
+                'patient_referrals': patient_referrals,
+                'external_referrals': external_referrals,
+                'referral_rate': round((referred_patients / total_patients * 100), 2) if total_patients > 0 else 0,
+                'top_patient_referrers': top_patient_referrers,
+                'top_external_referrers': top_external_referrers
+            }
+        }
+        
+        return jsonify(result)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching referral-tree for user {current_user.id}: {e}\n{traceback.format_exc()}")
+        return jsonify({"error": "Failed to fetch referral tree data"}), 500
+
 @api.route('/create-checkout-session', methods=['POST'])
 @login_required
 def create_checkout_session():

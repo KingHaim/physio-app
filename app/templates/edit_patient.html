@@ -68,6 +68,59 @@
                                         </option>
                                     </select>
                                 </div>
+
+                                <!-- Referral Information Section -->
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-3">{{ _('Referral Information') }}</h6>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="referred_by_type" class="form-label">{{ _('Referred By Type') }}</label>
+                                            <select class="form-select" id="referred_by_type" name="referred_by_type" onchange="toggleReferralFields()">
+                                                <option value="">{{ _('Not referred') }}</option>
+                                                <option value="patient" {% if patient.referred_by_patient_id %}selected{% endif %}>{{ _('Existing Patient') }}</option>
+                                                <option value="other" {% if patient.referred_by_name and not patient.referred_by_patient_id %}selected{% endif %}>{{ _('Other Person/Organization') }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="row" id="patient-referral-section" style="display: {% if patient.referred_by_patient_id %}block{% else %}none{% endif %};">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="referred_by_patient_id" class="form-label">{{ _('Referring Patient') }}</label>
+                                            <select class="form-select" id="referred_by_patient_id" name="referred_by_patient_id">
+                                                <option value="">{{ _('Select patient...') }}</option>
+                                                {% for pat in all_patients %}
+                                                    {% if pat.id != patient.id %}
+                                                        <option value="{{ pat.id }}" {% if patient.referred_by_patient_id == pat.id %}selected{% endif %}>
+                                                            {{ pat.name }}
+                                                        </option>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="row" id="other-referral-section" style="display: {% if patient.referred_by_name and not patient.referred_by_patient_id %}block{% else %}none{% endif %};">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="referred_by_name" class="form-label">{{ _('Referred By Name') }}</label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="referred_by_name" 
+                                                   name="referred_by_name" 
+                                                   value="{{ patient.referred_by_name or '' }}"
+                                                   placeholder="{{ _('e.g., Dr. Smith, Physical Therapy Clinic...') }}">
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="referral_notes" class="form-label">{{ _('Referral Notes') }}</label>
+                                        <textarea class="form-control" 
+                                                  id="referral_notes" 
+                                                  name="referral_notes" 
+                                                  rows="2"
+                                                  placeholder="{{ _('Additional referral information (optional)') }}">{{ patient.referral_notes or '' }}</textarea>
+                                    </div>
+                                </div>
                             </div>
 
                             
@@ -739,6 +792,31 @@
                 });
             }
         });
+    }
+
+    // Function to toggle referral fields based on selection
+    function toggleReferralFields() {
+        const referralType = document.getElementById('referred_by_type').value;
+        const patientSection = document.getElementById('patient-referral-section');
+        const otherSection = document.getElementById('other-referral-section');
+        
+        if (referralType === 'patient') {
+            patientSection.style.display = 'block';
+            otherSection.style.display = 'none';
+            // Clear other section values
+            document.getElementById('referred_by_name').value = '';
+        } else if (referralType === 'other') {
+            patientSection.style.display = 'none';
+            otherSection.style.display = 'block';
+            // Clear patient section values
+            document.getElementById('referred_by_patient_id').value = '';
+        } else {
+            patientSection.style.display = 'none';
+            otherSection.style.display = 'none';
+            // Clear all values
+            document.getElementById('referred_by_patient_id').value = '';
+            document.getElementById('referred_by_name').value = '';
+        }
     }
 
     // Form validation and handling

@@ -52,7 +52,16 @@ class Patient(db.Model):
     ai_clinical_notes = db.Column(db.Text)  # Additional clinical considerations
     ai_analysis_date = db.Column(db.DateTime)  # When analysis was last performed
 
+    # Referral system fields
+    referred_by_patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=True)
+    _referred_by_name = db.Column("referred_by_name", db.String(500), nullable=True)  # Encrypted field for non-patient referrals
+    referral_notes = db.Column(db.Text, nullable=True)  # Additional referral information
+
     consents = db.relationship('UserConsent', backref='patient', lazy=True)
+    
+    # Self-referential relationship for patient referrals
+    referred_by = db.relationship('Patient', remote_side=[id], backref='referrals', foreign_keys=[referred_by_patient_id])
+    # Note: 'referrals' backref gives us all patients referred by this patient
     
     # Property getters and setters for encrypted fields
     @property
@@ -164,6 +173,78 @@ class Patient(db.Model):
                 self._anamnesis = encrypt_text(value)
         else:
             self._anamnesis = None
+
+    @property
+    def referred_by_name(self):
+        """Get decrypted referral source name (for non-patient referrals)"""
+        if self._referred_by_name:
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                return self._referred_by_name
+            return decrypt_text(self._referred_by_name)
+        return None
+
+    @referred_by_name.setter
+    def referred_by_name(self, value):
+        """Set encrypted referral source name (for non-patient referrals)"""
+        if value:
+            # Check if encryption is disabled for testing
+            if hasattr(current_app, 'config') and current_app.config.get('DISABLE_ENCRYPTION', False):
+                self._referred_by_name = value
+            else:
+                self._referred_by_name = encrypt_text(value)
+        else:
+            self._referred_by_name = None
+
+    @property
+    def referral_source(self):
+        """Get the referral source - either a patient name or a custom name"""
+        if self.referred_by:
+            return self.referred_by.name
+        elif self.referred_by_name:
+            return self.referred_by_name
+        return None
+
+    def get_referral_chain(self, visited=None):
+        """Get the complete referral chain leading to this patient"""
+        if visited is None:
+            visited = set()
+        
+        # Prevent infinite loops
+        if self.id in visited:
+            return []
+        
+        visited.add(self.id)
+        chain = [self]
+        
+        if self.referred_by:
+            parent_chain = self.referred_by.get_referral_chain(visited.copy())
+            chain = parent_chain + chain
+            
+        return chain
+
+    def get_referral_tree(self, visited=None):
+        """Get the complete referral tree starting from this patient"""
+        if visited is None:
+            visited = set()
+        
+        # Prevent infinite loops
+        if self.id in visited:
+            return {'patient': self, 'referrals': []}
+        
+        visited.add(self.id)
+        
+        tree = {
+            'patient': self,
+            'referrals': []
+        }
+        
+        for referred_patient in self.referrals:
+            if referred_patient.id not in visited:
+                subtree = referred_patient.get_referral_tree(visited.copy())
+                tree['referrals'].append(subtree)
+        
+        return tree
 
 
 class Location(db.Model):

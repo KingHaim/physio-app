@@ -3518,6 +3518,19 @@ def new_patient():
                                    address_line1=address_line1, address_line2=address_line2, city=city, 
                                    postcode=postcode, preferred_location=preferred_location)
 
+        # Handle referral information
+        referred_by_type = request.form.get('referred_by_type')
+        referred_by_patient_id = None
+        referred_by_name = None
+        
+        if referred_by_type == 'patient':
+            referred_by_patient_id_str = request.form.get('referred_by_patient_id')
+            referred_by_patient_id = int(referred_by_patient_id_str) if referred_by_patient_id_str else None
+        elif referred_by_type == 'other':
+            referred_by_name = request.form.get('referred_by_name')
+        
+        referral_notes = request.form.get('referral_notes')
+
         new_patient_obj = Patient(
             name=name,
             date_of_birth=date_of_birth,
@@ -3533,6 +3546,9 @@ def new_patient():
             city=city,
             postcode=postcode,
             preferred_location=preferred_location,
+            referred_by_patient_id=referred_by_patient_id,
+            referred_by_name=referred_by_name,
+            referral_notes=referral_notes,
             user_id=current_user.id, 
             status='Active'
         )
@@ -3609,7 +3625,9 @@ def new_patient():
                                    portal_login_email=portal_login_email)
 
     # GET request
-    return render_template('new_patient.html')
+    # Get all patients for referral dropdown
+    all_patients = current_user.get_accessible_patients()
+    return render_template('new_patient.html', all_patients=all_patients)
 
 @main.route('/patient/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -3659,6 +3677,28 @@ def edit_patient(id):
             patient.city = request.form.get('city')
             patient.postcode = request.form.get('postcode')
             patient.preferred_location = request.form.get('preferred_location')
+            
+            # Handle referral information
+            referred_by_type = request.form.get('referred_by_type')
+            if referred_by_type == 'patient':
+                # Clear any existing non-patient referral
+                patient.referred_by_name = None
+                # Set patient referral
+                referred_by_patient_id = request.form.get('referred_by_patient_id')
+                patient.referred_by_patient_id = int(referred_by_patient_id) if referred_by_patient_id else None
+            elif referred_by_type == 'other':
+                # Clear any existing patient referral
+                patient.referred_by_patient_id = None
+                # Set non-patient referral
+                patient.referred_by_name = request.form.get('referred_by_name')
+            else:
+                # Clear all referral information
+                patient.referred_by_patient_id = None
+                patient.referred_by_name = None
+            
+            # Always update referral notes
+            patient.referral_notes = request.form.get('referral_notes')
+            
         except ValueError:
             flash('Invalid date format for Date of Birth. Please use YYYY-MM-DD.', 'danger')
             return render_template('edit_patient.html', patient=patient)
@@ -3738,7 +3778,9 @@ def edit_patient(id):
             
     # --- GET Request ---
     # For GET, ensure patient data (including portal_user_account details if any) is passed
-    return render_template('edit_patient.html', patient=patient)
+    # Get all patients for referral dropdown (excluding current patient)
+    all_patients = current_user.get_accessible_patients()
+    return render_template('edit_patient.html', patient=patient, all_patients=all_patients)
 
 @main.route('/patient/<int:id>/delete', methods=['POST'])
 @login_required
