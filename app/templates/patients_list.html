@@ -31,6 +31,21 @@
         </div>
     </div>
 
+    <!-- Dry Needling Legend -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-info py-2 mb-2">
+                <small class="d-flex align-items-center flex-wrap gap-3">
+                    <strong>{{ _('Dry Needling Preferences:') }}</strong>
+                    <span>🚫 {{ _('Never') }}</span>
+                    <span>⚪ {{ _('Neutral') }}</span>
+                    <span>✅ {{ _('Likes') }}</span>
+                    <span>❓ {{ _('Unknown') }}</span>
+                </small>
+            </div>
+        </div>
+    </div>
+
     <!-- Patient Usage Display -->
     <div class="row mb-3">
         <div class="col-12">
@@ -119,6 +134,9 @@
                                    class="text-decoration-none text-dark fw-medium">
                                    {{ patient.name }}
                                 </a>
+                                <span class="ms-2" title="{{ patient.get_dry_needling_text() }}" style="font-size: 1.1rem;">
+                                    {{ patient.get_dry_needling_symbol() }}
+                                </span>
                             </td>
                             <td>{{ patient.diagnosis|truncate(40) if patient.diagnosis else _('No diagnosis') }}</td>
                             <td>

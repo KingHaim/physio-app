@@ -3530,6 +3530,9 @@ def new_patient():
             referred_by_name = request.form.get('referred_by_name')
         
         referral_notes = request.form.get('referral_notes')
+        
+        # Get treatment preferences
+        dry_needling_preference = request.form.get('dry_needling_preference', 'unknown')
 
         new_patient_obj = Patient(
             name=name,
@@ -3549,6 +3552,7 @@ def new_patient():
             referred_by_patient_id=referred_by_patient_id,
             referred_by_name=referred_by_name,
             referral_notes=referral_notes,
+            dry_needling_preference=dry_needling_preference,
             user_id=current_user.id, 
             status='Active'
         )
@@ -3698,6 +3702,9 @@ def edit_patient(id):
             
             # Always update referral notes
             patient.referral_notes = request.form.get('referral_notes')
+            
+            # Update treatment preferences
+            patient.dry_needling_preference = request.form.get('dry_needling_preference', 'unknown')
             
         except ValueError:
             flash('Invalid date format for Date of Birth. Please use YYYY-MM-DD.', 'danger')

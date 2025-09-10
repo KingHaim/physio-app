@@ -57,6 +57,9 @@ class Patient(db.Model):
     _referred_by_name = db.Column("referred_by_name", db.String(500), nullable=True)  # Encrypted field for non-patient referrals
     referral_notes = db.Column(db.Text, nullable=True)  # Additional referral information
 
+    # Treatment preferences
+    dry_needling_preference = db.Column(db.String(20), default='unknown')  # 'never', 'neutral', 'likes', 'unknown'
+
     consents = db.relationship('UserConsent', backref='patient', lazy=True)
     
     # Self-referential relationship for patient referrals
@@ -245,6 +248,36 @@ class Patient(db.Model):
                 tree['referrals'].append(subtree)
         
         return tree
+
+    def get_dry_needling_symbol(self):
+        """Get visual symbol for dry needling preference"""
+        symbols = {
+            'never': '🚫',      # Red X - Never wants dry needling
+            'neutral': '⚪',    # White circle - Neutral/doesn't mind
+            'likes': '✅',      # Green check - Likes/prefers dry needling
+            'unknown': '❓'     # Question mark - Unknown preference
+        }
+        return symbols.get(self.dry_needling_preference, '❓')
+    
+    def get_dry_needling_text(self):
+        """Get text description for dry needling preference"""
+        texts = {
+            'never': 'No quiere punción seca',
+            'neutral': 'Indiferente a punción seca', 
+            'likes': 'Le gusta la punción seca',
+            'unknown': 'Preferencia desconocida'
+        }
+        return texts.get(self.dry_needling_preference, 'Preferencia desconocida')
+    
+    def get_dry_needling_color(self):
+        """Get color class for dry needling preference"""
+        colors = {
+            'never': 'text-danger',     # Red for never
+            'neutral': 'text-secondary', # Gray for neutral
+            'likes': 'text-success',     # Green for likes
+            'unknown': 'text-muted'      # Muted for unknown
+        }
+        return colors.get(self.dry_needling_preference, 'text-muted')
 
 
 class Location(db.Model):

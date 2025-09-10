@@ -121,6 +121,34 @@
                                                   placeholder="{{ _('Additional referral information (optional)') }}">{{ patient.referral_notes or '' }}</textarea>
                                     </div>
                                 </div>
+
+                                <!-- Treatment Preferences Section -->
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-3">{{ _('Treatment Preferences') }}</h6>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="dry_needling_preference" class="form-label">
+                                                <i class="bi bi-bullseye"></i> {{ _('Dry Needling Preference') }}
+                                            </label>
+                                            <select class="form-select" id="dry_needling_preference" name="dry_needling_preference">
+                                                <option value="unknown" {% if patient.dry_needling_preference == 'unknown' or not patient.dry_needling_preference %}selected{% endif %}>
+                                                    ❓ {{ _('Unknown / Not asked') }}
+                                                </option>
+                                                <option value="never" {% if patient.dry_needling_preference == 'never' %}selected{% endif %}>
+                                                    🚫 {{ _('Never wants dry needling') }}
+                                                </option>
+                                                <option value="neutral" {% if patient.dry_needling_preference == 'neutral' %}selected{% endif %}>
+                                                    ⚪ {{ _('Neutral / Doesn\'t mind') }}
+                                                </option>
+                                                <option value="likes" {% if patient.dry_needling_preference == 'likes' %}selected{% endif %}>
+                                                    ✅ {{ _('Likes / Prefers dry needling') }}
+                                                </option>
+                                            </select>
+                                            <div class="form-text">{{ _('This helps you quickly identify patient preferences for dry needling treatment') }}</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             

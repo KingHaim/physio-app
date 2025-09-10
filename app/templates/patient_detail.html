@@ -253,6 +253,13 @@
                 <p class="mb-1"><strong>{{ _('Date of Birth:') }}</strong> {{ patient.date_of_birth.strftime('%Y-%m-%d') if patient.date_of_birth else _('Not provided') }}</p>
                 <p class="mb-1"><strong>{{ _('Contact:') }}</strong> {{ patient.contact or _('Not provided') }}</p>
                 <p class="mb-1"><strong>{{ _('Status:') }}</strong> <span class="badge bg-{{ 'primary' if patient.status == 'Active' else 'secondary' }}">{{ _(patient.status) }}</span></p>
+                <p class="mb-1">
+                    <strong>{{ _('Dry Needling:') }}</strong> 
+                    <span class="badge d-inline-flex align-items-center gap-1" style="font-size: 0.85rem; padding: 0.4rem 0.6rem;">
+                        <span style="font-size: 1.1rem;">{{ patient.get_dry_needling_symbol() }}</span>
+                        <span class="{{ patient.get_dry_needling_color() }}">{{ patient.get_dry_needling_text() }}</span>
+                    </span>
+                </p>
             </div>
         </div>
         <div class="col-md-4 text-md-end">

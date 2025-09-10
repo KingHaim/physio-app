@@ -133,6 +133,33 @@
                                 </div>
                             </div>
 
+                            <!-- Treatment Preferences Section -->
+                            <div class="row g-3 mt-2">
+                                <div class="col-12">
+                                    <h6 class="text-muted mb-3">{{ _('Treatment Preferences') }}</h6>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="dry_needling_preference" class="form-label">
+                                        <i class="bi bi-bullseye"></i> {{ _('Dry Needling Preference') }}
+                                    </label>
+                                    <select class="form-select" id="dry_needling_preference" name="dry_needling_preference">
+                                        <option value="unknown" selected>
+                                            ❓ {{ _('Unknown / Not asked') }}
+                                        </option>
+                                        <option value="never">
+                                            🚫 {{ _('Never wants dry needling') }}
+                                        </option>
+                                        <option value="neutral">
+                                            ⚪ {{ _('Neutral / Doesn\'t mind') }}
+                                        </option>
+                                        <option value="likes">
+                                            ✅ {{ _('Likes / Prefers dry needling') }}
+                                        </option>
+                                    </select>
+                                    <div class="form-text">{{ _('This helps you quickly identify patient preferences for dry needling treatment') }}</div>
+                                </div>
+                            </div>
+
                             <div class="row g-3 mt-2">
                                 <div class="col-md-6">
                                     <label for="anamnesis_gender" class="form-label">{{ _('Gender') }}</label>
