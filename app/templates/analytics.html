@@ -773,76 +773,28 @@ function renderReferralTree(nodes, edges) {
     // Clear loading content
     container.innerHTML = '';
     
-    // Create a simple network visualization using CSS and HTML
-    // For a more advanced visualization, you could use D3.js or vis.js
-    let html = '<div style="position: relative; height: 100%; overflow: auto; padding: 20px;">';
+    // Build a proper tree structure
+    const tree = buildTreeStructure(nodes, edges);
     
-    // Group nodes by type and level
-    const patientNodes = nodes.filter(n => n.type === 'patient');
-    const externalNodes = nodes.filter(n => n.type === 'external');
+    // Create SVG for better tree visualization
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.style.width = '100%';
+    svg.style.height = '100%';
+    svg.style.background = '#f8f9fa';
     
-    // Create a simple hierarchical layout
-    html += '<div style="display: flex; flex-direction: column; gap: 20px;">';
+    // Calculate tree layout
+    const layout = calculateTreeLayout(tree);
     
-    // External referrers at the top
-    if (externalNodes.length > 0) {
-        html += '<div style="text-align: center;">';
-        html += '<h6 class="text-muted mb-2">External Referrers</h6>';
-        html += '<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">';
-        externalNodes.forEach(node => {
-            html += `<div class="referral-node external-node" style="background: #6c757d; color: white; padding: 8px 12px; border-radius: 8px; font-size: 12px;">
-                        ${node.name}
-                     </div>`;
-        });
-        html += '</div></div>';
-    }
+    // Draw edges first (so they appear behind nodes)
+    drawEdges(svg, layout.edges);
     
-    // Patient nodes
-    if (patientNodes.length > 0) {
-        html += '<div style="text-align: center;">';
-        html += '<h6 class="text-muted mb-2">Patients</h6>';
-        html += '<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">';
-        
-        // Find root patients (not referred by anyone)
-        const rootPatients = patientNodes.filter(n => !edges.some(e => e.to === n.id));
-        const referredPatients = patientNodes.filter(n => edges.some(e => e.to === n.id));
-        
-        // Show root patients first
-        rootPatients.forEach(node => {
-            const referralsGiven = edges.filter(e => e.from === node.id).length;
-            const nodeColor = referralsGiven > 0 ? '#28a745' : '#007bff';
-            html += `<div class="referral-node patient-node" style="background: ${nodeColor}; color: white; padding: 8px 12px; border-radius: 8px; font-size: 12px; position: relative;">
-                        ${node.name}
-                        ${referralsGiven > 0 ? `<span style="position: absolute; top: -8px; right: -8px; background: #ffc107; color: #000; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: flex; align-items: center; justify-content: center;">${referralsGiven}</span>` : ''}
-                     </div>`;
-        });
-        
-        // Show referred patients
-        referredPatients.forEach(node => {
-            const referralsGiven = edges.filter(e => e.from === node.id).length;
-            const nodeColor = referralsGiven > 0 ? '#28a745' : '#17a2b8';
-            html += `<div class="referral-node patient-node" style="background: ${nodeColor}; color: white; padding: 8px 12px; border-radius: 8px; font-size: 12px; position: relative;">
-                        ${node.name}
-                        ${referralsGiven > 0 ? `<span style="position: absolute; top: -8px; right: -8px; background: #ffc107; color: #000; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: flex; align-items: center; justify-content: center;">${referralsGiven}</span>` : ''}
-                     </div>`;
-        });
-        
-        html += '</div></div>';
-    }
-    
-    html += '</div>';
+    // Draw nodes
+    drawNodes(svg, layout.nodes);
     
     // Add legend
-    html += `<div style="position: absolute; bottom: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 4px; font-size: 12px;">
-                <div><span style="display: inline-block; width: 12px; height: 12px; background: #6c757d; margin-right: 5px;"></span>External Referrer</div>
-                <div><span style="display: inline-block; width: 12px; height: 12px; background: #007bff; margin-right: 5px;"></span>Patient</div>
-                <div><span style="display: inline-block; width: 12px; height: 12px; background: #28a745; margin-right: 5px;"></span>Active Referrer</div>
-                <div><span style="display: inline-block; width: 12px; height: 12px; background: #17a2b8; margin-right: 5px;"></span>Referred Patient</div>
-             </div>`;
+    addTreeLegend(container);
     
-    html += '</div>';
-    
-    container.innerHTML = html;
+    container.appendChild(svg);
 }
 
 function showReferralError(message) {
@@ -853,6 +805,235 @@ function showReferralError(message) {
                                   <p class="mt-2">${message}</p>
                               </div>
                            </div>`;
+}
+
+function buildTreeStructure(nodes, edges) {
+    // Create a map of nodes by ID
+    const nodeMap = new Map();
+    nodes.forEach(node => nodeMap.set(node.id, {...node, children: []}));
+    
+    // Find root nodes (nodes with no incoming edges)
+    const rootNodes = [];
+    const hasParent = new Set();
+    
+    edges.forEach(edge => {
+        hasParent.add(edge.to);
+        const parent = nodeMap.get(edge.from);
+        const child = nodeMap.get(edge.to);
+        if (parent && child) {
+            parent.children.push(child);
+        }
+    });
+    
+    // Collect all root nodes
+    nodes.forEach(node => {
+        if (!hasParent.has(node.id)) {
+            rootNodes.push(nodeMap.get(node.id));
+        }
+    });
+    
+    return { roots: rootNodes, nodeMap };
+}
+
+function calculateTreeLayout(tree) {
+    const nodeWidth = 120;
+    const nodeHeight = 40;
+    const levelHeight = 80;
+    const nodeSpacing = 20;
+    
+    const layoutNodes = [];
+    const layoutEdges = [];
+    
+    // Calculate positions for each root tree
+    let currentX = 50;
+    
+    tree.roots.forEach(root => {
+        const treeWidth = calculateSubtreeWidth(root, nodeWidth, nodeSpacing);
+        const startX = currentX + treeWidth / 2;
+        
+        layoutSubtree(root, startX, 30, 0, nodeWidth, nodeHeight, levelHeight, nodeSpacing, layoutNodes, layoutEdges);
+        
+        currentX += treeWidth + 100; // Space between separate trees
+    });
+    
+    return { nodes: layoutNodes, edges: layoutEdges };
+}
+
+function calculateSubtreeWidth(node, nodeWidth, nodeSpacing) {
+    if (node.children.length === 0) {
+        return nodeWidth;
+    }
+    
+    let totalWidth = 0;
+    node.children.forEach(child => {
+        totalWidth += calculateSubtreeWidth(child, nodeWidth, nodeSpacing);
+    });
+    
+    return Math.max(nodeWidth, totalWidth + (node.children.length - 1) * nodeSpacing);
+}
+
+function layoutSubtree(node, x, y, level, nodeWidth, nodeHeight, levelHeight, nodeSpacing, layoutNodes, layoutEdges) {
+    // Add current node to layout
+    const layoutNode = {
+        ...node,
+        x: x - nodeWidth / 2,
+        y: y,
+        width: nodeWidth,
+        height: nodeHeight,
+        centerX: x,
+        centerY: y + nodeHeight / 2
+    };
+    layoutNodes.push(layoutNode);
+    
+    // Layout children
+    if (node.children.length > 0) {
+        const totalChildWidth = node.children.reduce((sum, child) => 
+            sum + calculateSubtreeWidth(child, nodeWidth, nodeSpacing), 0
+        );
+        const totalSpacing = (node.children.length - 1) * nodeSpacing;
+        const childrenStartX = x - (totalChildWidth + totalSpacing) / 2;
+        
+        let currentChildX = childrenStartX;
+        
+        node.children.forEach(child => {
+            const childWidth = calculateSubtreeWidth(child, nodeWidth, nodeSpacing);
+            const childCenterX = currentChildX + childWidth / 2;
+            const childY = y + levelHeight;
+            
+            // Add edge from parent to child
+            layoutEdges.push({
+                x1: x,
+                y1: y + nodeHeight,
+                x2: childCenterX,
+                y2: childY,
+                from: node.id,
+                to: child.id
+            });
+            
+            // Recursively layout child subtree
+            layoutSubtree(child, childCenterX, childY, level + 1, nodeWidth, nodeHeight, levelHeight, nodeSpacing, layoutNodes, layoutEdges);
+            
+            currentChildX += childWidth + nodeSpacing;
+        });
+    }
+}
+
+function drawEdges(svg, edges) {
+    edges.forEach(edge => {
+        // Create curved line for better aesthetics
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const midY = (edge.y1 + edge.y2) / 2;
+        const pathData = `M ${edge.x1} ${edge.y1} Q ${edge.x1} ${midY} ${(edge.x1 + edge.x2) / 2} ${midY} Q ${edge.x2} ${midY} ${edge.x2} ${edge.y2}`;
+        
+        line.setAttribute('d', pathData);
+        line.setAttribute('stroke', '#6c757d');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('fill', 'none');
+        line.setAttribute('opacity', '0.7');
+        
+        svg.appendChild(line);
+    });
+}
+
+function drawNodes(svg, nodes) {
+    nodes.forEach(node => {
+        // Create group for node
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        
+        // Node background
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', node.x);
+        rect.setAttribute('y', node.y);
+        rect.setAttribute('width', node.width);
+        rect.setAttribute('height', node.height);
+        rect.setAttribute('rx', '8');
+        
+        // Color based on node type and referral status
+        let fillColor = '#007bff'; // Default patient color
+        if (node.type === 'external') {
+            fillColor = '#6c757d';
+        } else if (node.children && node.children.length > 0) {
+            fillColor = '#28a745'; // Active referrer
+        }
+        
+        rect.setAttribute('fill', fillColor);
+        rect.setAttribute('stroke', '#fff');
+        rect.setAttribute('stroke-width', '2');
+        
+        // Node text
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', node.centerX);
+        text.setAttribute('y', node.centerY + 5);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('fill', 'white');
+        text.setAttribute('font-size', '12px');
+        text.setAttribute('font-weight', 'bold');
+        
+        // Truncate long names
+        let displayName = node.name;
+        if (displayName.length > 15) {
+            displayName = displayName.substring(0, 12) + '...';
+        }
+        text.textContent = displayName;
+        
+        // Add referral count badge if applicable
+        if (node.children && node.children.length > 0) {
+            const badge = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            badge.setAttribute('cx', node.x + node.width - 8);
+            badge.setAttribute('cy', node.y + 8);
+            badge.setAttribute('r', '8');
+            badge.setAttribute('fill', '#ffc107');
+            badge.setAttribute('stroke', '#fff');
+            badge.setAttribute('stroke-width', '1');
+            
+            const badgeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            badgeText.setAttribute('x', node.x + node.width - 8);
+            badgeText.setAttribute('y', node.y + 12);
+            badgeText.setAttribute('text-anchor', 'middle');
+            badgeText.setAttribute('fill', '#000');
+            badgeText.setAttribute('font-size', '10px');
+            badgeText.setAttribute('font-weight', 'bold');
+            badgeText.textContent = node.children.length;
+            
+            group.appendChild(badge);
+            group.appendChild(badgeText);
+        }
+        
+        group.appendChild(rect);
+        group.appendChild(text);
+        
+        // Add tooltip with full name and details
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = `${node.name}\nType: ${node.type}\nReferrals: ${node.children ? node.children.length : 0}`;
+        group.appendChild(title);
+        
+        svg.appendChild(group);
+    });
+}
+
+function addTreeLegend(container) {
+    const legend = document.createElement('div');
+    legend.style.position = 'absolute';
+    legend.style.bottom = '10px';
+    legend.style.right = '10px';
+    legend.style.background = 'rgba(255,255,255,0.95)';
+    legend.style.padding = '10px';
+    legend.style.borderRadius = '4px';
+    legend.style.fontSize = '11px';
+    legend.style.border = '1px solid #dee2e6';
+    legend.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+    
+    legend.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 5px;">Legend</div>
+        <div style="margin-bottom: 3px;"><span style="display: inline-block; width: 12px; height: 12px; background: #6c757d; margin-right: 5px; border-radius: 2px;"></span>External Referrer</div>
+        <div style="margin-bottom: 3px;"><span style="display: inline-block; width: 12px; height: 12px; background: #007bff; margin-right: 5px; border-radius: 2px;"></span>Patient</div>
+        <div style="margin-bottom: 3px;"><span style="display: inline-block; width: 12px; height: 12px; background: #28a745; margin-right: 5px; border-radius: 2px;"></span>Active Referrer</div>
+        <div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #dee2e6; font-size: 10px; color: #6c757d;">
+            Numbers show referral count
+        </div>
+    `;
+    
+    container.appendChild(legend);
 }
 
 // Load inactive patients count
