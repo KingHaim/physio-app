@@ -251,6 +251,10 @@ def create_app(config_class=None):
     # Register Google Calendar blueprint
     from app.routes.google_calendar import google_calendar_bp
     app.register_blueprint(google_calendar_bp)
+    
+    # Register ICD-10 API blueprint
+    from app.routes.icd10_api import icd10_api
+    app.register_blueprint(icd10_api)
 
     # Create all tables
     # with app.app_context():

@@ -434,19 +434,12 @@
                 </div>
             </div>
 
-            <!-- Diagnosis and Treatment Plan -->
+            <!-- ICD-10 Diagnoses Section -->
             <div class="row mb-4">
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="bi bi-clipboard-pulse"></i> {{ _('Diagnosis') }}</h5>
-                        </div>
-                        <div class="card-body">
-                            <p>{{ patient.diagnosis }}</p>
-                        </div>
-                    </div>
+                <div class="col-md-8">
+                    {% include 'components/icd10_diagnosis_display.html' %}
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="card h-100">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="bi bi-journal-medical"></i> {{ _('Treatment Plan') }}</h5>
@@ -2571,5 +2564,8 @@ if (!document.getElementById('typing-dots-css')) {
         </div>
     </div>
 </div>
+
+<!-- Include ICD-10 Diagnosis Modal -->
+{% include 'components/icd10_diagnosis_modal.html' %}
 
 {% endblock %}

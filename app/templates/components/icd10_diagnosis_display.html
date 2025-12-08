@@ -1,0 +1,361 @@
+<!-- ICD-10 Diagnosis Display Component -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-clipboard-pulse text-primary"></i> 
+            ICD-10 Diagnoses
+        </h5>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-sm btn-outline-primary" 
+                    data-bs-toggle="modal" data-bs-target="#add-diagnosis-modal">
+                <i class="bi bi-plus-circle"></i> Add Diagnosis
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-info" 
+                    onclick="loadDiagnosisAnalytics()" 
+                    data-bs-toggle="modal" data-bs-target="#diagnosis-analytics-modal">
+                <i class="bi bi-graph-up"></i> Analytics
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Legacy Diagnosis Display (for backward compatibility) -->
+        {% if patient.diagnosis and not patient.active_diagnoses %}
+        <div class="alert alert-warning">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="alert-heading">
+                        <i class="bi bi-exclamation-triangle"></i> Legacy Diagnosis
+                    </h6>
+                    <p class="mb-2">{{ patient.diagnosis }}</p>
+                    <small class="text-muted">
+                        This diagnosis uses the old text format. Consider converting to ICD-10 coding for better tracking and analytics.
+                    </small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" 
+                        onclick="convertLegacyDiagnosis('{{ patient.diagnosis }}')">
+                    <i class="bi bi-arrow-up-circle"></i> Convert to ICD-10
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ICD-10 Diagnoses List -->
+        <div id="patient-diagnoses-list">
+            <!-- Diagnoses will be loaded here by JavaScript -->
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading diagnoses...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading ICD-10 diagnoses...</p>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="row mt-4" id="diagnosis-quick-stats" style="display: none;">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="h4 text-primary mb-0" id="active-diagnoses-count">0</div>
+                    <small class="text-muted">Active Diagnoses</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="h4 text-success mb-0" id="resolved-diagnoses-count">0</div>
+                    <small class="text-muted">Resolved</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="h4 text-warning mb-0" id="chronic-diagnoses-count">0</div>
+                    <small class="text-muted">Chronic</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="h4 text-info mb-0" id="avg-duration-days">0</div>
+                    <small class="text-muted">Avg Duration (days)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Diagnosis Summary Card -->
+<div class="card mt-3">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="bi bi-clipboard-data"></i> Diagnosis Summary
+        </h6>
+    </div>
+    <div class="card-body">
+        <div id="diagnosis-summary-content">
+            <!-- Summary will be populated by JavaScript -->
+            <div class="text-muted text-center py-2">
+                <small>Diagnosis summary will appear here once diagnoses are loaded</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Treatment Outcome Tracking -->
+{% if patient.treatments %}
+<div class="card mt-3">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="bi bi-activity"></i> Treatment Outcomes by Diagnosis
+        </h6>
+    </div>
+    <div class="card-body">
+        <div id="treatment-outcomes-chart">
+            <!-- Outcomes chart will be populated by JavaScript -->
+            <div class="text-muted text-center py-3">
+                <i class="bi bi-graph-up" style="font-size: 2rem;"></i>
+                <p class="mt-2">Treatment outcome analytics will be displayed here</p>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadTreatmentOutcomes()">
+                    <i class="bi bi-refresh"></i> Load Outcomes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// Additional JavaScript functions for this component
+
+function loadDiagnosisAnalytics() {
+    const analyticsContent = document.getElementById('diagnosis-analytics-content');
+    
+    // Show loading state
+    analyticsContent.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading analytics...</p>
+        </div>
+    `;
+    
+    // Load analytics data
+    fetch('/api/analytics/diagnoses')
+        .then(response => response.json())
+        .then(data => {
+            displayDiagnosisAnalytics(data);
+        })
+        .catch(error => {
+            console.error('Error loading analytics:', error);
+            analyticsContent.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Error loading analytics. Please try again.
+                </div>
+            `;
+        });
+}
+
+function displayDiagnosisAnalytics(data) {
+    const analyticsContent = document.getElementById('diagnosis-analytics-content');
+    
+    let html = `
+        <!-- Summary Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <div class="h3 mb-0">${data.total_active_diagnoses || 0}</div>
+                        <small>Total Active Diagnoses</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <div class="h3 mb-0">${data.recent_diagnoses_count || 0}</div>
+                        <small>New (Last 30 days)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <div class="h3 mb-0">${data.category_stats?.length || 0}</div>
+                        <small>Categories</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <div class="h3 mb-0">${data.common_diagnoses?.length || 0}</div>
+                        <small>Unique Conditions</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Most Common Diagnoses -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Most Common Diagnoses</h6>
+                    </div>
+                    <div class="card-body">
+    `;
+    
+    if (data.common_diagnoses && data.common_diagnoses.length > 0) {
+        html += '<div class="list-group list-group-flush">';
+        data.common_diagnoses.forEach((diagnosis, index) => {
+            const percentage = data.total_active_diagnoses > 0 ? 
+                Math.round((diagnosis.count / data.total_active_diagnoses) * 100) : 0;
+            
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-primary me-2">${diagnosis.code}</span>
+                        <strong>${diagnosis.description}</strong>
+                        <br><small class="text-muted">${diagnosis.category}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-secondary">${diagnosis.count}</span>
+                        <br><small class="text-muted">${percentage}%</small>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    } else {
+        html += '<p class="text-muted">No diagnosis data available</p>';
+    }
+    
+    html += `
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Category Distribution -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Diagnoses by Category</h6>
+                    </div>
+                    <div class="card-body">
+    `;
+    
+    if (data.category_stats && data.category_stats.length > 0) {
+        html += '<div class="list-group list-group-flush">';
+        data.category_stats.forEach(category => {
+            const percentage = data.total_active_diagnoses > 0 ? 
+                Math.round((category.count / data.total_active_diagnoses) * 100) : 0;
+            
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <strong>${category.category}</strong>
+                    <div class="text-end">
+                        <span class="badge bg-info">${category.count}</span>
+                        <br><small class="text-muted">${percentage}%</small>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    } else {
+        html += '<p class="text-muted">No category data available</p>';
+    }
+    
+    html += `
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    analyticsContent.innerHTML = html;
+}
+
+function convertLegacyDiagnosis(legacyDiagnosis) {
+    // Pre-populate search with legacy diagnosis text
+    const searchInput = document.getElementById('icd10-search');
+    if (searchInput) {
+        searchInput.value = legacyDiagnosis;
+        // Trigger search
+        icd10Manager.searchCodes(legacyDiagnosis);
+    }
+    
+    // Show the add diagnosis modal
+    const modal = new bootstrap.Modal(document.getElementById('add-diagnosis-modal'));
+    modal.show();
+    
+    // Add note about conversion
+    const clinicalNotesField = document.getElementById('clinical-notes');
+    if (clinicalNotesField) {
+        clinicalNotesField.value = `Converted from legacy diagnosis: "${legacyDiagnosis}"`;
+    }
+}
+
+function loadTreatmentOutcomes() {
+    // This would load treatment outcome data and display charts
+    // Implementation depends on your charting library (Chart.js, D3, etc.)
+    console.log('Loading treatment outcomes...');
+}
+
+// Update diagnosis summary when diagnoses are loaded
+function updateDiagnosisSummary(diagnoses) {
+    const summaryContent = document.getElementById('diagnosis-summary-content');
+    const quickStats = document.getElementById('diagnosis-quick-stats');
+    
+    if (!diagnoses || diagnoses.length === 0) {
+        summaryContent.innerHTML = '<p class="text-muted">No ICD-10 diagnoses recorded</p>';
+        return;
+    }
+    
+    // Calculate stats
+    const active = diagnoses.filter(d => d.status === 'active');
+    const resolved = diagnoses.filter(d => d.status === 'resolved');
+    const chronic = diagnoses.filter(d => d.status === 'chronic');
+    
+    const durations = diagnoses.filter(d => d.duration_days).map(d => d.duration_days);
+    const avgDuration = durations.length > 0 ? 
+        Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : 0;
+    
+    // Update quick stats
+    document.getElementById('active-diagnoses-count').textContent = active.length;
+    document.getElementById('resolved-diagnoses-count').textContent = resolved.length;
+    document.getElementById('chronic-diagnoses-count').textContent = chronic.length;
+    document.getElementById('avg-duration-days').textContent = avgDuration;
+    quickStats.style.display = 'block';
+    
+    // Update summary
+    const primary = diagnoses.filter(d => d.diagnosis_type === 'primary' && d.status === 'active');
+    const secondary = diagnoses.filter(d => d.diagnosis_type === 'secondary' && d.status === 'active');
+    
+    let summaryHtml = '';
+    
+    if (primary.length > 0) {
+        summaryHtml += '<div class="mb-2"><strong>Primary:</strong> ';
+        summaryHtml += primary.map(d => `<span class="badge bg-primary me-1">${d.icd10_code}</span> ${d.description}`).join(', ');
+        summaryHtml += '</div>';
+    }
+    
+    if (secondary.length > 0) {
+        summaryHtml += '<div class="mb-2"><strong>Secondary:</strong> ';
+        summaryHtml += secondary.map(d => `<span class="badge bg-info me-1">${d.icd10_code}</span> ${d.description}`).join(', ');
+        summaryHtml += '</div>';
+    }
+    
+    if (resolved.length > 0) {
+        summaryHtml += `<div class="text-muted"><small><strong>Recently Resolved:</strong> ${resolved.length} condition(s)</small></div>`;
+    }
+    
+    summaryContent.innerHTML = summaryHtml || '<p class="text-muted">No active diagnoses</p>';
+}
+
+// Hook into the main diagnosis manager to update summary
+if (typeof icd10Manager !== 'undefined') {
+    const originalDisplayPatientDiagnoses = icd10Manager.displayPatientDiagnoses;
+    icd10Manager.displayPatientDiagnoses = function(diagnoses) {
+        originalDisplayPatientDiagnoses.call(this, diagnoses);
+        updateDiagnosisSummary(diagnoses);
+    };
+}
+</script>

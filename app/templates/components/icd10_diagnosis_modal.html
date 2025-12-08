@@ -1,0 +1,263 @@
+<!-- ICD-10 Diagnosis Management Modal -->
+<div class="modal fade" id="add-diagnosis-modal" tabindex="-1" aria-labelledby="add-diagnosis-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="add-diagnosis-modal-label">
+                    <i class="bi bi-clipboard-plus"></i> Add ICD-10 Diagnosis
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Navigation Tabs -->
+                <ul class="nav nav-tabs mb-4" id="diagnosis-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="search-tab" data-bs-toggle="tab" data-bs-target="#search-panel" type="button" role="tab">
+                            <i class="bi bi-search"></i> Search ICD-10 Codes
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates-panel" type="button" role="tab">
+                            <i class="bi bi-clipboard-check"></i> Quick Templates
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="diagnosis-tab-content">
+                    <!-- Search Panel -->
+                    <div class="tab-pane fade show active" id="search-panel" role="tabpanel">
+                        <div class="row">
+                            <!-- Search Interface -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-search"></i> Search ICD-10 Codes
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Search Input -->
+                                        <div class="mb-3">
+                                            <label for="icd10-search" class="form-label">Search by code or description</label>
+                                            <input type="text" class="form-control" id="icd10-search" 
+                                                   placeholder="e.g., M54.5, back pain, shoulder..." 
+                                                   autocomplete="off">
+                                            <div class="form-text">Type at least 2 characters to search</div>
+                                        </div>
+
+                                        <!-- Category Filter -->
+                                        <div class="mb-3">
+                                            <label for="icd10-category-filter" class="form-label">Filter by category</label>
+                                            <select class="form-select" id="icd10-category-filter">
+                                                <option value="">All categories</option>
+                                                <option value="Musculoskeletal">Musculoskeletal</option>
+                                                <option value="Injury">Injury/Trauma</option>
+                                                <option value="Neurological">Neurological</option>
+                                                <option value="Symptoms">Symptoms & Signs</option>
+                                                <option value="Post-surgical">Post-surgical</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Search Results -->
+                                        <div id="icd10-search-results" class="border rounded p-2" style="max-height: 400px; overflow-y: auto;">
+                                            <div class="text-muted text-center py-3">
+                                                <i class="bi bi-search"></i>
+                                                <p class="mb-0">Start typing to search for ICD-10 codes</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Diagnosis Form -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-clipboard-plus"></i> Diagnosis Details
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="add-diagnosis-form">
+                                            <!-- Selected Code Display -->
+                                            <div id="selected-icd10-display" class="mb-3">
+                                                <!-- Selected code will be displayed here -->
+                                            </div>
+
+                                            <!-- Hidden field for selected code ID -->
+                                            <input type="hidden" id="selected-icd10-code-id" name="icd10_code_id">
+
+                                            <!-- Diagnosis Type -->
+                                            <div class="mb-3">
+                                                <label for="diagnosis-type" class="form-label">Diagnosis Type</label>
+                                                <select class="form-select" id="diagnosis-type" name="diagnosis_type" required>
+                                                    <option value="primary">Primary Diagnosis</option>
+                                                    <option value="secondary">Secondary Diagnosis</option>
+                                                    <option value="differential">Differential Diagnosis</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- Severity -->
+                                            <div class="mb-3">
+                                                <label for="diagnosis-severity" class="form-label">Severity</label>
+                                                <select class="form-select" id="diagnosis-severity" name="severity">
+                                                    <option value="mild">Mild</option>
+                                                    <option value="moderate" selected>Moderate</option>
+                                                    <option value="severe">Severe</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- Confidence Level -->
+                                            <div class="mb-3">
+                                                <label for="confidence-level" class="form-label">Confidence Level</label>
+                                                <select class="form-select" id="confidence-level" name="confidence_level">
+                                                    <option value="confirmed" selected>Confirmed</option>
+                                                    <option value="probable">Probable</option>
+                                                    <option value="suspected">Suspected</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- Onset Date -->
+                                            <div class="mb-3">
+                                                <label for="onset-date" class="form-label">Onset Date</label>
+                                                <input type="date" class="form-control" id="onset-date" name="onset_date">
+                                                <div class="form-text">When did the condition start?</div>
+                                            </div>
+
+                                            <!-- Diagnosis Date -->
+                                            <div class="mb-3">
+                                                <label for="diagnosis-date" class="form-label">Diagnosis Date</label>
+                                                <input type="date" class="form-control" id="diagnosis-date" name="diagnosis_date" 
+                                                       value="{{ datetime.now().strftime('%Y-%m-%d') }}">
+                                            </div>
+
+                                            <!-- Clinical Notes -->
+                                            <div class="mb-3">
+                                                <label for="clinical-notes" class="form-label">Clinical Notes</label>
+                                                <textarea class="form-control" id="clinical-notes" name="clinical_notes" 
+                                                          rows="3" placeholder="Additional clinical observations, context, or notes..."></textarea>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Templates Panel -->
+                    <div class="tab-pane fade" id="templates-panel" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-clipboard-check"></i> Common Diagnosis Templates
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="diagnosis-template-select" class="form-label">Select a template</label>
+                                            <select class="form-select" id="diagnosis-template-select">
+                                                <option value="">Loading templates...</option>
+                                            </select>
+                                            <div class="form-text">
+                                                Templates include pre-configured diagnosis details for common conditions
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div id="template-preview">
+                                    <!-- Template preview will be displayed here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Template Application Form -->
+                        <div class="row mt-3" id="template-form-section" style="display: none;">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-gear"></i> Template Configuration
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="template-onset-date" class="form-label">Onset Date</label>
+                                                    <input type="date" class="form-control" id="template-onset-date">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="template-severity" class="form-label">Severity Override</label>
+                                                    <select class="form-select" id="template-severity">
+                                                        <option value="">Use template default</option>
+                                                        <option value="mild">Mild</option>
+                                                        <option value="moderate">Moderate</option>
+                                                        <option value="severe">Severe</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="template-clinical-notes" class="form-label">Additional Clinical Notes</label>
+                                            <textarea class="form-control" id="template-clinical-notes" rows="3" 
+                                                      placeholder="Any additional notes specific to this patient..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="add-diagnosis-btn" disabled>
+                    <i class="bi bi-plus-circle"></i> Add Diagnosis
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Diagnosis Analytics Modal -->
+<div class="modal fade" id="diagnosis-analytics-modal" tabindex="-1" aria-labelledby="diagnosis-analytics-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="diagnosis-analytics-modal-label">
+                    <i class="bi bi-graph-up"></i> Diagnosis Analytics
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="diagnosis-analytics-content">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading analytics...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include the JavaScript -->
+<script src="{{ url_for('static', filename='js/icd10_diagnosis.js') }}"></script>
+
+<!-- Initialize with patient ID if available -->
+{% if patient %}
+<script>
+document.body.dataset.patientId = '{{ patient.id }}';
+</script>
+{% endif %}

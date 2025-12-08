@@ -38,6 +38,10 @@ class Patient(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     treatments = db.relationship('Treatment', backref='patient', lazy=True)
     
+    # ICD-10 Diagnosis relationships
+    diagnoses = db.relationship('PatientDiagnosis', backref='patient', lazy=True, 
+                               cascade='all, delete-orphan')
+    
     # New fields for extended contact and address information (non-sensitive)
     address_line1 = db.Column(db.String(100))
     address_line2 = db.Column(db.String(100))
@@ -278,6 +282,72 @@ class Patient(db.Model):
             'unknown': 'text-muted'      # Muted for unknown
         }
         return colors.get(self.dry_needling_preference, 'text-muted')
+    
+    # ICD-10 Diagnosis Helper Methods
+    @property
+    def primary_diagnosis(self):
+        """Get the primary ICD-10 diagnosis"""
+        return self.diagnoses.filter_by(diagnosis_type='primary', status='active').first()
+    
+    @property
+    def active_diagnoses(self):
+        """Get all active diagnoses"""
+        return self.diagnoses.filter_by(status='active').all()
+    
+    @property
+    def all_diagnoses_summary(self):
+        """Get a summary of all diagnoses for display"""
+        diagnoses = self.active_diagnoses
+        if not diagnoses:
+            return self.diagnosis  # Fallback to legacy diagnosis field
+        
+        primary = [d for d in diagnoses if d.diagnosis_type == 'primary']
+        secondary = [d for d in diagnoses if d.diagnosis_type == 'secondary']
+        
+        summary_parts = []
+        if primary:
+            summary_parts.extend([f"{d.icd10_code.code}: {d.icd10_code.short_description}" for d in primary])
+        if secondary:
+            summary_parts.extend([f"({d.icd10_code.code}: {d.icd10_code.short_description})" for d in secondary])
+        
+        return "; ".join(summary_parts) if summary_parts else self.diagnosis
+    
+    def add_diagnosis(self, icd10_code_id, diagnosis_type='primary', **kwargs):
+        """Add a new ICD-10 diagnosis to the patient"""
+        from app.models_icd10 import PatientDiagnosis  # Import here to avoid circular imports
+        
+        # If adding a primary diagnosis, mark existing primary as secondary
+        if diagnosis_type == 'primary':
+            existing_primary = self.primary_diagnosis
+            if existing_primary:
+                existing_primary.diagnosis_type = 'secondary'
+        
+        diagnosis = PatientDiagnosis(
+            patient_id=self.id,
+            icd10_code_id=icd10_code_id,
+            diagnosis_type=diagnosis_type,
+            **kwargs
+        )
+        
+        db.session.add(diagnosis)
+        return diagnosis
+    
+    def get_diagnosis_history(self):
+        """Get complete diagnosis history including resolved diagnoses"""
+        return self.diagnoses.order_by(PatientDiagnosis.diagnosis_date.desc()).all()
+    
+    def get_conditions_by_category(self):
+        """Group active diagnoses by ICD-10 category"""
+        diagnoses = self.active_diagnoses
+        categories = {}
+        
+        for diagnosis in diagnoses:
+            category = diagnosis.icd10_code.category
+            if category not in categories:
+                categories[category] = []
+            categories[category].append(diagnosis)
+        
+        return categories
 
 
 class Location(db.Model):
