@@ -643,7 +643,24 @@
             return value;
         }
         
-        const anamnesisData = {
+        // Get existing data to preserve any fields not in the form
+        let existingData = {};
+        const anamnesisField = document.getElementById('edit_compiled_anamnesis');
+        if (anamnesisField && anamnesisField.value) {
+            try {
+                existingData = JSON.parse(anamnesisField.value);
+                if (typeof existingData === 'string') {
+                    existingData = JSON.parse(existingData);
+                }
+                console.log('DEBUG: Preserving existing anamnesis data:', existingData);
+            } catch (e) {
+                console.log('DEBUG: Could not parse existing data, starting fresh');
+                existingData = {};
+            }
+        }
+        
+        // Create new data structure with form values
+        const formData = {
             personal_data: {
                 age: safeGetValue('edit_anamnesis_age'),
                 gender: safeGetValue('edit_anamnesis_gender'),
@@ -684,8 +701,25 @@
             },
             metadata: {
                 form_version: '2.0_edit',
-                updated_date: new Date().toISOString()
+                updated_date: new Date().toISOString(),
+                // Preserve original creation date if it exists
+                created_date: existingData.metadata?.created_date || new Date().toISOString()
             }
+        };
+        
+        // Merge with existing data to preserve any fields not captured in form
+        const anamnesisData = {
+            ...existingData,
+            ...formData,
+            // Ensure nested objects are properly merged
+            personal_data: { ...existingData.personal_data, ...formData.personal_data },
+            chief_complaint: { ...existingData.chief_complaint, ...formData.chief_complaint },
+            medical_history: { ...existingData.medical_history, ...formData.medical_history },
+            family_history: { ...existingData.family_history, ...formData.family_history },
+            lifestyle: { ...existingData.lifestyle, ...formData.lifestyle },
+            pain_details: { ...existingData.pain_details, ...formData.pain_details },
+            functional_assessment: { ...existingData.functional_assessment, ...formData.functional_assessment },
+            metadata: { ...existingData.metadata, ...formData.metadata }
         };
 
         // Convert to JSON and update the hidden field
@@ -927,64 +961,150 @@
     function populateEditFormFromAnamnesis(data) {
         console.log('Populating edit form with data:', data);
         
-        // Essential Information - access nested structure correctly
-        if (data.chief_complaint && data.chief_complaint.main_complaint) {
-            document.getElementById('edit_anamnesis_chief_complaint').value = data.chief_complaint.main_complaint;
-        }
-        if (data.pain_details && data.pain_details.pain_scale !== undefined) {
-            document.getElementById('edit_anamnesis_pain_scale').value = data.pain_details.pain_scale;
-            updateEditPainDisplay(data.pain_details.pain_scale);
-        }
-        if (data.chief_complaint && data.chief_complaint.onset) {
-            document.getElementById('edit_anamnesis_onset').value = data.chief_complaint.onset;
-        }
-        if (data.chief_complaint && data.chief_complaint.mechanism) {
-            document.getElementById('edit_anamnesis_mechanism').value = data.chief_complaint.mechanism;
+        // Helper function to safely set field value
+        function safeSetValue(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (element && value !== undefined && value !== null && value !== '') {
+                element.value = value;
+                console.log(`DEBUG: Set ${elementId} = "${value}"`);
+                return true;
+            }
+            return false;
         }
         
-        // Personal Information
-        if (data.personal_data) {
-            if (data.personal_data.age) document.getElementById('edit_anamnesis_age').value = data.personal_data.age;
-            if (data.personal_data.gender) document.getElementById('edit_anamnesis_gender').value = data.personal_data.gender;
-            if (data.personal_data.occupation) document.getElementById('edit_anamnesis_occupation').value = data.personal_data.occupation;
-            if (data.personal_data.emergency_contact) document.getElementById('edit_anamnesis_emergency_contact').value = data.personal_data.emergency_contact;
+        // Handle different data structures - both new structured format and legacy formats
+        
+        // Essential Information - try multiple possible data structures
+        safeSetValue('edit_anamnesis_chief_complaint', 
+            data.chief_complaint?.main_complaint || 
+            data.anamnesis_chief_complaint || 
+            data.chief_complaint);
+            
+        safeSetValue('edit_anamnesis_pain_scale', 
+            data.pain_details?.pain_scale || 
+            data.anamnesis_pain_scale || 
+            data.pain_scale);
+            
+        if (data.pain_details?.pain_scale || data.anamnesis_pain_scale || data.pain_scale) {
+            const painScale = data.pain_details?.pain_scale || data.anamnesis_pain_scale || data.pain_scale;
+            updateEditPainDisplay(painScale);
         }
         
-        // Medical History
-        if (data.medical_history) {
-            if (data.medical_history.previous_conditions) document.getElementById('edit_anamnesis_previous_conditions').value = data.medical_history.previous_conditions;
-            if (data.medical_history.surgeries) document.getElementById('edit_anamnesis_surgeries').value = data.medical_history.surgeries;
-            if (data.medical_history.medications) document.getElementById('edit_anamnesis_medications').value = data.medical_history.medications;
-            if (data.medical_history.allergies) document.getElementById('edit_anamnesis_allergies').value = data.medical_history.allergies;
-        }
+        safeSetValue('edit_anamnesis_onset', 
+            data.chief_complaint?.onset || 
+            data.anamnesis_onset || 
+            data.onset);
+            
+        safeSetValue('edit_anamnesis_mechanism', 
+            data.chief_complaint?.mechanism || 
+            data.anamnesis_mechanism || 
+            data.mechanism);
         
-        // Family History
-        if (data.family_history && data.family_history.family_history) {
-            document.getElementById('edit_anamnesis_family_history').value = data.family_history.family_history;
-        }
+        // Personal Information - try multiple structures
+        safeSetValue('edit_anamnesis_age', 
+            data.personal_data?.age || 
+            data.anamnesis_age || 
+            data.age);
+            
+        safeSetValue('edit_anamnesis_gender', 
+            data.personal_data?.gender || 
+            data.anamnesis_gender || 
+            data.gender);
+            
+        safeSetValue('edit_anamnesis_occupation', 
+            data.personal_data?.occupation || 
+            data.anamnesis_occupation || 
+            data.occupation);
+            
+        safeSetValue('edit_anamnesis_emergency_contact', 
+            data.personal_data?.emergency_contact || 
+            data.anamnesis_emergency_contact || 
+            data.emergency_contact);
         
-        // Lifestyle
-        if (data.lifestyle) {
-            if (data.lifestyle.physical_activity) document.getElementById('edit_anamnesis_physical_activity').value = data.lifestyle.physical_activity;
-            if (data.lifestyle.sleep) document.getElementById('edit_anamnesis_sleep').value = data.lifestyle.sleep;
-            if (data.lifestyle.work_posture) document.getElementById('edit_anamnesis_work_posture').value = data.lifestyle.work_posture;
-            if (data.lifestyle.stress_level) document.getElementById('edit_anamnesis_stress_level').value = data.lifestyle.stress_level;
-            if (data.lifestyle.diet_habits) document.getElementById('edit_anamnesis_diet_habits').value = data.lifestyle.diet_habits;
-        }
+        // Medical History - try multiple structures
+        safeSetValue('edit_anamnesis_previous_conditions', 
+            data.medical_history?.previous_conditions || 
+            data.anamnesis_previous_conditions || 
+            data.previous_conditions);
+            
+        safeSetValue('edit_anamnesis_surgeries', 
+            data.medical_history?.surgeries || 
+            data.anamnesis_surgeries || 
+            data.surgeries);
+            
+        safeSetValue('edit_anamnesis_medications', 
+            data.medical_history?.medications || 
+            data.anamnesis_medications || 
+            data.medications);
+            
+        safeSetValue('edit_anamnesis_allergies', 
+            data.medical_history?.allergies || 
+            data.anamnesis_allergies || 
+            data.allergies);
         
-        // Pain Details
-        if (data.pain_details) {
-            if (data.pain_details.pain_type) document.getElementById('edit_anamnesis_pain_type').value = data.pain_details.pain_type;
-            if (data.pain_details.pain_location) document.getElementById('edit_anamnesis_pain_location').value = data.pain_details.pain_location;
-            if (data.pain_details.pain_triggers) document.getElementById('edit_anamnesis_pain_triggers').value = data.pain_details.pain_triggers;
-            if (data.pain_details.pain_relievers) document.getElementById('edit_anamnesis_pain_relievers').value = data.pain_details.pain_relievers;
-        }
+        // Family History - try multiple structures
+        safeSetValue('edit_anamnesis_family_history', 
+            data.family_history?.family_history || 
+            data.anamnesis_family_history || 
+            data.family_history);
         
-        // Functional Assessment
-        if (data.functional_assessment) {
-            if (data.functional_assessment.functional_limitations) document.getElementById('edit_anamnesis_functional_limitations').value = data.functional_assessment.functional_limitations;
-            if (data.functional_assessment.onset_date) document.getElementById('edit_anamnesis_onset_date').value = data.functional_assessment.onset_date;
-        }
+        // Lifestyle - try multiple structures
+        safeSetValue('edit_anamnesis_physical_activity', 
+            data.lifestyle?.physical_activity || 
+            data.anamnesis_physical_activity || 
+            data.physical_activity);
+            
+        safeSetValue('edit_anamnesis_sleep', 
+            data.lifestyle?.sleep || 
+            data.anamnesis_sleep || 
+            data.sleep);
+            
+        safeSetValue('edit_anamnesis_work_posture', 
+            data.lifestyle?.work_posture || 
+            data.anamnesis_work_posture || 
+            data.work_posture);
+            
+        safeSetValue('edit_anamnesis_stress_level', 
+            data.lifestyle?.stress_level || 
+            data.anamnesis_stress_level || 
+            data.stress_level);
+            
+        safeSetValue('edit_anamnesis_diet_habits', 
+            data.lifestyle?.diet_habits || 
+            data.anamnesis_diet_habits || 
+            data.diet_habits);
+        
+        // Pain Details - try multiple structures
+        safeSetValue('edit_anamnesis_pain_type', 
+            data.pain_details?.pain_type || 
+            data.anamnesis_pain_type || 
+            data.pain_type);
+            
+        safeSetValue('edit_anamnesis_pain_location', 
+            data.pain_details?.pain_location || 
+            data.anamnesis_pain_location || 
+            data.pain_location);
+            
+        safeSetValue('edit_anamnesis_pain_triggers', 
+            data.pain_details?.pain_triggers || 
+            data.anamnesis_pain_triggers || 
+            data.pain_triggers);
+            
+        safeSetValue('edit_anamnesis_pain_relievers', 
+            data.pain_details?.pain_relievers || 
+            data.anamnesis_pain_relievers || 
+            data.pain_relievers);
+        
+        // Functional Assessment - try multiple structures
+        safeSetValue('edit_anamnesis_functional_limitations', 
+            data.functional_assessment?.functional_limitations || 
+            data.anamnesis_functional_limitations || 
+            data.functional_limitations);
+            
+        safeSetValue('edit_anamnesis_onset_date', 
+            data.functional_assessment?.onset_date || 
+            data.anamnesis_onset_date || 
+            data.onset_date);
         
         console.log('Edit form populated successfully');
     }
