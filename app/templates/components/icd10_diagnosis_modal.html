@@ -129,7 +129,7 @@
                                             <div class="mb-3">
                                                 <label for="diagnosis-date" class="form-label">Diagnosis Date</label>
                                                 <input type="date" class="form-control" id="diagnosis-date" name="diagnosis_date" 
-                                                       value="{{ datetime.now().strftime('%Y-%m-%d') }}">
+                                                       value="">
                                             </div>
 
                                             <!-- Clinical Notes -->
@@ -261,3 +261,14 @@
 document.body.dataset.patientId = '{{ patient.id }}';
 </script>
 {% endif %}
+
+<script>
+// Set current date as default for diagnosis date
+document.addEventListener('DOMContentLoaded', function() {
+    const diagnosisDateField = document.getElementById('diagnosis-date');
+    if (diagnosisDateField && !diagnosisDateField.value) {
+        const today = new Date().toISOString().split('T')[0];
+        diagnosisDateField.value = today;
+    }
+});
+</script>
