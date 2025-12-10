@@ -39,19 +39,40 @@ class PathologyGuideManager {
             this.modal.show();
 
             // Fetch guide data from API
+            console.log('🔍 Fetching pathology guide:', templateName);
             const response = await fetch(`/api/pathology-guide/${encodeURIComponent(templateName)}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': this.getCSRFToken()
-                }
+                },
+                credentials: 'same-origin'  // Ensure cookies are sent
             });
 
+            console.log('📡 Pathology guide response:', response.status, response.statusText);
+            console.log('📡 Response URL:', response.url);
+
+            // Check if we were redirected to login page
+            if (response.url.includes('/auth/login') || response.status === 302) {
+                throw new Error('Authentication required. Please refresh the page and log in again.');
+            }
+
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Pathology guide API error:', errorText);
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
+            // Check if response is actually JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('❌ Non-JSON response received:', text.substring(0, 200));
+                throw new Error('Server returned invalid response. Please try refreshing the page.');
+            }
+
             const guideData = await response.json();
+            console.log('✅ Pathology guide loaded:', guideData.name);
             this.currentGuide = guideData;
             this.displayGuide(guideData);
 
