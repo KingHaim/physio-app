@@ -414,7 +414,6 @@ class ICD10DiagnosisManager {
             const response = await fetch(`/api/patient/${this.patientId}/diagnoses`);
             const data = await response.json();
             
-            console.log('Loaded diagnoses:', data.diagnoses); // Debug log
             this.displayPatientDiagnoses(data.diagnoses);
         } catch (error) {
             console.error('Error loading patient diagnoses:', error);
@@ -441,7 +440,6 @@ class ICD10DiagnosisManager {
         let html = '';
         
         diagnoses.forEach(diagnosis => {
-            console.log('Processing diagnosis:', diagnosis.description, 'has_pathology_guide:', diagnosis.has_pathology_guide, 'template_name:', diagnosis.template_name); // Debug log
             
             const statusBadge = this.getStatusBadge(diagnosis.status);
             const typeBadge = this.getTypeBadge(diagnosis.diagnosis_type);
@@ -493,7 +491,7 @@ class ICD10DiagnosisManager {
                                 <button class="btn btn-sm btn-outline-info" 
                                         onclick="showPathologyGuide('${diagnosis.template_name || diagnosis.description}')"
                                         title="Clinical Pathway Guide"
-                                        style="display: ${diagnosis.has_pathology_guide !== false ? 'inline-block' : 'none'};">
+                                        style="display: ${diagnosis.has_pathology_guide === true ? 'inline-block' : 'none'};">
                                     <i class="bi bi-info-circle"></i>
                                 </button>
                                 
