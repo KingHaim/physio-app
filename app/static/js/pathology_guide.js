@@ -11,7 +11,12 @@ class PathologyGuideManager {
     }
 
     initializeModal() {
-        this.modal = new bootstrap.Modal(document.getElementById('pathologyGuideModal'));
+        const modalElement = document.getElementById('pathologyGuideModal');
+        if (modalElement) {
+            this.modal = new bootstrap.Modal(modalElement);
+        } else {
+            console.error('Pathology guide modal element not found');
+        }
     }
 
     /**
@@ -21,6 +26,15 @@ class PathologyGuideManager {
      */
     async loadGuide(templateName, templateId = null) {
         try {
+            // Ensure modal is initialized
+            if (!this.modal) {
+                this.initializeModal();
+            }
+            
+            if (!this.modal) {
+                throw new Error('Modal not available - pathology guide modal not found in DOM');
+            }
+            
             this.showLoading();
             this.modal.show();
 
@@ -48,16 +62,25 @@ class PathologyGuideManager {
     }
 
     showLoading() {
-        document.getElementById('guide-loading').classList.remove('d-none');
-        document.getElementById('guide-error').classList.add('d-none');
-        document.getElementById('guide-content').classList.add('d-none');
+        const loadingEl = document.getElementById('guide-loading');
+        const errorEl = document.getElementById('guide-error');
+        const contentEl = document.getElementById('guide-content');
+        
+        if (loadingEl) loadingEl.classList.remove('d-none');
+        if (errorEl) errorEl.classList.add('d-none');
+        if (contentEl) contentEl.classList.add('d-none');
     }
 
     showError(message) {
-        document.getElementById('guide-loading').classList.add('d-none');
-        document.getElementById('guide-error').classList.remove('d-none');
-        document.getElementById('guide-content').classList.add('d-none');
-        document.getElementById('guide-error-message').textContent = message;
+        const loadingEl = document.getElementById('guide-loading');
+        const errorEl = document.getElementById('guide-error');
+        const contentEl = document.getElementById('guide-content');
+        const errorMessageEl = document.getElementById('guide-error-message');
+        
+        if (loadingEl) loadingEl.classList.add('d-none');
+        if (errorEl) errorEl.classList.remove('d-none');
+        if (contentEl) contentEl.classList.add('d-none');
+        if (errorMessageEl) errorMessageEl.textContent = message;
     }
 
     displayGuide(guide) {
@@ -328,6 +351,14 @@ function showPathologyGuide(templateName, templateId = null) {
     if (window.pathologyGuideManager) {
         window.pathologyGuideManager.loadGuide(templateName, templateId);
     } else {
-        console.error('PathologyGuideManager not initialized');
+        // Try to initialize if not ready
+        console.warn('PathologyGuideManager not initialized, attempting to initialize...');
+        try {
+            window.pathologyGuideManager = new PathologyGuideManager();
+            window.pathologyGuideManager.loadGuide(templateName, templateId);
+        } catch (error) {
+            console.error('Failed to initialize PathologyGuideManager:', error);
+            alert('Clinical guide system not available. Please refresh the page and try again.');
+        }
     }
 }
