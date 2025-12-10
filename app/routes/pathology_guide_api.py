@@ -12,7 +12,7 @@ import json
 pathology_guide_api = Blueprint('pathology_guide_api', __name__)
 
 @pathology_guide_api.route('/api/pathology-guide/<path:template_name>', methods=['GET'])
-# @login_required  # Temporarily disabled - authentication issue
+@login_required
 def get_pathology_guide(template_name):
     """
     Get pathology guide by template name
