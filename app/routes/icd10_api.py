@@ -150,6 +150,20 @@ def get_patient_diagnoses(patient_id):
                 diagnosis.icd10_code.short_description.title(),  # Capitalize first letters
                 diagnosis.icd10_code.description,
             ]
+            
+            # Special case mappings for common mismatches
+            special_mappings = {
+                'Low back pain': 'Acute Lower Back Pain',
+                'Frozen shoulder': 'Frozen Shoulder',
+                'Tennis elbow': 'Tennis Elbow',
+                'Plantar fasciitis': 'Plantar Fasciitis',
+            }
+            
+            # Add special mappings to variations
+            for original, mapped in special_mappings.items():
+                if diagnosis.icd10_code.short_description == original:
+                    variations.insert(0, mapped)  # Try mapped version first
+            
             for variation in variations:
                 pathology_guide = PathologyGuide.query.filter_by(name=variation).first()
                 if pathology_guide:
@@ -180,6 +194,40 @@ def get_patient_diagnoses(patient_id):
         'diagnoses': result,
         'patient_id': patient_id,
         'patient_name': patient.name
+    })
+
+@icd10_api.route('/api/patient/<int:patient_id>/diagnoses/<int:diagnosis_id>', methods=['GET'])
+@login_required
+def get_patient_diagnosis(patient_id, diagnosis_id):
+    """Get a specific diagnosis for a patient"""
+    patient = Patient.query.get_or_404(patient_id)
+    
+    # Check access permissions
+    accessible_patients = current_user.get_accessible_patients()
+    if patient not in accessible_patients:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    diagnosis = PatientDiagnosis.query.filter_by(
+        id=diagnosis_id,
+        patient_id=patient_id
+    ).first_or_404()
+    
+    return jsonify({
+        'id': diagnosis.id,
+        'icd10_code': diagnosis.icd10_code.code,
+        'icd10_code_id': diagnosis.icd10_code_id,
+        'description': diagnosis.icd10_code.short_description,
+        'full_description': diagnosis.icd10_code.description,
+        'diagnosis_type': diagnosis.diagnosis_type,
+        'status': diagnosis.status,
+        'confidence_level': diagnosis.confidence_level,
+        'severity': diagnosis.severity,
+        'onset_date': diagnosis.onset_date.isoformat() if diagnosis.onset_date else None,
+        'diagnosis_date': diagnosis.diagnosis_date.isoformat() if diagnosis.diagnosis_date else None,
+        'resolved_date': diagnosis.resolved_date.isoformat() if diagnosis.resolved_date else None,
+        'clinical_notes': diagnosis.clinical_notes,
+        'duration_days': diagnosis.duration_days,
+        'is_active': diagnosis.is_active
     })
 
 @icd10_api.route('/api/patient/<int:patient_id>/diagnoses', methods=['POST'])

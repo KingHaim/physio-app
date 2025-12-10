@@ -329,7 +329,11 @@ class ICD10DiagnosisManager {
             return;
         }
         
-        const formData = new FormData(document.getElementById('add-diagnosis-form'));
+        const form = document.getElementById('add-diagnosis-form');
+        const editId = form.getAttribute('data-edit-id');
+        const isEdit = !!editId;
+        
+        const formData = new FormData(form);
         const data = {
             icd10_code_id: formData.get('icd10_code_id'),
             diagnosis_type: formData.get('diagnosis_type') || 'primary',
@@ -359,8 +363,14 @@ class ICD10DiagnosisManager {
                 headers['X-CSRFToken'] = csrfToken;
             }
             
-            const response = await fetch(`/api/patient/${this.patientId}/diagnoses`, {
-                method: 'POST',
+            // Determine URL and method based on edit mode
+            const url = isEdit 
+                ? `/api/patient/${this.patientId}/diagnoses/${editId}`
+                : `/api/patient/${this.patientId}/diagnoses`;
+            const method = isEdit ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
                 headers: headers,
                 body: JSON.stringify(data)
             });
@@ -381,7 +391,7 @@ class ICD10DiagnosisManager {
             console.log('Parsed result:', result);
             
             if (result.success) {
-                this.showSuccess(result.message);
+                this.showSuccess(result.message || (isEdit ? 'Diagnosis updated successfully' : 'Diagnosis added successfully'));
                 this.loadPatientDiagnoses();
                 this.resetForm();
                 
@@ -389,7 +399,7 @@ class ICD10DiagnosisManager {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('add-diagnosis-modal'));
                 if (modal) modal.hide();
             } else {
-                this.showError(result.error || 'Failed to add diagnosis');
+                this.showError(result.error || (isEdit ? 'Failed to update diagnosis' : 'Failed to add diagnosis'));
             }
         } catch (error) {
             console.error('Error adding diagnosis:', error);
@@ -577,6 +587,76 @@ class ICD10DiagnosisManager {
         }
     }
     
+    async editDiagnosis(diagnosisId) {
+        try {
+            // Fetch the diagnosis details
+            const response = await fetch(`/api/patient/${this.patientId}/diagnoses/${diagnosisId}`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const diagnosis = await response.json();
+            
+            // Populate the edit form with current diagnosis data
+            this.populateEditForm(diagnosis);
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('add-diagnosis-modal'));
+            modal.show();
+            
+            // Change the form to edit mode
+            const form = document.getElementById('add-diagnosis-form');
+            form.setAttribute('data-edit-id', diagnosisId);
+            
+            // Update modal title and button text
+            const modalTitle = document.getElementById('add-diagnosis-modal-label');
+            if (modalTitle) modalTitle.textContent = 'Edit Diagnosis';
+            
+            const submitBtn = document.querySelector('#add-diagnosis-modal .btn-primary');
+            if (submitBtn) submitBtn.textContent = 'Update Diagnosis';
+            
+        } catch (error) {
+            console.error('Error loading diagnosis for edit:', error);
+            this.showError('Failed to load diagnosis details for editing.');
+        }
+    }
+    
+    populateEditForm(diagnosis) {
+        // Populate form fields with diagnosis data
+        const fields = {
+            'icd10-search': diagnosis.description,
+            'diagnosis-type': diagnosis.diagnosis_type,
+            'status': diagnosis.status,
+            'severity': diagnosis.severity,
+            'confidence-level': diagnosis.confidence_level,
+            'onset-date': diagnosis.onset_date,
+            'diagnosis-date': diagnosis.diagnosis_date,
+            'clinical-notes': diagnosis.clinical_notes
+        };
+        
+        for (const [fieldId, value] of Object.entries(fields)) {
+            const field = document.getElementById(fieldId);
+            if (field && value !== null && value !== undefined) {
+                field.value = value;
+            }
+        }
+        
+        // Store the ICD-10 code info for submission
+        this.selectedICD10 = {
+            id: diagnosis.icd10_code_id || null,
+            code: diagnosis.icd10_code,
+            description: diagnosis.description
+        };
+        
+        // Update the search results display
+        this.displaySearchResults([{
+            id: diagnosis.icd10_code_id,
+            code: diagnosis.icd10_code,
+            short_description: diagnosis.description,
+            description: diagnosis.full_description || diagnosis.description
+        }]);
+    }
+    
     async deleteDiagnosis(diagnosisId) {
         if (!confirm('Are you sure you want to delete this diagnosis? This action cannot be undone.')) return;
         
@@ -607,7 +687,16 @@ class ICD10DiagnosisManager {
         const form = document.getElementById('add-diagnosis-form');
         if (form) {
             form.reset();
+            form.removeAttribute('data-edit-id'); // Clear edit mode
         }
+        
+        // Reset modal title and button text to add mode
+        const modalTitle = document.getElementById('add-diagnosis-modal-label');
+        if (modalTitle) modalTitle.textContent = 'Add New Diagnosis';
+        
+        const submitBtn = document.querySelector('#add-diagnosis-modal .btn-primary');
+        if (submitBtn) submitBtn.textContent = 'Add Diagnosis';
+        
         this.clearSelection();
         this.clearTemplatePreview();
     }
