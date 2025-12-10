@@ -368,6 +368,11 @@ def delete_patient_diagnosis(patient_id, diagnosis_id):
 @physio_required
 def apply_diagnosis_template(template_id, patient_id):
     """Apply a diagnosis template to a patient"""
+    # Debug CSRF token issue
+    current_app.logger.info(f'Template application request headers: {dict(request.headers)}')
+    csrf_token = request.headers.get('X-CSRFToken')
+    current_app.logger.info(f'CSRF token in headers: {csrf_token[:10] + "..." if csrf_token else "None"}')
+    
     patient = Patient.query.get_or_404(patient_id)
     template = DiagnosisTemplate.query.get_or_404(template_id)
     
