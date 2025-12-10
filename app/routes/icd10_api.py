@@ -3,6 +3,7 @@
 
 from flask import Blueprint, request, jsonify, render_template
 from flask_login import login_required, current_user
+from flask_wtf import csrf
 from sqlalchemy import or_, and_
 from datetime import datetime, date, timedelta
 import json
@@ -151,6 +152,7 @@ def get_patient_diagnoses(patient_id):
     })
 
 @icd10_api.route('/api/patient/<int:patient_id>/diagnoses', methods=['POST'])
+@csrf.exempt
 @login_required
 @physio_required
 def add_patient_diagnosis(patient_id):
@@ -214,6 +216,7 @@ def add_patient_diagnosis(patient_id):
     })
 
 @icd10_api.route('/api/patient/<int:patient_id>/diagnoses/<int:diagnosis_id>', methods=['PUT'])
+@csrf.exempt
 @login_required
 @physio_required
 def update_patient_diagnosis(patient_id, diagnosis_id):
@@ -281,6 +284,7 @@ def delete_patient_diagnosis(patient_id, diagnosis_id):
     })
 
 @icd10_api.route('/api/template/<int:template_id>/apply/<int:patient_id>', methods=['POST'])
+@csrf.exempt
 @login_required
 @physio_required
 def apply_diagnosis_template(template_id, patient_id):

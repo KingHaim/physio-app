@@ -346,15 +346,39 @@ class ICD10DiagnosisManager {
         }
         
         try {
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || 
+                             document.querySelector('input[name=csrf_token]')?.value;
+            
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            
+            // Add CSRF token if available
+            if (csrfToken) {
+                headers['X-CSRFToken'] = csrfToken;
+            }
+            
             const response = await fetch(`/api/patient/${this.patientId}/diagnoses`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: headers,
                 body: JSON.stringify(data)
             });
             
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            // Check if response is actually JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Non-JSON response received:', text);
+                this.showError(`Server error: Expected JSON but got ${contentType}. Check browser console for details.`);
+                return;
+            }
+            
             const result = await response.json();
+            console.log('Parsed result:', result);
             
             if (result.success) {
                 this.showSuccess(result.message);
