@@ -503,6 +503,17 @@ class ICD10DiagnosisManager {
         // Ensure container allows dropdowns to overflow
         container.style.overflow = 'visible';
         
+        // Also ensure parent containers don't clip dropdowns
+        const parentCard = container.closest('.card');
+        if (parentCard) {
+            parentCard.style.overflow = 'visible';
+        }
+        
+        const parentCardBody = container.closest('.card-body');
+        if (parentCardBody) {
+            parentCardBody.style.overflow = 'visible';
+        }
+        
         diagnoses.forEach(diagnosis => {
             
             const statusBadge = this.getStatusBadge(diagnosis.status);
@@ -510,7 +521,7 @@ class ICD10DiagnosisManager {
             const severityBadge = this.getSeverityBadge(diagnosis.severity);
             
             html += `
-                <div class="card mb-3 diagnosis-card" data-diagnosis-id="${diagnosis.id}" style="overflow: visible; position: relative;">
+                <div class="card mb-3 diagnosis-card" data-diagnosis-id="${diagnosis.id}" style="overflow: visible; position: relative; z-index: 1;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="flex-grow-1">
@@ -564,7 +575,7 @@ class ICD10DiagnosisManager {
                                             type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
+                                    <ul class="dropdown-menu dropdown-menu-end" style="z-index: 1050;">
                                         <li><a class="dropdown-item" href="#" onclick="icd10Manager.editDiagnosis(${diagnosis.id})">
                                             <i class="bi bi-pencil"></i> Edit
                                         </a></li>

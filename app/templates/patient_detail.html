@@ -207,6 +207,40 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
+
+    /* Fix dropdown visibility in diagnosis cards */
+    #patient-diagnoses-list {
+        overflow: visible !important;
+    }
+    
+    #patient-diagnoses-list .card {
+        overflow: visible !important;
+        position: relative;
+        z-index: 1;
+    }
+    
+    #patient-diagnoses-list .card-body {
+        overflow: visible !important;
+    }
+    
+    .diagnosis-card {
+        overflow: visible !important;
+        position: relative !important;
+    }
+    
+    .diagnosis-card .dropdown-menu {
+        z-index: 1050 !important;
+        position: absolute !important;
+    }
+    
+    /* Ensure parent containers don't clip dropdowns */
+    .card:has(.diagnosis-card) {
+        overflow: visible !important;
+    }
+    
+    .tab-pane:has(#patient-diagnoses-list) {
+        overflow: visible !important;
+    }
 </style>
 {% endblock %}
 
