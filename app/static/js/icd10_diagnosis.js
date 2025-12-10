@@ -486,13 +486,13 @@ class ICD10DiagnosisManager {
                                 ` : ''}
                             </div>
                             
-                            <div class="btn-group">
+                            <div class="d-flex gap-2">
                                 <!-- Info Button (if pathology guide exists) -->
                                 <button class="btn btn-sm btn-outline-info" 
                                         onclick="showPathologyGuide('${diagnosis.template_name || diagnosis.description}')"
                                         title="Clinical Pathway Guide"
                                         style="display: ${diagnosis.has_pathology_guide === true ? 'inline-block' : 'none'};">
-                                    <i class="bi bi-info-circle"></i>
+                                    <i class="bi bi-info-circle"></i> Info
                                 </button>
                                 
                                 <div class="dropdown">

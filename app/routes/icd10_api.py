@@ -157,6 +157,9 @@ def get_patient_diagnoses(patient_id):
                 'Frozen shoulder': 'Frozen Shoulder',
                 'Tennis elbow': 'Tennis Elbow',
                 'Plantar fasciitis': 'Plantar Fasciitis',
+                'Neck pain': 'Neck Pain/Cervicalgia',
+                'Stiff jaw/TMJ': 'TMJ Dysfunction',
+                'TMJ Dysfunction': 'TMJ Dysfunction',
             }
             
             # Add special mappings to variations
