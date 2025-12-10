@@ -292,7 +292,27 @@ class ICD10DiagnosisManager {
                 })
             });
             
+            console.log('🔍 Template response status:', response.status);
+            console.log('🔍 Template response headers:', response.headers.get('content-type'));
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Template application failed:', response.status, 'Response:', errorText);
+                this.showError(`Failed to apply template (${response.status}). Check console for details.`);
+                return;
+            }
+            
+            // Check if response is actually JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('❌ Non-JSON response received:', text);
+                this.showError(`Server error: Expected JSON but got ${contentType}. Check browser console for details.`);
+                return;
+            }
+            
             const data = await response.json();
+            console.log('✅ Template result:', data);
             
             if (data.success) {
                 this.showSuccess(data.message);
@@ -455,6 +475,9 @@ class ICD10DiagnosisManager {
         
         let html = '';
         
+        // Ensure container allows dropdowns to overflow
+        container.style.overflow = 'visible';
+        
         diagnoses.forEach(diagnosis => {
             
             const statusBadge = this.getStatusBadge(diagnosis.status);
@@ -462,7 +485,7 @@ class ICD10DiagnosisManager {
             const severityBadge = this.getSeverityBadge(diagnosis.severity);
             
             html += `
-                <div class="card mb-3 diagnosis-card" data-diagnosis-id="${diagnosis.id}">
+                <div class="card mb-3 diagnosis-card" data-diagnosis-id="${diagnosis.id}" style="overflow: visible; position: relative;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="flex-grow-1">
@@ -513,10 +536,10 @@ class ICD10DiagnosisManager {
                                 
                                 <div class="dropdown">
                                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                            type="button" data-bs-toggle="dropdown">
+                                            type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
-                                    <ul class="dropdown-menu">
+                                    <ul class="dropdown-menu dropdown-menu-end">
                                         <li><a class="dropdown-item" href="#" onclick="icd10Manager.editDiagnosis(${diagnosis.id})">
                                             <i class="bi bi-pencil"></i> Edit
                                         </a></li>
