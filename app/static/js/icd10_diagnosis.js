@@ -575,7 +575,7 @@ class ICD10DiagnosisManager {
                                             type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end" style="z-index: 1050;">
+                                    <ul class="dropdown-menu dropdown-menu-end" style="z-index: 1070; position: absolute !important;" data-bs-boundary="viewport">
                                         <li><a class="dropdown-item" href="#" onclick="icd10Manager.editDiagnosis(${diagnosis.id})">
                                             <i class="bi bi-pencil"></i> Edit
                                         </a></li>
@@ -602,6 +602,37 @@ class ICD10DiagnosisManager {
         });
         
         container.innerHTML = html;
+        
+        // Initialize dropdowns with proper configuration to prevent clipping
+        setTimeout(() => {
+            const dropdownElements = container.querySelectorAll('[data-bs-toggle="dropdown"]');
+            dropdownElements.forEach(element => {
+                if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                    new bootstrap.Dropdown(element, {
+                        boundary: 'viewport',
+                        popperConfig: {
+                            strategy: 'fixed',
+                            modifiers: [
+                                {
+                                    name: 'preventOverflow',
+                                    options: {
+                                        boundary: 'viewport',
+                                        altBoundary: true,
+                                        padding: 8
+                                    }
+                                },
+                                {
+                                    name: 'flip',
+                                    options: {
+                                        fallbackPlacements: ['top-end', 'bottom-start', 'top-start']
+                                    }
+                                }
+                            ]
+                        }
+                    });
+                }
+            });
+        }, 100);
     }
     
     getStatusBadge(status) {

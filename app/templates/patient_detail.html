@@ -208,38 +208,83 @@
         letter-spacing: 0.5px;
     }
 
-    /* Fix dropdown visibility in diagnosis cards */
+    /* Fix dropdown visibility in diagnosis cards - Comprehensive solution */
+    
+    /* Main diagnosis container */
     #patient-diagnoses-list {
         overflow: visible !important;
+        position: relative !important;
+        z-index: 10 !important;
     }
     
+    /* All cards in diagnosis list */
     #patient-diagnoses-list .card {
         overflow: visible !important;
-        position: relative;
-        z-index: 1;
+        position: relative !important;
+        z-index: 20 !important;
     }
     
     #patient-diagnoses-list .card-body {
         overflow: visible !important;
-    }
-    
-    .diagnosis-card {
-        overflow: visible !important;
         position: relative !important;
     }
     
+    /* Individual diagnosis cards */
+    .diagnosis-card {
+        overflow: visible !important;
+        position: relative !important;
+        z-index: 30 !important;
+    }
+    
+    /* Dropdown button container */
+    .diagnosis-card .btn-group {
+        position: relative !important;
+        z-index: 40 !important;
+    }
+    
+    /* Dropdown menu itself */
     .diagnosis-card .dropdown-menu {
-        z-index: 1050 !important;
+        z-index: 1060 !important;
         position: absolute !important;
+        top: 100% !important;
+        right: 0 !important;
+        left: auto !important;
+        transform: none !important;
+        margin-top: 2px !important;
+        min-width: 120px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     }
     
-    /* Ensure parent containers don't clip dropdowns */
-    .card:has(.diagnosis-card) {
+    /* Force all parent containers to allow overflow */
+    .card:has(#patient-diagnoses-list),
+    .card-body:has(#patient-diagnoses-list),
+    .tab-pane:has(#patient-diagnoses-list),
+    .tab-content:has(#patient-diagnoses-list),
+    .container:has(#patient-diagnoses-list),
+    .row:has(#patient-diagnoses-list),
+    .col:has(#patient-diagnoses-list) {
         overflow: visible !important;
     }
     
-    .tab-pane:has(#patient-diagnoses-list) {
+    /* Bootstrap tab pane specific fixes */
+    .tab-pane {
         overflow: visible !important;
+    }
+    
+    .tab-content {
+        overflow: visible !important;
+    }
+    
+    /* Container and layout fixes */
+    .container-fluid, .container {
+        overflow: visible !important;
+    }
+    
+    /* Ensure dropdown shows above other content */
+    .dropdown-menu.show {
+        z-index: 1070 !important;
+        display: block !important;
+        position: absolute !important;
     }
 </style>
 {% endblock %}
