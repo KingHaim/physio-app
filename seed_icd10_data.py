@@ -82,6 +82,12 @@ def seed_icd10_codes():
         ("M40.2", "Other and unspecified kyphosis", "Rounded back posture", "Musculoskeletal", "Postural disorders"),
         ("M41.9", "Scoliosis, unspecified", "Spinal curvature", "Musculoskeletal", "Postural disorders"),
         ("M43.8", "Other specified deforming dorsopathies", "Postural dysfunction", "Musculoskeletal", "Postural disorders"),
+        
+        # Additional Codes for New Templates
+        ("Z98.890", "Other specified postprocedural states", "Post-operative status", "Post-surgical", "Post-operative"),
+        ("H81.10", "Benign paroxysmal positional vertigo, unspecified ear", "BPPV/Vertigo", "Neurological", "Vestibular disorders"),
+        ("Z96.651", "Presence of right artificial knee joint", "Total knee replacement", "Post-surgical", "Joint replacement"),
+        ("M92.5", "Juvenile osteochondrosis of tibia and fibula", "Osgood-Schlatter disease", "Musculoskeletal", "Pediatric conditions"),
     ]
     
     # Injury and Trauma Codes (S00-T88)
@@ -230,6 +236,42 @@ def seed_diagnosis_templates():
             "typical_duration_days": 45,
             "common_symptoms": '["Jaw pain", "Clicking/popping", "Restricted opening", "Ear pain", "Headaches"]',
             "treatment_guidelines": "Manual therapy (intra/extra-oral), relaxation exercises, posture correction, cervical spine treatment"
+        },
+        {
+            "name": "Post-Op ACL Reconstruction",
+            "description": "Post-operative rehabilitation following ACL reconstruction",
+            "primary_code": "Z98.890",
+            "default_severity": "severe",
+            "typical_duration_days": 270,
+            "common_symptoms": '["Instability", "Post-op swelling", "Quadriceps atrophy", "Extension deficit"]',
+            "treatment_guidelines": "Phase 1: Extension/Quieting. Phase 2: Loading. Phase 3: Plyometrics. Phase 4: Return to Sport."
+        },
+        {
+            "name": "BPPV (Vertigo)",
+            "description": "Benign Paroxysmal Positional Vertigo - Posterior Canal",
+            "primary_code": "H81.10",
+            "default_severity": "severe",
+            "typical_duration_days": 3,
+            "common_symptoms": '["Room spinning", "Nausea", "Imbalance", "Nystagmus"]',
+            "treatment_guidelines": "Dix-Hallpike for assessment. Epley Maneuver for treatment. Balance retraining."
+        },
+        {
+            "name": "Total Knee Arthroplasty (TKA)",
+            "description": "Rehabilitation following total knee replacement",
+            "primary_code": "Z96.651",
+            "default_severity": "moderate",
+            "typical_duration_days": 90,
+            "common_symptoms": '["Stiffness", "Swelling", "Surgical site pain", "Gait deviation"]',
+            "treatment_guidelines": "Scar mobilization, range of motion (0-120), gait training, functional strengthening."
+        },
+        {
+            "name": "Osgood-Schlatter Disease",
+            "description": "Tibial tuberosity traction apophysitis in adolescents",
+            "primary_code": "M92.5",
+            "default_severity": "mild",
+            "typical_duration_days": 60,
+            "common_symptoms": '["Bump below knee", "Pain with jumping", "Pain with kneeling", "Quad tightness"]',
+            "treatment_guidelines": "Load management (reduce jumping), icing, quad stretching, hip strengthening."
         }
     ]
     
