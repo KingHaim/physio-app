@@ -2463,6 +2463,10 @@ if (!document.getElementById('typing-dots-css')) {
 }
 </script>
 
+<!-- Include ICD-10 and Pathology Guide JavaScript -->
+<script src="{{ url_for('static', filename='js/icd10_diagnosis.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pathology_guide.js') }}"></script>
+
 <!-- Patient AI Chat Modal - Redesigned Minimal Interface -->
 <div class="modal fade" id="patientAIChatModal" tabindex="-1" aria-labelledby="patientAIChatModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-fullscreen">
@@ -2571,9 +2575,4 @@ if (!document.getElementById('typing-dots-css')) {
 <!-- Include Pathology Guide Modal -->
 {% include 'components/pathology_guide_modal.html' %}
 
-{% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/icd10_diagnosis.js') }}"></script>
-<script src="{{ url_for('static', filename='js/pathology_guide.js') }}"></script>
 {% endblock %}
