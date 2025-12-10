@@ -19,8 +19,25 @@ def get_pathology_guide(template_name):
     Returns rich clinical content for the specified diagnosis
     """
     try:
-        # Find the pathology guide by template name
+        # First, try to find the pathology guide by exact template name
         guide = PathologyGuide.query.filter_by(name=template_name).first()
+        
+        # If not found, try the same mappings as in icd10_api.py
+        if not guide:
+            # Special case mappings for common mismatches
+            special_mappings = {
+                'Low back pain': 'Acute Lower Back Pain',
+                'Frozen shoulder': 'Frozen Shoulder',
+                'Tennis elbow': 'Tennis Elbow',
+                'Plantar fasciitis': 'Plantar Fasciitis',
+                'Neck pain': 'Neck Pain/Cervicalgia',
+                'Stiff jaw/TMJ': 'TMJ Dysfunction',
+                'TMJ Dysfunction': 'TMJ Dysfunction',
+            }
+            
+            mapped_name = special_mappings.get(template_name)
+            if mapped_name:
+                guide = PathologyGuide.query.filter_by(name=mapped_name).first()
         
         if not guide:
             return jsonify({

@@ -675,6 +675,7 @@ class ICD10DiagnosisManager {
         if (!confirm('Are you sure you want to delete this diagnosis? This action cannot be undone.')) return;
         
         try {
+            console.log('🗑️ Deleting diagnosis:', diagnosisId);
             const response = await fetch(`/api/patient/${this.patientId}/diagnoses/${diagnosisId}`, {
                 method: 'DELETE',
                 headers: {
@@ -683,7 +684,27 @@ class ICD10DiagnosisManager {
                 }
             });
             
+            console.log('🔍 Delete response status:', response.status);
+            console.log('🔍 Delete response headers:', response.headers.get('content-type'));
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Delete failed with status:', response.status, 'Response:', errorText);
+                this.showError(`Failed to delete diagnosis (${response.status}). Check console for details.`);
+                return;
+            }
+            
+            // Check if response is actually JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('❌ Non-JSON response received:', text);
+                this.showError(`Server error: Expected JSON but got ${contentType}. Check browser console for details.`);
+                return;
+            }
+            
             const result = await response.json();
+            console.log('✅ Delete result:', result);
             
             if (result.success) {
                 this.showSuccess('Diagnosis deleted successfully');
@@ -692,7 +713,7 @@ class ICD10DiagnosisManager {
                 this.showError(result.error || 'Failed to delete diagnosis');
             }
         } catch (error) {
-            console.error('Error deleting diagnosis:', error);
+            console.error('❌ Error deleting diagnosis:', error);
             this.showError('Error deleting diagnosis. Please try again.');
         }
     }
