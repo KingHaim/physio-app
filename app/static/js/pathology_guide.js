@@ -40,7 +40,11 @@ class PathologyGuideManager {
 
             // Fetch guide data from API
             console.log('🔍 Fetching pathology guide:', templateName);
-            const response = await fetch(`/api/pathology-guide/${encodeURIComponent(templateName)}`, {
+            const encodedName = encodeURIComponent(templateName);
+            const url = `/api/pathology-guide/${encodedName}`;
+            console.log('📡 Request URL:', url);
+            
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
