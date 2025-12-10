@@ -411,8 +411,12 @@ class ICD10DiagnosisManager {
         if (!this.patientId) return;
         
         try {
+            console.log('🔍 Loading patient diagnoses for patient ID:', this.patientId);
             const response = await fetch(`/api/patient/${this.patientId}/diagnoses`);
             const data = await response.json();
+            
+            console.log('📡 API Response:', data);
+            console.log('📋 Diagnoses array:', data.diagnoses);
             
             this.displayPatientDiagnoses(data.diagnoses);
         } catch (error) {
@@ -423,6 +427,18 @@ class ICD10DiagnosisManager {
     displayPatientDiagnoses(diagnoses) {
         const container = document.getElementById('patient-diagnoses-list');
         if (!container) return;
+        
+        console.log('🔍 Displaying patient diagnoses:', diagnoses);
+        
+        // Debug: Log each diagnosis and its pathology guide status
+        diagnoses.forEach((diagnosis, index) => {
+            console.log(`📋 Diagnosis ${index + 1}:`, {
+                description: diagnosis.description,
+                has_pathology_guide: diagnosis.has_pathology_guide,
+                template_name: diagnosis.template_name,
+                type_of_has_pathology_guide: typeof diagnosis.has_pathology_guide
+            });
+        });
         
         if (diagnoses.length === 0) {
             container.innerHTML = `
