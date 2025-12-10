@@ -1,0 +1,320 @@
+<!-- Pathology Guide Modal - Clinical Pathway Guide -->
+<div class="modal fade" id="pathologyGuideModal" tabindex="-1" aria-labelledby="pathologyGuideModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="pathologyGuideModalLabel">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span id="guide-title">Clinical Pathway Guide</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Loading State -->
+                <div id="guide-loading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading clinical guide...</p>
+                </div>
+                
+                <!-- Error State -->
+                <div id="guide-error" class="alert alert-danger d-none">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="guide-error-message">Failed to load guide information.</span>
+                </div>
+                
+                <!-- Guide Content -->
+                <div id="guide-content" class="d-none">
+                    <!-- Navigation Tabs -->
+                    <ul class="nav nav-tabs mb-4" id="guideTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                                <i class="fas fa-eye me-1"></i> Overview
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="clinical-tab" data-bs-toggle="tab" data-bs-target="#clinical" type="button" role="tab">
+                                <i class="fas fa-stethoscope me-1"></i> Clinical Pearls
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="patient-tab" data-bs-toggle="tab" data-bs-target="#patient" type="button" role="tab">
+                                <i class="fas fa-user me-1"></i> Patient Education
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="treatment-tab" data-bs-toggle="tab" data-bs-target="#treatment" type="button" role="tab">
+                                <i class="fas fa-dumbbell me-1"></i> Treatment
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="faq-tab" data-bs-toggle="tab" data-bs-target="#faq" type="button" role="tab">
+                                <i class="fas fa-question-circle me-1"></i> FAQs
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="safety-tab" data-bs-toggle="tab" data-bs-target="#safety" type="button" role="tab">
+                                <i class="fas fa-exclamation-triangle me-1"></i> Red Flags
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="guideTabContent">
+                        <!-- Overview Tab -->
+                        <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0"><i class="fas fa-info me-2"></i>Condition Overview</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p id="guide-description" class="mb-0"></p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mt-3" id="anatomy-card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0"><i class="fas fa-bone me-2"></i>Anatomy Overview</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p id="guide-anatomy" class="mb-0"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Quick Stats</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Typical Duration:</span>
+                                                <strong id="guide-duration"></strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Common Symptoms:</span>
+                                                <span class="badge bg-info">Multiple</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Treatment Phases:</span>
+                                                <span class="badge bg-success" id="phase-count">3</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mt-3">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Quick Red Flags</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p id="guide-red-flags-preview" class="mb-0 small"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Clinical Pearls Tab -->
+                        <div class="tab-pane fade" id="clinical" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-gem me-2"></i>Clinical Pearls for Healthcare Providers</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-lightbulb me-2"></i>
+                                        <strong>Pro Tips:</strong> Key insights for effective assessment and treatment
+                                    </div>
+                                    <div id="guide-clinical-pearls"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Patient Education Tab -->
+                        <div class="tab-pane fade" id="patient" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-user-md me-2"></i>Patient Education Content</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>Patient-Friendly:</strong> Use this content to explain the condition to patients
+                                    </div>
+                                    <div id="guide-patient-education"></div>
+                                    
+                                    <div class="mt-4">
+                                        <h6><i class="fas fa-list me-2"></i>Common Symptoms</h6>
+                                        <div id="guide-symptoms" class="mb-3"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Treatment Tab -->
+                        <div class="tab-pane fade" id="treatment" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0"><i class="fas fa-road me-2"></i>Treatment Phases</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="guide-treatment-phases"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-secondary text-white">
+                                            <h6 class="mb-0"><i class="fas fa-home me-2"></i>Home Exercises</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="guide-home-exercises"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mt-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Treatment Guidelines</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="guide-treatment-guidelines"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- FAQ Tab -->
+                        <div class="tab-pane fade" id="faq" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-comments me-2"></i>
+                                        <strong>Patient FAQs:</strong> Common questions and evidence-based answers
+                                    </div>
+                                    <div class="accordion" id="faqAccordion">
+                                        <!-- FAQ items will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Red Flags Tab -->
+                        <div class="tab-pane fade" id="safety" role="tabpanel">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Red Flags & Safety Considerations</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-danger">
+                                        <i class="fas fa-shield-alt me-2"></i>
+                                        <strong>Safety First:</strong> When to refer or seek urgent medical attention
+                                    </div>
+                                    <div id="guide-red-flags"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <div class="d-flex justify-content-between w-100">
+                    <div>
+                        <button type="button" class="btn btn-outline-primary" onclick="printGuide()">
+                            <i class="fas fa-print me-2"></i>Print Guide
+                        </button>
+                        <button type="button" class="btn btn-outline-info" onclick="emailGuide()">
+                            <i class="fas fa-envelope me-2"></i>Email to Patient
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.modal-xl {
+    max-width: 1200px;
+}
+
+.nav-tabs .nav-link {
+    color: #495057;
+    border: 1px solid transparent;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: #e9ecef #e9ecef #dee2e6;
+}
+
+.nav-tabs .nav-link.active {
+    color: #495057;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    font-weight: 500;
+}
+
+.alert {
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #e7f1ff;
+    color: #0c63e4;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+#guide-content .fas {
+    color: #6c757d;
+}
+
+.tab-pane {
+    min-height: 400px;
+}
+
+@media print {
+    .modal-header, .modal-footer, .nav-tabs {
+        display: none !important;
+    }
+    
+    .modal-body {
+        padding: 0 !important;
+    }
+    
+    .tab-content {
+        display: block !important;
+    }
+    
+    .tab-pane {
+        display: block !important;
+        opacity: 1 !important;
+    }
+}
+</style>

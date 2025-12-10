@@ -475,25 +475,39 @@ class ICD10DiagnosisManager {
                                 ` : ''}
                             </div>
                             
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                        type="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-three-dots-vertical"></i>
+                            <div class="btn-group">
+                                <!-- Info Button (if pathology guide exists) -->
+                                <button class="btn btn-sm btn-outline-info" 
+                                        onclick="showPathologyGuide('${diagnosis.template_name || diagnosis.description}')"
+                                        title="Clinical Pathway Guide"
+                                        style="display: ${diagnosis.has_pathology_guide !== false ? 'inline-block' : 'none'};">
+                                    <i class="bi bi-info-circle"></i>
                                 </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#" onclick="icd10Manager.editDiagnosis(${diagnosis.id})">
-                                        <i class="bi bi-pencil"></i> Edit
-                                    </a></li>
-                                    ${diagnosis.status === 'active' ? `
-                                    <li><a class="dropdown-item" href="#" onclick="icd10Manager.resolveDiagnosis(${diagnosis.id})">
-                                        <i class="bi bi-check-circle"></i> Mark Resolved
-                                    </a></li>
-                                    ` : ''}
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="#" onclick="icd10Manager.deleteDiagnosis(${diagnosis.id})">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </a></li>
-                                </ul>
+                                
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                            type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="icd10Manager.editDiagnosis(${diagnosis.id})">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a></li>
+                                        ${diagnosis.status === 'active' ? `
+                                        <li><a class="dropdown-item" href="#" onclick="icd10Manager.resolveDiagnosis(${diagnosis.id})">
+                                            <i class="bi bi-check-circle"></i> Mark Resolved
+                                        </a></li>
+                                        ` : ''}
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" onclick="showPathologyGuide('${diagnosis.template_name || diagnosis.description}')">
+                                            <i class="bi bi-info-circle"></i> Clinical Guide
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="icd10Manager.deleteDiagnosis(${diagnosis.id})">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </a></li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>

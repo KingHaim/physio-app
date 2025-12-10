@@ -2568,4 +2568,12 @@ if (!document.getElementById('typing-dots-css')) {
 <!-- Include ICD-10 Diagnosis Modal -->
 {% include 'components/icd10_diagnosis_modal.html' %}
 
+<!-- Include Pathology Guide Modal -->
+{% include 'components/pathology_guide_modal.html' %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/icd10_diagnosis.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pathology_guide.js') }}"></script>
 {% endblock %}

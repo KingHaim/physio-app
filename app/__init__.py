@@ -255,6 +255,10 @@ def create_app(config_class=None):
     # Register ICD-10 API blueprint
     from app.routes.icd10_api import icd10_api
     app.register_blueprint(icd10_api)
+    
+    # Register Pathology Guide API blueprint
+    from app.routes.pathology_guide_api import pathology_guide_api
+    app.register_blueprint(pathology_guide_api)
 
     # Create all tables
     # with app.app_context():

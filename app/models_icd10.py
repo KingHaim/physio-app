@@ -191,3 +191,70 @@ class TreatmentOutcome(db.Model):
         if improvement is not None and self.pain_level_before > 0:
             return (improvement / self.pain_level_before) * 100
         return None
+
+
+class PathologyGuide(db.Model):
+    """
+    Clinical Pathway Guide - Rich educational content for diagnoses
+    Provides clinical pearls, patient education, red flags, and FAQs
+    """
+    __tablename__ = 'pathology_guides'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    
+    # Clinical content for healthcare providers
+    clinical_pearls = db.Column(db.Text)  # Quick tips for the physio
+    patient_education = db.Column(db.Text)  # Simple language explanation for patients
+    red_flags = db.Column(db.Text)  # When to refer back to doctor/urgent care
+    
+    # FAQs stored as JSON: [{"q": "Question?", "a": "Answer"}]
+    # Using Text for SQLite compatibility, will store JSON strings
+    faq_data = db.Column(db.Text)  # JSON string of FAQ array
+    
+    # Additional clinical information
+    anatomy_overview = db.Column(db.Text)  # Basic anatomy explanation
+    treatment_phases = db.Column(db.Text)  # Treatment progression phases
+    home_exercises = db.Column(db.Text)  # Key exercises for patients
+    
+    # Metadata
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Link to the Diagnosis Template (One-to-One relationship)
+    diagnosis_template_id = db.Column(db.Integer, db.ForeignKey('diagnosis_templates.id'), unique=True)
+    diagnosis_template = db.relationship('DiagnosisTemplate', backref=db.backref('pathology_guide', uselist=False))
+    
+    def __repr__(self):
+        return f'<PathologyGuide {self.name}>'
+    
+    @property
+    def faq_list(self):
+        """Get FAQ data as a Python list"""
+        if self.faq_data:
+            try:
+                import json
+                return json.loads(self.faq_data)
+            except (json.JSONDecodeError, TypeError):
+                return []
+        return []
+    
+    @faq_list.setter
+    def faq_list(self, value):
+        """Set FAQ data from a Python list"""
+        if value:
+            import json
+            self.faq_data = json.dumps(value)
+        else:
+            self.faq_data = None
+    
+    def get_summary_stats(self):
+        """Get summary statistics for this guide"""
+        return {
+            'has_clinical_pearls': bool(self.clinical_pearls),
+            'has_patient_education': bool(self.patient_education),
+            'has_red_flags': bool(self.red_flags),
+            'faq_count': len(self.faq_list),
+            'has_anatomy': bool(self.anatomy_overview),
+            'has_exercises': bool(self.home_exercises)
+        }
