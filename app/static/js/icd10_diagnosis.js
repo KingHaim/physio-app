@@ -30,35 +30,26 @@ class ICD10DiagnosisManager {
     getCSRFToken() {
         console.log('🔍 Getting CSRF token...');
         
-        // Try multiple ways to get CSRF token
-        const metaToken = document.querySelector('meta[name="csrf-token"]');
-        if (metaToken) {
-            const token = metaToken.getAttribute('content');
-            console.log('✅ Found CSRF token in meta tag:', token ? 'present' : 'empty');
-            return token;
+        // Use the same pattern as other parts of the codebase
+        const token = document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || 
+                     document.querySelector('input[name="csrf_token"]')?.value || '';
+        
+        if (token) {
+            console.log('✅ Found CSRF token:', token.substring(0, 10) + '...');
+        } else {
+            console.error('❌ CSRF token not found');
+            console.log('Meta tag exists:', !!document.querySelector('meta[name=csrf-token]'));
+            console.log('Form input exists:', !!document.querySelector('input[name="csrf_token"]'));
+            
+            // Try alternative selectors
+            const metaWithQuotes = document.querySelector('meta[name="csrf-token"]');
+            if (metaWithQuotes) {
+                console.log('Found meta tag with quoted selector');
+                return metaWithQuotes.getAttribute('content') || '';
+            }
         }
         
-        const cookieToken = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('csrf_token='));
-        if (cookieToken) {
-            const token = cookieToken.split('=')[1];
-            console.log('✅ Found CSRF token in cookie:', token ? 'present' : 'empty');
-            return token;
-        }
-        
-        // Fallback: try to get from a form
-        const csrfInput = document.querySelector('input[name="csrf_token"]');
-        if (csrfInput) {
-            const token = csrfInput.value;
-            console.log('✅ Found CSRF token in form input:', token ? 'present' : 'empty');
-            return token;
-        }
-        
-        console.error('❌ CSRF token not found in any location');
-        console.log('Available meta tags:', document.querySelectorAll('meta').length);
-        console.log('Available form inputs:', document.querySelectorAll('input[name="csrf_token"]').length);
-        return '';
+        return token;
     }
     
     bindEvents() {
