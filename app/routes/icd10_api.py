@@ -127,6 +127,36 @@ def get_patient_diagnoses(patient_id):
     
     result = []
     for diagnosis in diagnoses:
+        # Check if there's a pathology guide for this diagnosis
+        from app.models_icd10 import PathologyGuide, DiagnosisTemplate
+        
+        # First, try to find a diagnosis template that matches this ICD-10 code
+        template = DiagnosisTemplate.query.filter_by(primary_icd10_code_id=diagnosis.icd10_code_id).first()
+        
+        has_pathology_guide = False
+        template_name = diagnosis.icd10_code.short_description
+        
+        if template:
+            # Check if there's a pathology guide for this template
+            pathology_guide = PathologyGuide.query.filter_by(name=template.name).first()
+            if pathology_guide:
+                has_pathology_guide = True
+                template_name = template.name
+        
+        if not has_pathology_guide:
+            # Fallback: try direct matching with ICD-10 description variations
+            variations = [
+                diagnosis.icd10_code.short_description,
+                diagnosis.icd10_code.short_description.title(),  # Capitalize first letters
+                diagnosis.icd10_code.description,
+            ]
+            for variation in variations:
+                pathology_guide = PathologyGuide.query.filter_by(name=variation).first()
+                if pathology_guide:
+                    has_pathology_guide = True
+                    template_name = variation
+                    break
+        
         result.append({
             'id': diagnosis.id,
             'icd10_code': diagnosis.icd10_code.code,
@@ -141,7 +171,9 @@ def get_patient_diagnoses(patient_id):
             'resolved_date': diagnosis.resolved_date.isoformat() if diagnosis.resolved_date else None,
             'clinical_notes': diagnosis.clinical_notes,
             'duration_days': diagnosis.duration_days,
-            'is_active': diagnosis.is_active
+            'is_active': diagnosis.is_active,
+            'has_pathology_guide': has_pathology_guide,
+            'template_name': template_name
         })
     
     return jsonify({

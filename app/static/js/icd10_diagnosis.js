@@ -404,6 +404,7 @@ class ICD10DiagnosisManager {
             const response = await fetch(`/api/patient/${this.patientId}/diagnoses`);
             const data = await response.json();
             
+            console.log('Loaded diagnoses:', data.diagnoses); // Debug log
             this.displayPatientDiagnoses(data.diagnoses);
         } catch (error) {
             console.error('Error loading patient diagnoses:', error);
@@ -430,6 +431,8 @@ class ICD10DiagnosisManager {
         let html = '';
         
         diagnoses.forEach(diagnosis => {
+            console.log('Processing diagnosis:', diagnosis.description, 'has_pathology_guide:', diagnosis.has_pathology_guide, 'template_name:', diagnosis.template_name); // Debug log
+            
             const statusBadge = this.getStatusBadge(diagnosis.status);
             const typeBadge = this.getTypeBadge(diagnosis.diagnosis_type);
             const severityBadge = this.getSeverityBadge(diagnosis.severity);
@@ -579,7 +582,11 @@ class ICD10DiagnosisManager {
         
         try {
             const response = await fetch(`/api/patient/${this.patientId}/diagnoses/${diagnosisId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': this.getCSRFToken(),
+                    'Content-Type': 'application/json'
+                }
             });
             
             const result = await response.json();
