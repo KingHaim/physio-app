@@ -21,7 +21,7 @@ def get_pathology_guide(template_name):
     try:
         # Debug: log what we received
         current_app.logger.info(f'Pathology guide request for: "{template_name}" (type: {type(template_name)})')
-        print(f'🔍 API received template_name: "{template_name}"')
+        
         # First, try to find the pathology guide by exact template name
         guide = PathologyGuide.query.filter_by(name=template_name).first()
         
