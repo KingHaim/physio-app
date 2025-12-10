@@ -27,6 +27,30 @@ class ICD10DiagnosisManager {
         }
     }
     
+    getCSRFToken() {
+        // Try multiple ways to get CSRF token
+        const metaToken = document.querySelector('meta[name="csrf-token"]');
+        if (metaToken) {
+            return metaToken.getAttribute('content');
+        }
+        
+        const cookieToken = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrf_token='));
+        if (cookieToken) {
+            return cookieToken.split('=')[1];
+        }
+        
+        // Fallback: try to get from a form
+        const csrfInput = document.querySelector('input[name="csrf_token"]');
+        if (csrfInput) {
+            return csrfInput.value;
+        }
+        
+        console.warn('CSRF token not found');
+        return '';
+    }
+    
     bindEvents() {
         // Search functionality
         const searchInput = document.getElementById('icd10-search');
