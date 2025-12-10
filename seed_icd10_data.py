@@ -46,6 +46,20 @@ def seed_icd10_codes():
         ("M16.9", "Osteoarthritis of hip, unspecified", "Hip osteoarthritis", "Musculoskeletal", "Degenerative joint"),
         ("M19.9", "Osteoarthritis, unspecified site", "Osteoarthritis", "Musculoskeletal", "Degenerative joint"),
         
+        # TMJ & Head/Face Disorders (M26)
+        ("M26.60", "Temporomandibular joint disorder, unspecified", "TMJ Dysfunction", "Musculoskeletal", "Head/Face disorders"),
+        ("M26.62", "Arthralgia of temporomandibular joint", "Jaw joint pain", "Musculoskeletal", "Head/Face disorders"),
+        ("M26.61", "Adhesions and ankylosis of temporomandibular joint", "Stiff jaw/TMJ", "Musculoskeletal", "Head/Face disorders"),
+        ("M26.69", "Other specified temporomandibular joint disorders", "Clicking jaw/TMJ", "Musculoskeletal", "Head/Face disorders"),
+        
+        # Foot and Ankle Pathologies (M20-M21, M70-M79)
+        ("M72.2", "Plantar fascial fibromatosis", "Plantar fasciitis", "Musculoskeletal", "Foot disorders"),
+        ("M20.1", "Hallux valgus (acquired)", "Bunions", "Musculoskeletal", "Foot disorders"),
+        ("M21.4", "Flat foot [pes planus] (acquired)", "Flat feet", "Musculoskeletal", "Foot disorders"),
+        ("M77.4", "Metatarsalgia", "Metatarsalgia", "Musculoskeletal", "Foot disorders"),
+        ("M20.4", "Other hammer toe(s) (acquired)", "Hammer toe", "Musculoskeletal", "Foot disorders"),
+        ("M76.8", "Other enthesopathies of lower limb", "Tibialis posterior tendonitis", "Musculoskeletal", "Foot disorders"),
+
         # Muscle and Tendon Disorders (M60-M79)
         ("M79.3", "Panniculitis, unspecified", "Muscle inflammation", "Musculoskeletal", "Muscle disorders"),
         ("M62.8", "Other specified disorders of muscle", "Muscle strain", "Musculoskeletal", "Muscle disorders"),
@@ -76,11 +90,13 @@ def seed_icd10_codes():
         ("S43.4", "Sprain and strain of shoulder joint", "Shoulder sprain", "Injury", "Shoulder injuries"),
         ("S13.4", "Sprain and strain of cervical spine", "Neck strain/whiplash", "Injury", "Neck injuries"),
         ("S33.5", "Sprain and strain of lumbar spine", "Lower back strain", "Injury", "Back injuries"),
+        ("S03.4", "Sprain and strain of jaw", "Jaw sprain", "Injury", "Head/Face injuries"),
         
         # Fractures (common ones requiring physiotherapy)
         ("S72.0", "Fracture of neck of femur", "Hip fracture", "Injury", "Hip injuries"),
         ("S52.5", "Fracture of lower end of radius", "Wrist fracture (Colles)", "Injury", "Wrist injuries"),
         ("S82.6", "Fracture of lateral malleolus", "Ankle fracture", "Injury", "Ankle injuries"),
+        ("S92.3", "Fracture of metatarsal bone", "Metatarsal fracture", "Injury", "Foot injuries"),
         
         # Post-surgical conditions
         ("Z98.1", "Arthrodesis status", "Post spinal fusion", "Post-surgical", "Post-operative"),
@@ -90,7 +106,7 @@ def seed_icd10_codes():
     # Neurological Conditions (G00-G99)
     neurological_codes = [
         ("G56.0", "Carpal tunnel syndrome", "Carpal tunnel syndrome", "Neurological", "Nerve entrapment"),
-        ("G57.6", "Lesion of plantar nerve", "Plantar fasciitis/nerve", "Neurological", "Foot disorders"),
+        ("G57.6", "Lesion of plantar nerve", "Morton's neuroma", "Neurological", "Foot disorders"),
         ("G44.2", "Tension-type headache", "Tension headache", "Neurological", "Headaches"),
         ("G93.3", "Postviral fatigue syndrome", "Chronic fatigue syndrome", "Neurological", "Chronic conditions"),
     ]
@@ -101,6 +117,7 @@ def seed_icd10_codes():
         ("R25.2", "Cramp and spasm", "Muscle cramps", "Symptoms", "Muscle symptoms"),
         ("R26.2", "Difficulty in walking, not elsewhere classified", "Walking difficulty", "Symptoms", "Mobility issues"),
         ("R29.3", "Abnormal posture", "Poor posture", "Symptoms", "Postural issues"),
+        ("R68.84", "Jaw pain", "Jaw pain", "Symptoms", "Head/Face symptoms"),
     ]
     
     # Combine all codes
@@ -181,6 +198,24 @@ def seed_diagnosis_templates():
             "typical_duration_days": 21,
             "common_symptoms": '["Ankle pain", "Swelling", "Instability", "Limited weight bearing"]',
             "treatment_guidelines": "RICE protocol, progressive loading, balance training, return to activity"
+        },
+        {
+            "name": "Plantar Fasciitis",
+            "description": "Inflammation of the plantar fascia",
+            "primary_code": "M72.2",
+            "default_severity": "moderate",
+            "typical_duration_days": 90,
+            "common_symptoms": '["Heel pain", "Morning stiffness", "Pain with initial steps", "Arch pain"]',
+            "treatment_guidelines": "Stretching (gastroc/soleus), strengthening, taping, footwear advice, load management"
+        },
+        {
+            "name": "TMJ Dysfunction",
+            "description": "Temporomandibular joint disorder",
+            "primary_code": "M26.60",
+            "default_severity": "mild",
+            "typical_duration_days": 45,
+            "common_symptoms": '["Jaw pain", "Clicking/popping", "Restricted opening", "Ear pain", "Headaches"]',
+            "treatment_guidelines": "Manual therapy (intra/extra-oral), relaxation exercises, posture correction, cervical spine treatment"
         }
     ]
     
