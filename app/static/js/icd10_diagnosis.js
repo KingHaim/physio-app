@@ -498,7 +498,8 @@ class ICD10DiagnosisManager {
             return;
         }
         
-        let html = '';
+        // Start with grid container for compact layout
+        let html = '<div class="row g-3">';
         
         // Ensure container allows dropdowns to overflow
         container.style.overflow = 'visible';
@@ -521,85 +522,100 @@ class ICD10DiagnosisManager {
             const severityBadge = this.getSeverityBadge(diagnosis.severity);
             
             html += `
-                <div class="card mb-3 diagnosis-card" data-diagnosis-id="${diagnosis.id}" style="overflow: visible; position: relative; z-index: 1;">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <h6 class="card-title">
-                                    <span class="badge bg-primary me-2">${diagnosis.icd10_code}</span>
-                                    ${diagnosis.description}
-                                    ${typeBadge}
-                                </h6>
-                                <p class="card-text text-muted small mb-2">${diagnosis.full_description}</p>
-                                
-                                <div class="row g-2 mb-2">
-                                    <div class="col-auto">
-                                        <small class="text-muted">Status:</small> ${statusBadge}
-                                    </div>
-                                    <div class="col-auto">
-                                        <small class="text-muted">Severity:</small> ${severityBadge}
-                                    </div>
-                                    ${diagnosis.onset_date ? `
-                                    <div class="col-auto">
-                                        <small class="text-muted">Onset:</small> 
-                                        <span class="badge bg-light text-dark">${new Date(diagnosis.onset_date).toLocaleDateString()}</span>
-                                    </div>
-                                    ` : ''}
-                                    ${diagnosis.duration_days ? `
-                                    <div class="col-auto">
-                                        <small class="text-muted">Duration:</small> 
-                                        <span class="badge bg-light text-dark">${diagnosis.duration_days} days</span>
-                                    </div>
-                                    ` : ''}
+                <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                    <div class="card diagnosis-card-compact h-100" data-diagnosis-id="${diagnosis.id}" 
+                         style="min-height: 240px; position: relative; overflow: visible;">
+                        <div class="card-body p-3 d-flex flex-column">
+                            <!-- Header with code and dropdown -->
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-primary" style="font-size: 0.75rem;">${diagnosis.icd10_code}</span>
+                                <div class="dropdown position-static">
+                                    <button type="button" class="btn btn-sm btn-link p-1 text-muted" 
+                                            data-bs-toggle="dropdown" aria-expanded="false" 
+                                            data-bs-boundary="viewport" data-bs-placement="bottom-end"
+                                            style="line-height: 1;">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" 
+                                        style="z-index: 1080; position: absolute; min-width: 140px; font-size: 0.875rem;">
+                                        <li><a class="dropdown-item py-2" href="#" onclick="icd10Manager.editDiagnosis(${diagnosis.id})">
+                                            <i class="bi bi-pencil me-2"></i>Edit
+                                        </a></li>
+                                        ${diagnosis.status === 'active' ? `
+                                        <li><a class="dropdown-item py-2 text-success" href="#" onclick="icd10Manager.resolveDiagnosis(${diagnosis.id})">
+                                            <i class="bi bi-check-circle me-2"></i>Mark Resolved
+                                        </a></li>
+                                        ` : ''}
+                                        ${diagnosis.has_pathology_guide === true ? `
+                                        <li><a class="dropdown-item py-2" href="#" onclick="showPathologyGuide('${diagnosis.template_name || diagnosis.description}')">
+                                            <i class="bi bi-info-circle me-2"></i>Clinical Guide
+                                        </a></li>
+                                        ` : ''}
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item py-2 text-danger" href="#" onclick="icd10Manager.deleteDiagnosis(${diagnosis.id})">
+                                            <i class="bi bi-trash me-2"></i>Delete
+                                        </a></li>
+                                    </ul>
                                 </div>
-                                
-                                ${diagnosis.clinical_notes ? `
-                                <div class="mt-2">
-                                    <small class="text-muted">Clinical Notes:</small>
-                                    <p class="small mb-0">${diagnosis.clinical_notes}</p>
+                            </div>
+                            
+                            <!-- Diagnosis name -->
+                            <h6 class="card-title mb-2" style="font-size: 0.9rem; line-height: 1.3; height: 2.6rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                ${diagnosis.description}
+                            </h6>
+                            
+                            <!-- Type badge -->
+                            <div class="mb-2">
+                                ${typeBadge}
+                            </div>
+                            
+                            <!-- Status and severity badges -->
+                            <div class="mb-2 d-flex flex-wrap gap-1">
+                                ${statusBadge}
+                                ${severityBadge}
+                            </div>
+                            
+                            <!-- Date and duration info -->
+                            <div class="mb-2" style="font-size: 0.75rem;">
+                                ${diagnosis.onset_date ? `
+                                <div class="text-muted mb-1">
+                                    <i class="bi bi-calendar3 me-1"></i>Onset: ${new Date(diagnosis.onset_date).toLocaleDateString()}
+                                </div>
+                                ` : ''}
+                                ${diagnosis.duration_days ? `
+                                <div class="text-muted">
+                                    <i class="bi bi-clock me-1"></i>Duration: ${diagnosis.duration_days} days
                                 </div>
                                 ` : ''}
                             </div>
                             
-                            <div class="d-flex gap-2">
-                                <!-- Info Button (if pathology guide exists) -->
-                                <button class="btn btn-sm btn-outline-info" 
-                                        onclick="showPathologyGuide('${diagnosis.template_name || diagnosis.description}')"
-                                        title="Clinical Pathway Guide"
-                                        style="display: ${diagnosis.has_pathology_guide === true ? 'inline-block' : 'none'};">
-                                    <i class="bi bi-info-circle"></i> Info
-                                </button>
-                                
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                            type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-three-dots-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end" style="z-index: 1070; position: absolute !important;" data-bs-boundary="viewport">
-                                        <li><a class="dropdown-item" href="#" onclick="icd10Manager.editDiagnosis(${diagnosis.id})">
-                                            <i class="bi bi-pencil"></i> Edit
-                                        </a></li>
-                                        ${diagnosis.status === 'active' ? `
-                                        <li><a class="dropdown-item" href="#" onclick="icd10Manager.resolveDiagnosis(${diagnosis.id})">
-                                            <i class="bi bi-check-circle"></i> Mark Resolved
-                                        </a></li>
-                                        ` : ''}
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="#" onclick="showPathologyGuide('${diagnosis.template_name || diagnosis.description}')">
-                                            <i class="bi bi-info-circle"></i> Clinical Guide
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="icd10Manager.deleteDiagnosis(${diagnosis.id})">
-                                            <i class="bi bi-trash"></i> Delete
-                                        </a></li>
-                                    </ul>
+                            <!-- Clinical notes (truncated) -->
+                            ${diagnosis.clinical_notes ? `
+                            <div class="text-muted mb-2" style="font-size: 0.75rem; flex-grow: 1;">
+                                <div style="height: 2.25rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
+                                    ${diagnosis.clinical_notes}
                                 </div>
+                            </div>
+                            ` : '<div style="flex-grow: 1;"></div>'}
+                            
+                            <!-- Bottom section with info button -->
+                            <div class="mt-auto">
+                                ${diagnosis.has_pathology_guide === true ? `
+                                <button type="button" class="btn btn-sm btn-outline-info w-100" 
+                                        onclick="showPathologyGuide('${diagnosis.template_name || diagnosis.description}')"
+                                        title="View Clinical Guide" style="font-size: 0.75rem;">
+                                    <i class="bi bi-info-circle me-1"></i>Clinical Guide
+                                </button>
+                                ` : ''}
                             </div>
                         </div>
                     </div>
                 </div>
             `;
         });
+        
+        // Close the grid container
+        html += '</div>';
         
         container.innerHTML = html;
         

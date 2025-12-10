@@ -286,6 +286,50 @@
         display: block !important;
         position: absolute !important;
     }
+
+    /* Compact diagnosis card styling */
+    .diagnosis-card-compact {
+        transition: all 0.2s ease;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .diagnosis-card-compact:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-color: #007bff;
+    }
+    
+    .diagnosis-card-compact .card-body {
+        font-size: 0.875rem;
+    }
+    
+    .diagnosis-card-compact .badge {
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+    
+    .diagnosis-card-compact .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    /* Responsive grid adjustments */
+    @media (max-width: 768px) {
+        .diagnosis-card-compact {
+            min-height: 200px !important;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .diagnosis-card-compact {
+            min-height: 180px !important;
+        }
+        
+        .diagnosis-card-compact .card-body {
+            padding: 0.75rem !important;
+        }
+    }
 </style>
 {% endblock %}
 
