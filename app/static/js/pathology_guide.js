@@ -109,12 +109,18 @@ class PathologyGuideManager {
     }
 
     displayGuide(guide) {
-        document.getElementById('guide-loading').classList.add('d-none');
-        document.getElementById('guide-error').classList.add('d-none');
-        document.getElementById('guide-content').classList.remove('d-none');
+        // Safely hide loading and error states
+        const loadingElement = document.getElementById('guide-loading');
+        const errorElement = document.getElementById('guide-error');
+        const contentElement = document.getElementById('guide-content');
+        const titleElement = document.getElementById('guide-title');
+
+        if (loadingElement) loadingElement.classList.add('d-none');
+        if (errorElement) errorElement.classList.add('d-none');
+        if (contentElement) contentElement.classList.remove('d-none');
 
         // Set modal title
-        document.getElementById('guide-title').textContent = guide.name;
+        if (titleElement) titleElement.textContent = guide.name;
 
         // Overview tab
         this.populateOverview(guide);
@@ -138,50 +144,58 @@ class PathologyGuideManager {
     populateOverview(guide) {
         // Description
         const descElement = document.getElementById('guide-description');
-        descElement.textContent = guide.description || 'No description available.';
+        if (descElement) {
+            descElement.textContent = guide.description || 'No description available.';
+        }
 
         // Anatomy overview
         const anatomyElement = document.getElementById('guide-anatomy');
         const anatomyCard = document.getElementById('anatomy-card');
-        if (guide.anatomy_overview) {
+        if (guide.anatomy_overview && anatomyElement && anatomyCard) {
             anatomyElement.textContent = guide.anatomy_overview;
             anatomyCard.classList.remove('d-none');
-        } else {
+        } else if (anatomyCard) {
             anatomyCard.classList.add('d-none');
         }
 
         // Duration
         const durationElement = document.getElementById('guide-duration');
-        if (guide.typical_duration_days) {
-            const weeks = Math.round(guide.typical_duration_days / 7);
-            durationElement.textContent = `${weeks} weeks`;
-        } else {
-            durationElement.textContent = 'Variable';
+        if (durationElement) {
+            if (guide.typical_duration_days) {
+                const weeks = Math.round(guide.typical_duration_days / 7);
+                durationElement.textContent = `${weeks} weeks`;
+            } else {
+                durationElement.textContent = 'Variable';
+            }
         }
 
         // Phase count
         const phaseCountElement = document.getElementById('phase-count');
-        if (guide.treatment_phases) {
+        if (phaseCountElement && guide.treatment_phases) {
             const phases = guide.treatment_phases.split(/Phase \d+:/).length - 1;
             phaseCountElement.textContent = phases > 0 ? phases : '3';
         }
 
         // Red flags preview
         const redFlagsPreview = document.getElementById('guide-red-flags-preview');
-        if (guide.red_flags) {
-            const preview = guide.red_flags.substring(0, 100) + (guide.red_flags.length > 100 ? '...' : '');
-            redFlagsPreview.textContent = preview;
-        } else {
-            redFlagsPreview.textContent = 'See Red Flags tab for safety information.';
+        if (redFlagsPreview) {
+            if (guide.red_flags) {
+                const preview = guide.red_flags.substring(0, 100) + (guide.red_flags.length > 100 ? '...' : '');
+                redFlagsPreview.textContent = preview;
+            } else {
+                redFlagsPreview.textContent = 'See Red Flags tab for safety information.';
+            }
         }
     }
 
     populateClinicalPearls(guide) {
         const container = document.getElementById('guide-clinical-pearls');
-        if (guide.clinical_pearls) {
-            container.innerHTML = this.formatTextContent(guide.clinical_pearls);
-        } else {
-            container.innerHTML = '<p class="text-muted">No clinical pearls available for this condition.</p>';
+        if (container) {
+            if (guide.clinical_pearls) {
+                container.innerHTML = this.formatTextContent(guide.clinical_pearls);
+            } else {
+                container.innerHTML = '<p class="text-muted">No clinical pearls available for this condition.</p>';
+            }
         }
     }
 
@@ -190,54 +204,64 @@ class PathologyGuideManager {
         const symptomsContainer = document.getElementById('guide-symptoms');
 
         // Patient education content
-        if (guide.patient_education) {
-            educationContainer.innerHTML = this.formatTextContent(guide.patient_education);
-        } else {
-            educationContainer.innerHTML = '<p class="text-muted">No patient education content available.</p>';
+        if (educationContainer) {
+            if (guide.patient_education) {
+                educationContainer.innerHTML = this.formatTextContent(guide.patient_education);
+            } else {
+                educationContainer.innerHTML = '<p class="text-muted">No patient education content available.</p>';
+            }
         }
 
         // Common symptoms
-        if (guide.common_symptoms) {
-            const symptoms = guide.common_symptoms.split(',').map(s => s.trim());
-            const symptomsHTML = symptoms.map(symptom => 
-                `<span class="badge bg-light text-dark me-2 mb-2">${symptom}</span>`
-            ).join('');
-            symptomsContainer.innerHTML = symptomsHTML;
-        } else {
-            symptomsContainer.innerHTML = '<p class="text-muted">No symptoms listed.</p>';
+        if (symptomsContainer) {
+            if (guide.common_symptoms) {
+                const symptoms = guide.common_symptoms.split(',').map(s => s.trim());
+                const symptomsHTML = symptoms.map(symptom => 
+                    `<span class="badge bg-light text-dark me-2 mb-2">${symptom}</span>`
+                ).join('');
+                symptomsContainer.innerHTML = symptomsHTML;
+            } else {
+                symptomsContainer.innerHTML = '<p class="text-muted">No symptoms listed.</p>';
+            }
         }
     }
 
     populateTreatment(guide) {
         // Treatment phases
         const phasesContainer = document.getElementById('guide-treatment-phases');
-        if (guide.treatment_phases) {
-            phasesContainer.innerHTML = this.formatPhases(guide.treatment_phases);
-        } else {
-            phasesContainer.innerHTML = '<p class="text-muted">No treatment phases defined.</p>';
+        if (phasesContainer) {
+            if (guide.treatment_phases) {
+                phasesContainer.innerHTML = this.formatPhases(guide.treatment_phases);
+            } else {
+                phasesContainer.innerHTML = '<p class="text-muted">No treatment phases defined.</p>';
+            }
         }
 
         // Home exercises
         const exercisesContainer = document.getElementById('guide-home-exercises');
-        if (guide.home_exercises) {
-            exercisesContainer.innerHTML = this.formatExercises(guide.home_exercises);
-        } else {
-            exercisesContainer.innerHTML = '<p class="text-muted">No home exercises specified.</p>';
+        if (exercisesContainer) {
+            if (guide.home_exercises) {
+                exercisesContainer.innerHTML = this.formatExercises(guide.home_exercises);
+            } else {
+                exercisesContainer.innerHTML = '<p class="text-muted">No home exercises specified.</p>';
+            }
         }
 
         // Treatment guidelines
         const guidelinesContainer = document.getElementById('guide-treatment-guidelines');
-        if (guide.treatment_guidelines) {
-            guidelinesContainer.innerHTML = this.formatTextContent(guide.treatment_guidelines);
-        } else {
-            guidelinesContainer.innerHTML = '<p class="text-muted">No treatment guidelines available.</p>';
+        if (guidelinesContainer) {
+            if (guide.treatment_guidelines) {
+                guidelinesContainer.innerHTML = this.formatTextContent(guide.treatment_guidelines);
+            } else {
+                guidelinesContainer.innerHTML = '<p class="text-muted">No treatment guidelines available.</p>';
+            }
         }
     }
 
     populateFAQ(guide) {
         const container = document.getElementById('faqAccordion');
         
-        if (guide.faq_list && guide.faq_list.length > 0) {
+        if (container && guide.faq_list && guide.faq_list.length > 0) {
             const faqHTML = guide.faq_list.map((faq, index) => `
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="faq-heading-${index}">
@@ -259,7 +283,7 @@ class PathologyGuideManager {
             `).join('');
             
             container.innerHTML = faqHTML;
-        } else {
+        } else if (container) {
             container.innerHTML = `
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
@@ -271,7 +295,7 @@ class PathologyGuideManager {
 
     populateRedFlags(guide) {
         const container = document.getElementById('guide-red-flags');
-        if (guide.red_flags) {
+        if (container && guide.red_flags) {
             container.innerHTML = `
                 <div class="alert alert-danger">
                     <h6><i class="fas fa-exclamation-triangle me-2"></i>When to Refer or Seek Urgent Care:</h6>
@@ -285,7 +309,7 @@ class PathologyGuideManager {
                     </p>
                 </div>
             `;
-        } else {
+        } else if (container) {
             container.innerHTML = `
                 <div class="alert alert-warning">
                     <i class="fas fa-info-circle me-2"></i>
