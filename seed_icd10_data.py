@@ -52,12 +52,15 @@ def seed_icd10_codes():
         ("M26.61", "Adhesions and ankylosis of temporomandibular joint", "Stiff jaw/TMJ", "Musculoskeletal", "Head/Face disorders"),
         ("M26.69", "Other specified temporomandibular joint disorders", "Clicking jaw/TMJ", "Musculoskeletal", "Head/Face disorders"),
         
-        # Foot and Ankle Pathologies (M20-M21, M70-M79)
+        # Foot and Ankle Pathologies (M20-M21, M70-M79, M92)
         ("M72.2", "Plantar fascial fibromatosis", "Plantar fasciitis", "Musculoskeletal", "Foot disorders"),
         ("M20.1", "Hallux valgus (acquired)", "Bunions", "Musculoskeletal", "Foot disorders"),
+        ("M20.2", "Hallux rigidus", "Stiff Big Toe", "Musculoskeletal", "Foot disorders"),
+        ("M20.5", "Other deformities of toe(s) (acquired)", "Tailor's Bunion", "Musculoskeletal", "Foot disorders"),
         ("M21.4", "Flat foot [pes planus] (acquired)", "Flat feet", "Musculoskeletal", "Foot disorders"),
         ("M77.4", "Metatarsalgia", "Metatarsalgia", "Musculoskeletal", "Foot disorders"),
         ("M20.4", "Other hammer toe(s) (acquired)", "Hammer toe", "Musculoskeletal", "Foot disorders"),
+        ("M92.6", "Juvenile osteochondrosis of tarsus", "Sever's Disease", "Musculoskeletal", "Pediatric/Foot"),
         ("M76.8", "Other enthesopathies of lower limb", "Tibialis posterior tendonitis", "Musculoskeletal", "Foot disorders"),
 
         # Muscle and Tendon Disorders (M60-M79)
@@ -85,6 +88,7 @@ def seed_icd10_codes():
     injury_codes = [
         # Sprains and Strains
         ("S93.4", "Sprain and strain of ankle", "Ankle sprain", "Injury", "Ankle injuries"),
+        ("S93.5", "Sprain of toe", "Turf Toe / Toe Sprain", "Injury", "Foot injuries"),
         ("S83.5", "Sprain and strain of cruciate ligament of knee", "Knee ligament sprain", "Injury", "Knee injuries"),
         ("S63.6", "Sprain and strain of finger(s)", "Finger sprain", "Injury", "Hand injuries"),
         ("S43.4", "Sprain and strain of shoulder joint", "Shoulder sprain", "Injury", "Shoulder injuries"),
@@ -97,6 +101,7 @@ def seed_icd10_codes():
         ("S52.5", "Fracture of lower end of radius", "Wrist fracture (Colles)", "Injury", "Wrist injuries"),
         ("S82.6", "Fracture of lateral malleolus", "Ankle fracture", "Injury", "Ankle injuries"),
         ("S92.3", "Fracture of metatarsal bone", "Metatarsal fracture", "Injury", "Foot injuries"),
+        ("S92.35", "Fracture of fifth metatarsal bone", "Jones Fracture", "Injury", "Foot injuries"),
         
         # Post-surgical conditions
         ("Z98.1", "Arthrodesis status", "Post spinal fusion", "Post-surgical", "Post-operative"),
@@ -207,6 +212,15 @@ def seed_diagnosis_templates():
             "typical_duration_days": 90,
             "common_symptoms": '["Heel pain", "Morning stiffness", "Pain with initial steps", "Arch pain"]',
             "treatment_guidelines": "Stretching (gastroc/soleus), strengthening, taping, footwear advice, load management"
+        },
+        {
+            "name": "Jones Fracture (5th Metatarsal)",
+            "description": "Fracture of the base of the fifth metatarsal",
+            "primary_code": "S92.35",
+            "default_severity": "severe",
+            "typical_duration_days": 60,
+            "common_symptoms": '["Lateral foot pain", "Swelling", "Difficulty walking", "Bruising"]',
+            "treatment_guidelines": "Immobilization (boot/cast), gradual weight bearing, strengthening, balance training"
         },
         {
             "name": "TMJ Dysfunction",
