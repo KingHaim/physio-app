@@ -1076,7 +1076,7 @@ def add_treatment(patient_id):
 @physio_required # <<< ADD DECORATOR
 def new_recurring_appointment(patient_id):
     patient = Patient.query.get_or_404(patient_id)
-    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+    accessible_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
     if patient.id not in accessible_ids:
         abort(404)
     
@@ -1444,6 +1444,12 @@ def get_appointments():
 @physio_required # <<< ADD DECORATOR
 def update_appointment(id):
     treatment = Treatment.query.get_or_404(id)
+    patient = treatment.patient
+    if not patient:
+        abort(404)
+    accessible_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
+    if patient.id not in accessible_ids:
+        abort(404)
 
     if request.form.get('action') == 'complete':
         treatment.status = 'Completed'
@@ -1886,7 +1892,7 @@ def edit_treatment(id):
     patient = treatment.patient
     if not patient:
         abort(404)
-    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+    accessible_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
     if patient.id not in accessible_ids:
         abort(404)
     # REMOVED form instantiation
@@ -2156,30 +2162,12 @@ def view_treatment(id):
         flash('An error occurred while loading the treatment.', 'danger')
         return redirect(url_for('main.patients_list'))
 
-@main.route('/test/edit-treatment/<int:id>')
-@login_required
-@physio_required # <<< ADD DECORATOR
-def test_edit_treatment(id):
-    treatment = Treatment.query.get_or_404(id)
-    return f"""
-    <html>
-    <body>
-        <h1>Test Edit Treatment</h1>
-        <p>Treatment ID: {treatment.id}</p>
-        <p>Date: {treatment.created_at}</p>
-        <p>Description: {treatment.treatment_type}</p>
-        <p>Patient: {treatment.patient.name}</p>
-        <a href="/treatment/{treatment.id}/edit">Go to Edit Page</a>
-    </body>
-    </html>
-    """
-
 @main.route('/patient/<int:id>/edit-treatments')
 @login_required
 @physio_required # <<< ADD DECORATOR
 def patient_edit_treatments(id):
     patient = Patient.query.get_or_404(id)
-    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+    accessible_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
     if patient.id not in accessible_ids:
         abort(404)
     treatments = Treatment.query.filter_by(patient_id=id).order_by(Treatment.created_at.desc()).all()
@@ -2190,7 +2178,7 @@ def patient_edit_treatments(id):
 @physio_required # <<< ADD DECORATOR
 def new_treatment_page(patient_id):
     patient = Patient.query.get_or_404(patient_id)
-    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+    accessible_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
     if patient.id not in accessible_ids:
         abort(404)
     now = datetime.now() # Get current datetime
@@ -2748,32 +2736,29 @@ def bulk_update_treatments():
         updated_count = 0
         earliest_treatment_id = None
         patient_id_for_check = None
+        denied = {'success': False, 'message': 'Unable to update treatments.'}
 
         # --- Determine if auto-fee logic applies ---
         clinic_name_for_fee = current_user.clinic_name or 'CostaSpine Clinic'
         is_costaspine_auto_fee = (field_to_update == 'location' and new_value == clinic_name_for_fee)
 
-        # --- Get patient ID and earliest treatment if auto-fee applies --- 
+        # Filter to accessible treatments before using any id as a reference.
+        accessible_patient_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
+        treatments_to_update = Treatment.query.filter(
+            Treatment.id.in_(treatment_ids),
+            Treatment.patient_id.in_(accessible_patient_ids)
+        ).all()
+        if not treatments_to_update:
+            return jsonify(denied), 400
+
+        # Auto-fee reference comes from an already-authorized treatment only.
         if is_costaspine_auto_fee:
-            # Find the patient ID from the first treatment ID in the list
-            first_treatment_check = Treatment.query.options(db.joinedload(Treatment.patient)).get(treatment_ids[0])
-            if not first_treatment_check:
-                 return jsonify({'success': False, 'message': 'Invalid treatment ID found in list.'}), 400
-            patient_id_for_check = first_treatment_check.patient_id
-            
-            # Find the earliest treatment for this specific patient
+            patient_id_for_check = treatments_to_update[0].patient_id
             earliest_patient_treatment = Treatment.query.filter_by(patient_id=patient_id_for_check)\
                                                  .order_by(Treatment.created_at.asc(), Treatment.id.asc())\
                                                  .first()
             earliest_treatment_id = earliest_patient_treatment.id if earliest_patient_treatment else None
 
-        # --- Query and update selected treatments (only those the user can access) ---
-        accessible_patient_ids = [p.id for p in current_user.get_accessible_patients()]
-        treatments_to_update = Treatment.query.filter(
-            Treatment.id.in_(treatment_ids),
-            Treatment.patient_id.in_(accessible_patient_ids)
-        ).all()
-        
         for treatment in treatments_to_update:
             # Consistency check: Ensure all selected treatments belong to the same patient if auto-fee applies
             if patient_id_for_check is not None and treatment.patient_id != patient_id_for_check:
@@ -2801,8 +2786,7 @@ def bulk_update_treatments():
             db.session.commit()
             return jsonify({'success': True, 'message': f'Successfully updated {updated_count} treatments.'})
         else:
-             # Handle case where all treatments were skipped or list was empty
-             return jsonify({'success': False, 'message': 'No valid treatments were updated.'}), 400 # Return 400 Bad Request
+             return jsonify(denied), 400
 
     except Exception as e:
         db.session.rollback()
@@ -4952,7 +4936,7 @@ def data_processing_activities():
 @login_required
 def patient_consent(patient_id):
     patient = Patient.query.get_or_404(patient_id)
-    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+    accessible_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
     if patient.id not in accessible_ids:
         abort(404)
     form = UserConsentForm()
