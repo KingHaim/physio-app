@@ -217,6 +217,45 @@ def test_production_refuses_app_base_url_host_not_in_trusted_hosts():
         create_app(UntrustedBase)
 
 
+@pytest.mark.parametrize('trusted_hosts', [None, [], ['', '  ']])
+def test_production_refuses_empty_trusted_hosts(trusted_hosts):
+    class EmptyTrusted(ProductionConfig):
+        APP_BASE_URL = 'https://www.trxck.tech'
+        TRUSTED_HOSTS = trusted_hosts
+
+    with pytest.raises(RuntimeError, match='TRUSTED_HOSTS'):
+        create_app(EmptyTrusted)
+
+
+def test_production_accepts_app_base_url_host_case_insensitive():
+    class MixedCase(ProductionConfig):
+        APP_BASE_URL = 'https://WWW.TRXCK.TECH'
+        TRUSTED_HOSTS = ['www.trxck.tech', 'trxck.tech']
+
+    previous = login_manager.session_protection
+    try:
+        app = create_app(MixedCase)
+        assert app.config['APP_BASE_URL'] == 'https://WWW.TRXCK.TECH'
+    finally:
+        login_manager.session_protection = previous
+
+
+@pytest.mark.parametrize('base_url', [
+    'https://www.trxck.tech/app',
+    'https://www.trxck.tech?next=1',
+    'https://www.trxck.tech#frag',
+    'https://user:pass@www.trxck.tech',
+    'https://user@www.trxck.tech',
+])
+def test_production_refuses_app_base_url_with_path_query_fragment_or_userinfo(base_url):
+    class ExtraBits(ProductionConfig):
+        APP_BASE_URL = base_url
+        TRUSTED_HOSTS = ['www.trxck.tech', 'trxck.tech']
+
+    with pytest.raises(RuntimeError, match='APP_BASE_URL'):
+        create_app(ExtraBits)
+
+
 def test_production_login_set_cookie_headers_are_secure():
     """Real Set-Cookie flags on session and remember cookies under production + HTTPS."""
     app, previous = _make_prod_app()

@@ -54,17 +54,39 @@ def absolute_url(endpoint, **values):
 
 
 def require_production_app_base_url(app):
-    """Refuse to start if APP_BASE_URL is not https:// on a trusted host."""
+    """Refuse to start if APP_BASE_URL is not an https origin on a trusted host."""
+    trusted = app.config.get('TRUSTED_HOSTS')
+    trusted_normalized = [
+        str(host).strip().lower()
+        for host in (trusted or [])
+        if str(host).strip()
+    ]
+    if not trusted_normalized:
+        raise RuntimeError(
+            'TRUSTED_HOSTS must be a non-empty list in production. '
+            'Werkzeug treats an empty list as allow-all.'
+        )
+
     base = (app.config.get('APP_BASE_URL') or '').strip()
     parsed = urlparse(base)
-    if parsed.scheme != 'https' or not parsed.hostname:
+    extra_path = parsed.path not in ('', '/')
+    if (
+        parsed.scheme != 'https'
+        or not parsed.hostname
+        or extra_path
+        or parsed.query
+        or parsed.fragment
+        or parsed.username is not None
+        or parsed.password is not None
+    ):
         raise RuntimeError(
-            'APP_BASE_URL must be an https:// origin in production '
+            'APP_BASE_URL must be an https:// origin '
+            '(scheme://host[:port], optional trailing slash) in production '
             f'(got {base!r}).'
         )
-    trusted = app.config.get('TRUSTED_HOSTS') or []
-    if not host_is_trusted(parsed.netloc, trusted):
+
+    if not host_is_trusted(parsed.hostname.lower(), trusted_normalized):
         raise RuntimeError(
             f'APP_BASE_URL host {parsed.hostname!r} must be listed in '
-            f'TRUSTED_HOSTS {list(trusted)!r}.'
+            f'TRUSTED_HOSTS {trusted_normalized!r}.'
         )
