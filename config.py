@@ -22,15 +22,25 @@ ENV_ALIASES = {
 DEFAULT_PROD_TRUSTED_HOSTS = ['www.trxck.tech', 'trxck.tech']
 DEFAULT_LOCAL_TRUSTED_HOSTS = ['localhost', '127.0.0.1']
 DEFAULT_PROD_APP_BASE_URL = 'https://www.trxck.tech'
-DEFAULT_LOCAL_APP_BASE_URL = 'http://localhost'
+DEFAULT_LOCAL_APP_BASE_URL = 'http://localhost:5002'
+
+
+def _normalize_host_list(hosts):
+    return [str(part).strip().lower() for part in hosts if str(part).strip()]
 
 
 def parse_trusted_hosts(default):
+    """Parse TRUSTED_HOSTS. Empty/whitespace env falls back to default.
+
+    Entries are stripped and lowercased so request Host matching is
+    case-insensitive. An explicitly empty list assigned on a config class
+    is left empty and production startup refuses it.
+    """
     raw = os.environ.get('TRUSTED_HOSTS')
     if raw is None or str(raw).strip() == '':
-        return list(default)
-    hosts = [part.strip() for part in str(raw).split(',') if part.strip()]
-    return hosts or list(default)
+        return _normalize_host_list(default)
+    hosts = _normalize_host_list(str(raw).split(','))
+    return hosts or _normalize_host_list(default)
 
 
 def parse_app_base_url(default):
@@ -241,6 +251,7 @@ class TestConfig(Config):
     
     # Disable CSRF for testing
     WTF_CSRF_ENABLED = False
+    APP_BASE_URL = parse_app_base_url('http://localhost')
 
 # Configuration dictionary
 config = {

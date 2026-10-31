@@ -408,6 +408,7 @@ def send_trial_reminder_emails():
     ]
     
     total_sent = 0
+    total_failed = 0
     
     for config in reminder_configs:
         days = config['days']
@@ -427,20 +428,41 @@ def send_trial_reminder_emails():
         ).all()
         
         for user in users_to_remind:
+            user_id = user.id
             try:
-                # Send the reminder email
                 if send_trial_reminder_email(user, days):
-                    # Mark this reminder as sent
                     subscription = user.current_subscription
                     if subscription:
                         setattr(subscription, field_name, True)
                         db.session.commit()
                         total_sent += 1
-                        print(f"Sent {days}-day reminder to {user.email}")
+                        current_app.logger.info(
+                            'Sent %s-day trial reminder to user_id=%s', days, user_id
+                        )
+                    else:
+                        total_failed += 1
+                        current_app.logger.error(
+                            'Sent %s-day trial reminder but no subscription '
+                            'to mark for user_id=%s',
+                            days,
+                            user_id,
+                        )
                 else:
-                    print(f"Failed to send {days}-day reminder to {user.email}")
-            except Exception as e:
-                print(f"Error sending {days}-day reminder to {user.email}: {str(e)}")
+                    total_failed += 1
+                    current_app.logger.error(
+                        'Failed to send %s-day trial reminder to user_id=%s',
+                        days,
+                        user_id,
+                    )
+            except Exception:
+                total_failed += 1
+                current_app.logger.exception(
+                    'Error sending %s-day trial reminder to user_id=%s',
+                    days,
+                    user_id,
+                )
     
-    print(f"Total trial reminder emails sent: {total_sent}")
-    return total_sent
+    current_app.logger.info(
+        'Trial reminder batch finished: sent=%s failed=%s', total_sent, total_failed
+    )
+    return total_sent, total_failed

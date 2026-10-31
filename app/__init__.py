@@ -170,6 +170,13 @@ def create_app(config_class=None):
     
     app.config.from_object(config_class)
 
+    from app.urls import (
+        lowercase_wsgi_host,
+        normalize_trusted_hosts_config,
+        require_production_app_base_url,
+    )
+    normalize_trusted_hosts_config(app)
+
     # Cookie flags come from the selected config (Secure in production, off for local HTTP).
     login_manager.session_protection = app.config.get('SESSION_PROTECTION', 'basic')
 
@@ -189,7 +196,6 @@ def create_app(config_class=None):
                 'DEBUG must be False in production. '
                 'Refusing to start with the debugger enabled.'
             )
-        from app.urls import require_production_app_base_url
         require_production_app_base_url(app)
         # One trusted hop (PythonAnywhere). x_proto so request.is_secure and
         # WTF_CSRF_SSL_STRICT see HTTPS; x_for for the client IP.
@@ -200,6 +206,8 @@ def create_app(config_class=None):
             app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
         else:
             app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
+
+    app.wsgi_app = lowercase_wsgi_host(app.wsgi_app)
 
     # Setup logging and monitoring
     setup_logging(app)

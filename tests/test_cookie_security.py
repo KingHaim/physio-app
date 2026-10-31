@@ -9,12 +9,19 @@ from urllib.parse import urlparse
 import pytest
 from flask import has_request_context, request, url_for
 from sqlalchemy.pool import StaticPool
+from werkzeug.test import EnvironBuilder
 
 from app import create_app, db, login_manager
 from app.email_utils import send_trial_reminder_emails, send_verification_email
 from app.models import Plan, User, UserSubscription
 from app.urls import absolute_url
-from config import DevelopmentConfig, ProductionConfig, TestConfig, resolve_config_name
+from config import (
+    DevelopmentConfig,
+    ProductionConfig,
+    TestConfig,
+    parse_trusted_hosts,
+    resolve_config_name,
+)
 
 
 DEBUG_AND_REMOVED_PATHS = (
@@ -130,6 +137,7 @@ def test_local_and_test_configs_keep_insecure_cookies_for_http():
     assert 'localhost' in test_app.config['TRUSTED_HOSTS']
     assert '127.0.0.1' in test_app.config['TRUSTED_HOSTS']
     assert 'localhost' in DevelopmentConfig.TRUSTED_HOSTS
+    assert DevelopmentConfig.APP_BASE_URL == 'http://localhost:5002'
 
 
 def test_unset_env_resolve_config_name_is_production(monkeypatch):
@@ -254,6 +262,140 @@ def test_production_refuses_app_base_url_with_path_query_fragment_or_userinfo(ba
 
     with pytest.raises(RuntimeError, match='APP_BASE_URL'):
         create_app(ExtraBits)
+
+
+def test_parse_trusted_hosts_lowercases_and_strips(monkeypatch):
+    monkeypatch.setenv('TRUSTED_HOSTS', ' WWW.TRXCK.TECH , TRXCK.TECH ')
+    assert parse_trusted_hosts(['Example.COM']) == ['www.trxck.tech', 'trxck.tech']
+    monkeypatch.delenv('TRUSTED_HOSTS')
+    assert parse_trusted_hosts(['WWW.TRXCK.TECH', ' trxck.tech ']) == [
+        'www.trxck.tech',
+        'trxck.tech',
+    ]
+
+
+def test_parse_trusted_hosts_empty_or_whitespace_env_falls_back(monkeypatch):
+    default = ['www.trxck.tech', 'trxck.tech']
+    monkeypatch.delenv('TRUSTED_HOSTS', raising=False)
+    assert parse_trusted_hosts(default) == default
+    monkeypatch.setenv('TRUSTED_HOSTS', '   ')
+    assert parse_trusted_hosts(default) == default
+    monkeypatch.setenv('TRUSTED_HOSTS', ',,,')
+    assert parse_trusted_hosts(default) == default
+
+
+def test_create_app_lowercases_trusted_hosts_on_config():
+    class UpperTrusted(ProductionCookieTestConfig):
+        TRUSTED_HOSTS = ['WWW.TRXCK.TECH']
+        APP_BASE_URL = 'https://www.trxck.tech'
+
+    previous = login_manager.session_protection
+    try:
+        app = create_app(UpperTrusted)
+        assert app.config['TRUSTED_HOSTS'] == ['www.trxck.tech']
+    finally:
+        login_manager.session_protection = previous
+
+
+def test_mixed_case_host_accepted_via_raw_wsgi():
+    """Flask's test client lowercases Host; raw WSGI must still accept WWW."""
+    class UpperTrusted(ProductionCookieTestConfig):
+        TRUSTED_HOSTS = ['WWW.TRXCK.TECH']
+        APP_BASE_URL = 'https://www.trxck.tech'
+
+    previous = login_manager.session_protection
+    builder = EnvironBuilder(method='GET', path='/auth/login')
+    try:
+        app = create_app(UpperTrusted)
+        with app.app_context():
+            db.create_all()
+
+        captured = {}
+
+        def start_response(status, headers, exc_info=None):
+            captured['status'] = status
+
+        environ = builder.get_environ()
+        environ['HTTP_HOST'] = 'WWW.TRXCK.TECH'
+        environ['SERVER_NAME'] = 'WWW.TRXCK.TECH'
+        environ['SERVER_PORT'] = '443'
+        environ['wsgi.url_scheme'] = 'https'
+        list(app(environ, start_response))
+        assert captured['status'].startswith('200'), captured
+    finally:
+        builder.close()
+        login_manager.session_protection = previous
+
+
+def test_app_base_url_strips_default_ports():
+    class Port443(ProductionCookieTestConfig):
+        APP_BASE_URL = 'https://www.trxck.tech:443'
+
+    previous = login_manager.session_protection
+    try:
+        app = create_app(Port443)
+        with app.app_context():
+            assert not has_request_context()
+            assert absolute_url('auth.login') == 'https://www.trxck.tech/auth/login'
+    finally:
+        login_manager.session_protection = previous
+
+
+def test_app_base_url_strips_http_default_port():
+    class Port80(TestConfig):
+        APP_BASE_URL = 'http://localhost:80'
+
+    previous = login_manager.session_protection
+    try:
+        app = create_app(Port80)
+        with app.app_context():
+            assert absolute_url('auth.login') == 'http://localhost/auth/login'
+    finally:
+        login_manager.session_protection = previous
+
+
+def test_send_trial_reminders_cli_exits_nonzero_on_failure(monkeypatch):
+    app, previous = _make_prod_app()
+    try:
+        monkeypatch.setattr(
+            'app.email_utils.send_trial_reminder_emails',
+            lambda: (0, 1),
+        )
+        result = app.test_cli_runner().invoke(args=['send-trial-reminders'])
+        assert result.exit_code != 0
+        assert 'sent successfully' not in result.output
+    finally:
+        login_manager.session_protection = previous
+
+
+def test_send_trial_reminders_cli_exits_nonzero_when_batch_raises(monkeypatch):
+    app, previous = _make_prod_app()
+    try:
+        def boom():
+            raise RuntimeError('smtp unavailable')
+
+        monkeypatch.setattr('app.email_utils.send_trial_reminder_emails', boom)
+        result = app.test_cli_runner().invoke(args=['send-trial-reminders'])
+        assert result.exit_code != 0
+        assert 'sent successfully' not in result.output
+    finally:
+        login_manager.session_protection = previous
+
+
+def test_maintenance_cli_exits_nonzero_on_reminder_failure(monkeypatch):
+    app, previous = _make_prod_app()
+    try:
+        monkeypatch.setattr('app.cli.mark_past_treatments_as_completed', lambda: 0)
+        monkeypatch.setattr('app.cli.mark_inactive_patients', lambda: 0)
+        monkeypatch.setattr(
+            'app.email_utils.send_trial_reminder_emails',
+            lambda: (0, 1),
+        )
+        result = app.test_cli_runner().invoke(args=['maintenance'])
+        assert result.exit_code != 0
+        assert 'sent successfully' not in result.output
+    finally:
+        login_manager.session_protection = previous
 
 
 def test_production_login_set_cookie_headers_are_secure():
@@ -603,10 +745,11 @@ def test_send_trial_reminders_without_request_uses_app_base_url(monkeypatch):
             sub_id = subscription.id
 
             assert not has_request_context()
-            sent = send_trial_reminder_emails()
+            sent, failed = send_trial_reminder_emails()
             flagged = UserSubscription.query.get(sub_id).trial_reminder_7_days_sent
 
         assert sent == 1
+        assert failed == 0
         assert flagged is True
         assert captured.get('text')
         assert 'https://www.trxck.tech/manage-subscription' in captured['text']

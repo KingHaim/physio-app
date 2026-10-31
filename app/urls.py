@@ -20,7 +20,18 @@ def app_base_url():
             'APP_BASE_URL is not configured. Set it to the public origin '
             '(production default is https://www.trxck.tech).'
         )
-    return base
+    parsed = urlparse(base)
+    if not parsed.scheme or not parsed.hostname:
+        return base
+    port = parsed.port
+    default_port = (parsed.scheme == 'https' and port == 443) or (
+        parsed.scheme == 'http' and port == 80
+    )
+    if port and not default_port:
+        netloc = f'{parsed.hostname}:{port}'
+    else:
+        netloc = parsed.hostname
+    return f'{parsed.scheme}://{netloc}'
 
 
 def _relative_path(endpoint, values):
@@ -90,3 +101,28 @@ def require_production_app_base_url(app):
             f'APP_BASE_URL host {parsed.hostname!r} must be listed in '
             f'TRUSTED_HOSTS {trusted_normalized!r}.'
         )
+
+
+def normalize_trusted_hosts_config(app):
+    """Lowercase/strip TRUSTED_HOSTS on the live app config."""
+    hosts = app.config.get('TRUSTED_HOSTS')
+    if hosts is None:
+        return
+    app.config['TRUSTED_HOSTS'] = [
+        str(host).strip().lower() for host in hosts if str(host).strip()
+    ]
+
+
+def lowercase_wsgi_host(wsgi_app):
+    """Host names are case-insensitive; Werkzeug's TRUSTED_HOSTS check is not."""
+
+    def wrapped(environ, start_response):
+        host = environ.get('HTTP_HOST')
+        if host:
+            environ['HTTP_HOST'] = host.lower()
+        forwarded = environ.get('HTTP_X_FORWARDED_HOST')
+        if forwarded:
+            environ['HTTP_X_FORWARDED_HOST'] = forwarded.lower()
+        return wsgi_app(environ, start_response)
+
+    return wrapped
