@@ -6,7 +6,32 @@ from datetime import timedelta
 # Get the absolute path to the directory containing this file
 basedir = os.path.abspath(os.path.dirname(__file__))
 
+# Public defaults first (.flaskenv), then .env. Neither overrides a real env var.
+load_dotenv(os.path.join(basedir, '.flaskenv'))
 load_dotenv()
+
+VALID_ENVIRONMENTS = frozenset({'development', 'production', 'testing'})
+
+
+def resolve_config_name():
+    """Return development|production|testing. Unset defaults to production.
+
+    FLASK_ENV is preferred; APP_ENV is an optional alias. Values are stripped
+    and lowercased. Unknown values raise so a typo cannot silently use insecure
+    development settings.
+    """
+    raw = os.environ.get('FLASK_ENV')
+    if raw is None or str(raw).strip() == '':
+        raw = os.environ.get('APP_ENV')
+    if raw is None or str(raw).strip() == '':
+        return 'production'
+    name = str(raw).strip().lower()
+    if name not in VALID_ENVIRONMENTS:
+        raise RuntimeError(
+            f"Unknown environment {name!r}. "
+            "Set FLASK_ENV or APP_ENV to 'development', 'production', or 'testing'."
+        )
+    return name
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY")
@@ -138,7 +163,9 @@ class ProductionConfig(Config):
     REMEMBER_COOKIE_SAMESITE = 'Lax'
     REMEMBER_COOKIE_DURATION = timedelta(days=14)
     PERMANENT_SESSION_LIFETIME = timedelta(hours=12)
-    SESSION_PROTECTION = 'strong'
+    # 'basic' (not 'strong'): 'strong' logs users out on any IP change,
+    # including X-Forwarded-For that a client can spoof, and clears remember-me.
+    SESSION_PROTECTION = 'basic'
     WTF_CSRF_SSL_STRICT = True
     
     # Production-specific settings - only check at runtime, not import time
@@ -185,5 +212,5 @@ config = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
     'testing': TestConfig,
-    'default': DevelopmentConfig
+    'default': ProductionConfig,
 }

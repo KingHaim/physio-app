@@ -5405,9 +5405,3 @@ def create_patient_ajax():
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Error creating patient: {str(e)}'}), 500
 
-@main.route('/test_anamnesis')
-@login_required
-def test_anamnesis():
-    """Test route for anamnesis display debugging"""
-    return render_template('test_anamnesis.html')
-

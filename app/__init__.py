@@ -1,6 +1,7 @@
 # app/__init__.py
 import os
 from flask import Flask, request, session
+from werkzeug.middleware.proxy_fix import ProxyFix
 from app.security import SecurityMiddleware
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -26,6 +27,30 @@ login_manager.login_view = 'auth.login'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.login_message_category = 'info'
 login_manager.session_protection = 'basic'
+
+
+def _clear_remember_cookie(response):
+    """Delete remember_token with the same Secure/HttpOnly/SameSite flags used to set it.
+
+    Flask-Login 0.6.3's _clear_cookie only passes domain/path, so browsers can
+    keep a Secure remember cookie after logout.
+    """
+    from flask import current_app
+
+    cookie_name = current_app.config.get('REMEMBER_COOKIE_NAME', 'remember_token')
+    domain = current_app.config.get('REMEMBER_COOKIE_DOMAIN')
+    path = current_app.config.get('REMEMBER_COOKIE_PATH', '/')
+    response.delete_cookie(
+        cookie_name,
+        domain=domain,
+        path=path,
+        secure=bool(current_app.config.get('REMEMBER_COOKIE_SECURE')),
+        httponly=bool(current_app.config.get('REMEMBER_COOKIE_HTTPONLY', True)),
+        samesite=current_app.config.get('REMEMBER_COOKIE_SAMESITE') or 'Lax',
+    )
+
+
+login_manager._clear_cookie = _clear_remember_cookie
 
 # Initialize CSRF protection
 csrf = CSRFProtect()
@@ -104,7 +129,7 @@ def setup_sentry(app):
             integrations=[FlaskIntegration()],
             traces_sample_rate=0.2,  # Sample 20% of transactions
             send_default_pii=True,  # Include user context
-            environment=app.config.get('FLASK_ENV', 'development'),
+            environment=app.config.get('FLASK_ENV') or os.environ.get('FLASK_ENV', 'production'),
             before_send=lambda event, hint: before_sentry_send(event, hint, app)
         )
         app.logger.info("Sentry error monitoring initialized.")
@@ -129,19 +154,37 @@ def before_sentry_send(event, hint, app):
     
     return event
 
+def _is_production_config(config_class):
+    from config import ProductionConfig
+    return isinstance(config_class, type) and issubclass(config_class, ProductionConfig)
+
+
 def create_app(config_class=None):
     app = Flask(__name__)
     
     # Determine which config to use based on environment
     if config_class is None:
-        from config import config
-        config_name = os.environ.get('FLASK_ENV', 'development')
-        config_class = config.get(config_name, config['default'])
+        from config import config, resolve_config_name
+        config_name = resolve_config_name()
+        config_class = config[config_name]
     
     app.config.from_object(config_class)
 
     # Cookie flags come from the selected config (Secure in production, off for local HTTP).
     login_manager.session_protection = app.config.get('SESSION_PROTECTION', 'basic')
+
+    if _is_production_config(config_class):
+        if not app.config.get('SESSION_COOKIE_SECURE'):
+            raise RuntimeError(
+                'SESSION_COOKIE_SECURE must be True in production. '
+                'Refusing to start with insecure cookies.'
+            )
+        # One trusted hop (PythonAnywhere). x_proto so request.is_secure and
+        # WTF_CSRF_SSL_STRICT see HTTPS; x_for for the client IP; x_host so
+        # request.host / url_for(_external=True) use the public Host
+        # (www.trxck.tech vs trxck.tech) instead of the internal gunicorn host.
+        # SERVER_NAME still overrides url_for's host when it is set.
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # Setup logging and monitoring
     setup_logging(app)
@@ -421,5 +464,15 @@ def get_locale_display_name(locale_identifier):
     return display_names.get(str(locale_identifier), str(locale_identifier))
 # ---------------------------------------------------------
 
-# Create the app instance
-app = create_app()
+# Lazy app instance so `from app import app` still works (PythonAnywhere /
+# older scripts) without constructing a production app at import time.
+_app = None
+
+
+def __getattr__(name):
+    global _app
+    if name == 'app':
+        if _app is None:
+            _app = create_app()
+        return _app
+    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')

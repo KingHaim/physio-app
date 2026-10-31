@@ -77,11 +77,18 @@ This guide will help you deploy PhysioApp to PythonAnywhere.
    project_folder = os.path.expanduser(path)
    load_dotenv(os.path.join(project_folder, '.env'))
 
-   # Import your app
+   # Import your app. This is the supported WSGI path:
+   #   from run import app as application
+   # run.py calls create_app(). Unset FLASK_ENV now means production
+   # (secure cookies). Set FLASK_ENV=production in .env explicitly.
    from run import app as application
    ```
 
    (Replace `yourusername` with your actual PythonAnywhere username)
+
+   Do not point the WSGI file at `app:app` unless you intend the lazy
+   `from app import app` fallback (it also calls `create_app()`). The
+   documented import remains `from run import app as application`.
 
 4. In the "Virtualenv" section:
    - Set it to `/home/kinghaim/physio-app/venv`

@@ -50,12 +50,19 @@ touch .env
 # Add your settings to .env
 # Example:
 SECRET_KEY=your-secret-key   # Required for Flask session security
+FLASK_ENV=development        # Required for local HTTP. Unset defaults to production.
 # CALENDLY_API_TOKEN=your-calendly-token
 # DEEPSEEK_API_KEY=your-deepseek-api-key
 ```
 
 Make sure the `SECRET_KEY` variable is set before running the application. The
 app will exit on startup if this variable is missing.
+
+`FLASK_ENV` (or optional `APP_ENV`) must be `development`, `production`, or
+`testing` (case-insensitive). An unset value now defaults to **production**
+(secure cookies, HTTPS). A typo refuses to start. The committed `.flaskenv`
+sets `FLASK_ENV=development` for `flask run` and `python run.py` on HTTP.
+Pytest sets `FLASK_ENV=testing` in `tests/conftest.py`.
 
 5. Initialize the database:
 

@@ -71,15 +71,14 @@ def login():
                 flash(_('Please verify your email before signing in. Check your inbox.'), 'warning')
                 return render_template('auth/login.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
             
-            # Set session as permanent if remember me is checked
-            if form.remember_me.data:
+            # Clear first so session.permanent is not wiped by session.clear().
+            remember = form.remember_me.data
+            session.clear()
+            if remember:
                 session.permanent = True
             
-            # Clear any existing session data that might interfere
-            session.clear()
-            
             current_app.logger.info(f"About to call login_user for: {user.email} (ID: {user.id})")
-            login_user(user, remember=form.remember_me.data)
+            login_user(user, remember=remember)
             current_app.logger.info(f"login_user completed. Current user is now: {current_user.email if current_user.is_authenticated else 'Not authenticated'}")
             
             # Set user's preferred language in session if available
@@ -105,18 +104,9 @@ def login():
 
     return render_template('auth/login.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
 
-@auth.route('/logout')
+@auth.route('/logout', methods=['POST'])
 def logout():
     logout_user()
-    return redirect(url_for('auth.login'))
-
-@auth.route('/clear-session')
-def clear_session():
-    """Clear session data - useful for debugging login issues"""
-    from flask import session
-    logout_user()
-    session.clear()
-    flash('Session cleared successfully', 'info')
     return redirect(url_for('auth.login'))
 
 @auth.route('/register', methods=['GET', 'POST'])

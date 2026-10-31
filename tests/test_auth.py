@@ -96,6 +96,6 @@ def test_registration(client, app):
         assert b'Email already registered' in response.data
 
 def test_logout_route(client):
-    """Test logout functionality."""
-    response = client.get('/auth/logout', follow_redirects=True)
+    """Logout is POST-only; a POST logs the user out."""
+    response = client.post('/auth/logout', follow_redirects=True)
     assert response.status_code == 200 

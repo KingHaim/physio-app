@@ -219,6 +219,19 @@
             align-items: center !important;
         }
         
+        .logout-form {
+            margin: 0;
+        }
+
+        .logout-form .logout-link {
+            background: none;
+            border: none;
+            width: calc(100% - 30px);
+            cursor: pointer;
+            font: inherit;
+            text-align: left;
+        }
+
         .logout-link:hover {
             background-color: rgba(255, 255, 255, 0.1) !important;
             color: white !important;
@@ -892,9 +905,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link logout-link" href="{{ url_for('auth.logout') }}">
-                                <i class="bi bi-box-arrow-right"></i> {{ _('Logout') }}
-                            </a>
+                            <form action="{{ url_for('auth.logout') }}" method="post" class="logout-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="nav-link logout-link">
+                                    <i class="bi bi-box-arrow-right"></i> {{ _('Logout') }}
+                                </button>
+                            </form>
                         </li>
                         {% else %}
                         <li class="nav-item">
