@@ -137,14 +137,8 @@ def register():
             user.consent_given = True
             user.consent_date = datetime.utcnow()
         
-        # Make the first registered user an admin ONLY if no other users exist
-        if User.query.count() == 0:
-            user.is_admin = True
-            user.role = 'admin'
-            user.email_verified = True  # First admin user is auto-verified
-        else:
-            user.role = 'physio'
-            user.email_verified = False  # New users must verify their email
+        user.role = 'physio'
+        user.email_verified = False
         
         db.session.add(user)
         db.session.commit()
@@ -330,11 +324,6 @@ def google_callback():
                         email_verified=True,  # Google emails are verified
                         role='physio'
                     )
-                    
-                    # Make the first registered user an admin
-                    if User.query.count() == 0:
-                        user.is_admin = True
-                        user.role = 'admin'
                     
                     db.session.add(user)
             

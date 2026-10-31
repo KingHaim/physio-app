@@ -1,6 +1,6 @@
 import click
 from flask.cli import with_appcontext
-from app.utils import mark_past_treatments_as_completed, mark_inactive_patients
+from app.utils import mark_all_past_treatments_as_completed_global, mark_inactive_patients
 from app.models import User, db
 from datetime import datetime, timedelta, date, time
 
@@ -14,7 +14,7 @@ def register_commands(app):
     @with_appcontext
     def update_treatment_statuses():
         """Update treatment statuses (mark past treatments as completed)."""
-        count = mark_past_treatments_as_completed()
+        count = mark_all_past_treatments_as_completed_global()
         click.echo(f"Marked {count} past treatments as completed.")
     
     @app.cli.command('update-patient-statuses')
@@ -46,7 +46,7 @@ def register_commands(app):
     @with_appcontext
     def run_maintenance():
         """Run all maintenance tasks."""
-        treatment_count = mark_past_treatments_as_completed()
+        treatment_count = mark_all_past_treatments_as_completed_global()
         patient_count = mark_inactive_patients()
         
         reminder_failed = False

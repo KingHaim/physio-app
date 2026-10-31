@@ -385,7 +385,7 @@ def test_send_trial_reminders_cli_exits_nonzero_when_batch_raises(monkeypatch):
 def test_maintenance_cli_exits_nonzero_on_reminder_failure(monkeypatch):
     app, previous = _make_prod_app()
     try:
-        monkeypatch.setattr('app.cli.mark_past_treatments_as_completed', lambda: 0)
+        monkeypatch.setattr('app.cli.mark_all_past_treatments_as_completed_global', lambda: 0)
         monkeypatch.setattr('app.cli.mark_inactive_patients', lambda: 0)
         monkeypatch.setattr(
             'app.email_utils.send_trial_reminder_emails',
