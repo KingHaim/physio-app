@@ -869,3 +869,88 @@ def test_review_payments_does_not_complete_other_users_treatments(
     with app.app_context():
         still_scheduled = Treatment.query.get(past_id)
         assert still_scheduled.status == "Scheduled"
+
+
+def test_match_booking_cannot_reassign_another_tenants_treatment(
+    client, app, owner_and_treatment, other_physio
+):
+    """A colliding Calendly invitee id must not move user A's treatment onto B's patient."""
+    invitee_id = f"invitee-{uuid.uuid4().hex}"
+    with app.app_context():
+        a_treatment = Treatment.query.get(owner_and_treatment["treatment_id"])
+        a_treatment.calendly_invitee_uri = invitee_id
+        a_patient_id = a_treatment.patient_id
+
+        other = User.query.get(other_physio)
+        b_patient = Patient(name=f"BMatch_{uuid.uuid4().hex[:4]}", user_id=other.id)
+        db.session.add(b_patient)
+        db.session.commit()
+
+        booking = UnmatchedCalendlyBooking(
+            user_id=other.id,
+            name="Collision Invitee",
+            email="collision@example.com",
+            event_type="Initial consult",
+            status="Pending",
+            calendly_invitee_id=invitee_id,
+            start_time=datetime.utcnow(),
+        )
+        db.session.add(booking)
+        db.session.commit()
+        booking_id = booking.id
+        b_patient_id = b_patient.id
+        a_treatment_id = a_treatment.id
+
+    login_user_in_session(client, app, other_physio)
+    foreign_patient = client.post(
+        "/api/calendly/match-booking",
+        json={
+            "booking_id": booking_id,
+            "patient_id": a_patient_id,
+        },
+        follow_redirects=False,
+    )
+    assert foreign_patient.status_code == 404
+    with app.app_context():
+        assert Treatment.query.get(a_treatment_id).patient_id == a_patient_id
+
+    match_own = client.post(
+        "/api/calendly/match-booking",
+        json={
+            "booking_id": booking_id,
+            "patient_id": b_patient_id,
+        },
+        follow_redirects=False,
+    )
+    assert match_own.status_code == 200
+    assert match_own.get_json()["success"] is True
+    with app.app_context():
+        a_treatment = Treatment.query.get(a_treatment_id)
+        assert a_treatment.patient_id == a_patient_id
+        b_treatments = Treatment.query.filter_by(patient_id=b_patient_id).all()
+        assert len(b_treatments) == 1
+        assert b_treatments[0].id != a_treatment_id
+
+
+def test_first_registered_user_is_not_admin(client, app):
+    """The first sign-up is a physio, not an admin. Admin is CLI-only."""
+    unique_email = f"first_{uuid.uuid4().hex[:8]}@example.com"
+    with app.app_context():
+        assert User.query.count() == 0
+
+    response = client.post(
+        "/auth/register",
+        data={
+            "email": unique_email,
+            "password": "newpassword",
+            "confirm_password": "newpassword",
+            "consent_checkbox": "y",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    with app.app_context():
+        user = User.query.filter_by(email=unique_email).first()
+        assert user is not None
+        assert user.is_admin is False
+        assert user.role == "physio"

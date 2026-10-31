@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, current_app, request
+from flask import Blueprint, jsonify, current_app, request, abort
 import requests
 import re
 from datetime import datetime, timedelta, date
@@ -8,6 +8,7 @@ from sqlalchemy.sql import func, or_, case
 import os
 import json
 from flask_login import login_required, current_user
+from werkzeug.exceptions import HTTPException
 import traceback
 import stripe
 from flask import url_for
@@ -237,50 +238,66 @@ def search_patients():
 @api.route('/calendly/match-booking', methods=['POST'])
 @login_required
 def match_calendly_booking():
+    data = request.json or {}
+    booking_id = data.get('booking_id')
+    patient_id = data.get('patient_id')
+
+    if not booking_id or not patient_id:
+        return jsonify({'success': False, 'error': 'Missing booking_id or patient_id'}), 400
+
+    booking = UnmatchedCalendlyBooking.query.filter_by(
+        id=booking_id, user_id=current_user.id
+    ).first()
+    if booking is None:
+        abort(404)
+
+    patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
+    if patient is None:
+        abort(404)
+
     try:
-        data = request.json
-        booking_id = data.get('booking_id')
-        patient_id = data.get('patient_id')
-        
-        if not booking_id or not patient_id:
-            return jsonify({'success': False, 'error': 'Missing booking_id or patient_id'}), 400
-        
-        booking = UnmatchedCalendlyBooking.query.filter_by(id=booking_id, user_id=current_user.id).first_or_404('Booking not found or not authorized')
-        patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first_or_404('Patient not found or not authorized')
-        
         booking.status = 'Matched'
         booking.matched_patient_id = patient_id
-        
-        # First check if a treatment with this Calendly invitee UUID already exists
-        existing_treatment = Treatment.query.filter_by(
-            calendly_invitee_uri=booking.calendly_invitee_id  # Using the UUID stored in UnmatchedCalendlyBooking
-        ).first()
-        
+
+        existing_treatment = (
+            Treatment.query
+            .join(Patient)
+            .filter(
+                Treatment.calendly_invitee_uri == booking.calendly_invitee_id,
+                Patient.user_id == current_user.id,
+            )
+            .first()
+        )
+
         if existing_treatment:
-            # If it exists but for a different patient, update the patient_id
             if existing_treatment.patient_id != patient.id:
                 existing_treatment.patient_id = patient.id
-                existing_treatment.notes += f"\nUpdated patient assignment on {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}"
+                existing_notes = existing_treatment.notes or ""
+                existing_treatment.notes = (
+                    existing_notes
+                    + f"\nUpdated patient assignment on {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}"
+                )
         else:
-            # Only create a new treatment if one doesn't exist with this invitee UUID
             treatment = Treatment(
                 patient_id=patient.id,
                 created_at=booking.start_time,
                 treatment_type=booking.event_type,
                 status="Scheduled",
-                notes=f"Linked to Calendly booking. Matched by admin user.",
-                calendly_invitee_uri=booking.calendly_invitee_id  # Using the UUID stored in UnmatchedCalendlyBooking
+                notes="Linked to Calendly booking.",
+                calendly_invitee_uri=booking.calendly_invitee_id,
             )
             db.session.add(treatment)
-        
+
         db.session.commit()
-        
+
         return jsonify({
             'success': True,
             'message': 'Booking matched to patient successfully',
             'patient_id': patient_id
         })
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error in match_calendly_booking: {str(e)}")
