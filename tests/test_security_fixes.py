@@ -50,12 +50,9 @@ def client(app):
 
 def login_user_in_session(client, app, user_id):
     """Helper function to login a user in the test session."""
-    with app.app_context():
-        user = User.query.get(user_id)
-        if user:
-            with client.session_transaction() as sess:
-                sess["_user_id"] = str(user.id)
-                sess["_fresh"] = True
+    with client.session_transaction() as sess:
+        sess["_user_id"] = str(user_id)
+        sess["_fresh"] = True
 
 
 def _create_physio(email_prefix):
@@ -292,54 +289,100 @@ def test_bulk_update_filters_before_reference_and_hides_id_existence(
     assert foreign_only.get_json()["message"] == missing.get_json()["message"] == BULK_UPDATE_DENIED_MESSAGE
 
 
-def test_clinic_manager_can_edit_member_patient_treatment(client, app):
-    """Clinic managers who can manage clinic patients keep access to members' records."""
+def _add_clinic_member(clinic_id, email_prefix, role):
+    user = _create_physio(email_prefix)
+    membership = ClinicMembership(
+        user_id=user.id,
+        clinic_id=clinic_id,
+        role=role,
+        is_active=True,
+    )
+    membership.set_permissions_by_role()
+    db.session.add(membership)
+    patient = Patient(name=f"{email_prefix}_{uuid.uuid4().hex[:4]}", user_id=user.id)
+    db.session.add(patient)
+    db.session.commit()
+    treatment = Treatment(
+        patient_id=patient.id,
+        treatment_type="Assessment",
+        status="Scheduled",
+    )
+    db.session.add(treatment)
+    db.session.commit()
+    return {
+        "user_id": user.id,
+        "patient_id": patient.id,
+        "treatment_id": treatment.id,
+    }
+
+
+@pytest.fixture
+def clinic_physios(app):
+    """One clinic: manager M, practitioner R, practitioner R2, each with their own patient."""
     with app.app_context():
         clinic = Clinic(name=f"Clinic_{uuid.uuid4().hex[:6]}")
         db.session.add(clinic)
         db.session.commit()
+        return {
+            "manager": _add_clinic_member(clinic.id, "manager", "admin"),
+            "practitioner": _add_clinic_member(clinic.id, "pract", "practitioner"),
+            "other_practitioner": _add_clinic_member(clinic.id, "pract2", "practitioner"),
+        }
 
-        manager = _create_physio("manager")
-        member = _create_physio("member")
 
-        manager_membership = ClinicMembership(
-            user_id=manager.id,
-            clinic_id=clinic.id,
-            role="admin",
-            is_active=True,
-        )
-        manager_membership.set_permissions_by_role()
-        member_membership = ClinicMembership(
-            user_id=member.id,
-            clinic_id=clinic.id,
-            role="practitioner",
-            is_active=True,
-        )
-        member_membership.set_permissions_by_role()
-        db.session.add_all([manager_membership, member_membership])
+def _assert_forbidden_and_unwritten(client, app, other):
+    edit = client.get(f"/treatment/{other['treatment_id']}/edit", follow_redirects=False)
+    assert edit.status_code == 404
+    treatments = client.get(
+        f"/patient/{other['patient_id']}/edit-treatments", follow_redirects=False
+    )
+    assert treatments.status_code == 404
+    cancel = client.post(
+        f"/appointments/update/{other['treatment_id']}",
+        data={"action": "cancel"},
+        follow_redirects=False,
+    )
+    assert cancel.status_code == 404
+    with app.app_context():
+        treatment = Treatment.query.get(other["treatment_id"])
+        assert treatment.status != "Cancelled"
 
-        patient = Patient(name=f"MemberPatient_{uuid.uuid4().hex[:4]}", user_id=member.id)
-        db.session.add(patient)
-        db.session.commit()
-        treatment = Treatment(
-            patient_id=patient.id,
-            treatment_type="Assessment",
-            status="Scheduled",
-        )
-        db.session.add(treatment)
-        db.session.commit()
 
-        manager_id = manager.id
-        treatment_id = treatment.id
-        patient_id = patient.id
+def _assert_own_access(client, actor):
+    edit = client.get(f"/treatment/{actor['treatment_id']}/edit", follow_redirects=False)
+    assert edit.status_code != 404
+    assert edit.status_code != 403
+    treatments = client.get(
+        f"/patient/{actor['patient_id']}/edit-treatments", follow_redirects=False
+    )
+    assert treatments.status_code == 200
 
-    login_user_in_session(client, app, manager_id)
-    manager_edit = client.get(f"/treatment/{treatment_id}/edit", follow_redirects=False)
-    assert manager_edit.status_code != 404
-    assert manager_edit.status_code != 403
 
-    manager_list = client.get(f"/patient/{patient_id}/edit-treatments", follow_redirects=False)
-    assert manager_list.status_code == 200
+def test_clinic_manager_cannot_access_practitioner_patient(client, app, clinic_physios):
+    """Manager M cannot open or write practitioner R's patient."""
+    manager = clinic_physios["manager"]
+    practitioner = clinic_physios["practitioner"]
+    login_user_in_session(client, app, manager["user_id"])
+    _assert_forbidden_and_unwritten(client, app, practitioner)
+    _assert_own_access(client, manager)
+
+
+def test_practitioner_cannot_access_other_practitioner_patient(client, app, clinic_physios):
+    """Practitioner R cannot open or write practitioner R2's patient."""
+    practitioner = clinic_physios["practitioner"]
+    other = clinic_physios["other_practitioner"]
+    login_user_in_session(client, app, practitioner["user_id"])
+    _assert_forbidden_and_unwritten(client, app, other)
+    _assert_own_access(client, practitioner)
+
+
+def test_practitioner_cannot_access_manager_patient(client, app, clinic_physios):
+    """Practitioner R cannot open or write manager M's patient."""
+    practitioner = clinic_physios["practitioner"]
+    manager = clinic_physios["manager"]
+    login_user_in_session(client, app, practitioner["user_id"])
+    _assert_forbidden_and_unwritten(client, app, manager)
+    _assert_own_access(client, practitioner)
 
 
 def test_edit_treatments_list_handles_none_notes(client, app, owner_and_treatment):

@@ -668,9 +668,9 @@ def get_treatment_details(id):
     # Add access check: Only physio or the correct patient
     if current_user.role == 'patient' and (not current_user.patient_record or current_user.patient_record.id != treatment.patient_id):
         return jsonify({'error': 'Forbidden'}), 403
-    elif current_user.role == 'physio' and not current_user.is_admin:
-        # Check if physio can access this patient (own patients or clinic patients)
-        accessible_patients = current_user.get_accessible_patients(include_clinic_patients=True)
+    elif current_user.role == 'physio' or current_user.is_admin:
+        # Own patients only — clinic managers/admins do not see other members' records
+        accessible_patients = current_user.get_accessible_patients()
         patient_ids = [p.id for p in accessible_patients]
         if treatment.patient_id not in patient_ids:
             return jsonify({'error': 'Forbidden'}), 403
@@ -1076,7 +1076,7 @@ def add_treatment(patient_id):
 @physio_required # <<< ADD DECORATOR
 def new_recurring_appointment(patient_id):
     patient = Patient.query.get_or_404(patient_id)
-    accessible_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
     if patient.id not in accessible_ids:
         abort(404)
     
@@ -1447,7 +1447,7 @@ def update_appointment(id):
     patient = treatment.patient
     if not patient:
         abort(404)
-    accessible_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
     if patient.id not in accessible_ids:
         abort(404)
 
@@ -1892,7 +1892,7 @@ def edit_treatment(id):
     patient = treatment.patient
     if not patient:
         abort(404)
-    accessible_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
     if patient.id not in accessible_ids:
         abort(404)
     # REMOVED form instantiation
@@ -2109,8 +2109,8 @@ def view_treatment(id):
         # SECURITY FIX: All users (including admins) must follow access control rules
         try:
             if current_user.role == 'physio' or current_user.is_admin:
-                # Physios and admins can access their own patients or clinic patients
-                accessible_patients = current_user.get_accessible_patients(include_clinic_patients=True)
+                # Own patients only — clinic managers/admins do not see other members' records
+                accessible_patients = current_user.get_accessible_patients()
                 patient_ids = [p.id for p in accessible_patients]
                 if patient.id not in patient_ids:
                     flash('You do not have permission to view this treatment.', 'danger')
@@ -2167,7 +2167,7 @@ def view_treatment(id):
 @physio_required # <<< ADD DECORATOR
 def patient_edit_treatments(id):
     patient = Patient.query.get_or_404(id)
-    accessible_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
     if patient.id not in accessible_ids:
         abort(404)
     treatments = Treatment.query.filter_by(patient_id=id).order_by(Treatment.created_at.desc()).all()
@@ -2178,7 +2178,7 @@ def patient_edit_treatments(id):
 @physio_required # <<< ADD DECORATOR
 def new_treatment_page(patient_id):
     patient = Patient.query.get_or_404(patient_id)
-    accessible_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
     if patient.id not in accessible_ids:
         abort(404)
     now = datetime.now() # Get current datetime
@@ -2743,7 +2743,7 @@ def bulk_update_treatments():
         is_costaspine_auto_fee = (field_to_update == 'location' and new_value == clinic_name_for_fee)
 
         # Filter to accessible treatments before using any id as a reference.
-        accessible_patient_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
+        accessible_patient_ids = [p.id for p in current_user.get_accessible_patients()]
         treatments_to_update = Treatment.query.filter(
             Treatment.id.in_(treatment_ids),
             Treatment.patient_id.in_(accessible_patient_ids)
@@ -4936,7 +4936,7 @@ def data_processing_activities():
 @login_required
 def patient_consent(patient_id):
     patient = Patient.query.get_or_404(patient_id)
-    accessible_ids = [p.id for p in current_user.get_accessible_patients(include_clinic_patients=True)]
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
     if patient.id not in accessible_ids:
         abort(404)
     form = UserConsentForm()
