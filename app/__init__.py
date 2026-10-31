@@ -140,10 +140,8 @@ def create_app(config_class=None):
     
     app.config.from_object(config_class)
 
-    # Configure session
-    app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
-    app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    # Cookie flags come from the selected config (Secure in production, off for local HTTP).
+    login_manager.session_protection = app.config.get('SESSION_PROTECTION', 'basic')
 
     # Setup logging and monitoring
     setup_logging(app)

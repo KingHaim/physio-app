@@ -80,11 +80,15 @@ class Config:
         }
     }
     
-    # Session configuration
+    # Session configuration (HTTP-safe defaults for local development)
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
     SESSION_COOKIE_SECURE = False
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SECURE = False
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
+    SESSION_PROTECTION = 'basic'
     
     # CSRF configuration
     WTF_CSRF_TIME_LIMIT = 3600
@@ -112,6 +116,9 @@ class DevelopmentConfig(Config):
     # Remove SERVER_NAME restriction for development to work with both localhost and 127.0.0.1
     # SERVER_NAME = 'localhost:5000'  # Commented out to allow flexible host access
     PREFERRED_URL_SCHEME = 'http'
+    # Keep cookies sendable over local HTTP
+    SESSION_COOKIE_SECURE = False
+    REMEMBER_COOKIE_SECURE = False
 
 class ProductionConfig(Config):
     DEBUG = False
@@ -120,6 +127,19 @@ class ProductionConfig(Config):
     # Use production domain from environment or default
     SERVER_NAME = os.environ.get('SERVER_NAME') or 'trxck.tech'
     PREFERRED_URL_SCHEME = 'https'
+
+    # HTTPS-only cookies. SameSite=Lax (not Strict) so top-level GET
+    # returns from Google OAuth, Calendly, and Stripe still carry the session.
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SECURE = True
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_DURATION = timedelta(days=14)
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=12)
+    SESSION_PROTECTION = 'strong'
+    WTF_CSRF_SSL_STRICT = True
     
     # Production-specific settings - only check at runtime, not import time
     def __init__(self):
@@ -149,9 +169,13 @@ class TestConfig(Config):
     # Disable encryption for testing to avoid length issues
     DISABLE_ENCRYPTION = True
     
-    # Use simpler session configuration for testing
+    # Use simpler session configuration for testing (HTTP, no Secure flag)
     SESSION_COOKIE_SECURE = False
     SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SECURE = False
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
     
     # Disable CSRF for testing
     WTF_CSRF_ENABLED = False
