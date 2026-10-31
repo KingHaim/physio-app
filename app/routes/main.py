@@ -668,9 +668,9 @@ def get_treatment_details(id):
     # Add access check: Only physio or the correct patient
     if current_user.role == 'patient' and (not current_user.patient_record or current_user.patient_record.id != treatment.patient_id):
         return jsonify({'error': 'Forbidden'}), 403
-    elif current_user.role == 'physio' and not current_user.is_admin:
-        # Check if physio can access this patient (own patients or clinic patients)
-        accessible_patients = current_user.get_accessible_patients(include_clinic_patients=True)
+    elif current_user.role == 'physio' or current_user.is_admin:
+        # Own patients only — clinic managers/admins do not see other members' records
+        accessible_patients = current_user.get_accessible_patients()
         patient_ids = [p.id for p in accessible_patients]
         if treatment.patient_id not in patient_ids:
             return jsonify({'error': 'Forbidden'}), 403
@@ -1076,6 +1076,9 @@ def add_treatment(patient_id):
 @physio_required # <<< ADD DECORATOR
 def new_recurring_appointment(patient_id):
     patient = Patient.query.get_or_404(patient_id)
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+    if patient.id not in accessible_ids:
+        abort(404)
     
     if request.method == 'POST':
         try:
@@ -1441,6 +1444,12 @@ def get_appointments():
 @physio_required # <<< ADD DECORATOR
 def update_appointment(id):
     treatment = Treatment.query.get_or_404(id)
+    patient = treatment.patient
+    if not patient:
+        abort(404)
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+    if patient.id not in accessible_ids:
+        abort(404)
 
     if request.form.get('action') == 'complete':
         treatment.status = 'Completed'
@@ -1881,6 +1890,11 @@ def create_patient_from_booking(booking_id):
 def edit_treatment(id):
     treatment = Treatment.query.get_or_404(id)
     patient = treatment.patient
+    if not patient:
+        abort(404)
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+    if patient.id not in accessible_ids:
+        abort(404)
     # REMOVED form instantiation
     
     print(f"DEBUG: Raw treatment.evaluation_data for ID {id}: {treatment.evaluation_data!r}") 
@@ -2095,8 +2109,8 @@ def view_treatment(id):
         # SECURITY FIX: All users (including admins) must follow access control rules
         try:
             if current_user.role == 'physio' or current_user.is_admin:
-                # Physios and admins can access their own patients or clinic patients
-                accessible_patients = current_user.get_accessible_patients(include_clinic_patients=True)
+                # Own patients only — clinic managers/admins do not see other members' records
+                accessible_patients = current_user.get_accessible_patients()
                 patient_ids = [p.id for p in accessible_patients]
                 if patient.id not in patient_ids:
                     flash('You do not have permission to view this treatment.', 'danger')
@@ -2148,29 +2162,14 @@ def view_treatment(id):
         flash('An error occurred while loading the treatment.', 'danger')
         return redirect(url_for('main.patients_list'))
 
-@main.route('/test/edit-treatment/<int:id>')
-@login_required
-@physio_required # <<< ADD DECORATOR
-def test_edit_treatment(id):
-    treatment = Treatment.query.get_or_404(id)
-    return f"""
-    <html>
-    <body>
-        <h1>Test Edit Treatment</h1>
-        <p>Treatment ID: {treatment.id}</p>
-        <p>Date: {treatment.created_at}</p>
-        <p>Description: {treatment.treatment_type}</p>
-        <p>Patient: {treatment.patient.name}</p>
-        <a href="/treatment/{treatment.id}/edit">Go to Edit Page</a>
-    </body>
-    </html>
-    """
-
 @main.route('/patient/<int:id>/edit-treatments')
 @login_required
 @physio_required # <<< ADD DECORATOR
 def patient_edit_treatments(id):
     patient = Patient.query.get_or_404(id)
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+    if patient.id not in accessible_ids:
+        abort(404)
     treatments = Treatment.query.filter_by(patient_id=id).order_by(Treatment.created_at.desc()).all()
     return render_template('edit_treatments_list.html', patient=patient, treatments=treatments)
 
@@ -2179,6 +2178,9 @@ def patient_edit_treatments(id):
 @physio_required # <<< ADD DECORATOR
 def new_treatment_page(patient_id):
     patient = Patient.query.get_or_404(patient_id)
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+    if patient.id not in accessible_ids:
+        abort(404)
     now = datetime.now() # Get current datetime
     # Check if patient has any treatments at all
     has_past_treatments = db.session.query(Treatment.id).filter(
@@ -2591,117 +2593,6 @@ def get_costaspine_fee_data():
         print(f"Error fetching CostaSpine fee data: {e}")
         return jsonify({"error": "Failed to fetch data"}), 500
 
-@main.route('/admin/update-treatments')
-@login_required # Assuming only logged-in users should access
-@physio_required # <<< ADD DECORATOR
-def update_treatments_demo():
-    """Update all treatments with sample data for demonstration purposes."""
-    treatments = Treatment.query.all()
-    
-    treatment_types = [
-        "Initial Assessment", "Follow-up", "Deep Tissue Massage", 
-        "Sports Massage", "Trigger Point Therapy", "Myofascial Release",
-        "Joint Mobilization", "Rehabilitation Exercise", "Manual Therapy"
-    ]
-    
-    assessment_templates = [
-        "Patient presents with {location} pain rated {pain}/10. Range of motion is {rom}.",
-        "Follow-up assessment shows {improvement} improvement since last session. Pain now at {pain}/10.",
-        "Initial evaluation indicates {condition} with associated {symptoms}.",
-        "Patient reports {change} in symptoms since previous treatment."
-    ]
-    
-    notes_templates = [
-        "Treatment focused on {area}. Patient responded well to {technique}.",
-        "Used {technique} on {area}. Patient reported immediate relief.",
-        "Performed {technique}. Recommended home exercises for {area}.",
-        "Patient showed {response} to treatment. Advised to continue with {advice}."
-    ]
-    
-    locations = ["lower back", "neck", "shoulder", "knee", "hip", "ankle", "wrist"]
-    rom_states = ["limited", "moderately restricted", "slightly restricted", "normal"]
-    improvements = ["significant", "moderate", "slight", "minimal"]
-    conditions = ["muscle strain", "joint dysfunction", "postural imbalance", "overuse syndrome"]
-    symptoms = ["pain", "stiffness", "reduced mobility", "muscle spasms", "nerve impingement"]
-    changes = ["improvement", "slight improvement", "no change", "worsening"]
-    areas = ["cervical spine", "lumbar region", "thoracic spine", "shoulder complex", "hip complex", "knee joint"]
-    techniques = ["soft tissue manipulation", "joint mobilization", "trigger point release", "myofascial release", "proprioceptive neuromuscular facilitation"]
-    responses = ["positive response", "good improvement", "moderate improvement", "limited improvement"]
-    advice = ["stretching routine", "strengthening exercises", "postural correction", "activity modification", "rest and ice"]
-    
-    providers = ["Dr. Smith", "Dr. Johnson", "Dr. Williams", "Dr. Brown", "Dr. Jones"]
-    
-    import random
-    from datetime import timedelta
-    
-    count = 0
-    for treatment in treatments:
-        # Only update treatments with default/empty values
-        if treatment.treatment_type == "Unknown" or not treatment.treatment_type:
-            treatment.treatment_type = random.choice(treatment_types)
-            count += 1
-        
-        # Generate assessment if empty
-        if not treatment.assessment:
-            template = random.choice(assessment_templates)
-            pain = treatment.pain_level if treatment.pain_level else random.randint(1, 9)
-            
-            if "{location}" in template:
-                template = template.replace("{location}", random.choice(locations))
-            if "{pain}" in template:
-                template = template.replace("{pain}", str(pain))
-            if "{rom}" in template:
-                template = template.replace("{rom}", random.choice(rom_states))
-            if "{improvement}" in template:
-                template = template.replace("{improvement}", random.choice(improvements))
-            if "{condition}" in template:
-                template = template.replace("{condition}", random.choice(conditions))
-            if "{symptoms}" in template:
-                template = template.replace("{symptoms}", random.choice(symptoms))
-            if "{change}" in template:
-                template = template.replace("{change}", random.choice(changes))
-                
-            treatment.assessment = template
-        
-        # Generate notes if empty
-        if not treatment.notes:
-            template = random.choice(notes_templates)
-            
-            if "{area}" in template:
-                template = template.replace("{area}", random.choice(areas))
-            if "{technique}" in template:
-                template = template.replace("{technique}", random.choice(techniques))
-            if "{response}" in template:
-                template = template.replace("{response}", random.choice(responses))
-            if "{advice}" in template:
-                template = template.replace("{advice}", random.choice(advice))
-                
-            treatment.notes = template
-        
-        # Add provider if empty
-        if not treatment.provider or treatment.provider == "none":
-            treatment.provider = random.choice(providers)
-        
-        # Make sure pain level is set
-        if not treatment.pain_level:
-            treatment.pain_level = random.randint(1, 9)
-        
-        # Set movement restriction if empty
-        if not treatment.movement_restriction or treatment.movement_restriction == "none":
-            treatment.movement_restriction = random.choice(rom_states)
-    
-    db.session.commit()
-    
-    return f"""
-    <html>
-    <body>
-        <h1>Treatment Data Updated</h1>
-        <p>Updated {count} treatment records with meaningful data.</p>
-        <a href="/">Return to Dashboard</a>
-    </body>
-    </html>
-    """
-
 @main.route('/report/<int:report_id>/pdf')
 @login_required
 def download_report_pdf(report_id):
@@ -2845,28 +2736,29 @@ def bulk_update_treatments():
         updated_count = 0
         earliest_treatment_id = None
         patient_id_for_check = None
+        denied = {'success': False, 'message': 'Unable to update treatments.'}
 
         # --- Determine if auto-fee logic applies ---
         clinic_name_for_fee = current_user.clinic_name or 'CostaSpine Clinic'
         is_costaspine_auto_fee = (field_to_update == 'location' and new_value == clinic_name_for_fee)
 
-        # --- Get patient ID and earliest treatment if auto-fee applies --- 
+        # Filter to accessible treatments before using any id as a reference.
+        accessible_patient_ids = [p.id for p in current_user.get_accessible_patients()]
+        treatments_to_update = Treatment.query.filter(
+            Treatment.id.in_(treatment_ids),
+            Treatment.patient_id.in_(accessible_patient_ids)
+        ).all()
+        if not treatments_to_update:
+            return jsonify(denied), 400
+
+        # Auto-fee reference comes from an already-authorized treatment only.
         if is_costaspine_auto_fee:
-            # Find the patient ID from the first treatment ID in the list
-            first_treatment_check = Treatment.query.options(db.joinedload(Treatment.patient)).get(treatment_ids[0])
-            if not first_treatment_check:
-                 return jsonify({'success': False, 'message': 'Invalid treatment ID found in list.'}), 400
-            patient_id_for_check = first_treatment_check.patient_id
-            
-            # Find the earliest treatment for this specific patient
+            patient_id_for_check = treatments_to_update[0].patient_id
             earliest_patient_treatment = Treatment.query.filter_by(patient_id=patient_id_for_check)\
                                                  .order_by(Treatment.created_at.asc(), Treatment.id.asc())\
                                                  .first()
             earliest_treatment_id = earliest_patient_treatment.id if earliest_patient_treatment else None
 
-        # --- Query and update selected treatments --- 
-        treatments_to_update = Treatment.query.filter(Treatment.id.in_(treatment_ids)).all()
-        
         for treatment in treatments_to_update:
             # Consistency check: Ensure all selected treatments belong to the same patient if auto-fee applies
             if patient_id_for_check is not None and treatment.patient_id != patient_id_for_check:
@@ -2894,8 +2786,7 @@ def bulk_update_treatments():
             db.session.commit()
             return jsonify({'success': True, 'message': f'Successfully updated {updated_count} treatments.'})
         else:
-             # Handle case where all treatments were skipped or list was empty
-             return jsonify({'success': False, 'message': 'No valid treatments were updated.'}), 400 # Return 400 Bad Request
+             return jsonify(denied), 400
 
     except Exception as e:
         db.session.rollback()
@@ -5045,6 +4936,9 @@ def data_processing_activities():
 @login_required
 def patient_consent(patient_id):
     patient = Patient.query.get_or_404(patient_id)
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+    if patient.id not in accessible_ids:
+        abort(404)
     form = UserConsentForm()
     
     if form.validate_on_submit():
@@ -5240,16 +5134,6 @@ def manage_billing():
             return redirect(url_for('main.pricing_clinic'))
         else:
             return redirect(url_for('main.pricing_individual'))
-
-@main.route('/make-admin')
-@login_required
-def make_admin():
-    """Make the current user an admin."""
-    current_user.is_admin = True
-    current_user.role = 'admin'
-    db.session.commit()
-    flash('You are now an admin user with unlimited access.', 'success')
-    return redirect(url_for('main.index'))
 
 def format_month(month_str):
     try:

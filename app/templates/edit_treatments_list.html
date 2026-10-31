@@ -39,7 +39,7 @@
                                     {{ treatment.status }}
                                 </span>
                             </div>
-                            <p class="mb-1">{{ treatment.notes|truncate(100) }}</p>
+                            <p class="mb-1">{{ (treatment.notes or '')|truncate(100) }}</p>
                             <small>Click to edit this treatment session</small>
                         </a>
                         {% endfor %}
