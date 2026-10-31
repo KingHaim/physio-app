@@ -8,7 +8,8 @@ import json
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List, Any
 import requests
-from flask import current_app, url_for
+from flask import current_app
+from app.urls import absolute_url
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
@@ -37,12 +38,12 @@ class GoogleCalendarService:
         }
     
     def _get_default_redirect_uri(self):
-        """Generate default redirect URI"""
-        from flask import request, url_for
+        """Generate default redirect URI from APP_BASE_URL, never the request Host."""
         try:
-            return url_for('google_calendar.oauth_callback', _external=True)
-        except:
-            return 'http://localhost:5000/google-calendar/callback'
+            return absolute_url('google_calendar.oauth_callback')
+        except Exception:
+            base = (current_app.config.get('APP_BASE_URL') or 'http://localhost:5000').rstrip('/')
+            return f'{base}/google-calendar/callback'
     
     def get_authorization_url(self, user_id: int) -> Optional[str]:
         """Generate OAuth2 authorization URL for user"""

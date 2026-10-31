@@ -34,6 +34,7 @@ from app.forms import (
 )
 from functools import wraps
 from flask_babel import _
+from app.urls import absolute_url
 # from .analytics import generate_analytics_report, generate_deepseek_report
 
 # Define timezones
@@ -4305,7 +4306,7 @@ def manage_subscription():
         # The return_url is where the user will be redirected after they are done in the portal
         session = stripe.billing_portal.Session.create(
             customer=current_user.stripe_customer_id,
-            return_url=url_for('main.manage_subscription', _external=True)
+            return_url=absolute_url('main.manage_subscription')
         )
         return redirect(session.url)
     except stripe.error.StripeError as e:
@@ -5223,7 +5224,7 @@ def manage_billing():
         # Create a new Stripe Billing Portal session
         session = stripe.billing_portal.Session.create(
             customer=current_user.stripe_customer_id,
-            return_url=url_for('main.manage_billing', _external=True)
+            return_url=absolute_url('main.manage_billing')
         )
         return redirect(session.url)
     except stripe.error.StripeError as e:

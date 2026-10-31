@@ -49,6 +49,9 @@ This guide will help you deploy PhysioApp to PythonAnywhere.
    DEEPSEEK_API_KEY=your_deepseek_api_key_here
    DEEPSEEK_API_ENDPOINT=https://api.deepseek.com/v1/chat/completions
    SECRET_KEY=your_flask_secret_key_here
+   FLASK_ENV=production
+   APP_BASE_URL=https://www.trxck.tech
+   TRUSTED_HOSTS=www.trxck.tech,trxck.tech
    ```
 3. Save and exit (Ctrl+X, then Y, then Enter)
 

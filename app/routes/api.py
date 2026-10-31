@@ -11,6 +11,7 @@ from flask_login import login_required, current_user
 import traceback
 import stripe
 from flask import url_for
+from app.urls import absolute_url
 from generate_patient_report import format_treatment_history
 from app.crypto_utils import decrypt_text
 import os
@@ -1542,8 +1543,8 @@ def create_checkout_session():
             payment_method_types=['card'],
             line_items=[{'price': plan.stripe_price_id, 'quantity': 1}],
             mode='subscription',
-            success_url=url_for('main.subscription_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=url_for('main.pricing_individual', _external=True),
+            success_url=absolute_url('main.subscription_success') + '?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=absolute_url('main.pricing_individual'),
             client_reference_id=str(current_user.id),
             customer_email=current_user.email,
             metadata={
@@ -1606,8 +1607,8 @@ def create_clinic_checkout_session():
             payment_method_types=['card'],
             line_items=[{'price': plan.stripe_price_id, 'quantity': 1}],
             mode='subscription',
-            success_url=url_for('main.subscription_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=url_for('main.pricing_clinic', _external=True),
+            success_url=absolute_url('main.subscription_success') + '?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=absolute_url('main.pricing_clinic'),
             client_reference_id=f"clinic_{current_user.clinic.id}",
             customer_email=current_user.email,
             metadata={

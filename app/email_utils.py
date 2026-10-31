@@ -4,7 +4,8 @@ Email utilities for sending verification emails and other notifications
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from flask import current_app, url_for
+from flask import current_app
+from app.urls import absolute_url
 import logging
 
 def send_email(to_email, subject, html_body, text_body=None):
@@ -64,7 +65,7 @@ HTML Body: {html_body[:200]}...
 def send_verification_email(user):
     """Send email verification email to user"""
     token = user.generate_email_verification_token()
-    verification_url = url_for('auth.verify_email', token=token, _external=True)
+    verification_url = absolute_url('auth.verify_email', token=token)
     subject = "Verifica tu email - TRXCKER"
     
     # Get user's name or use a generic greeting
@@ -162,7 +163,7 @@ Ya puedes acceder a todas las funcionalidades de TRXCKER:
 - Reportes y análisis
 - Y mucho más...
 
-Accede a tu cuenta: {url_for('auth.login', _external=True)}
+Accede a tu cuenta: {absolute_url('auth.login')}
 
 ¡Bienvenido a TRXCKER!
 
@@ -223,7 +224,7 @@ El equipo de TRXCKER
             </div>
             
             <p>¡Comienza ahora!</p>
-            <a href="{url_for('auth.login', _external=True)}" class="button">🚀 Acceder a mi Cuenta</a>
+            <a href="{absolute_url('auth.login')}" class="button">🚀 Acceder a mi Cuenta</a>
             
             <p>Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.</p>
         </div>
@@ -280,7 +281,7 @@ Your current {plan_name} trial includes:
 - And much more!
 
 Upgrade now to continue without interruption:
-{url_for('main.manage_subscription', _external=True)}
+{absolute_url('main.manage_subscription')}
 
 Questions? We're here to help - just reply to this email.
 
@@ -375,7 +376,7 @@ The TRXCKER Team
             
             <p>Don't lose access to your data and all these powerful features!</p>
             
-            <a href="{url_for('main.manage_subscription', _external=True)}" class="button {'button-urgent' if days_remaining <= 2 else ''}">
+            <a href="{absolute_url('main.manage_subscription')}" class="button {'button-urgent' if days_remaining <= 2 else ''}">
                 🚀 Upgrade Now to Continue
             </a>
             

@@ -1,3 +1,5 @@
-# Public Flask CLI defaults. Does not override a real environment variable.
-# Production is the fail-closed default when this file is absent and FLASK_ENV is unset.
-FLASK_ENV=development
+# Public Flask CLI hints only. Do not set FLASK_ENV here.
+# config.py does not load this file. Unset FLASK_ENV defaults to production
+# (secure cookies). For local HTTP, set FLASK_ENV=development in your shell
+# or in .env (which is loaded).
+# FLASK_APP=run.py

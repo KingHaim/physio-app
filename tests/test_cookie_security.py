@@ -1,5 +1,9 @@
 """H6: production cookie flags, fail-closed env, removed debug routes, logout."""
+import os
+import subprocess
+import sys
 from datetime import timedelta
+from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
@@ -7,7 +11,9 @@ from flask import request, url_for
 from sqlalchemy.pool import StaticPool
 
 from app import create_app, db, login_manager
+from app.email_utils import send_verification_email
 from app.models import User
+from app.urls import absolute_url
 from config import DevelopmentConfig, ProductionConfig, TestConfig, resolve_config_name
 
 
@@ -27,6 +33,8 @@ class ProductionCookieTestConfig(ProductionConfig):
     """Production cookie/ProxyFix settings with an isolated SQLite DB for tests."""
     TESTING = True
     WTF_CSRF_ENABLED = False
+    APP_BASE_URL = 'https://www.trxck.tech'
+    TRUSTED_HOSTS = ['www.trxck.tech', 'trxck.tech']
     SQLALCHEMY_DATABASE_URI = 'sqlite://'
     SQLALCHEMY_ENGINE_OPTIONS = {
         'connect_args': {'check_same_thread': False},
@@ -87,6 +95,8 @@ def test_production_config_sets_secure_cookie_flags():
     assert ProductionConfig.SESSION_PROTECTION == 'basic'
     assert ProductionConfig.SERVER_NAME is None
     assert not getattr(ProductionConfig, 'SESSION_COOKIE_DOMAIN', None)
+    assert ProductionConfig.APP_BASE_URL == 'https://www.trxck.tech'
+    assert ProductionConfig.TRUSTED_HOSTS == ['www.trxck.tech', 'trxck.tech']
 
 
 def test_create_app_does_not_override_production_cookie_flags():
@@ -117,25 +127,39 @@ def test_local_and_test_configs_keep_insecure_cookies_for_http():
     test_app = create_app(TestConfig)
     assert test_app.config['SESSION_COOKIE_SECURE'] is False
     assert test_app.config['REMEMBER_COOKIE_SECURE'] is False
+    assert 'localhost' in test_app.config['TRUSTED_HOSTS']
+    assert '127.0.0.1' in test_app.config['TRUSTED_HOSTS']
+    assert 'localhost' in DevelopmentConfig.TRUSTED_HOSTS
 
 
-def test_unset_env_defaults_to_production(monkeypatch):
-    """An unset FLASK_ENV/APP_ENV must not fall back to insecure development cookies."""
+def test_unset_env_resolve_config_name_is_production(monkeypatch):
+    """resolve_config_name reads the live env; unset → production.
+
+    In-process create_app cannot prove the .flaskenv hole is closed:
+    conftest sets FLASK_ENV before import, and config.py already ran
+    load_dotenv. Boot-through-dotenv is the subprocess test below.
+    """
     monkeypatch.delenv('FLASK_ENV', raising=False)
     monkeypatch.delenv('APP_ENV', raising=False)
     assert resolve_config_name() == 'production'
-    app = create_app()
-    assert app.config['SESSION_COOKIE_SECURE'] is True
-    assert app.config['REMEMBER_COOKIE_SECURE'] is True
-    assert app.config['DEBUG'] is False
-    assert app.config['SQLALCHEMY_ECHO'] is False
 
 
-@pytest.mark.parametrize('value', ['staging', 'prodction', 'dev', 'PROD'])
+@pytest.mark.parametrize('value', ['staging', 'prodction', 'develop', 'productionn'])
 def test_unknown_env_refuses_to_start(monkeypatch, value):
     monkeypatch.setenv('FLASK_ENV', value)
     with pytest.raises(RuntimeError, match='Unknown environment'):
         create_app()
+
+
+@pytest.mark.parametrize('value,expected', [
+    ('dev', 'development'),
+    ('DEV', 'development'),
+    ('prod', 'production'),
+    ('PROD', 'production'),
+])
+def test_env_aliases(monkeypatch, value, expected):
+    monkeypatch.setenv('FLASK_ENV', value)
+    assert resolve_config_name() == expected
 
 
 def test_env_value_is_stripped_and_lowercased(monkeypatch):
@@ -157,6 +181,22 @@ def test_production_refuses_insecure_session_cookie():
 
     with pytest.raises(RuntimeError, match='SESSION_COOKIE_SECURE'):
         create_app(InsecureProduction)
+
+
+def test_production_refuses_insecure_remember_cookie():
+    class InsecureRemember(ProductionConfig):
+        REMEMBER_COOKIE_SECURE = False
+
+    with pytest.raises(RuntimeError, match='REMEMBER_COOKIE_SECURE'):
+        create_app(InsecureRemember)
+
+
+def test_production_refuses_debug():
+    class DebugProduction(ProductionConfig):
+        DEBUG = True
+
+    with pytest.raises(RuntimeError, match='DEBUG'):
+        create_app(DebugProduction)
 
 
 def test_production_login_set_cookie_headers_are_secure():
@@ -258,10 +298,11 @@ def test_logout_get_not_allowed(client):
 
 
 def test_logout_post_logs_out(client, app):
+    email = f'logout_user_{os.getpid()}@example.com'
     with app.app_context():
         user = User(
-            username='logout_user@example.com',
-            email='logout_user@example.com',
+            username=email,
+            email=email,
             role='physio',
             email_verified=True,
             is_new_user=False,
@@ -272,28 +313,36 @@ def test_logout_post_logs_out(client, app):
 
     client.post(
         '/auth/login',
-        data={'email': 'logout_user@example.com', 'password': 'password123'},
+        data={'email': email, 'password': 'password123'},
         follow_redirects=True,
     )
     with client.session_transaction() as sess:
         assert sess.get('_user_id')
 
+    with client.session_transaction() as sess:
+        sess['lang'] = 'es'
+        sess['_permanent'] = True
+
     response = client.post('/auth/logout', follow_redirects=False)
     assert response.status_code in (302, 200)
     with client.session_transaction() as sess:
         assert sess.get('_user_id') is None
+        assert sess.get('lang') is None
+        assert not sess.get('_permanent')
+        assert dict(sess) == {}
 
 
-def test_www_host_reaches_login_and_oauth_uses_request_host():
+def test_www_host_reaches_login_and_oauth_uses_app_base_url():
     """With SERVER_NAME unset, www + X-Forwarded-Proto: https must not 404.
 
-    Prod DNS today serves only https://www.trxck.tech. A hardcoded apex
-    SERVER_NAME can 404 every www request; OAuth must follow the request host.
+    Prod DNS today serves only https://www.trxck.tech. OAuth redirect_uri
+    comes from APP_BASE_URL, not the request Host.
     """
     app, previous = _make_prod_app()
     try:
         assert not app.config.get('SERVER_NAME')
         assert not app.config.get('SESSION_COOKIE_DOMAIN')
+        assert app.config['APP_BASE_URL'] == 'https://www.trxck.tech'
 
         from app.routes.auth import build_oauth_redirect_uri
 
@@ -347,3 +396,131 @@ def test_proxyfix_x_forwarded_proto_makes_request_secure():
         assert data['url'].startswith('https://')
     finally:
         login_manager.session_protection = previous
+
+
+def test_untrusted_host_header_returns_400():
+    """Host: evil.com is not in TRUSTED_HOSTS and must be rejected."""
+    app, previous = _make_prod_app()
+    try:
+        client = app.test_client()
+        response = client.get(
+            '/auth/login',
+            headers={'Host': 'evil.com'},
+            base_url='https://evil.com',
+        )
+        assert response.status_code == 400
+    finally:
+        login_manager.session_protection = previous
+
+
+def test_untrusted_x_forwarded_host_returns_400():
+    """ProxyFix x_host=1 would rewrite to evil.com; TRUSTED_HOSTS rejects it."""
+    app, previous = _make_prod_app()
+    try:
+        client = app.test_client()
+        response = client.get(
+            '/auth/login',
+            headers={
+                'Host': 'www.trxck.tech',
+                'X-Forwarded-Host': 'evil.com',
+                'X-Forwarded-Proto': 'https',
+            },
+            base_url='https://www.trxck.tech',
+        )
+        assert response.status_code == 400
+    finally:
+        login_manager.session_protection = previous
+
+
+def test_outbound_urls_use_app_base_url_on_trusted_alias(monkeypatch):
+    """Verification email and OAuth redirect_uri use APP_BASE_URL, not Host.
+
+    trxck.tech is a trusted alias; links must still point at www.trxck.tech.
+    """
+    app, previous = _make_prod_app()
+    try:
+        user_id = _create_verified_physio(app, email='verify_host@example.com')
+        captured = {}
+
+        def fake_send(to_email, subject, html_body, text_body=None):
+            captured['html'] = html_body
+            captured['text'] = text_body
+            return True
+
+        monkeypatch.setattr('app.email_utils.send_email', fake_send)
+
+        from app.routes.auth import build_oauth_redirect_uri
+
+        @app.route('/_outbound_probe')
+        def _outbound_probe():
+            user = User.query.get(user_id)
+            send_verification_email(user)
+            return {
+                'oauth': build_oauth_redirect_uri(),
+                'absolute': absolute_url('auth.verify_email', token='probe-token'),
+            }
+
+        client = app.test_client()
+        alias_headers = {
+            'Host': 'trxck.tech',
+            'X-Forwarded-Proto': 'https',
+        }
+        response = client.get(
+            '/_outbound_probe',
+            headers=alias_headers,
+            base_url='https://trxck.tech',
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['oauth'] == 'https://www.trxck.tech/auth/callback/google'
+        assert data['absolute'] == 'https://www.trxck.tech/auth/verify_email/probe-token'
+        assert 'https://www.trxck.tech/auth/verify_email/' in captured['text']
+        assert 'https://www.trxck.tech/auth/verify_email/' in captured['html']
+        assert 'https://trxck.tech/' not in captured['text']
+        assert 'https://evil.com' not in captured['text']
+    finally:
+        login_manager.session_protection = previous
+
+
+def test_from_run_import_app_ignores_flaskenv_when_env_is_production(tmp_path):
+    """Temp dir: .flaskenv=development, .env=production, process env unset.
+
+    load_dotenv does not override, so loading .flaskenv first would boot
+    DevelopmentConfig even when PYTHONANYWHERE_SETUP.md's .env says
+    production. config.py must load only .env.
+    """
+    repo = Path(__file__).resolve().parents[1]
+    for name in ('run.py', 'config.py', 'app'):
+        os.symlink(repo / name, tmp_path / name)
+    (tmp_path / '.flaskenv').write_text('FLASK_ENV=development\nAPP_ENV=development\n')
+    (tmp_path / '.env').write_text(
+        'FLASK_ENV=production\n'
+        'SECRET_KEY=subprocess-secret-key-for-ci\n'
+    )
+    env = {
+        key: value
+        for key, value in os.environ.items()
+        if key not in ('FLASK_ENV', 'APP_ENV')
+    }
+    env['PYTHONPATH'] = os.pathsep.join((str(tmp_path), str(repo)))
+    env['SECRET_KEY'] = 'subprocess-secret-key-for-ci'
+    result = subprocess.run(
+        [
+            sys.executable,
+            '-c',
+            'from config import ProductionConfig\n'
+            'from run import app\n'
+            'assert app.config["DEBUG"] is False\n'
+            'assert app.config["SESSION_COOKIE_SECURE"] is True\n'
+            'assert app.config["REMEMBER_COOKIE_SECURE"] is True\n'
+            'assert app.config["SESSION_COOKIE_SECURE"] is ProductionConfig.SESSION_COOKIE_SECURE\n'
+            'print("production")\n',
+        ],
+        cwd=str(tmp_path),
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + '\n' + result.stderr
+    assert 'production' in result.stdout

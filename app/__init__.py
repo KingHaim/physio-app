@@ -179,12 +179,25 @@ def create_app(config_class=None):
                 'SESSION_COOKIE_SECURE must be True in production. '
                 'Refusing to start with insecure cookies.'
             )
+        if not app.config.get('REMEMBER_COOKIE_SECURE'):
+            raise RuntimeError(
+                'REMEMBER_COOKIE_SECURE must be True in production. '
+                'Refusing to start with insecure cookies.'
+            )
+        if app.config.get('DEBUG'):
+            raise RuntimeError(
+                'DEBUG must be False in production. '
+                'Refusing to start with the debugger enabled.'
+            )
         # One trusted hop (PythonAnywhere). x_proto so request.is_secure and
-        # WTF_CSRF_SSL_STRICT see HTTPS; x_for for the client IP; x_host so
-        # request.host / url_for(_external=True) use the public Host instead
-        # of the internal gunicorn host. Do not set SERVER_NAME unless the
-        # env provides it — a mismatched SERVER_NAME can 404 www.
-        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+        # WTF_CSRF_SSL_STRICT see HTTPS; x_for for the client IP.
+        # x_host=1 only when TRUSTED_HOSTS will reject a spoofed
+        # X-Forwarded-Host. Outbound URLs use APP_BASE_URL, never request.host.
+        trusted_hosts = app.config.get('TRUSTED_HOSTS')
+        if trusted_hosts:
+            app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+        else:
+            app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
     # Setup logging and monitoring
     setup_logging(app)

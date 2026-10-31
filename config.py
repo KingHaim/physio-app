@@ -6,30 +6,56 @@ from datetime import timedelta
 # Get the absolute path to the directory containing this file
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-# Public defaults first (.flaskenv), then .env. Neither overrides a real env var.
-load_dotenv(os.path.join(basedir, '.flaskenv'))
-load_dotenv()
+# Load the project .env only. Do not load .flaskenv — a committed
+# FLASK_ENV=development there would turn every `from run import app`
+# (including production WSGI) into development when the process env is
+# unset, because load_dotenv does not override. Flask CLI may still read
+# .flaskenv on its own; do not put FLASK_ENV in that file.
+load_dotenv(os.path.join(basedir, '.env'))
 
 VALID_ENVIRONMENTS = frozenset({'development', 'production', 'testing'})
+ENV_ALIASES = {
+    'dev': 'development',
+    'prod': 'production',
+}
+
+DEFAULT_PROD_TRUSTED_HOSTS = ['www.trxck.tech', 'trxck.tech']
+DEFAULT_LOCAL_TRUSTED_HOSTS = ['localhost', '127.0.0.1']
+DEFAULT_PROD_APP_BASE_URL = 'https://www.trxck.tech'
+DEFAULT_LOCAL_APP_BASE_URL = 'http://localhost'
+
+
+def parse_trusted_hosts(default):
+    raw = os.environ.get('TRUSTED_HOSTS')
+    if raw is None or str(raw).strip() == '':
+        return list(default)
+    hosts = [part.strip() for part in str(raw).split(',') if part.strip()]
+    return hosts or list(default)
+
+
+def parse_app_base_url(default):
+    raw = (os.environ.get('APP_BASE_URL') or '').strip().rstrip('/')
+    return raw or default
 
 
 def resolve_config_name():
     """Return development|production|testing. Unset defaults to production.
 
     FLASK_ENV is preferred; APP_ENV is an optional alias. Values are stripped
-    and lowercased. Unknown values raise so a typo cannot silently use insecure
-    development settings.
+    and lowercased. 'dev' and 'prod' are accepted. Unknown values raise so a
+    typo cannot silently use insecure development settings.
     """
     raw = os.environ.get('FLASK_ENV')
     if raw is None or str(raw).strip() == '':
         raw = os.environ.get('APP_ENV')
     if raw is None or str(raw).strip() == '':
         return 'production'
-    name = str(raw).strip().lower()
+    name = ENV_ALIASES.get(str(raw).strip().lower(), str(raw).strip().lower())
     if name not in VALID_ENVIRONMENTS:
         raise RuntimeError(
             f"Unknown environment {name!r}. "
-            "Set FLASK_ENV or APP_ENV to 'development', 'production', or 'testing'."
+            "Set FLASK_ENV or APP_ENV to 'development', 'production', or 'testing' "
+            "(aliases: 'dev', 'prod')."
         )
     return name
 
@@ -104,9 +130,11 @@ class Config:
             'secret': os.environ.get('GOOGLE_CLIENT_SECRET')
         }
     }
-    # Optional absolute origin for OAuth callbacks, e.g. https://www.trxck.tech
-    # When unset, the callback is built from the current request host.
-    OAUTH_REDIRECT_BASE = (os.environ.get('OAUTH_REDIRECT_BASE') or '').strip().rstrip('/') or None
+    # Public origin for emails, OAuth redirect_uri, Calendar callbacks and
+    # Stripe URLs. Never derived from the request Host (Host-header injection).
+    APP_BASE_URL = parse_app_base_url(DEFAULT_LOCAL_APP_BASE_URL)
+    # Flask 3.1+ rejects any other Host / X-Forwarded-Host with 400.
+    TRUSTED_HOSTS = parse_trusted_hosts(DEFAULT_LOCAL_TRUSTED_HOSTS)
     
     # Session configuration (HTTP-safe defaults for local development)
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
@@ -157,6 +185,8 @@ class ProductionConfig(Config):
     # in the environment only after the canonical host is decided.
     SERVER_NAME = (os.environ.get('SERVER_NAME') or '').strip() or None
     PREFERRED_URL_SCHEME = 'https'
+    APP_BASE_URL = parse_app_base_url(DEFAULT_PROD_APP_BASE_URL)
+    TRUSTED_HOSTS = parse_trusted_hosts(DEFAULT_PROD_TRUSTED_HOSTS)
 
     # HTTPS-only cookies. SameSite=Lax (not Strict) so top-level GET
     # returns from Google OAuth, Calendly, and Stripe still carry the session.
