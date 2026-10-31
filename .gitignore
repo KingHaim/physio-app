@@ -20,10 +20,15 @@ run_with_api_key.sh
 .env
 *.env
 .env.*
+*.env.live
 !.env.example
 
-# Ignore SQL dumps
+# Ignore SQL dumps and local database files
 *.sql
+*.sql.gz
+*.dump
+*.sqlite
+*.sqlite3
 logs/physiotracker.log.*
 
 # Browser cookie jars
@@ -34,4 +39,5 @@ cookies*.txt
 *.backup
 
 # Generated clinical reports (may contain PHI)
-report_8_*.md
+report_*.md
+!report_template.md
