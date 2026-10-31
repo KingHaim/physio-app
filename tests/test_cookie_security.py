@@ -1,5 +1,6 @@
 """H6: production cookie flags, fail-closed env, removed debug routes, logout."""
 from datetime import timedelta
+from urllib.parse import urlparse
 
 import pytest
 from flask import request, url_for
@@ -84,6 +85,8 @@ def test_production_config_sets_secure_cookie_flags():
     assert ProductionConfig.REMEMBER_COOKIE_DURATION == timedelta(days=14)
     assert ProductionConfig.WTF_CSRF_SSL_STRICT is True
     assert ProductionConfig.SESSION_PROTECTION == 'basic'
+    assert ProductionConfig.SERVER_NAME is None
+    assert not getattr(ProductionConfig, 'SESSION_COOKIE_DOMAIN', None)
 
 
 def test_create_app_does_not_override_production_cookie_flags():
@@ -279,6 +282,42 @@ def test_logout_post_logs_out(client, app):
     assert response.status_code in (302, 200)
     with client.session_transaction() as sess:
         assert sess.get('_user_id') is None
+
+
+def test_www_host_reaches_login_and_oauth_uses_request_host():
+    """With SERVER_NAME unset, www + X-Forwarded-Proto: https must not 404.
+
+    Prod DNS today serves only https://www.trxck.tech. A hardcoded apex
+    SERVER_NAME can 404 every www request; OAuth must follow the request host.
+    """
+    app, previous = _make_prod_app()
+    try:
+        assert not app.config.get('SERVER_NAME')
+        assert not app.config.get('SESSION_COOKIE_DOMAIN')
+
+        from app.routes.auth import build_oauth_redirect_uri
+
+        @app.route('/_oauth_uri_probe')
+        def _oauth_uri_probe():
+            return {'uri': build_oauth_redirect_uri()}
+
+        client = app.test_client()
+        www_headers = {
+            'Host': 'www.trxck.tech',
+            'X-Forwarded-Proto': 'https',
+        }
+        login = client.get('/auth/login', headers=www_headers)
+        assert login.status_code == 200
+
+        probe = client.get('/_oauth_uri_probe', headers=www_headers)
+        assert probe.status_code == 200
+        uri = probe.get_json()['uri']
+        parsed = urlparse(uri)
+        assert parsed.scheme == 'https'
+        assert parsed.hostname == 'www.trxck.tech'
+        assert parsed.path == '/auth/callback/google'
+    finally:
+        login_manager.session_protection = previous
 
 
 def test_proxyfix_x_forwarded_proto_makes_request_secure():

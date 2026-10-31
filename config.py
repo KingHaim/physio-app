@@ -104,6 +104,9 @@ class Config:
             'secret': os.environ.get('GOOGLE_CLIENT_SECRET')
         }
     }
+    # Optional absolute origin for OAuth callbacks, e.g. https://www.trxck.tech
+    # When unset, the callback is built from the current request host.
+    OAUTH_REDIRECT_BASE = (os.environ.get('OAUTH_REDIRECT_BASE') or '').strip().rstrip('/') or None
     
     # Session configuration (HTTP-safe defaults for local development)
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
@@ -149,8 +152,10 @@ class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_ECHO = False
     
-    # Use production domain from environment or default
-    SERVER_NAME = os.environ.get('SERVER_NAME') or 'trxck.tech'
+    # Do not hardcode a host. A SERVER_NAME that does not match Host can 404
+    # every request (prod today is only https://www.trxck.tech). Set SERVER_NAME
+    # in the environment only after the canonical host is decided.
+    SERVER_NAME = (os.environ.get('SERVER_NAME') or '').strip() or None
     PREFERRED_URL_SCHEME = 'https'
 
     # HTTPS-only cookies. SameSite=Lax (not Strict) so top-level GET

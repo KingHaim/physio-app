@@ -181,9 +181,9 @@ def create_app(config_class=None):
             )
         # One trusted hop (PythonAnywhere). x_proto so request.is_secure and
         # WTF_CSRF_SSL_STRICT see HTTPS; x_for for the client IP; x_host so
-        # request.host / url_for(_external=True) use the public Host
-        # (www.trxck.tech vs trxck.tech) instead of the internal gunicorn host.
-        # SERVER_NAME still overrides url_for's host when it is set.
+        # request.host / url_for(_external=True) use the public Host instead
+        # of the internal gunicorn host. Do not set SERVER_NAME unless the
+        # env provides it — a mismatched SERVER_NAME can 404 www.
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # Setup logging and monitoring

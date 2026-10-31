@@ -245,6 +245,18 @@ def resend_verification():
     
     return render_template('auth/resend_verification.html')
 
+def build_oauth_redirect_uri():
+    """Google callback URL from the request host or OAUTH_REDIRECT_BASE.
+
+    No hardcoded apex/www. Prefer an explicit origin when the canonical host
+    is configured; otherwise use the current request (ProxyFix-aware).
+    """
+    base = (current_app.config.get('OAUTH_REDIRECT_BASE') or '').strip().rstrip('/')
+    if base:
+        return f"{base}{url_for('auth.google_callback')}"
+    return url_for('auth.google_callback', _external=True)
+
+
 @auth.route('/login/google')
 def google_login():
     """Initiate Google OAuth login"""
@@ -253,7 +265,7 @@ def google_login():
         return redirect(url_for('auth.login'))
     
     google = oauth.google
-    redirect_uri = url_for('auth.google_callback', _external=True)
+    redirect_uri = build_oauth_redirect_uri()
     return google.authorize_redirect(redirect_uri)
 
 @auth.route('/callback/google')
