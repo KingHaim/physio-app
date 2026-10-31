@@ -666,15 +666,16 @@ def index():
 # Decide if API endpoints need role check - for now, assume yes if it modifies/reveals sensitive data
 def get_treatment_details(id):
     treatment = Treatment.query.get_or_404(id)
-    # Own patients only — platform admin is not a cross-tenant data-access role
-    if current_user.role == 'patient':
-        if not current_user.patient_record or current_user.patient_record.id != treatment.patient_id:
-            return jsonify({'error': 'Forbidden'}), 403
-    else:
-        accessible_patients = current_user.get_accessible_patients()
-        patient_ids = [p.id for p in accessible_patients]
-        if treatment.patient_id not in patient_ids:
-            return jsonify({'error': 'Forbidden'}), 403
+    # Deny by default. Only the patient themself, or a caller who already
+    # owns that patient, may see the record. Role names are not an allow-list.
+    is_patient_self = (
+        current_user.role == 'patient'
+        and current_user.patient_record
+        and current_user.patient_record.id == treatment.patient_id
+    )
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+    if not is_patient_self and treatment.patient_id not in accessible_ids:
+        return jsonify({'error': 'Forbidden'}), 403
     try:
         # --- Fix Indentation Start --- Removed extra comment line
         # Get trigger points for this treatment
@@ -719,14 +720,14 @@ def get_treatment_details(id):
 @login_required
 @physio_required # Physio/admin only
 def delete_treatment(id):
+    treatment = Treatment.query.join(Patient).filter(
+        Treatment.id == id,
+        Patient.user_id == current_user.id
+    ).first()
+    if treatment is None:
+        abort(404)
+
     try:
-        treatment = Treatment.query.join(Patient).filter(
-            Treatment.id == id,
-            Patient.user_id == current_user.id
-        ).first()
-        if treatment is None:
-            abort(404)
-        
         # First delete associated trigger points
         TriggerPoint.query.filter_by(treatment_id=id).delete()
         
@@ -737,8 +738,6 @@ def delete_treatment(id):
         current_app.logger.info(f"Treatment {id} deleted by user {current_user.id}")
         
         return jsonify({'success': True, 'message': 'Treatment deleted successfully'})
-    except HTTPException:
-        raise
     except exc.SQLAlchemyError as e:
         db.session.rollback()
         current_app.logger.error(f"Database error deleting treatment {id}: {str(e)}")
@@ -763,23 +762,15 @@ def patient_detail(id):
     except Exception as e:
         current_app.logger.error(f"Error auto-syncing appointments in patient detail for user {current_user.id}: {e}")
     
-    # --- Access Control ---
-    # SECURITY FIX: All users (including admins) must follow access control rules
-    if current_user.role == 'physio' or current_user.is_admin:
-        # Physios and admins can access their own patients or clinic patients
-        accessible_patients = current_user.get_accessible_patients()
-        patient_ids = [p.id for p in accessible_patients]
-        if patient.id not in patient_ids:
-            flash('You do not have permission to view this patient\'s details.', 'danger')
-            return redirect(url_for('main.patients_list'))
-    elif current_user.role == 'patient':
-        # Patients should view their details via their own dashboard.
-        if not current_user.patient_record or current_user.patient_record.id != patient.id:
-            flash('Please access your details via the patient dashboard.', 'info')
-            return redirect(url_for('main.patient_dashboard'))
-    else: # Other roles
-        flash('Access Denied.', 'danger')
-        return redirect(url_for('main.index'))
+    # --- Access Control (own patients only; unknown roles denied) ---
+    is_patient_self = (
+        current_user.role == 'patient'
+        and current_user.patient_record
+        and current_user.patient_record.id == patient.id
+    )
+    accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+    if not is_patient_self and patient.id not in accessible_ids:
+        abort(404)
     # --- End Access Control ---
 
     # DEBUG: Log anamnesis state for troubleshooting
@@ -2064,28 +2055,15 @@ def view_treatment(id):
         
         patient = treatment.patient
         
-        # --- Access Control --- 
-        # SECURITY FIX: All users (including admins) must follow access control rules
-        try:
-            if current_user.role == 'physio' or current_user.is_admin:
-                # Own patients only — clinic managers/admins do not see other members' records
-                accessible_patients = current_user.get_accessible_patients()
-                patient_ids = [p.id for p in accessible_patients]
-                if patient.id not in patient_ids:
-                    flash('You do not have permission to view this treatment.', 'danger')
-                    return redirect(url_for('main.patients_list'))
-            elif current_user.role == 'patient':
-                if not current_user.patient_record or current_user.patient_record.id != patient.id:
-                    flash('You do not have permission to view this treatment.', 'danger')
-                    return redirect(url_for('main.patient_dashboard'))
-                # If it IS their record, they are allowed through.
-            else: # Other roles
-                flash('Access Denied.', 'danger')
-                return redirect(url_for('main.index'))
-        except Exception as e:
-            current_app.logger.error(f"Access control error for treatment {id}: {e}")
-            flash('Error checking permissions.', 'danger')
-            return redirect(url_for('main.index'))
+        # --- Access Control (own patients only; unknown roles denied) ---
+        is_patient_self = (
+            current_user.role == 'patient'
+            and current_user.patient_record
+            and current_user.patient_record.id == patient.id
+        )
+        accessible_ids = [p.id for p in current_user.get_accessible_patients()]
+        if not is_patient_self and patient.id not in accessible_ids:
+            abort(404)
         # --- End Access Control ---
         
         current_app.logger.info(f"Viewing treatment {id}: Type={treatment.treatment_type}, Notes={treatment.notes}, Status={treatment.status}")
@@ -2116,6 +2094,8 @@ def view_treatment(id):
         
         return render_template('view_treatment.html', treatment=mapped_treatment, patient=patient)
         
+    except HTTPException:
+        raise
     except Exception as e:
         current_app.logger.error(f"Unexpected error viewing treatment {id}: {e}")
         flash('An error occurred while loading the treatment.', 'danger')

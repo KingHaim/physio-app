@@ -157,8 +157,7 @@ def test_user_cannot_view_another_users_treatment(client, app, owner_and_treatme
     treatment_id = owner_and_treatment["treatment_id"]
     login_user_in_session(client, app, other_physio)
     response = client.get(f"/treatment/{treatment_id}/view", follow_redirects=False)
-    assert response.status_code != 200
-    assert response.status_code in (302, 403, 404)
+    assert response.status_code == 404
 
 
 def test_owner_can_open_own_treatment_edit(client, app, owner_and_treatment):
@@ -435,9 +434,65 @@ def test_admin_cannot_delete_another_users_treatment(client, app, owner_and_trea
     treatment_id = owner_and_treatment["treatment_id"]
     login_user_in_session(client, app, platform_admin)
     response = client.delete(f"/api/treatment/{treatment_id}", follow_redirects=False)
-    assert response.status_code in (403, 404)
+    assert response.status_code == 404
     with app.app_context():
         assert Treatment.query.get(treatment_id) is not None
+
+
+def test_non_owner_delete_treatment_returns_404_not_500(
+    client, app, owner_and_treatment, other_physio
+):
+    """A non-owner DELETE must 404; first_or_404 must not become a 500."""
+    treatment_id = owner_and_treatment["treatment_id"]
+    login_user_in_session(client, app, other_physio)
+    response = client.delete(f"/api/treatment/{treatment_id}", follow_redirects=False)
+    assert response.status_code == 404
+    assert response.status_code != 500
+    with app.app_context():
+        assert Treatment.query.get(treatment_id) is not None
+
+
+def test_unknown_role_cannot_get_another_users_treatment(
+    client, app, owner_and_treatment
+):
+    """Roles outside patient/physio/admin must not read another user's treatment JSON."""
+    with app.app_context():
+        unique_email = f"assistant_{uuid.uuid4().hex[:8]}@example.com"
+        assistant = User(
+            username=unique_email,
+            email=unique_email,
+            role="assistant",
+            is_admin=False,
+        )
+        assistant.set_password("password")
+        db.session.add(assistant)
+        db.session.commit()
+        assistant_id = assistant.id
+
+    treatment_id = owner_and_treatment["treatment_id"]
+    login_user_in_session(client, app, assistant_id)
+    response = client.get(f"/api/treatment/{treatment_id}", follow_redirects=False)
+    assert response.status_code in (403, 404)
+    if response.is_json:
+        body = response.get_json() or {}
+        assert "notes" not in body
+        assert "patient_name" not in body
+
+
+def test_non_owner_patient_and_treatment_pages_are_404(
+    client, app, owner_and_treatment, other_physio
+):
+    """HTML patient/treatment pages 404 for another practitioner."""
+    login_user_in_session(client, app, other_physio)
+    patient_page = client.get(
+        f"/patient/{owner_and_treatment['patient_id']}", follow_redirects=False
+    )
+    assert patient_page.status_code == 404
+    treatment_page = client.get(
+        f"/treatment/{owner_and_treatment['treatment_id']}/view",
+        follow_redirects=False,
+    )
+    assert treatment_page.status_code == 404
 
 
 def test_admin_cannot_delete_another_users_patient(client, app, owner_and_treatment, platform_admin):
