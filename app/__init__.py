@@ -189,6 +189,8 @@ def create_app(config_class=None):
                 'DEBUG must be False in production. '
                 'Refusing to start with the debugger enabled.'
             )
+        from app.urls import require_production_app_base_url
+        require_production_app_base_url(app)
         # One trusted hop (PythonAnywhere). x_proto so request.is_secure and
         # WTF_CSRF_SSL_STRICT see HTTPS; x_for for the client IP.
         # x_host=1 only when TRUSTED_HOSTS will reject a spoofed

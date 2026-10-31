@@ -2,17 +2,17 @@
 import os
 import subprocess
 import sys
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
-from flask import request, url_for
+from flask import has_request_context, request, url_for
 from sqlalchemy.pool import StaticPool
 
 from app import create_app, db, login_manager
-from app.email_utils import send_verification_email
-from app.models import User
+from app.email_utils import send_trial_reminder_emails, send_verification_email
+from app.models import Plan, User, UserSubscription
 from app.urls import absolute_url
 from config import DevelopmentConfig, ProductionConfig, TestConfig, resolve_config_name
 
@@ -197,6 +197,24 @@ def test_production_refuses_debug():
 
     with pytest.raises(RuntimeError, match='DEBUG'):
         create_app(DebugProduction)
+
+
+def test_production_refuses_http_app_base_url():
+    class HttpBase(ProductionConfig):
+        APP_BASE_URL = 'http://www.trxck.tech'
+        TRUSTED_HOSTS = ['www.trxck.tech', 'trxck.tech']
+
+    with pytest.raises(RuntimeError, match='APP_BASE_URL'):
+        create_app(HttpBase)
+
+
+def test_production_refuses_app_base_url_host_not_in_trusted_hosts():
+    class UntrustedBase(ProductionConfig):
+        APP_BASE_URL = 'https://evil.com'
+        TRUSTED_HOSTS = ['www.trxck.tech', 'trxck.tech']
+
+    with pytest.raises(RuntimeError, match='TRUSTED_HOSTS'):
+        create_app(UntrustedBase)
 
 
 def test_production_login_set_cookie_headers_are_secure():
@@ -478,6 +496,82 @@ def test_outbound_urls_use_app_base_url_on_trusted_alias(monkeypatch):
         assert 'https://www.trxck.tech/auth/verify_email/' in captured['html']
         assert 'https://trxck.tech/' not in captured['text']
         assert 'https://evil.com' not in captured['text']
+    finally:
+        login_manager.session_protection = previous
+
+
+def test_absolute_url_without_request_context_uses_app_base_url():
+    """CLI jobs only have an app context. url_for must not require SERVER_NAME."""
+    app, previous = _make_prod_app()
+    try:
+        with app.app_context():
+            assert not has_request_context()
+            url = absolute_url('auth.verify_email', token='cli-token')
+            manage = absolute_url('main.manage_subscription')
+        assert url.startswith(app.config['APP_BASE_URL'])
+        assert url == 'https://www.trxck.tech/auth/verify_email/cli-token'
+        assert manage == 'https://www.trxck.tech/manage-subscription'
+    finally:
+        login_manager.session_protection = previous
+
+
+def test_send_trial_reminders_without_request_uses_app_base_url(monkeypatch):
+    """flask send-trial-reminders must not swallow a missing request context."""
+    app, previous = _make_prod_app()
+    captured = {}
+
+    def fake_send(to_email, subject, html_body, text_body=None):
+        captured['to'] = to_email
+        captured['html'] = html_body
+        captured['text'] = text_body
+        return True
+
+    monkeypatch.setattr('app.email_utils.send_email', fake_send)
+
+    try:
+        with app.app_context():
+            user = User(
+                username='trial_cli@example.com',
+                email='trial_cli@example.com',
+                role='physio',
+                email_verified=True,
+                is_new_user=False,
+            )
+            plan = Plan(
+                name='Trial Reminder Plan',
+                slug='trial-reminder-plan',
+                plan_type='individual',
+                price_cents=0,
+                billing_interval='month',
+                currency='usd',
+                is_active=True,
+            )
+            db.session.add_all([user, plan])
+            db.session.commit()
+            ends = datetime.utcnow() + timedelta(days=7)
+            subscription = UserSubscription(
+                user_id=user.id,
+                plan_id=plan.id,
+                status='trialing',
+                trial_starts_at=datetime.utcnow(),
+                trial_ends_at=ends,
+                current_period_starts_at=datetime.utcnow(),
+                current_period_ends_at=ends,
+                trial_reminder_7_days_sent=False,
+            )
+            db.session.add(subscription)
+            db.session.commit()
+            sub_id = subscription.id
+
+            assert not has_request_context()
+            sent = send_trial_reminder_emails()
+            flagged = UserSubscription.query.get(sub_id).trial_reminder_7_days_sent
+
+        assert sent == 1
+        assert flagged is True
+        assert captured.get('text')
+        assert 'https://www.trxck.tech/manage-subscription' in captured['text']
+        assert 'https://www.trxck.tech/manage-subscription' in captured['html']
     finally:
         login_manager.session_protection = previous
 
