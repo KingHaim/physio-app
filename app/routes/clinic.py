@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
+from app.urls import absolute_url
 from flask_login import login_required, current_user
 from app.models import db, Clinic, ClinicMembership, ClinicSubscription, Plan, User
 from app.forms import ClinicForm
@@ -354,10 +355,10 @@ def invite_practitioner():
         
         # In a real application, you would send an email here
         if message_type == "existing_user":
-            invitation_link = url_for('clinic.join_with_token', token=invitation.invitation_token, _external=True)
+            invitation_link = absolute_url('clinic.join_with_token', token=invitation.invitation_token)
             message = f'Invitation sent to existing user {email}'
         else:
-            invitation_link = url_for('clinic.register_and_join', token=invitation.invitation_token, email=email, _external=True)
+            invitation_link = absolute_url('clinic.register_and_join', token=invitation.invitation_token, email=email)
             message = f'Invitation sent to {email}. They will be able to create an account and join the clinic.'
         
         return jsonify({

@@ -4,7 +4,8 @@ Email utilities for sending verification emails and other notifications
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from flask import current_app, url_for
+from flask import current_app
+from app.urls import absolute_url
 import logging
 
 def send_email(to_email, subject, html_body, text_body=None):
@@ -64,7 +65,7 @@ HTML Body: {html_body[:200]}...
 def send_verification_email(user):
     """Send email verification email to user"""
     token = user.generate_email_verification_token()
-    verification_url = url_for('auth.verify_email', token=token, _external=True)
+    verification_url = absolute_url('auth.verify_email', token=token)
     subject = "Verifica tu email - TRXCKER"
     
     # Get user's name or use a generic greeting
@@ -162,7 +163,7 @@ Ya puedes acceder a todas las funcionalidades de TRXCKER:
 - Reportes y análisis
 - Y mucho más...
 
-Accede a tu cuenta: {url_for('auth.login', _external=True)}
+Accede a tu cuenta: {absolute_url('auth.login')}
 
 ¡Bienvenido a TRXCKER!
 
@@ -223,7 +224,7 @@ El equipo de TRXCKER
             </div>
             
             <p>¡Comienza ahora!</p>
-            <a href="{url_for('auth.login', _external=True)}" class="button">🚀 Acceder a mi Cuenta</a>
+            <a href="{absolute_url('auth.login')}" class="button">🚀 Acceder a mi Cuenta</a>
             
             <p>Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.</p>
         </div>
@@ -280,7 +281,7 @@ Your current {plan_name} trial includes:
 - And much more!
 
 Upgrade now to continue without interruption:
-{url_for('main.manage_subscription', _external=True)}
+{absolute_url('main.manage_subscription')}
 
 Questions? We're here to help - just reply to this email.
 
@@ -375,7 +376,7 @@ The TRXCKER Team
             
             <p>Don't lose access to your data and all these powerful features!</p>
             
-            <a href="{url_for('main.manage_subscription', _external=True)}" class="button {'button-urgent' if days_remaining <= 2 else ''}">
+            <a href="{absolute_url('main.manage_subscription')}" class="button {'button-urgent' if days_remaining <= 2 else ''}">
                 🚀 Upgrade Now to Continue
             </a>
             
@@ -407,6 +408,7 @@ def send_trial_reminder_emails():
     ]
     
     total_sent = 0
+    total_failed = 0
     
     for config in reminder_configs:
         days = config['days']
@@ -426,20 +428,41 @@ def send_trial_reminder_emails():
         ).all()
         
         for user in users_to_remind:
+            user_id = user.id
             try:
-                # Send the reminder email
                 if send_trial_reminder_email(user, days):
-                    # Mark this reminder as sent
                     subscription = user.current_subscription
                     if subscription:
                         setattr(subscription, field_name, True)
                         db.session.commit()
                         total_sent += 1
-                        print(f"Sent {days}-day reminder to {user.email}")
+                        current_app.logger.info(
+                            'Sent %s-day trial reminder to user_id=%s', days, user_id
+                        )
+                    else:
+                        total_failed += 1
+                        current_app.logger.error(
+                            'Sent %s-day trial reminder but no subscription '
+                            'to mark for user_id=%s',
+                            days,
+                            user_id,
+                        )
                 else:
-                    print(f"Failed to send {days}-day reminder to {user.email}")
-            except Exception as e:
-                print(f"Error sending {days}-day reminder to {user.email}: {str(e)}")
+                    total_failed += 1
+                    current_app.logger.error(
+                        'Failed to send %s-day trial reminder to user_id=%s',
+                        days,
+                        user_id,
+                    )
+            except Exception:
+                total_failed += 1
+                current_app.logger.exception(
+                    'Error sending %s-day trial reminder to user_id=%s',
+                    days,
+                    user_id,
+                )
     
-    print(f"Total trial reminder emails sent: {total_sent}")
-    return total_sent
+    current_app.logger.info(
+        'Trial reminder batch finished: sent=%s failed=%s', total_sent, total_failed
+    )
+    return total_sent, total_failed

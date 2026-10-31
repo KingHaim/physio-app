@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, session
+from app.urls import absolute_url
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_babel import _
 from app.models import User, db
@@ -71,15 +72,14 @@ def login():
                 flash(_('Please verify your email before signing in. Check your inbox.'), 'warning')
                 return render_template('auth/login.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
             
-            # Set session as permanent if remember me is checked
-            if form.remember_me.data:
+            # Clear first so session.permanent is not wiped by session.clear().
+            remember = form.remember_me.data
+            session.clear()
+            if remember:
                 session.permanent = True
             
-            # Clear any existing session data that might interfere
-            session.clear()
-            
             current_app.logger.info(f"About to call login_user for: {user.email} (ID: {user.id})")
-            login_user(user, remember=form.remember_me.data)
+            login_user(user, remember=remember)
             current_app.logger.info(f"login_user completed. Current user is now: {current_user.email if current_user.is_authenticated else 'Not authenticated'}")
             
             # Set user's preferred language in session if available
@@ -105,18 +105,12 @@ def login():
 
     return render_template('auth/login.html', form=form, supported_locales=current_app.config['BABEL_SUPPORTED_LOCALES'])
 
-@auth.route('/logout')
+@auth.route('/logout', methods=['POST'])
 def logout():
-    logout_user()
-    return redirect(url_for('auth.login'))
-
-@auth.route('/clear-session')
-def clear_session():
-    """Clear session data - useful for debugging login issues"""
-    from flask import session
-    logout_user()
+    # Clear lang / _permanent first. logout_user() then sets session['_remember']
+    # = 'clear' so Flask-Login can still delete the remember cookie.
     session.clear()
-    flash('Session cleared successfully', 'info')
+    logout_user()
     return redirect(url_for('auth.login'))
 
 @auth.route('/register', methods=['GET', 'POST'])
@@ -249,6 +243,11 @@ def resend_verification():
     
     return render_template('auth/resend_verification.html')
 
+def build_oauth_redirect_uri():
+    """Google callback URL from APP_BASE_URL, never the request Host."""
+    return absolute_url('auth.google_callback')
+
+
 @auth.route('/login/google')
 def google_login():
     """Initiate Google OAuth login"""
@@ -257,7 +256,7 @@ def google_login():
         return redirect(url_for('auth.login'))
     
     google = oauth.google
-    redirect_uri = url_for('auth.google_callback', _external=True)
+    redirect_uri = build_oauth_redirect_uri()
     return google.authorize_redirect(redirect_uri)
 
 @auth.route('/callback/google')

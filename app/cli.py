@@ -30,10 +30,17 @@ def register_commands(app):
         """Send trial reminder emails to users who need them."""
         from app.email_utils import send_trial_reminder_emails
         try:
-            send_trial_reminder_emails()
-            click.echo("Trial reminder emails sent successfully.")
-        except Exception as e:
-            click.echo(f"Error sending trial reminders: {str(e)}")
+            sent, failed = send_trial_reminder_emails()
+        except Exception as exc:
+            click.echo(f'Error sending trial reminders: {exc}', err=True)
+            raise SystemExit(1) from exc
+        if failed:
+            click.echo(
+                f'Trial reminder batch finished with {failed} failure(s); {sent} sent.',
+                err=True,
+            )
+            raise SystemExit(1)
+        click.echo('Trial reminder emails sent successfully.')
     
     @app.cli.command('maintenance')
     @with_appcontext
@@ -42,15 +49,28 @@ def register_commands(app):
         treatment_count = mark_all_past_treatments_as_completed_global()
         patient_count = mark_inactive_patients()
         
-        # Send trial reminders
+        reminder_failed = False
         try:
             from app.email_utils import send_trial_reminder_emails
-            send_trial_reminder_emails()
-            click.echo("Trial reminder emails sent.")
-        except Exception as e:
-            click.echo(f"Error sending trial reminders: {str(e)}")
+            sent, failed = send_trial_reminder_emails()
+            if failed:
+                click.echo(
+                    f'Trial reminder batch finished with {failed} failure(s); {sent} sent.',
+                    err=True,
+                )
+                reminder_failed = True
+            else:
+                click.echo('Trial reminder emails sent.')
+        except Exception as exc:
+            click.echo(f'Error sending trial reminders: {exc}', err=True)
+            reminder_failed = True
         
-        click.echo(f"Maintenance complete: {treatment_count} treatments updated, {patient_count} patients marked inactive.")
+        click.echo(
+            f'Maintenance complete: {treatment_count} treatments updated, '
+            f'{patient_count} patients marked inactive.'
+        )
+        if reminder_failed:
+            raise SystemExit(1)
 
     @click.command('create-admin')
     @with_appcontext

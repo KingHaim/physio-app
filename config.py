@@ -6,7 +6,68 @@ from datetime import timedelta
 # Get the absolute path to the directory containing this file
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-load_dotenv()
+# Load the project .env only. Do not load .flaskenv — a committed
+# FLASK_ENV=development there would turn every `from run import app`
+# (including production WSGI) into development when the process env is
+# unset, because load_dotenv does not override. Flask CLI may still read
+# .flaskenv on its own; do not put FLASK_ENV in that file.
+load_dotenv(os.path.join(basedir, '.env'))
+
+VALID_ENVIRONMENTS = frozenset({'development', 'production', 'testing'})
+ENV_ALIASES = {
+    'dev': 'development',
+    'prod': 'production',
+}
+
+DEFAULT_PROD_TRUSTED_HOSTS = ['www.trxck.tech', 'trxck.tech']
+DEFAULT_LOCAL_TRUSTED_HOSTS = ['localhost', '127.0.0.1']
+DEFAULT_PROD_APP_BASE_URL = 'https://www.trxck.tech'
+DEFAULT_LOCAL_APP_BASE_URL = 'http://localhost:5002'
+
+
+def _normalize_host_list(hosts):
+    return [str(part).strip().lower() for part in hosts if str(part).strip()]
+
+
+def parse_trusted_hosts(default):
+    """Parse TRUSTED_HOSTS. Empty/whitespace env falls back to default.
+
+    Entries are stripped and lowercased so request Host matching is
+    case-insensitive. An explicitly empty list assigned on a config class
+    is left empty and production startup refuses it.
+    """
+    raw = os.environ.get('TRUSTED_HOSTS')
+    if raw is None or str(raw).strip() == '':
+        return _normalize_host_list(default)
+    hosts = _normalize_host_list(str(raw).split(','))
+    return hosts or _normalize_host_list(default)
+
+
+def parse_app_base_url(default):
+    raw = (os.environ.get('APP_BASE_URL') or '').strip().rstrip('/')
+    return raw or default
+
+
+def resolve_config_name():
+    """Return development|production|testing. Unset defaults to production.
+
+    FLASK_ENV is preferred; APP_ENV is an optional alias. Values are stripped
+    and lowercased. 'dev' and 'prod' are accepted. Unknown values raise so a
+    typo cannot silently use insecure development settings.
+    """
+    raw = os.environ.get('FLASK_ENV')
+    if raw is None or str(raw).strip() == '':
+        raw = os.environ.get('APP_ENV')
+    if raw is None or str(raw).strip() == '':
+        return 'production'
+    name = ENV_ALIASES.get(str(raw).strip().lower(), str(raw).strip().lower())
+    if name not in VALID_ENVIRONMENTS:
+        raise RuntimeError(
+            f"Unknown environment {name!r}. "
+            "Set FLASK_ENV or APP_ENV to 'development', 'production', or 'testing' "
+            "(aliases: 'dev', 'prod')."
+        )
+    return name
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY")
@@ -79,12 +140,21 @@ class Config:
             'secret': os.environ.get('GOOGLE_CLIENT_SECRET')
         }
     }
+    # Public origin for emails, OAuth redirect_uri, Calendar callbacks and
+    # Stripe URLs. Never derived from the request Host (Host-header injection).
+    APP_BASE_URL = parse_app_base_url(DEFAULT_LOCAL_APP_BASE_URL)
+    # Flask 3.1+ rejects any other Host / X-Forwarded-Host with 400.
+    TRUSTED_HOSTS = parse_trusted_hosts(DEFAULT_LOCAL_TRUSTED_HOSTS)
     
-    # Session configuration
+    # Session configuration (HTTP-safe defaults for local development)
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
     SESSION_COOKIE_SECURE = False
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SECURE = False
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
+    SESSION_PROTECTION = 'basic'
     
     # CSRF configuration
     WTF_CSRF_TIME_LIMIT = 3600
@@ -112,14 +182,36 @@ class DevelopmentConfig(Config):
     # Remove SERVER_NAME restriction for development to work with both localhost and 127.0.0.1
     # SERVER_NAME = 'localhost:5000'  # Commented out to allow flexible host access
     PREFERRED_URL_SCHEME = 'http'
+    # Keep cookies sendable over local HTTP
+    SESSION_COOKIE_SECURE = False
+    REMEMBER_COOKIE_SECURE = False
 
 class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_ECHO = False
     
-    # Use production domain from environment or default
-    SERVER_NAME = os.environ.get('SERVER_NAME') or 'trxck.tech'
+    # Do not hardcode a host. A SERVER_NAME that does not match Host can 404
+    # every request (prod today is only https://www.trxck.tech). Set SERVER_NAME
+    # in the environment only after the canonical host is decided.
+    SERVER_NAME = (os.environ.get('SERVER_NAME') or '').strip() or None
     PREFERRED_URL_SCHEME = 'https'
+    APP_BASE_URL = parse_app_base_url(DEFAULT_PROD_APP_BASE_URL)
+    TRUSTED_HOSTS = parse_trusted_hosts(DEFAULT_PROD_TRUSTED_HOSTS)
+
+    # HTTPS-only cookies. SameSite=Lax (not Strict) so top-level GET
+    # returns from Google OAuth, Calendly, and Stripe still carry the session.
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SECURE = True
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_DURATION = timedelta(days=14)
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=12)
+    # 'basic' (not 'strong'): 'strong' logs users out on any IP change,
+    # including X-Forwarded-For that a client can spoof, and clears remember-me.
+    SESSION_PROTECTION = 'basic'
+    WTF_CSRF_SSL_STRICT = True
     
     # Production-specific settings - only check at runtime, not import time
     def __init__(self):
@@ -149,17 +241,22 @@ class TestConfig(Config):
     # Disable encryption for testing to avoid length issues
     DISABLE_ENCRYPTION = True
     
-    # Use simpler session configuration for testing
+    # Use simpler session configuration for testing (HTTP, no Secure flag)
     SESSION_COOKIE_SECURE = False
     SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SECURE = False
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
     
     # Disable CSRF for testing
     WTF_CSRF_ENABLED = False
+    APP_BASE_URL = parse_app_base_url('http://localhost')
 
 # Configuration dictionary
 config = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
     'testing': TestConfig,
-    'default': DevelopmentConfig
+    'default': ProductionConfig,
 }

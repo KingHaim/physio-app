@@ -50,12 +50,30 @@ touch .env
 # Add your settings to .env
 # Example:
 SECRET_KEY=your-secret-key   # Required for Flask session security
+FLASK_ENV=development        # Required for local HTTP. Unset defaults to production.
 # CALENDLY_API_TOKEN=your-calendly-token
 # DEEPSEEK_API_KEY=your-deepseek-api-key
 ```
 
 Make sure the `SECRET_KEY` variable is set before running the application. The
 app will exit on startup if this variable is missing.
+
+`FLASK_ENV` (or optional `APP_ENV`) must be `development`, `production`, or
+`testing` (case-insensitive; aliases `dev` and `prod`). An unset value
+defaults to **production** (secure cookies, HTTPS). A typo refuses to start.
+Do **not** put `FLASK_ENV` in `.flaskenv` — `config.py` / `run.py` do not
+load that file, and a committed `FLASK_ENV=development` would make production
+WSGI (`from run import app`) start insecurely when the process env is unset.
+Set `FLASK_ENV=development` in your shell or `.env` for local HTTP. Pytest
+sets `FLASK_ENV=testing` in `tests/conftest.py`.
+
+Public links (verification email, Google OAuth `redirect_uri`, Calendar
+callback, Stripe success/cancel/return) are built from `APP_BASE_URL`
+(production default `https://www.trxck.tech`), never from the request Host.
+Register `https://www.trxck.tech/auth/callback/google` in the Google console
+to match. `TRUSTED_HOSTS` (Flask 3.1+, production default
+`www.trxck.tech,trxck.tech`) rejects any other `Host` / `X-Forwarded-Host`
+with 400.
 
 5. Initialize the database:
 

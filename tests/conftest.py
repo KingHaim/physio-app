@@ -1,3 +1,9 @@
+import os
+
+# Must be set before importing the app so create_app() does not default to production.
+os.environ.setdefault('FLASK_ENV', 'testing')
+os.environ.setdefault('SECRET_KEY', 'test-secret-key-for-ci')
+
 import pytest
 import uuid
 from flask import Flask

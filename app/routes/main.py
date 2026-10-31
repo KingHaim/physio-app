@@ -34,6 +34,7 @@ from app.forms import (
 )
 from functools import wraps
 from flask_babel import _
+from app.urls import absolute_url
 from werkzeug.exceptions import HTTPException
 # from .analytics import generate_analytics_report, generate_deepseek_report
 
@@ -4093,7 +4094,7 @@ def manage_subscription():
         # The return_url is where the user will be redirected after they are done in the portal
         session = stripe.billing_portal.Session.create(
             customer=current_user.stripe_customer_id,
-            return_url=url_for('main.manage_subscription', _external=True)
+            return_url=absolute_url('main.manage_subscription')
         )
         return redirect(session.url)
     except stripe.error.StripeError as e:
@@ -5016,7 +5017,7 @@ def manage_billing():
         # Create a new Stripe Billing Portal session
         session = stripe.billing_portal.Session.create(
             customer=current_user.stripe_customer_id,
-            return_url=url_for('main.manage_billing', _external=True)
+            return_url=absolute_url('main.manage_billing')
         )
         return redirect(session.url)
     except stripe.error.StripeError as e:
@@ -5095,43 +5096,6 @@ def get_inactive_patients_data():
     except Exception as e:
         current_app.logger.error(f"Error in get_inactive_patients_data: {e}")
         return jsonify({"error": "Failed to fetch inactive patient data"}), 500
-
-@main.route('/debug/session')
-@login_required
-def debug_session():
-    """Debug endpoint to check session information"""
-    from flask import session, request
-    import json
-    
-    debug_info = {
-        'current_user_id': current_user.id if current_user.is_authenticated else None,
-        'current_user_email': current_user.email if current_user.is_authenticated else None,
-        'current_user_name': f"{current_user.first_name} {current_user.last_name}" if current_user.is_authenticated else None,
-        'session_data': dict(session),
-        'cookies': dict(request.cookies),
-        'is_authenticated': current_user.is_authenticated,
-        'user_agent': request.headers.get('User-Agent')
-    }
-    
-    return f"<pre>{json.dumps(debug_info, indent=2, default=str)}</pre>"
-
-@main.route('/debug/force-welcome')
-@login_required
-def force_welcome():
-    """Debug endpoint to force welcome modal to appear"""
-    # Temporarily set user as new for testing
-    original_is_new_user = getattr(current_user, 'is_new_user', False)
-    current_user.is_new_user = True
-    
-    from app.forms import WelcomeOnboardingForm
-    welcome_form = WelcomeOnboardingForm()
-    
-    # Reset the is_new_user flag
-    current_user.is_new_user = original_is_new_user
-    
-    return render_template('debug_welcome.html', 
-                         is_new_user=True,
-                         welcome_form=welcome_form)
 
 @main.route('/api/patient/create', methods=['POST'])
 @login_required
@@ -5224,34 +5188,4 @@ def create_patient_ajax():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Error creating patient: {str(e)}'}), 500
-
-@main.route('/debug/patients')
-@login_required
-def debug_patients():
-    """Temporary debug endpoint to see what patients exist for the current user"""
-    user_patients = Patient.query.filter_by(user_id=current_user.id).all()
-    
-    patients_info = []
-    for p in user_patients:
-        patients_info.append({
-            'id': p.id,
-            'name': p.name,
-            'status': p.status,
-            'user_id': p.user_id
-        })
-    
-    debug_info = {
-        'current_user_id': current_user.id,
-        'current_user_email': current_user.email,
-        'total_patients': len(user_patients),
-        'patients': patients_info
-    }
-    
-    return jsonify(debug_info)
-
-@main.route('/test_anamnesis')
-@login_required
-def test_anamnesis():
-    """Test route for anamnesis display debugging"""
-    return render_template('test_anamnesis.html')
 
