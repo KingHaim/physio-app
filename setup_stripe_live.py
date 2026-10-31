@@ -22,6 +22,17 @@ import argparse
 import json
 from typing import Dict, List
 
+
+def require_env(name: str) -> str:
+    """Return a required environment variable or exit with a clear error."""
+    value = os.environ.get(name)
+    if not value:
+        raise SystemExit(
+            f"Missing required environment variable {name}. "
+            "Set it in the environment and rerun; do not hardcode credentials."
+        )
+    return value
+
 # Live Price IDs for product prod_RFrAVB9sQ8sUHk
 # UPDATED WITH YOUR ACTUAL LIVE PRICE IDs
 LIVE_PRICE_IDS = {
@@ -77,7 +88,9 @@ def create_live_env_template():
     
     print("📄 Creating live environment template...")
     
-    live_env_content = """# LIVE STRIPE CONFIGURATION FOR TRXCK.TECH
+    mail_username = require_env("MAIL_USERNAME")
+    mail_password = require_env("MAIL_PASSWORD")
+    live_env_content = f"""# LIVE STRIPE CONFIGURATION FOR TRXCK.TECH
 # ==========================================
 # 
 # CRITICAL: These are LIVE Stripe keys that will process real payments!
@@ -101,8 +114,8 @@ export DATABASE_URL=postgresql://your_db_user:your_db_password@your_db_host:5432
 export MAIL_SERVER=smtp-relay.brevo.com
 export MAIL_PORT=587
 export MAIL_USE_TLS=true
-export MAIL_USERNAME=918347001@smtp-brevo.com
-export MAIL_PASSWORD=8caQAZJ6CbRBstjk
+export MAIL_USERNAME={mail_username}
+export MAIL_PASSWORD={mail_password}
 export MAIL_DEFAULT_SENDER=noreply@trxck.tech
 
 # Security Keys (GENERATE NEW ONES FOR PRODUCTION!)

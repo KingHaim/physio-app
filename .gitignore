@@ -5,9 +5,6 @@ instance/
 venv/
 physio/
 .DS_Store
-.env
-.env.*
-!.env.example
 .venv
 env/
 ENV/
@@ -15,14 +12,26 @@ ENV/
 logs/
 fixed_key.txt
 working_endpoint.txt
+.deepseek_working_endpoint
 *_backup_*.db
 run_with_api_key.sh
+
+# Environment files (keep only the safe example tracked)
+.env
+*.env
+.env.*
+!.env.example
 
 # Ignore SQL dumps
 *.sql
 logs/physiotracker.log.*
 
-# Ignore live environment files with sensitive data
-live.env
-*.env.live
-production.env
+# Browser cookie jars
+cookies*.txt
+
+# Editor / backup copies
+*.bak
+*.backup
+
+# Generated clinical reports (may contain PHI)
+report_8_*.md
