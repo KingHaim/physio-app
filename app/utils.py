@@ -5,36 +5,41 @@ from sqlalchemy import func, and_
 import logging
 import json
 
-def mark_past_treatments_as_completed(user_id=None):
-    """Mark past treatments with status 'Scheduled' as 'Completed'"""
+def _require_user_id(user_id):
+    if user_id is None:
+        raise ValueError(
+            "user_id is required; use mark_all_past_treatments_as_completed_global() for CLI-wide runs"
+        )
+    return user_id
+
+
+def mark_past_treatments_as_completed(user_id):
+    """Mark this tenant's past treatments with status 'Scheduled' as 'Completed'."""
+    user_id = _require_user_id(user_id)
     try:
         today = datetime.now().date()
-        
-        query = Treatment.query.filter(
+
+        past_treatments = Treatment.query.join(Patient).filter(
             and_(
                 Treatment.created_at < today,
-                Treatment.status == 'Scheduled'
+                Treatment.status == 'Scheduled',
+                Patient.user_id == user_id,
             )
-        )
+        ).all()
 
-        if user_id:
-            query = query.join(Patient).filter(Patient.user_id == user_id)
-        
-        past_treatments = query.all()
-        
         count = 0
         for treatment in past_treatments:
             treatment.status = 'Completed'
             count += 1
-        
+
         if count > 0:
             db.session.commit()
             current_app.logger.info(
                 "Automatically marked %s past treatments as Completed (user_id: %s)",
                 count,
-                user_id if user_id else 'global'
+                user_id,
             )
-        
+
         return count
     except Exception as e:
         db.session.rollback()
@@ -42,23 +47,50 @@ def mark_past_treatments_as_completed(user_id=None):
         raise
 
 
-def convert_past_recurring_to_treatments(user_id=None):
+def mark_all_past_treatments_as_completed_global():
+    """CLI/maintenance only: mark every tenant's past Scheduled treatments as Completed."""
+    try:
+        today = datetime.now().date()
+        past_treatments = Treatment.query.filter(
+            and_(
+                Treatment.created_at < today,
+                Treatment.status == 'Scheduled',
+            )
+        ).all()
+
+        count = 0
+        for treatment in past_treatments:
+            treatment.status = 'Completed'
+            count += 1
+
+        if count > 0:
+            db.session.commit()
+            current_app.logger.info(
+                "Automatically marked %s past treatments as Completed (global CLI run)",
+                count,
+            )
+
+        return count
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error marking past treatments as completed: {str(e)}")
+        raise
+
+
+def convert_past_recurring_to_treatments(user_id):
     """
-    Convert past recurring appointment occurrences to actual Treatment records.
-    This ensures all past appointments are properly recorded in the treatment history.
+    Convert this tenant's past recurring appointment occurrences to Treatment records.
     """
+    user_id = _require_user_id(user_id)
     try:
         today = datetime.now().date()
         created_count = 0
-        
-        # Get recurring appointments to process
-        recurring_query = RecurringAppointment.query.filter(
+
+        recurring_query = RecurringAppointment.query.join(Patient).filter(
             RecurringAppointment.is_active == True,
-            RecurringAppointment.start_date <= today
+            RecurringAppointment.start_date <= today,
+            Patient.user_id == user_id,
         )
-        
-        if user_id:
-            recurring_query = recurring_query.join(Patient).filter(Patient.user_id == user_id)
         
         active_rules = recurring_query.all()
         
@@ -375,24 +407,23 @@ def sync_calendly_for_user(user):
         return {'new_treatments': 0, 'new_unmatched_bookings': 0}
 
 
-def auto_sync_appointments(user_id=None):
+def auto_sync_appointments(user_id):
     """
-    Combined function to sync all appointment data:
+    Combined function to sync this tenant's appointment data:
     1. Convert past recurring appointments to treatments
     2. Mark past treatments as completed
     3. Sync Calendly events (if configured)
     """
+    user_id = _require_user_id(user_id)
     try:
         created_count = convert_past_recurring_to_treatments(user_id)
         completed_count = mark_past_treatments_as_completed(user_id)
-        
-        # Sync Calendly for the specific user
+
         calendly_synced = {'new_treatments': 0, 'new_unmatched_bookings': 0}
-        if user_id:
-            from app.models import User
-            user = User.query.get(user_id)
-            if user:
-                calendly_synced = sync_calendly_for_user(user)
+        from app.models import User
+        user = User.query.get(user_id)
+        if user:
+            calendly_synced = sync_calendly_for_user(user)
         
         return {
             'created_treatments': created_count,

@@ -9,8 +9,19 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key-for-security-fixes")
 os.environ.setdefault("FLASK_ENV", "testing")
 os.environ.setdefault("DISABLE_ENCRYPTION", "true")
 
+from datetime import date, datetime, time, timedelta
+
 from app import create_app, db
-from app.models import User, Patient, Treatment, Clinic, ClinicMembership, UnmatchedCalendlyBooking
+from app.models import (
+    User,
+    Patient,
+    Treatment,
+    Clinic,
+    ClinicMembership,
+    UnmatchedCalendlyBooking,
+    RecurringAppointment,
+    UserConsent,
+)
 
 
 REMOVED_PATHS = ("/make-admin", "/admin/update-treatments", "/admin/fix-calendly-dates")
@@ -139,17 +150,28 @@ def test_removed_routes_404_for_logged_in_non_admin(client, app, other_physio, p
 def test_user_cannot_edit_another_users_treatment(client, app, owner_and_treatment, other_physio):
     """User B cannot GET or POST the edit page for user A's treatment."""
     treatment_id = owner_and_treatment["treatment_id"]
+    with app.app_context():
+        original = Treatment.query.get(treatment_id)
+        original_status = original.status
+        original_notes = original.notes
+        original_type = original.treatment_type
+
     login_user_in_session(client, app, other_physio)
 
     get_response = client.get(f"/treatment/{treatment_id}/edit", follow_redirects=False)
-    assert get_response.status_code in (403, 404)
+    assert get_response.status_code == 404
 
     post_response = client.post(
         f"/treatment/{treatment_id}/edit",
-        data={"status": "Completed", "notes": "hijacked"},
+        data={"status": "Cancelled", "notes": "hijacked"},
         follow_redirects=False,
     )
-    assert post_response.status_code in (403, 404)
+    assert post_response.status_code == 404
+    with app.app_context():
+        treatment = Treatment.query.get(treatment_id)
+        assert treatment.status == original_status
+        assert treatment.notes == original_notes
+        assert treatment.treatment_type == original_type
 
 
 def test_user_cannot_view_another_users_treatment(client, app, owner_and_treatment, other_physio):
@@ -424,7 +446,7 @@ def test_admin_cannot_get_another_users_treatment(client, app, owner_and_treatme
     treatment_id = owner_and_treatment["treatment_id"]
     login_user_in_session(client, app, platform_admin)
     response = client.get(f"/api/treatment/{treatment_id}", follow_redirects=False)
-    assert response.status_code in (403, 404)
+    assert response.status_code == 404
     if response.is_json:
         assert "notes" not in (response.get_json() or {})
 
@@ -472,11 +494,39 @@ def test_unknown_role_cannot_get_another_users_treatment(
     treatment_id = owner_and_treatment["treatment_id"]
     login_user_in_session(client, app, assistant_id)
     response = client.get(f"/api/treatment/{treatment_id}", follow_redirects=False)
-    assert response.status_code in (403, 404)
+    assert response.status_code == 404
     if response.is_json:
         body = response.get_json() or {}
         assert "notes" not in body
         assert "patient_name" not in body
+
+
+def test_non_owner_get_treatment_is_404_for_every_role(
+    client, app, owner_and_treatment, other_physio, platform_admin
+):
+    """Non-owner GET /api/treatment/<id> is 404 for physio, admin, assistant, and portal."""
+    treatment_id = owner_and_treatment["treatment_id"]
+    with app.app_context():
+        unique_email = f"portal_{uuid.uuid4().hex[:8]}@example.com"
+        portal = User(
+            username=unique_email,
+            email=unique_email,
+            role="patient",
+            is_admin=False,
+        )
+        portal.set_password("password")
+        db.session.add(portal)
+        db.session.commit()
+        portal_id = portal.id
+
+    for user_id in (other_physio, platform_admin, portal_id):
+        login_user_in_session(client, app, user_id)
+        response = client.get(f"/api/treatment/{treatment_id}", follow_redirects=False)
+        assert response.status_code == 404
+        if response.is_json:
+            body = response.get_json() or {}
+            assert "notes" not in body
+            assert "patient_name" not in body
 
 
 def test_non_owner_patient_and_treatment_pages_are_404(
@@ -500,7 +550,7 @@ def test_admin_cannot_delete_another_users_patient(client, app, owner_and_treatm
     patient_id = owner_and_treatment["patient_id"]
     login_user_in_session(client, app, platform_admin)
     response = client.post(f"/patient/{patient_id}/delete", follow_redirects=False)
-    assert response.status_code in (302, 403, 404)
+    assert response.status_code == 404
     with app.app_context():
         assert Patient.query.get(patient_id) is not None
 
@@ -553,7 +603,7 @@ def test_admin_cannot_access_another_users_calendly_booking(
     assert b"OtherClinic Invitee" not in review.data
 
     match = client.get(f"/calendly/match_booking/{booking_id}", follow_redirects=False)
-    assert match.status_code in (302, 403, 404)
+    assert match.status_code == 404
 
 
 def test_admin_can_read_and_delete_own_treatment(client, app, platform_admin):
@@ -590,3 +640,232 @@ def test_admin_only_pages_still_work(client, app, platform_admin):
     login_user_in_session(client, app, platform_admin)
     response = client.get("/monitoring", follow_redirects=False)
     assert response.status_code == 200
+
+
+def test_user_cannot_delete_another_users_recurring_appointment(
+    client, app, owner_and_treatment, other_physio
+):
+    """User B gets 404 on A's recurring delete and the rule stays."""
+    with app.app_context():
+        rule = RecurringAppointment(
+            patient_id=owner_and_treatment["patient_id"],
+            start_date=date.today(),
+            recurrence_type="weekly",
+            time_of_day=time(10, 0),
+            treatment_type="Standard Session",
+        )
+        db.session.add(rule)
+        db.session.commit()
+        rule_id = rule.id
+
+    login_user_in_session(client, app, other_physio)
+    response = client.post(f"/recurring/{rule_id}/delete", follow_redirects=False)
+    assert response.status_code == 404
+    with app.app_context():
+        assert RecurringAppointment.query.get(rule_id) is not None
+
+
+def test_user_cannot_create_or_view_consent_for_another_users_patient(
+    client, app, owner_and_treatment, other_physio
+):
+    """User B cannot create a consent or load the template for user A's patient."""
+    patient_id = owner_and_treatment["patient_id"]
+    with app.app_context():
+        patient = Patient.query.get(patient_id)
+        patient_name = patient.name
+
+    login_user_in_session(client, app, other_physio)
+    create = client.post(
+        "/api/consent/create",
+        json={
+            "consent_type": "fisioterapia_general",
+            "patient_id": patient_id,
+            "lang": "es",
+        },
+        follow_redirects=False,
+    )
+    assert create.status_code == 404
+    with app.app_context():
+        assert UserConsent.query.filter_by(patient_id=patient_id).count() == 0
+
+    template = client.get(
+        f"/api/consent_template?type=fisioterapia_general&lang=es&patient_id={patient_id}",
+        follow_redirects=False,
+    )
+    assert template.status_code == 404
+    assert patient_name.encode() not in template.data
+
+
+def test_consent_apis_deny_when_consent_owner_does_not_own_patient(
+    client, app, owner_and_treatment, other_physio
+):
+    """An A-owned consent attached to B's patient is still denied for A."""
+    with app.app_context():
+        other = User.query.get(other_physio)
+        b_patient = Patient(
+            name=f"BPatient_{uuid.uuid4().hex[:4]}",
+            user_id=other.id,
+            diagnosis="BOwnDiagnosis",
+        )
+        db.session.add(b_patient)
+        db.session.commit()
+        mixed = UserConsent(
+            user_id=owner_and_treatment["owner_id"],
+            patient_id=b_patient.id,
+            purpose="fisioterapia_general",
+            given_at=datetime.utcnow(),
+            is_active=True,
+        )
+        db.session.add(mixed)
+        db.session.commit()
+        consent_id = mixed.id
+        b_patient_id = b_patient.id
+        b_patient_name = b_patient.name
+
+    login_user_in_session(client, app, owner_and_treatment["owner_id"])
+    create = client.post(
+        "/api/consent/create",
+        json={
+            "consent_type": "fisioterapia_general",
+            "patient_id": b_patient_id,
+            "lang": "es",
+        },
+        follow_redirects=False,
+    )
+    assert create.status_code == 404
+
+    template = client.get(
+        f"/api/consent_template?type=fisioterapia_general&lang=es&patient_id={b_patient_id}",
+        follow_redirects=False,
+    )
+    assert template.status_code == 404
+    assert b_patient_name.encode() not in template.data
+
+    revoke = client.post(f"/api/consent/{consent_id}/revoke", follow_redirects=False)
+    assert revoke.status_code == 404
+
+    delete = client.post(f"/api/consent/{consent_id}/delete", follow_redirects=False)
+    assert delete.status_code == 404
+
+    with app.app_context():
+        consent = UserConsent.query.get(consent_id)
+        assert consent is not None
+        assert consent.is_active is True
+        assert UserConsent.query.filter_by(patient_id=b_patient_id).count() == 1
+
+
+def test_patient_portal_cannot_use_consent_apis(client, app, owner_and_treatment):
+    """Patient-portal role is denied on both consent APIs."""
+    with app.app_context():
+        unique_email = f"portal_{uuid.uuid4().hex[:8]}@example.com"
+        portal = User(
+            username=unique_email,
+            email=unique_email,
+            role="patient",
+            is_admin=False,
+        )
+        portal.set_password("password")
+        db.session.add(portal)
+        db.session.commit()
+        portal_id = portal.id
+
+    patient_id = owner_and_treatment["patient_id"]
+    login_user_in_session(client, app, portal_id)
+
+    create = client.post(
+        "/api/consent/create",
+        json={
+            "consent_type": "fisioterapia_general",
+            "patient_id": patient_id,
+            "lang": "es",
+        },
+        follow_redirects=False,
+    )
+    assert create.status_code in (403, 404)
+
+    template = client.get(
+        f"/api/consent_template?type=fisioterapia_general&lang=es&patient_id={patient_id}",
+        follow_redirects=False,
+    )
+    assert template.status_code in (403, 404)
+
+
+def test_reports_and_treatments_by_month_are_own_only(
+    client, app, owner_and_treatment, other_physio
+):
+    """Reports and monthly counts include only the caller's patients."""
+    leak_diagnosis = f"LeakDiag{uuid.uuid4().hex[:6]}"
+    own_diagnosis = f"OwnDiag{uuid.uuid4().hex[:6]}"
+    with app.app_context():
+        owner_patient = Patient.query.get(owner_and_treatment["patient_id"])
+        owner_patient.diagnosis = leak_diagnosis
+        extra_a = Patient(
+            name=f"LeakExtra_{uuid.uuid4().hex[:4]}",
+            user_id=owner_and_treatment["owner_id"],
+            diagnosis=leak_diagnosis,
+        )
+        extra_a2 = Patient(
+            name=f"LeakExtra2_{uuid.uuid4().hex[:4]}",
+            user_id=owner_and_treatment["owner_id"],
+            diagnosis=leak_diagnosis,
+        )
+        other = User.query.get(other_physio)
+        b_patient = Patient(
+            name=f"OwnOnly_{uuid.uuid4().hex[:4]}",
+            user_id=other.id,
+            diagnosis=own_diagnosis,
+        )
+        db.session.add_all([extra_a, extra_a2, b_patient])
+        db.session.commit()
+        for patient_id in (extra_a.id, extra_a2.id):
+            db.session.add(
+                Treatment(
+                    patient_id=patient_id,
+                    treatment_type="Assessment",
+                    status="Completed",
+                )
+            )
+        db.session.add(
+            Treatment(
+                patient_id=b_patient.id,
+                treatment_type="Assessment",
+                status="Completed",
+            )
+        )
+        db.session.commit()
+
+    login_user_in_session(client, app, other_physio)
+    reports = client.get("/reports", follow_redirects=False)
+    assert reports.status_code == 200
+    assert leak_diagnosis.encode() not in reports.data
+    assert own_diagnosis.encode() in reports.data
+    assert b">3</h2>" not in reports.data
+    assert b">1</h2>" in reports.data
+
+    monthly = client.get("/api/reports/treatments-by-month", follow_redirects=False)
+    assert monthly.status_code == 200
+    payload = monthly.get_json()["treatments_by_month"]
+    assert sum(payload["data"]) == 1
+
+
+def test_review_payments_does_not_complete_other_users_treatments(
+    client, app, owner_and_treatment, other_physio
+):
+    """User B visiting review-payments must not flip user A's past Scheduled rows."""
+    with app.app_context():
+        past_treatment = Treatment(
+            patient_id=owner_and_treatment["patient_id"],
+            treatment_type="Assessment",
+            status="Scheduled",
+            created_at=datetime.now() - timedelta(days=3),
+        )
+        db.session.add(past_treatment)
+        db.session.commit()
+        past_id = past_treatment.id
+
+    login_user_in_session(client, app, other_physio)
+    response = client.get("/review-payments", follow_redirects=False)
+    assert response.status_code == 200
+    with app.app_context():
+        still_scheduled = Treatment.query.get(past_id)
+        assert still_scheduled.status == "Scheduled"

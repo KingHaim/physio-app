@@ -151,7 +151,8 @@ def physio_required(f):
         if not current_user.is_authenticated: # Ensure user is logged in first
             return redirect(url_for('auth.login', next=request.url))
         if current_user.role == 'patient':
-            # Redirect patients to their specific dashboard
+            if request.path.startswith('/api/'):
+                abort(404)
             return redirect(url_for('main.patient_dashboard'))
         return f(*args, **kwargs)
     return decorated_function
@@ -675,7 +676,7 @@ def get_treatment_details(id):
     )
     accessible_ids = [p.id for p in current_user.get_accessible_patients()]
     if not is_patient_self and treatment.patient_id not in accessible_ids:
-        return jsonify({'error': 'Forbidden'}), 403
+        abort(404)
     try:
         # --- Fix Indentation Start --- Removed extra comment line
         # Get trigger points for this treatment
@@ -1173,7 +1174,12 @@ def edit_recurring_appointment(id):
 @login_required
 @physio_required # <<< ADD DECORATOR
 def delete_recurring_appointment(id):
-    rule = RecurringAppointment.query.get_or_404(id)
+    rule = RecurringAppointment.query.join(Patient).filter(
+        RecurringAppointment.id == id,
+        Patient.user_id == current_user.id,
+    ).first()
+    if rule is None:
+        abort(404)
     patient_id = rule.patient_id
     try:
         db.session.delete(rule)
@@ -1436,13 +1442,14 @@ def update_appointment(id):
 @physio_required # <<< ADD DECORATOR
 def reports():
     try:
-        total_patients = Patient.query.count()
-        active_patients = Patient.query.filter_by(status='Active').count()
+        total_patients = Patient.query.filter_by(user_id=current_user.id).count()
+        active_patients = Patient.query.filter_by(user_id=current_user.id, status='Active').count()
 
         monthly_treatments_query = db.session.query(
             func.strftime('%Y-%m', Treatment.created_at).label('month'),
             func.count(Treatment.id).label('count')
-        ).group_by(func.strftime('%Y-%m', Treatment.created_at)) \
+        ).join(Patient).filter(Patient.user_id == current_user.id) \
+            .group_by(func.strftime('%Y-%m', Treatment.created_at)) \
             .order_by(func.strftime('%Y-%m', Treatment.created_at).desc()) \
             .limit(12).all()
 
@@ -1451,25 +1458,31 @@ def reports():
         conditions_query = db.session.query(
             Patient.diagnosis,
             func.count(Patient.id).label('count')
-        ).group_by(Patient.diagnosis).all()
+        ).filter(Patient.user_id == current_user.id).group_by(Patient.diagnosis).all()
 
         conditions = [(row[0], row[1]) for row in conditions_query]
 
-        completed_treatments = Treatment.query.filter_by(status='Completed').count()
-        total_treatments = Treatment.query.count()
+        completed_treatments = Treatment.query.join(Patient).filter(
+            Patient.user_id == current_user.id,
+            Treatment.status == 'Completed',
+        ).count()
+        total_treatments = Treatment.query.join(Patient).filter(
+            Patient.user_id == current_user.id
+        ).count()
         completion_rate = (completed_treatments / total_treatments * 100) if total_treatments > 0 else 0
 
         # Fix division by zero error
         try:
             avg_treatments = db.session.query(
                 func.count(Treatment.id) / func.count(func.distinct(Treatment.patient_id))
-            ).scalar() or 0
+            ).join(Patient).filter(Patient.user_id == current_user.id).scalar() or 0
         except:
             avg_treatments = 0
 
         recent_activity = (
             Treatment.query
             .join(Patient)
+            .filter(Patient.user_id == current_user.id)
             .order_by(Treatment.created_at.desc())
             .limit(10)
             .all()
@@ -1496,7 +1509,8 @@ def treatments_by_month():
         treatments = db.session.query(
             func.strftime('%Y-%m', Treatment.created_at).label('month'),
             func.count(Treatment.id).label('count')
-        ).group_by(func.strftime('%Y-%m', Treatment.created_at)) \
+        ).join(Patient).filter(Patient.user_id == current_user.id) \
+            .group_by(func.strftime('%Y-%m', Treatment.created_at)) \
             .order_by(func.strftime('%Y-%m', Treatment.created_at)) \
             .all()
 
@@ -1724,8 +1738,7 @@ def match_booking_to_patient(booking_id):
     booking = UnmatchedCalendlyBooking.query.get_or_404(booking_id)
 
     if booking.user_id != current_user.id:
-        flash('You are not authorized to access this booking.', 'danger')
-        return redirect(url_for('main.review_calendly_bookings'))
+        abort(404)
 
     if request.method == 'POST':
         patient_id = request.form.get('patient_id')
@@ -1778,8 +1791,7 @@ def create_patient_from_booking(booking_id):
     booking = UnmatchedCalendlyBooking.query.get_or_404(booking_id)
 
     if booking.user_id != current_user.id:
-        flash('You are not authorized to process this booking.', 'danger')
-        return redirect(url_for('main.review_calendly_bookings'))
+        abort(404)
 
     try:
         existing_patient_query = Patient.query.filter_by(
@@ -2728,7 +2740,9 @@ def financials():
     # --- Get available years (existing logic) ---
     available_years = db.session.query(
         func.extract('year', Treatment.created_at)
-    ).distinct().order_by(func.extract('year', Treatment.created_at).desc()).all()
+    ).join(Patient).filter(Patient.user_id == current_user.id).distinct().order_by(
+        func.extract('year', Treatment.created_at).desc()
+    ).all()
     available_years = [int(y[0]) for y in available_years if y[0] is not None]
     if not available_years:
         available_years = [year]
@@ -3015,7 +3029,7 @@ def review_payments():
     """Displays treatments with fees but missing payment methods."""
     try:
         # --- Add call to update statuses first ---
-        marked_count = mark_past_treatments_as_completed() 
+        marked_count = mark_past_treatments_as_completed(current_user.id) 
         if marked_count > 0:
             print(f"Marked {marked_count} past treatments as completed before loading review page.")
             # Optionally flash a message, but might be noisy if frequent
@@ -3590,13 +3604,9 @@ def edit_patient(id):
 @physio_required
 def delete_patient(id):
     """Delete a patient and all associated records."""
-    patient = Patient.query.get_or_404(id)
-
-    accessible_patients = current_user.get_accessible_patients()
-    patient_ids = [p.id for p in accessible_patients]
-    if patient.id not in patient_ids:
-        flash('You do not have permission to delete this patient.', 'danger')
-        return redirect(url_for('main.patients_list'))
+    patient = Patient.query.filter_by(id=id, user_id=current_user.id).first()
+    if patient is None:
+        abort(404)
 
     try:
         # Delete treatments and their trigger points
@@ -4849,11 +4859,19 @@ def security_breach():
 
 @main.route('/api/consent/<int:consent_id>/revoke', methods=['POST'])
 @login_required
+@physio_required
 def api_revoke_consent(consent_id):
-    consent = UserConsent.query.get_or_404(consent_id)
-    # SECURITY FIX: Remove admin bypass - users can only revoke their own consent
-    if consent.user_id != current_user.id:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    consent = (
+        UserConsent.query
+        .join(Patient, UserConsent.patient_id == Patient.id)
+        .filter(
+            UserConsent.id == consent_id,
+            Patient.user_id == current_user.id,
+        )
+        .first()
+    )
+    if consent is None:
+        abort(404)
 
     consent.is_active = False
     db.session.commit()
@@ -4890,6 +4908,7 @@ def before_request():
 
 @main.route('/api/consent/create', methods=['POST'])
 @login_required
+@physio_required
 def api_create_consent():
     data = request.get_json()
     consent_type = data.get('consent_type')
@@ -4908,10 +4927,9 @@ def api_create_consent():
         print('Invalid patient_id:', patient_id, e)
         return jsonify({'success': False, 'message': 'Invalid patient_id'}), 400
 
-    patient = Patient.query.get(patient_id)
+    patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
     if not patient:
-        print('Patient not found:', patient_id)
-        return jsonify({'success': False, 'message': 'Patient not found'}), 400
+        abort(404)
 
     consent = UserConsent(
         user_id=current_user.id,
@@ -4930,6 +4948,7 @@ def api_create_consent():
 
 @main.route('/api/consent_template')
 @login_required
+@physio_required
 def api_consent_template():
     consent_type = request.args.get('type')
     lang = request.args.get('lang', 'es')
@@ -4946,24 +4965,37 @@ def api_consent_template():
 
     template_file = template_map.get(consent_type, {}).get(lang)
     if not template_file:
-        return "Consent template not found.", 404
+        abort(404)
 
-    # Fetch the patient from the database
-    patient = None
-    if patient_id:
-        from app.models import Patient
-        patient = Patient.query.get(int(patient_id))
+    if not patient_id:
+        abort(404)
+    try:
+        patient_id = int(patient_id)
+    except (TypeError, ValueError):
+        abort(404)
+
+    patient = Patient.query.filter_by(id=patient_id, user_id=current_user.id).first()
+    if patient is None:
+        abort(404)
 
     return render_template(template_file, patient=patient, therapist=current_user, guardian=None)
 
 @main.route('/api/consent/<int:consent_id>/delete', methods=['POST'])
 @login_required
+@physio_required
 def api_delete_consent(consent_id):
     from app.models import UserConsent
-    consent = UserConsent.query.get_or_404(consent_id)
-    # SECURITY FIX: Remove admin bypass - users can only delete their own consent
-    if consent.user_id != current_user.id:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    consent = (
+        UserConsent.query
+        .join(Patient, UserConsent.patient_id == Patient.id)
+        .filter(
+            UserConsent.id == consent_id,
+            Patient.user_id == current_user.id,
+        )
+        .first()
+    )
+    if consent is None:
+        abort(404)
     db.session.delete(consent)
     db.session.commit()
     return jsonify({'success': True})
