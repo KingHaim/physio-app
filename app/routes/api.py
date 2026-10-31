@@ -1259,7 +1259,7 @@ def sync_appointments_manually():
         if current_user.role not in ['physio', 'admin']:
             return jsonify({'success': False, 'error': 'Access denied'}), 403
         
-        user_id = None if current_user.is_admin else current_user.id
+        user_id = current_user.id
         
         from app.utils import auto_sync_appointments
         sync_result = auto_sync_appointments(user_id)

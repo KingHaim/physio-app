@@ -10,11 +10,11 @@ os.environ.setdefault("FLASK_ENV", "testing")
 os.environ.setdefault("DISABLE_ENCRYPTION", "true")
 
 from app import create_app, db
-from app.models import User, Patient, Treatment, Clinic, ClinicMembership
+from app.models import User, Patient, Treatment, Clinic, ClinicMembership, UnmatchedCalendlyBooking
 
 
-REMOVED_PATHS = ("/make-admin", "/admin/update-treatments")
-REMOVED_ENDPOINTS = ("main.make_admin", "main.update_treatments_demo")
+REMOVED_PATHS = ("/make-admin", "/admin/update-treatments", "/admin/fix-calendly-dates")
+REMOVED_ENDPOINTS = ("main.make_admin", "main.update_treatments_demo", "main.fix_calendly_dates")
 TEST_EDIT_PATH_PREFIX = "/test/edit-treatment"
 BULK_UPDATE_DENIED_MESSAGE = "Unable to update treatments."
 PATHOLOGY_LOGIN_PATHS = (
@@ -91,6 +91,23 @@ def other_physio(app):
     """Physio B who does not own the other user's records."""
     with app.app_context():
         user = _create_physio("other")
+        return user.id
+
+
+def _create_admin(email_prefix):
+    unique_email = f"{email_prefix}_{uuid.uuid4().hex[:8]}@example.com"
+    user = User(username=unique_email, email=unique_email, role="admin", is_admin=True)
+    user.set_password("password")
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture
+def platform_admin(app):
+    """Platform admin who must not see other practitioners' patient data."""
+    with app.app_context():
+        user = _create_admin("platform_admin")
         return user.id
 
 
@@ -392,4 +409,129 @@ def test_edit_treatments_list_handles_none_notes(client, app, owner_and_treatmen
         f"/patient/{owner_and_treatment['patient_id']}/edit-treatments",
         follow_redirects=False,
     )
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize("path", REMOVED_PATHS)
+def test_removed_routes_404_for_platform_admin(client, app, platform_admin, path):
+    """Removed backdoors stay gone even for a platform admin."""
+    login_user_in_session(client, app, platform_admin)
+    response = client.get(path, follow_redirects=False)
+    assert response.status_code == 404
+
+
+def test_admin_cannot_get_another_users_treatment(client, app, owner_and_treatment, platform_admin):
+    """A platform admin must not read another practitioner's treatment via the API."""
+    treatment_id = owner_and_treatment["treatment_id"]
+    login_user_in_session(client, app, platform_admin)
+    response = client.get(f"/api/treatment/{treatment_id}", follow_redirects=False)
+    assert response.status_code in (403, 404)
+    if response.is_json:
+        assert "notes" not in (response.get_json() or {})
+
+
+def test_admin_cannot_delete_another_users_treatment(client, app, owner_and_treatment, platform_admin):
+    """A platform admin must not delete another practitioner's treatment."""
+    treatment_id = owner_and_treatment["treatment_id"]
+    login_user_in_session(client, app, platform_admin)
+    response = client.delete(f"/api/treatment/{treatment_id}", follow_redirects=False)
+    assert response.status_code in (403, 404)
+    with app.app_context():
+        assert Treatment.query.get(treatment_id) is not None
+
+
+def test_admin_cannot_delete_another_users_patient(client, app, owner_and_treatment, platform_admin):
+    """A platform admin must not delete another practitioner's patient."""
+    patient_id = owner_and_treatment["patient_id"]
+    login_user_in_session(client, app, platform_admin)
+    response = client.post(f"/patient/{patient_id}/delete", follow_redirects=False)
+    assert response.status_code in (302, 403, 404)
+    with app.app_context():
+        assert Patient.query.get(patient_id) is not None
+
+
+def test_admin_cannot_see_another_users_patient_on_calendar(
+    client, app, owner_and_treatment, platform_admin
+):
+    """Calendar HTML and events must not include another practitioner's patients."""
+    with app.app_context():
+        patient = Patient.query.get(owner_and_treatment["patient_id"])
+        patient_name = patient.name
+        treatment = Treatment.query.get(owner_and_treatment["treatment_id"])
+        treatment.status = "Scheduled"
+        db.session.commit()
+
+    login_user_in_session(client, app, platform_admin)
+    calendar_page = client.get("/calendar", follow_redirects=False)
+    assert calendar_page.status_code == 200
+    assert patient_name.encode() not in calendar_page.data
+
+    events = client.get(
+        "/api/calendar-appointments?start=2000-01-01T00:00:00&end=2100-01-01T00:00:00",
+        follow_redirects=False,
+    )
+    assert events.status_code == 200
+    payload = events.get_json()
+    assert isinstance(payload, list)
+    assert payload == []
+
+
+def test_admin_cannot_access_another_users_calendly_booking(
+    client, app, owner_and_treatment, platform_admin
+):
+    """Calendly review and match must stay scoped to the current user."""
+    with app.app_context():
+        booking = UnmatchedCalendlyBooking(
+            user_id=owner_and_treatment["owner_id"],
+            name="OtherClinic Invitee",
+            email="invitee@example.com",
+            event_type="Initial consult",
+            status="Pending",
+        )
+        db.session.add(booking)
+        db.session.commit()
+        booking_id = booking.id
+
+    login_user_in_session(client, app, platform_admin)
+    review = client.get("/calendly/review", follow_redirects=False)
+    assert review.status_code == 200
+    assert b"OtherClinic Invitee" not in review.data
+
+    match = client.get(f"/calendly/match_booking/{booking_id}", follow_redirects=False)
+    assert match.status_code in (302, 403, 404)
+
+
+def test_admin_can_read_and_delete_own_treatment(client, app, platform_admin):
+    """An admin who is also a practitioner still manages only their own records."""
+    with app.app_context():
+        admin = User.query.get(platform_admin)
+        patient = Patient(name=f"AdminOwn_{uuid.uuid4().hex[:4]}", user_id=admin.id)
+        db.session.add(patient)
+        db.session.commit()
+        treatment = Treatment(
+            patient_id=patient.id,
+            treatment_type="Assessment",
+            status="Completed",
+        )
+        db.session.add(treatment)
+        db.session.commit()
+        treatment_id = treatment.id
+        patient_id = patient.id
+
+    login_user_in_session(client, app, platform_admin)
+    get_response = client.get(f"/api/treatment/{treatment_id}", follow_redirects=False)
+    assert get_response.status_code == 200
+    assert get_response.get_json()["id"] == treatment_id
+
+    delete_response = client.delete(f"/api/treatment/{treatment_id}", follow_redirects=False)
+    assert delete_response.status_code == 200
+    with app.app_context():
+        assert Treatment.query.get(treatment_id) is None
+        assert Patient.query.get(patient_id) is not None
+
+
+def test_admin_only_pages_still_work(client, app, platform_admin):
+    """Legitimate admin-only pages stay available."""
+    login_user_in_session(client, app, platform_admin)
+    response = client.get("/monitoring", follow_redirects=False)
     assert response.status_code == 200
