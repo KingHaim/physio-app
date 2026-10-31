@@ -101,8 +101,8 @@ export DATABASE_URL=postgresql://your_db_user:your_db_password@your_db_host:5432
 export MAIL_SERVER=smtp-relay.brevo.com
 export MAIL_PORT=587
 export MAIL_USE_TLS=true
-export MAIL_USERNAME=918347001@smtp-brevo.com
-export MAIL_PASSWORD=8caQAZJ6CbRBstjk
+export MAIL_USERNAME=${MAIL_USERNAME}
+export MAIL_PASSWORD=${MAIL_PASSWORD}
 export MAIL_DEFAULT_SENDER=noreply@trxck.tech
 
 # Security Keys (GENERATE NEW ONES FOR PRODUCTION!)

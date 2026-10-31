@@ -1,0 +1,45 @@
+name: gitleaks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    name: Scan working tree for secrets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install gitleaks
+        run: |
+          set -euo pipefail
+          VERSION=8.30.1
+          BASE="https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}"
+          TARBALL="gitleaks_${VERSION}_linux_x64.tar.gz"
+          curl -sSL -o "/tmp/${TARBALL}" "${BASE}/${TARBALL}"
+          curl -sSL -o /tmp/gitleaks_checksums.txt "${BASE}/gitleaks_${VERSION}_checksums.txt"
+          EXPECTED="$(awk -v f="${TARBALL}" '$2 == f { print $1 }' /tmp/gitleaks_checksums.txt)"
+          ACTUAL="$(sha256sum "/tmp/${TARBALL}" | awk '{ print $1 }')"
+          if [ -z "${EXPECTED}" ] || [ "${EXPECTED}" != "${ACTUAL}" ]; then
+            echo "gitleaks tarball checksum mismatch or missing published hash" >&2
+            exit 1
+          fi
+          tar -xz -C /tmp -f "/tmp/${TARBALL}" gitleaks
+          sudo install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Scan checked-out tree
+        run: |
+          # History still contains leaked credentials (audit C2). Do not scan
+          # git history here — a full-history or PR-range scan would fail on
+          # parent blobs and deletion diffs. This job only checks the
+          # checked-out working tree so the PR can stay green while the owner
+          # rotates keys and later decides whether to rewrite history.
+          gitleaks detect --no-git --source . --verbose --redact

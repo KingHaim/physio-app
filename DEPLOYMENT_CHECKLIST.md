@@ -33,8 +33,8 @@ export DATABASE_URL=postgresql://user:pass@host:port/database  # Supabase connec
 
 ```bash
 export MAIL_SERVER=smtp-relay.brevo.com
-export MAIL_USERNAME=918347001@smtp-brevo.com
-export MAIL_PASSWORD=8caQAZJ6CbRBstjk
+export MAIL_USERNAME=   # set MAIL_USERNAME in the host environment
+export MAIL_PASSWORD=   # set MAIL_PASSWORD in the host environment
 export MAIL_DEFAULT_SENDER=noreply@trxck.tech
 ```
 
